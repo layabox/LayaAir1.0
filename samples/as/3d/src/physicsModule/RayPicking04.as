@@ -67,7 +67,6 @@ package physicsModule {
         private var _color:Vector4 = new Vector4(1, 0, 0, 1);
         private var _linePos:Vector3 = new Vector3(0, -1, 1);
         
-        private var camera:Camera;
         private var label:Label;
         
         public function RayPicking04() {

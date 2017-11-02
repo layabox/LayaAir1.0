@@ -19,8 +19,6 @@ package materialModule {
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	
-	import threeDimen.common.CameraMoveScript;
-	
 	public class StandardMaterial_ReflectMap {
 		
 		private var rotation:Vector3 = new Vector3(0, 0.01, 0);
@@ -40,9 +38,7 @@ package materialModule {
 			
 			var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.direction = new Vector3(0, -0.8, -1);
-			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-			directionLight.specularColor = new Vector3(1.0, 1.0, 0.8);
-			directionLight.diffuseColor = new Vector3(1, 1, 1);
+			directionLight.color = new Vector3(1, 1, 1);
 			
 			var textureCube:TextureCube = TextureCube.load("../../../../res/threeDimen/skyBox/skyBox1/skyCube.ltc");
 			

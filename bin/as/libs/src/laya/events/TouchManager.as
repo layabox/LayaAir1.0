@@ -270,6 +270,7 @@ package laya.events {
 		{
 			var lastOvers:Array;
 			lastOvers = getLastOvers();
+			preOvers.length = 0;
 			sendEvents(lastOvers, Event.MOUSE_OUT, 0);
 		}
 		

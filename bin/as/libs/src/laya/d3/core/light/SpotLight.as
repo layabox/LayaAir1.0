@@ -6,8 +6,6 @@ package laya.d3.core.light {
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
 	import laya.events.Event;
-	import laya.utils.Stat;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>SpotLight</code> 类用于创建聚光。

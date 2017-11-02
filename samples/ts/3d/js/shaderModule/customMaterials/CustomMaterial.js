@@ -44,7 +44,7 @@ var CustomMaterial = (function (_super) {
         enumerable: true,
         configurable: true
     });
+    CustomMaterial.DIFFUSETEXTURE = 1;
+    CustomMaterial.MARGINALCOLOR = 2;
     return CustomMaterial;
 }(Laya.BaseMaterial));
-CustomMaterial.DIFFUSETEXTURE = 1;
-CustomMaterial.MARGINALCOLOR = 2;

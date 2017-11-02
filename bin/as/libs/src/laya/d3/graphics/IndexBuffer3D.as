@@ -2,7 +2,6 @@ package laya.d3.graphics {
 	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>IndexBuffer3D</code> 类用于创建索引缓冲。

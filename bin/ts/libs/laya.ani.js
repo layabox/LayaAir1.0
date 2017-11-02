@@ -3232,6 +3232,21 @@
 			this._endLoaded();
 		}
 
+		/**
+		*@inheritDoc
+		*/
+		__proto.detoryResource=function(){
+			this._aniVersion=null;
+			this._anis=null;
+			this._aniMap=null;
+			this._publicExtData=null;
+			this.unfixedCurrentFrameIndexes=null;
+			this.unfixedCurrentTimes=null;
+			this.unfixedKeyframes=null;
+			this._aniClassName=null;
+			this._animationDatasCache=null;
+		}
+
 		__proto.getAnimationCount=function(){
 			return this._anis.length;
 		}
@@ -3987,7 +4002,7 @@
 			if (autoKey && this._indexControl){
 				return;
 			};
-			var tCurrTime=Laya.timer.currTimer;
+			var tCurrTime=this.timer.currTimer;
 			var preIndex=this._player.currentKeyframeIndex;
 			var dTime=tCurrTime-this._lastTime;
 			if (autoKey){
@@ -4530,7 +4545,7 @@
 					if (this._pause){
 						this._pause=false;
 						this._lastTime=Browser.now();
-						Laya.stage.frameLoop(1,this,this._update,null,true);
+						this.timer.frameLoop(1,this,this._update,null,true);
 					}
 					this._update();
 				}
@@ -4546,7 +4561,7 @@
 				if (this._player){
 					this._player.stop(true);
 				}
-				Laya.timer.clear(this,this._update);
+				this.timer.clear(this,this._update);
 			}
 		}
 
@@ -4569,7 +4584,7 @@
 				if (this._player){
 					this._player.paused=true;
 				}
-				Laya.timer.clear(this,this._update);
+				this.timer.clear(this,this._update);
 			}
 		}
 
@@ -4584,7 +4599,7 @@
 					this._player.paused=false;
 				}
 				this._lastTime=Browser.now();
-				Laya.stage.frameLoop(1,this,this._update,null,true);
+				this.timer.frameLoop(1,this,this._update,null,true);
 			}
 		}
 
@@ -4622,7 +4637,7 @@
 			this._curOriginalData=null;
 			this._boneMatrixArray.length=0;
 			this._lastTime=0;
-			Laya.timer.clear(this,this._update);
+			this.timer.clear(this,this._update);
 		}
 
 		/**
@@ -4748,8 +4763,8 @@
 
 		/**@private */
 		__proto._$3__onDisplay=function(value){
-			if (value)Laya.timer.loop(this.interval,this,this.updates,null,true);
-			else Laya.timer.clear(this,this.updates);
+			if (value)this.timer.loop(this.interval,this,this.updates,null,true);
+			else this.timer.clear(this,this.updates);
 		}
 
 		/**@private 更新时间轴*/
@@ -4841,7 +4856,7 @@
 			this.stop();
 			this._idOfSprite.length=0;
 			if (!this._parentMovieClip){
-				Laya.timer.clear(this,this.updates);
+				this.timer.clear(this,this.updates);
 				var i=0,len=0;
 				len=this._movieClipList.length;
 				for (i=0;i < len;i++){
@@ -5066,7 +5081,7 @@
 			this._initState();
 			this.play(0);
 			this.event(/*laya.events.Event.LOADED*/"loaded");
-			if (!this._parentMovieClip)Laya.timer.loop(this.interval,this,this.updates,null,true);
+			if (!this._parentMovieClip)this.timer.loop(this.interval,this,this.updates,null,true);
 		}
 
 		/**

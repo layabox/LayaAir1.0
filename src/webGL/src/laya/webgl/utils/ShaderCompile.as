@@ -1,5 +1,4 @@
 package laya.webgl.utils {
-	import laya.utils.Browser;
 	import laya.webgl.shader.Shader;
 	
 	public class ShaderCompile {

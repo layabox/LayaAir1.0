@@ -47,9 +47,7 @@ package advancedModule
 			
 			var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.direction = new Vector3(0, -0.8, -1);
-			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-			directionLight.specularColor = new Vector3(2.0, 2.0, 1.6);
-			directionLight.diffuseColor = new Vector3(1, 1, 1);
+			directionLight.color = new Vector3(1, 1, 1);
 			
 			var layaMonkey:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/LayaMonkey/LayaMonkey.lh")) as Sprite3D;
 		}

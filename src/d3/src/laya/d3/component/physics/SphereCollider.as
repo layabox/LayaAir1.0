@@ -7,6 +7,7 @@ package laya.d3.component.physics {
 	import laya.d3.math.Vector3;
 	import laya.d3.utils.RaycastHit;
 	import laya.events.Event;
+	import laya.d3.core.ComponentNode;
 	
 	/**
 	 * <code>SphereCollider</code> 类用于创建球碰撞器。
@@ -71,7 +72,7 @@ package laya.d3.component.physics {
 		private function _updateCollider():void {
 			if (_needUpdate) {
 				var maxScale:Number;
-				var transform:Transform3D = _owner.transform;
+				var transform:Transform3D = (_owner  as Sprite3D).transform;
 				var scale:Vector3 = transform.scale;
 				if (scale.x >= scale.y && scale.x >= scale.z)
 					maxScale = scale.x;
@@ -103,14 +104,14 @@ package laya.d3.component.physics {
 		 */
 		private function _initBoundSphere():void {
 			(owner as RenderableSprite3D)._geometryFilter._originalBoundingSphere.cloneTo(_originalBoundSphere);
-			owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+			(owner  as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
 			_needUpdate = true;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override public function _initialize(owner:Sprite3D):void {
+		override public function _initialize(owner:ComponentNode):void {
 			super._initialize(owner);
 			if (owner is RenderableSprite3D) {
 				var renderableOwner:RenderableSprite3D = owner as RenderableSprite3D;
@@ -124,7 +125,7 @@ package laya.d3.component.physics {
 			} else {
 				_originalBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0.5);
 				_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0.5);
-				owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+				(owner  as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
 				_needUpdate = true;
 			}
 		}
@@ -143,7 +144,7 @@ package laya.d3.component.physics {
 			if (distance !== -1 && distance <= maxDistance) {
 				
 				hitInfo.distance = distance;
-				hitInfo.sprite3D = _owner;
+				hitInfo.sprite3D = _owner as Sprite3D;
 				return true;
 			} else {
 				

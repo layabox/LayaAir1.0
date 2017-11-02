@@ -60,9 +60,7 @@ package physicsModule {
             
             //方向光
             var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
-            directionLight.ambientColor = new Vector3(0.6, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(0.6, 0.6, 0.6);
-            directionLight.diffuseColor = new Vector3(0.6, 0.6, 0.6);
+            directionLight.color = new Vector3(0.6, 0.6, 0.6);
             directionLight.direction = new Vector3(1, -1, -1);
             
             //平面

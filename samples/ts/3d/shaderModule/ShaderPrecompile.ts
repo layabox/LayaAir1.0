@@ -6,10 +6,10 @@ class ShaderPrecompile {
 
         var sc: Laya.ShaderCompile3D = Laya.ShaderCompile3D.get("SIMPLE");
         //部分低端移动设备不支持高精度shader,所以如果在PC端或高端移动设备输出的宏定义值需做判断移除高精度宏定义
-        if (Laya.WebGL.frameShaderHighPrecision)
+        if (Laya.WebGL.shaderHighPrecision)
             sc.precompileShaderWithShaderDefine(73, 4, 20);
         else
-            sc.precompileShaderWithShaderDefine(73 - Laya.ShaderCompile3D.SHADERDEFINE_FSHIGHPRECISION, 4, 20);
+            sc.precompileShaderWithShaderDefine(73 - Laya.ShaderCompile3D.SHADERDEFINE_HIGHPRECISION, 4, 20);
     }
 }
 new ShaderPrecompile;

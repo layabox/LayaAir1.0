@@ -35,7 +35,7 @@ package sceneModule {
             camera.sky = skyBox;
 			
 			scene.once(Event.HIERARCHY_LOADED, this, function():void{
-				setMaterials(scene.getChildAt(1), new Vector4(1.3, 1.3, 1.3, 1), new Vector3(0.3, 0.3, 0.3));
+				setMaterials(scene.getChildAt(1) as Sprite3D, new Vector4(1.3, 1.3, 1.3, 1), new Vector3(0.3, 0.3, 0.3));
 			});
         }
         
@@ -48,8 +48,8 @@ package sceneModule {
                     mat.albedo = albedo;
                 }
             }
-            for (var i:int = 0; i < spirit3D._childs.length; i++)
-                setMaterials(spirit3D._childs[i], albedo, ambientColor);
+            for (var j:int = 0; j < spirit3D._childs.length; j++)
+                setMaterials(spirit3D._childs[j], albedo, ambientColor);
         }
     }
 	

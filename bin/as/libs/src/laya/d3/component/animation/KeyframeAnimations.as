@@ -2,7 +2,9 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationPlayer;
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
+	import laya.d3.animation.AnimationNode;
 	import laya.d3.component.Component3D;
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Sprite3D;
 	import laya.events.Event;
 	
@@ -126,7 +128,7 @@ package laya.d3.component.animation {
 		 * @private
 		 */
 		private function _onOwnerActiveHierarchyChanged(active:Boolean):void {
-			if (_owner.displayedInStage) {
+			if ((_owner as Sprite3D).displayedInStage) {
 				if (active)
 					_addUpdatePlayerToTimer();
 				else
@@ -138,37 +140,37 @@ package laya.d3.component.animation {
 		 * @private
 		 */
 		private function _onDisplayInStage():void {
-			(_owner.activeInHierarchy) && (_addUpdatePlayerToTimer());
+			((_owner as Sprite3D).activeInHierarchy) && (_addUpdatePlayerToTimer());
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _onUnDisplayInStage():void {
-			(_owner.activeInHierarchy) && (_removeUpdatePlayerToTimer());
+			((_owner as Sprite3D).activeInHierarchy) && (_removeUpdatePlayerToTimer());
 		}
 		
 		/**
 		 * @private
 		 * 载入组件时执行
 		 */
-		override public function _load(owner:Sprite3D):void {
-			(_owner.displayedInStage && _owner.activeInHierarchy) && (_addUpdatePlayerToTimer());
-			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
-			_owner.on(Event.DISPLAY, this, _onDisplayInStage);
-			_owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
+		override public function _load(owner:ComponentNode):void {
+			(owner.displayedInStage && (owner as Sprite3D).activeInHierarchy) && (_addUpdatePlayerToTimer());
+			owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
+			owner.on(Event.DISPLAY, this, _onDisplayInStage);
+			owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
 		
 		/**
 		 * @private
 		 * 卸载组件时执行
 		 */
-		override public function _unload(owner:Sprite3D):void {
+		override public function _unload(owner:ComponentNode):void {
 			super._unload(owner);
-			(_owner.displayedInStage && _owner.activeInHierarchy) && (_removeUpdatePlayerToTimer());
-			_owner.off(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
-			_owner.off(Event.DISPLAY, this, _onDisplayInStage);
-			_owner.off(Event.UNDISPLAY, this, _onUnDisplayInStage);
+			(owner.displayedInStage && (owner as Sprite3D).activeInHierarchy) && (_removeUpdatePlayerToTimer());
+			owner.off(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
+			owner.off(Event.DISPLAY, this, _onDisplayInStage);
+			owner.off(Event.UNDISPLAY, this, _onUnDisplayInStage);
 			_player._destroy();
 			_player = null;
 			_templet = null;

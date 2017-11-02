@@ -31,7 +31,7 @@ package materialModule {
             Laya.stage.screenMode = Stage.SCREEN_NONE;
             Stat.show();
             
-            scene = Laya.stage.addChild(new Scene());
+            scene = Laya.stage.addChild(new Scene()) as Scene;
             
             var camera:Camera = (scene.addChild(new Camera(0, 0.1, 1000))) as Camera;
             camera.transform.translate(new Vector3(0, 0.7, 1.3));
@@ -40,9 +40,7 @@ package materialModule {
             
             var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
             directionLight.direction = new Vector3(0, -0.8, -1);
-            directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(2.0, 2.0, 1.6);
-            directionLight.diffuseColor = new Vector3(1, 1, 1);
+            directionLight.color = new Vector3(1, 1, 1);
             
             var completeHandler:Handler = Handler.create(this, onComplete);
             
@@ -55,7 +53,7 @@ package materialModule {
             dude1.transform.position = new Vector3(-0.6, 0, 0);
             
             var dude2:Sprite3D = Sprite3D.instantiate(dude1, scene, false, new Vector3(0.6, 0, 0));
-            var skinnedMeshSprite3d:SkinnedMeshSprite3D = dude2.getChildAt(0).getChildAt(0);
+            var skinnedMeshSprite3d:SkinnedMeshSprite3D = dude2.getChildAt(0).getChildAt(0) as SkinnedMeshSprite3D;
             
             for (var i:int = 0; i < skinnedMeshSprite3d.skinnedMeshRender.materials.length; i++) {
                 

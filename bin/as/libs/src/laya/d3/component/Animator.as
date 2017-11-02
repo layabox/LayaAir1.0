@@ -7,7 +7,6 @@ package laya.d3.component {
 	import laya.d3.animation.KeyframeNode;
 	import laya.d3.core.Avatar;
 	import laya.d3.core.ComponentNode;
-	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.RenderState;
@@ -61,9 +60,12 @@ package laya.d3.component {
 		/**@private */
 		private var _avatar:Avatar;
 		/**@private */
-		private var _cacheNodesOwners:Vector.<Vector.<AnimationNode>>;
-		/**@private */
-		private var _cacheNodesOriginalValue:Vector.<Vector.<Float32Array>>;
+		private var _cacheNodesDefaultlValues:Vector.<Vector.<Float32Array>>;
+		
+		/**@private 无Avatar时缓存场景树中的精灵节点。*/
+		public var _cacheNodesSpriteOwners:Vector.<Vector.<Sprite3D>>;
+		/**@private 有Avatar时缓存Avatar树中的AnimationNode节点。*/
+		private var _cacheNodesAvatarOwners:Vector.<Vector.<AnimationNode>>;
 		/**@private */
 		private var _curClipAnimationDatas:Vector.<Float32Array>;
 		/**@private */
@@ -121,9 +123,9 @@ package laya.d3.component {
 				
 				if (value) {
 					if (value.loaded)
-						_getClipsOwnersAndInitAvatarDatasAsync();
+						_getAvatarOwnersAndInitDatasAsync();
 					else
-						value.once(Event.LOADED, this, _getClipsOwnersAndInitAvatarDatasAsync);
+						value.once(Event.LOADED, this, _getAvatarOwnersAndInitDatasAsync);
 				}
 			}
 		}
@@ -213,7 +215,7 @@ package laya.d3.component {
 		 * @return	value 当前时间
 		 */
 		public function get currentPlayTime():Number {
-			return _currentTime + _playStartFrames[_currentPlayClipIndex];
+			return _currentTime + (_playStartFrames[_currentPlayClipIndex] / _currentPlayClip._frameRate);
 		}
 		
 		/**
@@ -290,8 +292,9 @@ package laya.d3.component {
 			_clips = new Vector.<AnimationClip>();
 			_playStartFrames = new Vector.<Number>();
 			_playEndFrames = new Vector.<Number>();
-			_cacheNodesOwners = new Vector.<Vector.<AnimationNode>>();
-			_cacheNodesOriginalValue = new Vector.<Vector.<Float32Array>>();
+			_cacheNodesSpriteOwners = new Vector.<Vector.<Sprite3D>>();
+			_cacheNodesAvatarOwners = new Vector.<Vector.<AnimationNode>>();
+			_cacheNodesDefaultlValues = new Vector.<Vector.<Float32Array>>();
 			_cacheNodesToSpriteMap = new Vector.<int>();
 			_cacheSpriteToNodesMap = new Vector.<int>();
 			_cacheFullFrames = new Vector.<Array>();
@@ -315,19 +318,17 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _getClipOwnersAndInitRelateDatas(clipIndex:int):void {
+		private function _getAvatarOwnersByClip(clipIndex:int):void {
 			var frameNodes:Vector.<KeyframeNode> = _clips[clipIndex]._nodes;
 			var frameNodesCount:int = frameNodes.length;
-			var owners:Vector.<AnimationNode> = _cacheNodesOwners[clipIndex];
-			var originalValues:Vector.<Float32Array> = _cacheNodesOriginalValue[clipIndex];
-			var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[clipIndex];
+			
+			var owners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[clipIndex];
 			owners.length = frameNodesCount;
-			originalValues.length = frameNodesCount;
-			publicDatas.length = frameNodesCount;
-			var rootBone:AnimationNode = _avatarRootNode;
+			var defaultValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
+			defaultValues.length = frameNodesCount;
 			
 			for (var i:int = 0; i < frameNodesCount; i++) {
-				var nodeOwner:AnimationNode = rootBone;
+				var nodeOwner:AnimationNode = _avatarRootNode;
 				var node:KeyframeNode = frameNodes[i];
 				var path:Vector.<String> = node.path;
 				for (var j:int = 0, m:int = path.length; j < m; j++) {
@@ -335,7 +336,7 @@ package laya.d3.component {
 					if (p === "") {
 						break;
 					} else {
-						nodeOwner = nodeOwner.getChildByName(path[j]);
+						nodeOwner = nodeOwner.getChildByName(p);
 						if (!nodeOwner)
 							break;
 					}
@@ -343,16 +344,55 @@ package laya.d3.component {
 				if (!nodeOwner)
 					continue;
 				owners[i] = nodeOwner;
-				originalValues[i] = new Float32Array(node.keyFrameWidth);
 				
 				var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](nodeOwner);
 				if (datas) {//不存在对应的实体节点时可能为空
-					var cacheDatas:Float32Array = originalValues[i];
+					var cacheDatas:Float32Array = new Float32Array(node.keyFrameWidth);
+					defaultValues[i] = cacheDatas;
 					for (j = 0, m = datas.length; j < m; j++)
 						cacheDatas[j] = datas[j];
 				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _handleSpriteOwnersByClip(clipIndex:int):void {
+			var frameNodes:Vector.<KeyframeNode> = _clips[clipIndex]._nodes;
+			var frameNodesCount:int = frameNodes.length;
+			
+			var owners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[clipIndex];
+			owners.length = frameNodesCount;
+			var defaultValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
+			defaultValues.length = frameNodesCount;
+			
+			for (var i:int = 0; i < frameNodesCount; i++) {
+				var nodeOwner:Sprite3D = _owner as Sprite3D;
+				var node:KeyframeNode = frameNodes[i];
+				var path:Vector.<String> = node.path;
+				var j:int, m:int;
+				for (j = 0, m = path.length; j < m; j++) {
+					var p:String = path[j];
+					if (p === "") {
+						break;
+					} else {
+						nodeOwner = nodeOwner.getChildByName(p) as Sprite3D;
+						if (!nodeOwner)
+							break;
+					}
+				}
 				
-				(node._cacheProperty) || (publicDatas[i] = new Float32Array(node.keyFrameWidth));//TODO:是否可以缩减队列，减少空循环
+				if (nodeOwner) {
+					owners[i] = nodeOwner;
+					var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](nodeOwner);
+					if (datas) {//不存在对应的实体节点时可能为空
+						var cacheDatas:Float32Array = new Float32Array(node.keyFrameWidth);
+						defaultValues[i] = cacheDatas;
+						for (j = 0, m = datas.length; j < m; j++)
+							cacheDatas[j] = datas[j];
+					}
+				}
 			}
 		}
 		
@@ -362,28 +402,46 @@ package laya.d3.component {
 		private function _offClipAndAvatarRelateEvent(avatar:Avatar, clip:AnimationClip):void {
 			if (avatar.loaded) {
 				if (!clip.loaded)
-					clip.off(Event.LOADED, this, _getClipOwnersAndInitRelateDatas);
+					clip.off(Event.LOADED, this, _getAvatarOwnersByClip);
 			} else {
-				avatar.off(Event.LOADED, this, _getClipsOwnersAndInitAvatarDatasAsync);
+				avatar.off(Event.LOADED, this, _getAvatarOwnersAndInitDatasAsync);
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _getClipOwnersAndInitRelateDatasAsync(clipIndex:int, clip:AnimationClip):void {
+		private function _getAvatarOwnersByClipAsync(clipIndex:int, clip:AnimationClip):void {
 			if (clip.loaded)
-				_getClipOwnersAndInitRelateDatas(clipIndex);
+				_getAvatarOwnersByClip(clipIndex);
 			else
-				clip.once(Event.LOADED, this, _getClipOwnersAndInitRelateDatas, [clipIndex]);
+				clip.once(Event.LOADED, this, _getAvatarOwnersByClip, [clipIndex]);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _getClipsOwnersAndInitAvatarDatasAsync():void {
+		private function _offGetSpriteOwnersByClipAsyncEvent(clip:AnimationClip):void {
+			if (!clip.loaded)
+				clip.off(Event.LOADED, this, _getSpriteOwnersByClipAsync);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getSpriteOwnersByClipAsync(clipIndex:int, clip:AnimationClip):void {
+			if (clip.loaded)
+				_handleSpriteOwnersByClip(clipIndex);
+			else
+				clip.once(Event.LOADED, this, _handleSpriteOwnersByClip, [clipIndex]);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getAvatarOwnersAndInitDatasAsync():void {
 			for (var i:int = 0, n:int = _clips.length; i < n; i++)
-				_getClipOwnersAndInitRelateDatasAsync(i, _clips[i]);
+				_getAvatarOwnersByClipAsync(i, _clips[i]);
 			
 			_avatar._cloneDatasToAnimator(this);
 			var avatarNodesCount:int = _avatarNodes.length;
@@ -484,12 +542,16 @@ package laya.d3.component {
 		 * @private
 		 */
 		private function _revertKeyframeNodes(clip:AnimationClip, clipIndex:int):void {
-			var originalValues:Vector.<Float32Array> = _cacheNodesOriginalValue[clipIndex];
-			var frameNodes:Vector.<KeyframeNode> = clip._nodes;
-			var nodeOwners:Vector.<AnimationNode> = _cacheNodesOwners[clipIndex];
-			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-				var owner:AnimationNode = nodeOwners[i];
-				(owner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](owner, originalValues[i]));
+			if (_avatar) {
+				var originalValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
+				var frameNodes:Vector.<KeyframeNode> = clip._nodes;
+				var nodeOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[clipIndex];
+				for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
+					var owner:AnimationNode = nodeOwners[i];
+					(owner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](owner, null, originalValues[i]));
+				}
+			} else {//TODO:补充
+				
 			}
 		}
 		
@@ -497,29 +559,27 @@ package laya.d3.component {
 		 * @private
 		 */
 		private function _onAnimationStop():void {
+			var i:int, n:int;
+			var frameNode:KeyframeNode, keyFrames:Vector.<Keyframe>, endKeyframeData:Float32Array;
 			_lastFrameIndex = -1;
 			var frameNodes:Vector.<KeyframeNode> = _currentPlayClip._nodes;
-			var nodeOwners:Vector.<AnimationNode> = _cacheNodesOwners[_currentPlayClipIndex];
-			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-				var owner:AnimationNode = nodeOwners[i];
-				var frameNode:KeyframeNode = frameNodes[i];
-				var keyFrames:Vector.<Keyframe> = frameNode.keyFrames;
-				var endKeyframeData:Float32Array = keyFrames[keyFrames.length - 1].data;
-				(owner) && (AnimationNode._propertySetFuncs[frameNode.propertyNameID](owner, endKeyframeData));
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setAnimationClipProperty(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
-			var nodeToCachePropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
-			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-				var owner:AnimationNode = nodeOwners[i];
-				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
-					var datas:Float32Array = (ketframeNode._cacheProperty) ? _curClipAnimationDatas[nodeToCachePropertyMap[i]] : publicClipAnimatioDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, datas));
+			if (_avatar) {
+				var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[_currentPlayClipIndex];
+				for (i = 0, n = avatarOwners.length; i < n; i++) {
+					var nodeOwner:AnimationNode = avatarOwners[i];
+					frameNode = frameNodes[i];
+					keyFrames = frameNode.keyFrames;
+					endKeyframeData = keyFrames[keyFrames.length - 1].data;
+					(nodeOwner) && (AnimationNode._propertySetFuncs[frameNode.propertyNameID](nodeOwner, null, endKeyframeData));
+				}
+			} else {
+				var spriteOwners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[_currentPlayClipIndex];
+				for (i = 0, n = spriteOwners.length; i < n; i++) {
+					var spriteOwner:Sprite3D = spriteOwners[i];
+					frameNode = frameNodes[i];
+					keyFrames = frameNode.keyFrames;
+					endKeyframeData = keyFrames[keyFrames.length - 1].data;
+					(spriteOwner) && (AnimationNode._propertySetFuncs[frameNode.propertyNameID](null, spriteOwner, endKeyframeData));
 				}
 			}
 		}
@@ -527,7 +587,51 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _setAnimationClipPropertyCache(nodeOwners:Vector.<AnimationNode>):void {
+		private function _setAnimationClipPropertyToAnimationNode(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
+			var nodeToCachePropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
+			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
+				var owner:AnimationNode = nodeOwners[i];
+				if (owner) {
+					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
+					var datas:Float32Array = (ketframeNode._cacheProperty) ? _curClipAnimationDatas[nodeToCachePropertyMap[i]] : publicClipAnimatioDatas[i];
+					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setAnimationClipPropertyToAnimationNodeRealTime(nodeOwners:Vector.<AnimationNode>):void {
+			var nodeToCachePropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
+			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
+				var owner:AnimationNode = nodeOwners[i];
+				if (owner) {
+					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
+					var datas:Float32Array = _curClipAnimationDatas[i];
+					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setAnimationClipPropertyToSprite3D(nodeOwners:Vector.<Sprite3D>):void {
+			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
+				var owner:Sprite3D = nodeOwners[i];
+				if (owner) {
+					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
+					var datas:Float32Array = _curClipAnimationDatas[i];
+					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](null, owner, datas));
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setAnimationClipPropertyToAnimationNodeCache(nodeOwners:Vector.<AnimationNode>):void {
 			var cachePropertyToNodeMap:Int32Array = _currentPlayClip._cachePropertyToNodeMap;
 			for (var i:int = 0, n:int = cachePropertyToNodeMap.length; i < n; i++) {
 				var nodexIndex:int = cachePropertyToNodeMap[i];
@@ -535,7 +639,7 @@ package laya.d3.component {
 				if (owner) {
 					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[nodexIndex];
 					var datas:Float32Array = _curClipAnimationDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, datas));
+					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
 				}
 			}
 		}
@@ -551,7 +655,37 @@ package laya.d3.component {
 				if (owner) {
 					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[nodeIndex];
 					var datas:Float32Array = publicClipAnimatioDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, datas));
+					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _handleSpriteOwnersBySprite(clipIndex:int, isLink:Boolean, path:Vector.<String>, sprite:Sprite3D):void {
+			var clip:AnimationClip = _clips[clipIndex];
+			var nodePath:String = path.join("/");
+			var ownersNodes:Vector.<KeyframeNode> = clip._nodesMap[nodePath];
+			if (ownersNodes) {
+				var owners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[clipIndex];
+				var nodes:Vector.<KeyframeNode> = clip._nodes;
+				var defaultValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
+				for (var i:int = 0, n:int = ownersNodes.length; i < n; i++) {
+					var node:KeyframeNode = ownersNodes[i];
+					var index:int = nodes.indexOf(node);
+					if (isLink) {
+						owners[index] = sprite;
+						var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](sprite);
+						if (datas) {//不存在对应的实体节点时可能为空
+							var cacheDatas:Float32Array = defaultValues[index];
+							(cacheDatas) || (defaultValues[index] = cacheDatas = new Float32Array(node.keyFrameWidth));
+							for (var j:int = 0, m:int = datas.length; j < m; j++)
+								cacheDatas[j] = datas[j];
+						}
+					} else {
+						owners[index] = null;
+					}
 				}
 			}
 		}
@@ -656,9 +790,11 @@ package laya.d3.component {
 			if (_updateTransformPropertyLoopCount === Stat.loopCount)
 				return;
 			
-			var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
-			currentPlayClip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicDatas, null, _cacheNodesOwners[_currentPlayClipIndex]);
-			_setAnimationClipPropertyUnCache(_cacheNodesOwners[_currentPlayClipIndex], publicDatas);
+			if (_avatar) {
+				var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
+				currentPlayClip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicDatas, null, _cacheNodesAvatarOwners[_currentPlayClipIndex]);
+				_setAnimationClipPropertyUnCache(_cacheNodesAvatarOwners[_currentPlayClipIndex], publicDatas);
+			}
 		}
 		
 		/**
@@ -681,41 +817,64 @@ package laya.d3.component {
 				if (_lastFrameIndex === frameIndex)
 					return;
 				
-				var cachedAvatarAniDatas:Vector.<Matrix4x4> = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, frameIndex);
-				if (cachedAvatarAniDatas) {//如果cachedAvatarAniDatas存在,cachedClipAniDatas一定存在
-					_curClipAnimationDatas = clip._getAnimationDataWithCache(cacheRate, frameIndex);
-					_setAnimationClipPropertyCache(_cacheNodesOwners[_currentPlayClipIndex]);
-					_updateAvatarNodesCache(cachedAvatarAniDatas);
-					_lastFrameIndex = frameIndex;
-					return;
+				var avatarOwners:Vector.<AnimationNode>, publicClipAnimationDatas:Vector.<Float32Array>;
+				var spriteOwners:Vector.<Sprite3D>;
+				
+				if (_avatar) {
+					var cachedAvatarAniDatas:Vector.<Matrix4x4> = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, frameIndex);
+					if (cachedAvatarAniDatas) {//如果cachedAvatarAniDatas存在,cachedClipAniDatas一定存在
+						_curClipAnimationDatas = clip._getAnimationDataWithCache(cacheRate, frameIndex);
+						_setAnimationClipPropertyToAnimationNodeCache(_cacheNodesAvatarOwners[_currentPlayClipIndex]);
+						_updateAvatarNodesCache(cachedAvatarAniDatas);
+						_lastFrameIndex = frameIndex;
+						return;
+					}
+					avatarOwners = _cacheNodesAvatarOwners[_currentPlayClipIndex];
+					publicClipAnimationDatas = _publicClipAnimationDatas[_currentPlayClipIndex];
+				} else {
+					spriteOwners = _cacheNodesSpriteOwners[_currentPlayClipIndex];
 				}
 				
-				var nodeOwners:Vector.<AnimationNode> = _cacheNodesOwners[_currentPlayClipIndex];
-				var publicClipAnimationDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
 				_curClipAnimationDatas = clip._getAnimationDataWithCache(cacheRate, frameIndex);
 				if (_curClipAnimationDatas) {
-					clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicClipAnimationDatas, null, nodeOwners);
-					_setAnimationClipProperty(nodeOwners, publicClipAnimationDatas);
+					if (_avatar) {
+						clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicClipAnimationDatas, null, avatarOwners);
+						_setAnimationClipPropertyToAnimationNode(avatarOwners, publicClipAnimationDatas);
+					} else {
+						_setAnimationClipPropertyToSprite3D(spriteOwners);
+					}
 				} else {
-					var cachePropertyToNodeMap:Int32Array = clip._cachePropertyToNodeMap;
 					_curClipAnimationDatas = new Vector.<Float32Array>();
-					_curClipAnimationDatas.length = cachePropertyToNodeMap.length;
-					clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicClipAnimationDatas, _curClipAnimationDatas, nodeOwners);
-					_setAnimationClipProperty(nodeOwners, publicClipAnimationDatas);
+					_curClipAnimationDatas.length = clip._cachePropertyToNodeMap.length;
+					
+					if (_avatar) {
+						clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicClipAnimationDatas, _curClipAnimationDatas, avatarOwners);
+						_setAnimationClipPropertyToAnimationNode(avatarOwners, publicClipAnimationDatas);
+					} else {
+						clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, null, _curClipAnimationDatas, null);
+						_setAnimationClipPropertyToSprite3D(spriteOwners);
+					}
 					clip._cacheAnimationData(cacheRate, frameIndex, _curClipAnimationDatas);
 				}
 				
-				_curAvatarAnimationDatas = new Vector.<Matrix4x4>();
-				_curAvatarAnimationDatas.length = _cacheSpriteToNodesMap.length;
-				_updateAvatarNodes(_curAvatarAnimationDatas);
-				clip._cacheAvatarData(_avatar, cacheRate, frameIndex, _curAvatarAnimationDatas);
+				if (_avatar) {
+					_curAvatarAnimationDatas = new Vector.<Matrix4x4>();
+					_curAvatarAnimationDatas.length = _cacheSpriteToNodesMap.length;
+					_updateAvatarNodes(_curAvatarAnimationDatas);
+					clip._cacheAvatarData(_avatar, cacheRate, frameIndex, _curAvatarAnimationDatas);
+				}
 				_updateTransformPropertyLoopCount = Stat.loopCount;
-			} else {
+			} else {//TODO:非缓存模式BUG
 				_curClipAnimationDatas = _publicClipAnimationDatas[_currentPlayClipIndex];
-				_curAvatarAnimationDatas = _publicAvatarAnimationDatas;
-				clip._evaluateAnimationlDatasRealTime(currentPlayTime, _curClipAnimationDatas);
-				_setAnimationClipProperty(_cacheNodesOwners[_currentPlayClipIndex], _curClipAnimationDatas);
-				_updateAvatarNodes(_curAvatarAnimationDatas);
+				if (_avatar) {
+					clip._evaluateAnimationlDatasRealTime(currentPlayTime, _curClipAnimationDatas);
+					_setAnimationClipPropertyToAnimationNodeRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex]);
+					_curAvatarAnimationDatas = _publicAvatarAnimationDatas;
+					_updateAvatarNodes(_curAvatarAnimationDatas);
+				} else {
+					clip._evaluateAnimationlDatasRealTime(currentPlayTime, _curClipAnimationDatas);
+					_setAnimationClipPropertyToSprite3D(_cacheNodesSpriteOwners[_currentPlayClipIndex]);
+				}
 			}
 			
 			_lastFrameIndex = frameIndex;
@@ -726,7 +885,7 @@ package laya.d3.component {
 		 */
 		private function _checkAnimationNode(node:AnimationNode, sprite:Sprite3D):void {
 			if (node.name === sprite.name && !sprite._transform.dummy)//判断!sprite._transform.dummy重名节点可按顺序依次匹配。
-				sprite._associateSpriteToAnimationNode(_avatar, node);
+				sprite._isLinkSpriteToAnimationNode(this, node, true);
 			
 			for (var i:int = 0, n:int = sprite._childs.length; i < n; i++)
 				_checkAnimationNode(node, sprite.getChildAt(i) as Sprite3D);
@@ -761,8 +920,9 @@ package laya.d3.component {
 			_currentPlayClip = null;
 			
 			_clipNames = null;
-			_cacheNodesOwners = null;
-			_cacheNodesOriginalValue = null;
+			_cacheNodesSpriteOwners = null;
+			_cacheNodesAvatarOwners = null;
+			_cacheNodesDefaultlValues = null;
 			_publicClipAnimationDatas = null;
 			_clips = null;
 			_cacheFullFrames = null;
@@ -788,7 +948,7 @@ package laya.d3.component {
 		 * @param   开始帧率。
 		 * @param   结束帧率。
 		 */
-		public function addClip(clip:AnimationClip, playName:String = null, startFrame:int = 0, endFrame:int = 4294967295/*uint.MAX_VALUE*/):void {
+		public function addClip(clip:AnimationClip, playName:String = null, startFrame:int = 0, endFrame:int = 4294967295/*int.MAX_VALUE*/):void {
 			playName = playName || clip.name;
 			var index:int = _clipNames.indexOf(playName);
 			if (index !== -1) {
@@ -796,9 +956,6 @@ package laya.d3.component {
 					throw new Error("Animation:this playName has exist with another clip.");
 			} else {
 				var clipIndex:int = _clips.indexOf(clip);
-				if (clipIndex !== -1)
-					throw new Error("Animation:this clip has exist with another playName.");
-				
 				if (startFrame < 0 || endFrame < 0)
 					throw new Error("Animator:startFrame and endFrame must large than zero.");
 				
@@ -809,16 +966,19 @@ package laya.d3.component {
 				_clips.push(clip);
 				_playStartFrames.push(startFrame);
 				_playEndFrames.push(endFrame);
-				_cacheNodesOwners.push(new Vector.<Sprite3D>());
-				_cacheNodesOriginalValue.push(new Vector.<Float32Array>());
+				_cacheNodesSpriteOwners.push(new Vector.<Sprite3D>());
+				_cacheNodesAvatarOwners.push(new Vector.<AnimationNode>());
+				_cacheNodesDefaultlValues.push(new Vector.<Float32Array>());
 				_publicClipAnimationDatas.push(new Vector.<Float32Array>());
 				
 				clipIndex = _clips.length - 1;
 				if (_avatar) {
 					if (_avatar.loaded)
-						_getClipOwnersAndInitRelateDatasAsync(clipIndex, clip);
+						_getAvatarOwnersByClipAsync(clipIndex, clip);
 					else
-						_avatar.once(Event.LOADED, this, _getClipOwnersAndInitRelateDatasAsync, [clipIndex, clip]);
+						_avatar.once(Event.LOADED, this, _getAvatarOwnersByClipAsync, [clipIndex, clip]);
+				} else {
+					_getSpriteOwnersByClipAsync(clipIndex, clip);
 				}
 				
 				if (clip.loaded)
@@ -835,15 +995,19 @@ package laya.d3.component {
 		public function removeClip(clip:AnimationClip):void {
 			var index:int = _clips.indexOf(clip);
 			if (index !== -1) {
-				(_avatar) && (_offClipAndAvatarRelateEvent(_avatar, clip));
+				if (_avatar)
+					_offClipAndAvatarRelateEvent(_avatar, clip)
+				else
+					_offGetSpriteOwnersByClipAsyncEvent(clip);
 				_offGetClipCacheFullKeyframeIndicesEvent(clip);
 				
 				_clipNames.splice(index, 1);
 				_clips.splice(index, 1);
 				_playStartFrames.splice(index, 1);
 				_playEndFrames.splice(index, 1);
-				_cacheNodesOwners.splice(index, 1);
-				_cacheNodesOriginalValue.splice(index, 1);
+				_cacheNodesSpriteOwners.splice(index, 1);
+				_cacheNodesAvatarOwners.splice(index, 1);
+				_cacheNodesDefaultlValues.splice(index, 1);
 				_publicClipAnimationDatas.splice(index, 1);
 			}
 		}
@@ -856,15 +1020,19 @@ package laya.d3.component {
 			var index:int = _clipNames.indexOf(playName);
 			if (index !== -1) {
 				var clip:AnimationClip = _clips[index];
-				(_avatar) && (_offClipAndAvatarRelateEvent(_avatar, clip));
+				if (_avatar)
+					_offClipAndAvatarRelateEvent(_avatar, clip);
+				else
+					_offGetSpriteOwnersByClipAsyncEvent(clip);
 				_offGetClipCacheFullKeyframeIndicesEvent(clip);
 				
 				_clipNames.splice(index, 1);
 				_clips.splice(index, 1);
 				_playStartFrames.splice(index, 1);
 				_playEndFrames.splice(index, 1);
-				_cacheNodesOwners.splice(index, 1);
-				_cacheNodesOriginalValue.splice(index, 1);
+				_cacheNodesSpriteOwners.splice(index, 1);
+				_cacheNodesAvatarOwners.splice(index, 1);
+				_cacheNodesDefaultlValues.splice(index, 1);
 				_publicClipAnimationDatas.splice(index, 1);
 			}
 		}
@@ -948,18 +1116,40 @@ package laya.d3.component {
 		}
 		
 		/**
-		 * 关联精灵节点到动画节点,该精灵必须在此Animator下。
+		 * 关联精灵节点到Avatar节点,此Animator必须有Avatar文件。
 		 * @param nodeName 关联节点的名字。
 		 * @param sprite3D 精灵节点。
 		 * @return 是否关联成功。
 		 */
-		public function linkSprite3D(nodeName:String, sprite3D:Sprite3D):Boolean {
-			var node:AnimationNode = _avatarNodeMap[nodeName];
-			if (node) {
-				if (this !== sprite3D._belongAnimator)
-					throw new Error("Animator:The link Sprite3D's belong Animator must be same as this.");
-				sprite3D._associateSpriteToAnimationNode(_avatar, node);
-				return true;
+		public function linkSprite3DToAvatarNode(nodeName:String, sprite3D:Sprite3D):Boolean {
+			if (_avatar) {
+				var node:AnimationNode = _avatarNodeMap[nodeName];
+				if (node) {
+					sprite3D._isLinkSpriteToAnimationNode(this, node, true);
+					return true;
+				} else {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		}
+		
+		/**
+		 * 解除精灵节点到Avatar节点的关联,此Animator必须有Avatar文件。
+		 * @param sprite3D 精灵节点。
+		 * @return 是否解除关联成功。
+		 */
+		public function unLinkSprite3DToAvatarNode(sprite3D:Sprite3D):Boolean {
+			if (_avatar) {
+				var dummy:AnimationTransform3D = sprite3D.transform.dummy;
+				if (dummy) {
+					var node:AnimationNode = _avatarNodeMap[dummy._owner.name];
+					sprite3D._isLinkSpriteToAnimationNode(this, node, false);
+					return true;
+				} else {
+					return false;
+				}
 			} else {
 				return false;
 			}

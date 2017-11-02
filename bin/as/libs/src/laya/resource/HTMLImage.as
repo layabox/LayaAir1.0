@@ -1,5 +1,6 @@
 package laya.resource {
 	import laya.net.URL;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	
 	/**
@@ -22,6 +23,8 @@ package laya.resource {
 		protected var _recreateLock:Boolean = false;
 		/**异步加载完成后是否需要释放（有可能在恢复过程中,再次被释放，用此变量做标记）*/
 		protected var _needReleaseAgain:Boolean = false;
+		
+		private var _enableMerageInAtlas:Boolean = true;
 		
 		/**
 		 * @inheritDoc
@@ -64,6 +67,17 @@ package laya.resource {
 			if (src.indexOf("data:image") != 0) _source.crossOrigin = "";
 			
 			(src) && (_source.src = src);
+		}
+		
+		public function get enableMerageInAtlas():Boolean {
+			return _enableMerageInAtlas;
+		}
+		
+		public function set enableMerageInAtlas(value:Boolean):void {
+			_enableMerageInAtlas = value;
+			if (Render.isConchApp) {
+				if (_source) _source.enableMerageInAtlas = value;
+			}
 		}
 		
 		/**

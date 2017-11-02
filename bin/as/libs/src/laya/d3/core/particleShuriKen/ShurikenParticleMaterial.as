@@ -3,7 +3,6 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
-	import laya.events.Event;
 	import laya.net.Loader;
 	
 	/**

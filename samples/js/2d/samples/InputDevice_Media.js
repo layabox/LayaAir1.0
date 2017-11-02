@@ -40,6 +40,6 @@
 
 	function onError(error)
 	{
-		alert(error.message);
+		alert(error.name + ":" + error.message);
 	}
 })();

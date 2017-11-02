@@ -257,15 +257,16 @@
 			if (!sprite)
 			{
 				sprite = body.layaSprite = _createBodyPrimitive(render, body);
+				sprite.initialAngle = body.angle;
 			}
 
 			// 如果sprite未在显示列表，则添加至显示列表
 			if (!container.contains(sprite))
 				container.addChild(sprite);
-
 			// 更新sprite位置
 			sprite.x = body.position.x;
 			sprite.y = body.position.y;
+			sprite.rotation = (body.angle - sprite.initialAngle) * 180 / Math.PI;
 		}
 	};
 
@@ -337,8 +338,6 @@
 			// 角度指示器
 			if (options.showAngleIndicator || options.showAxes)
 			{
-				primitive.beginFill(0, 0);
-
 				lineWidth = 1;
 				if (options.wireframes)
 				{

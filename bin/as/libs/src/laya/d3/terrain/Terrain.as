@@ -1,4 +1,5 @@
 package laya.d3.terrain {
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.math.Vector2;
@@ -56,9 +57,7 @@ package laya.d3.terrain {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
-			super._parseCustomProps(innerResouMap,customProps,json);
-			
+		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
 			terrainRes = Loader.getRes(innerResouMap[customProps.dataPath]);
 			
 			var lightmapIndex:* = customProps.lightmapIndex;

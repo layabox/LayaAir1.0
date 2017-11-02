@@ -182,8 +182,7 @@ package laya.d3.math {
 		 * @param  tp    顶平面。
 		 * @param  bp 底平面。
 		 */
-		private static function _getPlanesFromMatrix(m:Matrix4x4, np:Plane, fp:Plane, lp:Plane, rp:Plane, tp:Plane, bp:Plane):void {
-			
+		private static function _getPlanesFromMatrix(m:Matrix4x4, np:Plane, fp:Plane, lp:Plane, rp:Plane, tp:Plane, bp:Plane):void {//适用于OPENGL规则
 			var matrixE:Float32Array = m.elements;
 			var m11:Number = matrixE[0];
 			var m12:Number = matrixE[1];
@@ -204,10 +203,10 @@ package laya.d3.math {
 			
 			//近平面
 			var nearNorE:Float32Array = np.normal.elements;
-			nearNorE[0] = m13;
-			nearNorE[1] = m23;
-			nearNorE[2] = m33;
-			np.distance = m43;
+			nearNorE[0] = m14 + m13;
+			nearNorE[1] = m24 + m23;
+			nearNorE[2] = m34 + m33;
+			np.distance = m44 + m43;
 			np.normalize();
 			
 			//远平面
@@ -249,7 +248,6 @@ package laya.d3.math {
 			bottomNorE[2] = m34 + m32;
 			bp.distance = m44 + m42;
 			bp.normalize();
-		
 		}
 		
 		/**

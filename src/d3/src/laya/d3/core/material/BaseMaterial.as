@@ -2,7 +2,6 @@ package laya.d3.core.material {
 	import laya.d3.core.IClone;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
@@ -11,7 +10,6 @@ package laya.d3.core.material {
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
-	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.renders.Render;
 	import laya.resource.Resource;
@@ -562,7 +560,10 @@ package laya.d3.core.material {
 		 * @param name 名称。
 		 */
 		public function setShaderName(name:String):void {
-			_shaderCompile = ShaderCompile3D._preCompileShader[Shader3D.nameKey.getID(name)];
+			var nameID:int = Shader3D.nameKey.getID(name);
+			if (nameID === -1)
+				throw new Error("BaseMaterial: unknown shader name.");
+			_shaderCompile = ShaderCompile3D._preCompileShader[nameID];
 			if (_conchMaterial) {//NATIVE
 				_conchMaterial.setShader(_shaderCompile._conchShader);
 			}

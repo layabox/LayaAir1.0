@@ -34,9 +34,7 @@ package vrModule
 			
 			var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.direction = new Vector3(0, -0.8, -1);
-			directionLight.ambientColor = new Vector3(0.8, 0.8, 0.8);
-			directionLight.specularColor = new Vector3(0.5, 0.5, 1.0);
-			directionLight.diffuseColor = new Vector3(1, 1, 1);
+			directionLight.color = new Vector3(1, 1, 1);
 			
 			var earth:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/earth/EarthPlanet.lh")) as Sprite3D;
 			

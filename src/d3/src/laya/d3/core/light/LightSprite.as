@@ -3,7 +3,6 @@ package laya.d3.core.light {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
-	import laya.events.Event;
 	
 	/**
 	 * <code>LightSprite</code> 类用于创建灯光的父类。

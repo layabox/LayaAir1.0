@@ -1,7 +1,5 @@
 package laya.d3.component {
 	import laya.d3.core.ComponentNode;
-	import laya.d3.core.Layer;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.IUpdate;
 	import laya.d3.core.render.RenderState;
 	import laya.events.Event;

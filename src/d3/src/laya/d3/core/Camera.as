@@ -3,6 +3,7 @@ package laya.d3.core {
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.OrientedBoundBox;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
@@ -37,6 +38,8 @@ package laya.d3.core {
 		private var _boundFrustumUpdate:Boolean;
 		/** @private */
 		private var _boundFrustum:BoundFrustum;
+		/** @private */
+		private var _orientedBoundBox:OrientedBoundBox;
 		
 		/**
 		 * 获取横纵比。
@@ -195,8 +198,7 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
-			super._parseCustomProps(innerResouMap, customProps, json);
+		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
 			var color:Array = customProps.clearColor;
 			clearColor = new Vector4(color[0], color[1], color[2], color[3]);
 			var viewport:Array = customProps.viewport;
@@ -208,10 +210,10 @@ package laya.d3.core {
 		 */
 		override protected function _calculateProjectionMatrix():void {
 			if (!_useUserProjectionMatrix) {
-				if (orthographicProjection) {
+				if (_orthographic) {
 					var halfWidth:Number = orthographicVerticalSize * aspectRatio * 0.5;
 					var halfHeight:Number = orthographicVerticalSize * 0.5;
-					Matrix4x4.createOrthogonal(-halfWidth, halfWidth, -halfHeight, halfHeight, nearPlane, farPlane, _projectionMatrix);
+					Matrix4x4.createOrthoOffCenterRH(-halfWidth, halfWidth, -halfHeight, halfHeight, nearPlane, farPlane, _projectionMatrix);
 				} else {
 					Matrix4x4.createPerspective(3.1416 * fieldOfView / 180.0, aspectRatio, nearPlane, farPlane, _projectionMatrix);
 				}
@@ -254,9 +256,8 @@ package laya.d3.core {
 			}
 			
 			_prepareCameraViewProject(viewMat, projectMat);
-			state._boundFrustum = boundFrustum;
 			state._viewport = viewport;
-			scene._preRenderScene(gl, state);
+			scene._preRenderScene(gl, state, boundFrustum);
 			scene._clear(gl, state);
 			scene._renderScene(gl, state);
 			scene._postRenderUpdateComponents(state);
@@ -322,6 +323,28 @@ package laya.d3.core {
 			} else {
 				outE[0] = outE[0] / Laya.stage.clientScaleX;
 				outE[1] = outE[1] / Laya.stage.clientScaleY;
+			}
+		}
+		
+		/**
+		 * 转换2D屏幕坐标系统到3D正交投影下的坐标系统，注:只有正交模型下有效。
+		 * @param   source 源坐标。
+		 * @param   out 输出坐标。
+		 * @return 是否转换成功。
+		 */
+		public function convertScreenCoordToOrthographicCoord(source:Vector3, out:Vector3):Boolean {
+			if (_orthographic) {
+				var ratioX:Number = orthographicVerticalSize * aspectRatio / RenderState.clientWidth;
+				var ratioY:Number = orthographicVerticalSize / RenderState.clientHeight;
+				var se:Array = source.elements;
+				var oe:Array = out.elements;
+				oe[0] = (-RenderState.clientWidth / 2 + se[0]) * ratioX;
+				oe[1] = (RenderState.clientHeight / 2 - se[1]) * ratioY;
+				oe[2] = (nearPlane - farPlane) * (source.z + 1) / 2 - nearPlane;
+				Vector3.transformV3ToV3(out, transform.worldMatrix, out);
+				return true;
+			} else {
+				return false;
 			}
 		}
 	

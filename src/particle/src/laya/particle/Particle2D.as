@@ -107,14 +107,14 @@ package laya.particle {
 		 * 播放
 		 */
 		public function play():void {
-			Laya.timer.frameLoop(1, this, _loop);
+			timer.frameLoop(1, this, _loop);
 		}
 		
 		/**
 		 * 停止
 		 */
 		public function stop():void {
-			Laya.timer.clear(this, _loop);
+			timer.clear(this, _loop);
 		}
 		
 		/**@private */

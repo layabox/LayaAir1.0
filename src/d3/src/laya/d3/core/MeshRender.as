@@ -1,19 +1,11 @@
 package laya.d3.core {
-	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
-	import laya.d3.resource.models.Mesh;
-	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
-	import laya.renders.RenderSprite;
-	import laya.resource.IDispose;
 	
 	/**
 	 * <code>MeshRender</code> 类用于网格渲染器。

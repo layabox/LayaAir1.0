@@ -24,14 +24,14 @@ struct SpotLight
 };
 
 
-void  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
+void  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 ambinentColor,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
 {
 	dif=vec3(0.0);//不初始化在IOS中闪烁，PC中不会闪烁
 	amb=vec3(0.0);
 	spec=vec3(0.0);
 	vec3 lightVec=-normalize(dirLight.Direction);
 	
-	amb=matAmb;
+	amb=matAmb*ambinentColor;
 	
 	float  diffuseFactor=dot(lightVec, normal);
 	
@@ -46,7 +46,7 @@ void  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in Dire
 	
 }
 
-void computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLight poiLight, in vec3 pos,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
+void computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLight poiLight,in vec3 ambinentColor, in vec3 pos,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
 {
 	dif=vec3(0.0);
 	amb=vec3(0.0);
@@ -60,7 +60,7 @@ void computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLigh
 		
 	lightVec /= d; 
 	
-	amb = matAmb;	
+	amb = matAmb*ambinentColor;	
 
 	float diffuseFactor = dot(lightVec, normal);
 
@@ -79,7 +79,7 @@ void computePointLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in PointLigh
 	spec*= attenuate;
 }
 
-void ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight spoLight,in vec3 pos, in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
+void ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight spoLight,in vec3 ambinentColor,in vec3 pos, in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
 {
 	amb = vec3(0.0);
 	dif =vec3(0.0);
@@ -93,7 +93,7 @@ void ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight 
 		
 	lightVec /= d; 
 	
-	amb = matAmb;	
+	amb = matAmb*ambinentColor;	
 
 	float diffuseFactor = dot(lightVec, normal);
 

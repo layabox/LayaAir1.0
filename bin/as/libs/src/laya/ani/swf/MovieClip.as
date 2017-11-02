@@ -127,8 +127,8 @@ package laya.ani.swf {
 		}
 		/**@private */
 		private function _onDisplay(value:Boolean):void {			
-			if (value) Laya.timer.loop(this.interval, this, updates, null, true);
-			else Laya.timer.clear(this, updates);		
+			if (value) timer.loop(this.interval, this, updates, null, true);
+			else timer.clear(this, updates);		
 		}
 		
 		/**@private 更新时间轴*/
@@ -249,7 +249,7 @@ package laya.ani.swf {
 			stop();
 			_idOfSprite.length = 0;
 			if (!_parentMovieClip) {
-				Laya.timer.clear(this, updates);
+				timer.clear(this, updates);
 				var i:int, len:int;
 				len = _movieClipList.length;
 				for (i = 0; i < len; i++) {
@@ -483,7 +483,7 @@ package laya.ani.swf {
 			_initState();	
 			play(0);
 			event(Event.LOADED);
-			if (!_parentMovieClip) Laya.timer.loop(this.interval, this, updates, null, true);			
+			if (!_parentMovieClip) timer.loop(this.interval, this, updates, null, true);			
 		}
 		
 		

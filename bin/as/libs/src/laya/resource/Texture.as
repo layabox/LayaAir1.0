@@ -175,7 +175,8 @@ package laya.resource {
 		 * @return 返回一个新的Texture。
 		 */
 		public static function createFromTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
-			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX, y - texture.offsetY, width, height);
+			var offset:Number = (!Render.isWebGL && Browser.onFirefox || Browser.onEdge)?0.5:0;
+			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX-offset, y - texture.offsetY-offset, width+offset*2, height+offset*2);
 			var result:Rectangle = rect.intersection(_rect1.setTo(0, 0, texture.width, texture.height), _rect2);
 			if (result)
 				var tex:Texture = create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);

@@ -1,21 +1,14 @@
 package laya.d3.graphics {
-	import laya.d3.core.MeshRender;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.shader.ValusArray;
-	import laya.d3.utils.Utils3D;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * @private

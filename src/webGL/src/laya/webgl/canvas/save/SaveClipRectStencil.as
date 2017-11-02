@@ -12,7 +12,7 @@ package laya.webgl.canvas.save {
 		
 		public var _clipSaveRect:Rectangle;
 		public var _clipRect:Rectangle = new Rectangle();
-		
+		public var _rect:Rectangle = new Rectangle();
 		public var _saveMatrix:Matrix;
 		public var _matrix:Matrix = new Matrix();
 		
@@ -25,7 +25,7 @@ package laya.webgl.canvas.save {
 		
 		public function restore(context:WebGLContext2D):void {
 			//恢复模板
-			SubmitStencil.restore(context,_clipSaveRect,_saveMatrix,_contextX,_contextY);
+			SubmitStencil.restore(context,_rect,_saveMatrix,_contextX,_contextY);
 			
 			context._clipRect = _clipSaveRect;
 			context._curMat = _saveMatrix;
@@ -37,13 +37,18 @@ package laya.webgl.canvas.save {
 			context._curSubmit = Submit.RENDERBASE;
 		}
 		
-		public static function save(context:WebGLContext2D, submitStencil:SubmitStencil):void {
+		public static function save(context:WebGLContext2D, submitStencil:SubmitStencil, x:Number, y:Number, width:Number, height:Number):void {
 			if ((context._saveMark._saveuse & SaveBase.TYPE_CLIPRECT_STENCIL) == SaveBase.TYPE_CLIPRECT_STENCIL) return;
 			context._saveMark._saveuse |= SaveBase.TYPE_CLIPRECT_STENCIL;
 			var cache:* = _cache;
 			var o:SaveClipRectStencil = cache._length > 0 ? cache[--cache._length] : (new SaveClipRectStencil());
 			o._clipSaveRect = context._clipRect;
 			context._clipRect = o._clipRect.copyFrom(context._clipRect);
+			
+			o._rect.x = x;
+			o._rect.y = y;
+			o._rect.width = width;
+			o._rect.height = height;
 			
 			//sava x y
 			o._contextX =  context._x;

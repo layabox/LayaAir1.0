@@ -1,4 +1,5 @@
 package laya.webgl.resource {
+	import laya.display.Text;
 	import laya.renders.Render;
 	import laya.resource.Bitmap;
 	import laya.resource.Texture;
@@ -154,8 +155,11 @@ package laya.webgl.resource {
 				_ctx.save();
 				(_ctx as Object).clearRect(0, 0, cw + CborderSize * 2, ch + CborderSize * 2);
 				
-				_ctx.font =font;
-				
+				_ctx.font = font;
+				if (Text.RightToLeft)
+				{
+					_ctx.textAlign = "end";
+				}
 				_ctx.textBaseline = "top";
 				_ctx.translate(CborderSize, CborderSize);
 				if (xs != 1 || ys != 1) {

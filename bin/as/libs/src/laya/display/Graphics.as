@@ -238,6 +238,12 @@ package laya.display {
 			this._cmds.push(a);
 		}
 		
+		public function setFilters(fs:Array):void
+		{
+			_saveToCmd(Render._context._setFilters, fs);
+		}
+		
+		
 		/**
 		 * 绘制纹理。
 		 * @param tex		纹理。

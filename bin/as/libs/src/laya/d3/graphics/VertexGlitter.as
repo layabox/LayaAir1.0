@@ -1,7 +1,6 @@
 package laya.d3.graphics {
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	
 	/**
 	 * <code>VertexPositionNormalColorTangent</code> 类用于创建粒子顶点结构。

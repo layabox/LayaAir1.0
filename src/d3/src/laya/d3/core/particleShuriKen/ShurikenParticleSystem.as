@@ -144,6 +144,8 @@ package laya.d3.core.particleShuriKen {
 		private var _shape:BaseShape;
 		
 		/**@private */
+		private var _isEmitting:Boolean;
+		/**@private */
 		private var _isPlaying:Boolean;
 		/**@private */
 		private var _isPaused:Boolean;
@@ -153,8 +155,8 @@ package laya.d3.core.particleShuriKen {
 		private var _frameRateTime:Number;
 		/**@private 一次循环内的累计时间。*/
 		private var _emissionTime:Number;
-		/**@private 播放的累计时间。*/
-		private var _playbackTime:Number;
+		/**@private */
+		private var _totalDelayTime:Number;
 		/**@private */
 		private var _burstsIndex:int;
 		///**@private 发射粒子最小时间间隔。*/
@@ -373,22 +375,25 @@ package laya.d3.core.particleShuriKen {
 			return false;
 		}
 		
-		/**是否正在播放。*/
+		/**
+		 * 是否正在发射。
+		 */
+		public function get isEmitting():Boolean {
+			return _isEmitting;
+		}
+		
+		/**
+		 * 是否正在播放。
+		 */
 		public function get isPlaying():Boolean {
 			return _isPlaying;
 		}
 		
-		/**是否已暂停。*/
+		/**
+		 * 是否已暂停。
+		 */
 		public function get isPaused():Boolean {
 			return _isPaused;
-		}
-		
-		/**
-		 * 获取播放的累计时间。
-		 * @return 播放的累计时间。
-		 */
-		public function get playbackTime():Number {
-			return _playbackTime;
 		}
 		
 		/**
@@ -1011,12 +1016,13 @@ package laya.d3.core.particleShuriKen {
 			
 			_currentTime = 0;
 			
+			_isEmitting = false;
 			_isPlaying = false;
 			_isPaused = false;
 			_burstsIndex = 0;
 			_frameRateTime = 0;
 			_emissionTime = 0;
-			_playbackTime = 0;
+			_totalDelayTime = 0;
 			_simulateUpdate = false;
 			
 			_bufferMaxParticles = 1;
@@ -1390,21 +1396,24 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		private function _updateParticles(elapsedTime:Number):void {
-			var playbackTime:Number =_playbackTime+elapsedTime;
-			if (playbackTime < _playStartDelay){
-				_playbackTime = playbackTime;
-				return;
-			}
-			
 			_currentTime += elapsedTime; 
 			_retireActiveParticles();
 			_freeRetiredParticles();
-			//if (_firstActiveElement === _firstFreeElement)
+			
+			//if (_firstActiveElement === _firstFreeElement){
+				//_frameRateTime = 0//TODO:是否一起置零
 				//_currentTime = 0;
+			//}
 			//if (_firstRetiredElement === _firstActiveElement)
 				//_drawCounter = 0;
 			
-			if (_emission.enbale&&_isPlaying &&!_isPaused)
+			_totalDelayTime+= elapsedTime;
+			if (_totalDelayTime < _playStartDelay){
+				return;
+			}
+			
+			
+			if (_emission.enbale&&_isEmitting &&!_isPaused)
 				_advanceTime(elapsedTime, _currentTime);
 		}
 		
@@ -1418,15 +1427,15 @@ package laya.d3.core.particleShuriKen {
 			_firstRetiredElement = 0;
 			
 			_burstsIndex = 0;
-			_frameRateTime = 0;
+			_frameRateTime = time;//TOD0:零还是time待 验证
 			_emissionTime = 0;
-			_playbackTime = 0;
+			_totalDelayTime = 0;
 			_currentTime = time;
 			
 			
-			var playbackTime:Number =time;
-			if (playbackTime < _playStartDelay){
-				_playbackTime = playbackTime;
+			var delayTime:Number =time;
+			if (delayTime < _playStartDelay){
+				_totalDelayTime = delayTime;
 				return;
 			}
 			
@@ -1569,18 +1578,22 @@ package laya.d3.core.particleShuriKen {
 			
 			totalEmitCount = Math.min(maxParticles - aliveParticleCount, totalEmitCount);
 			for (i = 0; i < totalEmitCount; i++)
-				emit(emitTime);			
-				
-			var minEmissionTime:Number = emission._minEmissionTime;
-			_frameRateTime += minEmissionTime;
-			_frameRateTime = _currentTime-(_currentTime-_frameRateTime)%_maxStartLifetime;//大于最大声明周期的粒子一定会死亡，所以直接略过,TODO:是否更换机制		
-			while (_frameRateTime<= emitTime) {
-				if (emit(_frameRateTime))
-					_frameRateTime += minEmissionTime;
-				else
-					break;
+				emit(emitTime);
+			
+			
+			var emissionRate:Number = emission.emissionRate;
+			if (emissionRate>0){
+				var minEmissionTime:Number = 1/emissionRate;
+				_frameRateTime += minEmissionTime;
+				_frameRateTime = _currentTime-(_currentTime-_frameRateTime) % _maxStartLifetime;//大于最大声明周期的粒子一定会死亡，所以直接略过,TODO:是否更换机制
+				while (_frameRateTime <= emitTime) {
+					if (emit(_frameRateTime))
+						_frameRateTime += minEmissionTime;
+					else
+						break;
+				}
+				_frameRateTime = Math.floor(emitTime / minEmissionTime) * minEmissionTime;
 			}
-			_frameRateTime= Math.floor(emitTime/minEmissionTime)*minEmissionTime;
 		}
 		
 		/**
@@ -2012,10 +2025,11 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function play():void {
 			_burstsIndex = 0;
+			_isEmitting = true;
 			_isPlaying = true;
 			_isPaused = false;
-			_frameRateTime = 0;
 			_emissionTime = 0;
+			_totalDelayTime = 0;
 			
 			if (!autoRandomSeed) {
 				for (var i:int = 0, n:int = _randomSeeds.length; i < n; i++)
@@ -2038,6 +2052,7 @@ package laya.d3.core.particleShuriKen {
 			default: 
 				throw new Error("Utils3D: startDelayType is invalid.");
 			}
+			_frameRateTime+= _playStartDelay;//同步频率模式发射时间,更新函数中小于延迟时间不会更新此时间。
 			
 			_startUpdateLoopCount = Stat.loopCount;
 			this.event(Event.PLAYED);
@@ -2075,11 +2090,8 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function stop():void {
 			_burstsIndex = 0;
-			_frameRateTime = 0;
-			
-			_isPlaying = false;
+			_isEmitting = false;
 			_emissionTime = 0;
-			_playbackTime = 0;
 			this.event(Event.STOPPED);
 		}
 		
@@ -2157,12 +2169,13 @@ package laya.d3.core.particleShuriKen {
 			
 			dest.isPerformanceMode = isPerformanceMode;
 			
+			dest._isEmitting = _isEmitting;
 			dest._isPlaying = _isPlaying;
 			dest._isPaused = _isPaused;
 			dest._playStartDelay = _playStartDelay;
 			dest._frameRateTime = _frameRateTime;
 			dest._emissionTime = _emissionTime;
-			dest._playbackTime = _playbackTime;
+			dest._totalDelayTime = _totalDelayTime;
 			dest._burstsIndex = _burstsIndex;
 		}
 		

@@ -117,6 +117,8 @@ package laya.display {
 		 * 对于字形随字母组合变化的语种，如阿拉伯文，启用将使显示错误。但是即使禁用，自动换行也会在错误的地方截断。
 		 */
 		public static var CharacterCache:Boolean = true;
+		/**是否是从右向左的显示顺序*/
+		public static var RightToLeft:Boolean = false;
 		/**位图字体字典。*/
 		private static var _bitmapFonts:Object;
 		
@@ -199,6 +201,22 @@ package laya.display {
 				}
 				delete _bitmapFonts[name];
 			}
+		}
+		
+		/**
+		 * 设置文字排版模式为右到左。
+		 */
+		public static function setTextRightToLeft():void
+		{
+			var style:Object;
+			style = Browser.canvas.source.style;
+			style.display = "none";
+			style.position = "absolute";
+			style.direction = "rtl";
+			//Browser.document.body.style.direction = "rtl";
+			Render._mainCanvas.source.style.direction = "rtl";
+			Text.RightToLeft = true;
+			Browser.document.body.appendChild(Browser.canvas.source);
 		}
 		
 		/**@inheritDoc */
@@ -844,6 +862,20 @@ package laya.display {
 								//此行有多个单词 按单词分行
 								else
 									newLine = line.substring(startIndex, j);
+							}
+						}else
+						if (RightToLeft)
+						{
+							execResult =/([\u0600-\u06FF])+$/.exec(newLine);
+							if(execResult)
+							{
+								j = execResult.index + startIndex;
+									//此行只够容纳这一个单词 强制换行
+									if (execResult.index == 0)
+										j += newLine.length;
+									//此行有多个单词 按单词分行
+									else
+										newLine = line.substring(startIndex, j);
 							}
 						}
 						

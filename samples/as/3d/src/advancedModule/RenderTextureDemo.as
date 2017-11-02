@@ -54,9 +54,7 @@ package advancedModule
 			renderTargetCamera.addComponent(CameraMoveScript);
 			
 			var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
-            directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(1.0, 1.0, 1.0);
-            directionLight.diffuseColor = new Vector3(1, 1, 1);
+            directionLight.color = new Vector3(1, 1, 1);
             directionLight.direction = new Vector3(0, -1.0, -1.0);
 			
 			var layaMonkey:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/LayaMonkey/LayaMonkey.lh")) as Sprite3D;
@@ -71,7 +69,7 @@ package advancedModule
 		
 		private function onComplete():void {
 			
-			setMaterials(scene.getChildByName("scene"));
+			setMaterials(scene.getChildByName("scene") as Sprite3D);
 			layaPlane.transform.localPosition = new Vector3(0, 0.5, -1);
 			
             Laya.loader.load(["../../../../res/threeDimen/ui/button.png"], Handler.create(null, function():void {
@@ -83,7 +81,7 @@ package advancedModule
                 changeActionButton.scale(Browser.pixelRatio, Browser.pixelRatio);
                 changeActionButton.pos(Laya.stage.width / 2 - changeActionButton.width * Browser.pixelRatio / 2, Laya.stage.height - 100 * Browser.pixelRatio);
                 changeActionButton.on(Event.CLICK, this, function():void {
-					(layaPlane.getChildAt(0) as MeshSprite3D).meshRender.material.diffuseTexture = renderTargetCamera.renderTarget;
+					((layaPlane.getChildAt(0) as MeshSprite3D).meshRender.material as StandardMaterial).diffuseTexture = renderTargetCamera.renderTarget;
                 });
             }));
         }
@@ -91,8 +89,8 @@ package advancedModule
 		private function setMaterials(spirit3D:Sprite3D):void {
             if (spirit3D is MeshSprite3D) {
                 var meshSprite:MeshSprite3D = spirit3D as MeshSprite3D;
-                for (var i:int = 0; i <  meshSprite.meshRender.sharedMaterials.length; i++) {
-                    var mat:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
+                for (var j:int = 0; j <  meshSprite.meshRender.sharedMaterials.length; j++) {
+                    var mat:StandardMaterial = meshSprite.meshRender.sharedMaterials[j] as StandardMaterial;
                     mat.disableLight();
                 }
             }

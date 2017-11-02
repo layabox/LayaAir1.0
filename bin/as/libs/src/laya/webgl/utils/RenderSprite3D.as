@@ -82,7 +82,7 @@ package laya.webgl.utils {
 					context.addRenderObject(submitCMD);
 					//裁剪
 					context.ctx.save();
-					context.clipRect(x - tf.translateX  + tRect.x, y - tf.translateX + tRect.y, tRect.width, tRect.height);
+					context.clipRect(x - tf.translateX  + tRect.x, y - tf.translateY + tRect.y, tRect.width, tRect.height);
 					next._fun.call(next, sprite, context, x, y);
 					context.ctx.restore();
 					//设置混合模式

@@ -1,4 +1,4 @@
-package {
+﻿package {
 	import laya.display.Graphics;
 	import laya.display.Input;
 	import laya.display.Sprite;
@@ -30,12 +30,14 @@ package {
 		/*[COMPILER OPTIONS:normal]*/
 		/** 舞台对象的引用。*/
 		public static var stage:Stage = null;
-		/** 时间管理器的引用。*/
+		/** 逻辑时间管理器的引用，不允许缩放。*/
 		public static var timer:Timer = null;
+		/**@private 表现时间管理器，可以用来控制渲染表现，可以通过scale缩放，来表现慢镜头*/
+		public static var timer2:Timer = null;
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.10";
+		public static var version:String = "1.7.11";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -62,6 +64,7 @@ package {
 			Context.__init__();
 			Graphics.__init__();
 			timer = new Timer();
+			timer2 = new Timer();
 			loader = new LoaderManager();
 			/*[IF-FLASH]*/
 			width = Browser.clientWidth;
@@ -115,7 +118,7 @@ package {
 			if (value) {
 				Browser.window.onerror = function(msg:String, url:String, line:String, column:String, detail:*):void {
 					if (erralert++ < 5 && detail)
-						alert("出错啦，请把此信息截图给研发商\n" + msg + "\n" + detail.stack);
+						alert("出错啦，请把此信息截图给研发商\n" + msg + "\n" + detail.stack||detail);
 				}
 			} else {
 				Browser.window.onerror = null;

@@ -144,6 +144,11 @@ package laya.net {
 		 */
 		public function connect(host:String, port:int):void {
 			var url:String = "ws://" + host + ":" + port;
+			if (Browser.window.location.protocol == "https:") {
+				url = "wss://" + host + ":" + port;
+			} else {
+				url = "ws://" + host + ":" + port;
+			}
 			connectByUrl(url);
 		}
 		

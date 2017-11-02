@@ -20,8 +20,8 @@ package lightModule {
      */
     public class PointLightDemo {
 		
-        private var _position = new Vector3();
-        private var _quaternion = new Quaternion();
+        private var _temp_position:Vector3 = new Vector3();
+        private var _temp_quaternion:Quaternion = new Quaternion();
         
         public function PointLightDemo() {
             Laya3D.init(0, 0, true);
@@ -29,7 +29,7 @@ package lightModule {
             Laya.stage.screenMode = Stage.SCREEN_NONE;
             Stat.show();
             
-            var scene:Scene = Laya.stage.addChild(new Scene());
+            var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
             
             var camera:Camera = (scene.addChild(new Camera(0, 0.1, 1000))) as Camera;
             camera.transform.translate(new Vector3(0, 0.7, 1.3));
@@ -38,9 +38,7 @@ package lightModule {
             
 			//点光
             var pointLight:PointLight = scene.addChild(new PointLight()) as PointLight;
-            pointLight.ambientColor = new Vector3(0.0, 0.0, 0.0);
-			pointLight.specularColor = new Vector3(0.3, 0.3, 0.9);
-			pointLight.diffuseColor = new Vector3(0.1189446, 0.5907708, 0.7352941);
+			pointLight.color = new Vector3(0.1189446, 0.5907708, 0.7352941);
 			pointLight.transform.position = new Vector3(0.4, 0.4, 0.0);
 			pointLight.attenuation = new Vector3(0.0, 0.0, 3.0);
 			pointLight.range = 3.0;
@@ -49,16 +47,16 @@ package lightModule {
             
             var layaMonkey:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/LayaMonkey/LayaMonkey.lh")) as Sprite3D;
 			layaMonkey.once(Event.HIERARCHY_LOADED, this, function():void{
-				var aniSprite3d:Sprite3D = layaMonkey.getChildAt(0);
+				var aniSprite3d:Sprite3D = layaMonkey.getChildAt(0) as Sprite3D; 
 				var animator:Animator = aniSprite3d.getComponentByType(Animator) as Animator;
 				animator.play(null, 1.0, 75, 110);
 			});
 			
             Laya.timer.frameLoop(1, null, function():void {
 			
-				Quaternion.createFromYawPitchRoll(0.025, 0, 0, _quaternion);
-				Vector3.transformQuat(pointLight.transform.position, _quaternion, _position);
-				pointLight.transform.position = _position;
+				Quaternion.createFromYawPitchRoll(0.025, 0, 0, _temp_quaternion);
+				Vector3.transformQuat(pointLight.transform.position, _temp_quaternion, _temp_position);
+				pointLight.transform.position = _temp_position;
             });
         }
     }

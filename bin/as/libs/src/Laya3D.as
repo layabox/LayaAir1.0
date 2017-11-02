@@ -246,7 +246,15 @@ package {
 				var component:Object = components[k];
 				switch (k) {
 				case "Animator": 
-					_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, component.avatarPath, Avatar);
+					var avatarPath:String = component.avatarPath;
+					if (avatarPath){//兼容代码
+						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, avatarPath, Avatar);
+					}
+					else{
+						var avatarData:Object = component.avatar;
+						(avatarData) && (_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, avatarData.path, Avatar));
+					}
+					
 					var clipPaths:Vector.<String> = component.clipPaths;
 					for (i = 0, n = clipPaths.length; i < n; i++)
 						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, clipPaths[i], AnimationClip);

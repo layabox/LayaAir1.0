@@ -5,7 +5,8 @@
 	var Browser=laya.utils.Browser,CSSStyle=laya.display.css.CSSStyle,ClassUtils=laya.utils.ClassUtils;
 	var Event=laya.events.Event,HTMLChar=laya.utils.HTMLChar,Loader=laya.net.Loader,Node=laya.display.Node,Rectangle=laya.maths.Rectangle;
 	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
-	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
+	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Text=laya.display.Text,Texture=laya.resource.Texture;
+	var URL=laya.net.URL,Utils=laya.utils.Utils;
 	/**
 	*@private
 	*/
@@ -121,6 +122,7 @@
 		}
 
 		Layout._multiLineLayout=function(element){
+			if (Text.RightToLeft)return Layout._multiLineLayout2(element);
 			var elements=new Array;
 			element._addChildsToLayout(elements);
 			var i=0,n=elements.length,j=0;
@@ -243,6 +245,129 @@
 			return [maxWidth,y];
 		}
 
+		Layout._multiLineLayout2=function(element){
+			var elements=new Array;
+			element._addChildsToLayout(elements);
+			var i=0,n=elements.length,j=0;
+			var style=element._getCSSStyle();
+			var letterSpacing=style.letterSpacing;
+			var leading=style.leading;
+			var lineHeight=style.lineHeight;
+			var widthAuto=style._widthAuto()|| !style.wordWrap;
+			var width=widthAuto ? 999999 :element.width;
+			var height=element.height;
+			var maxWidth=0;
+			var exWidth=style.italic ? style.fontSize / 3 :0;
+			var align=2-style._getAlign();
+			var valign=style._getValign();
+			var endAdjust=valign!==0 || align!==0 || lineHeight !=0;
+			var oneLayout;
+			var x=0;
+			var y=0;
+			var w=0;
+			var h=0;
+			var tBottom=0;
+			var lines=new Array;
+			var curStyle;
+			var curPadding;
+			var curLine=lines[0]=new LayoutLine();
+			var newLine=false,nextNewline=false;
+			var htmlWord;
+			var sprite;
+			curLine.h=0;
+			if (style.italic)
+				width-=style.fontSize / 3;
+			var tWordWidth=0;
+			var tLineFirstKey=true;
+			function addLine (){
+				curLine.y=y;
+				y+=curLine.h+leading;
+				if (curLine.h==0)y+=lineHeight;
+				curLine.mWidth=tWordWidth;
+				tWordWidth=0;
+				curLine=new LayoutLine();
+				lines.push(curLine);
+				curLine.h=0;
+				x=0;
+				tLineFirstKey=true;
+				newLine=false;
+			}
+			for (i=0;i < n;i++){
+				oneLayout=elements[i];
+				if (oneLayout==null){
+					if (!tLineFirstKey){
+						x+=Layout.DIV_ELEMENT_PADDING;
+					}
+					curLine.wordStartIndex=curLine.elements.length;
+					continue ;
+				}
+				tLineFirstKey=false;
+				if ((oneLayout instanceof laya.html.dom.HTMLBrElement )){
+					addLine();
+					curLine.y=y;
+					continue ;
+					}else if (oneLayout._isChar()){
+					htmlWord=oneLayout;
+					if (!htmlWord.isWord){
+						if (lines.length > 0 && (x+w)> width && curLine.wordStartIndex > 0){
+							var tLineWord=0;
+							tLineWord=curLine.elements.length-curLine.wordStartIndex+1;
+							curLine.elements.length=curLine.wordStartIndex;
+							i-=tLineWord;
+							addLine();
+							continue ;
+						}
+						newLine=false;
+						tWordWidth+=htmlWord.width;
+						}else {
+						newLine=nextNewline || (htmlWord.char==='\n');
+						curLine.wordStartIndex=curLine.elements.length;
+					}
+					w=htmlWord.width+letterSpacing;
+					h=htmlWord.height;
+					nextNewline=false;
+					newLine=newLine || ((x+w)> width);
+					newLine && addLine();
+					curLine.minTextHeight=Math.min(curLine.minTextHeight,oneLayout.height);
+					}else {
+					curStyle=oneLayout._getCSSStyle();
+					sprite=oneLayout;
+					curPadding=curStyle.padding;
+					curStyle._getCssFloat()===0 || (endAdjust=true);
+					newLine=nextNewline || curStyle.lineElement;
+					w=sprite.width *sprite._style._tf.scaleX+curPadding[1]+curPadding[3]+letterSpacing;
+					h=sprite.height *sprite._style._tf.scaleY+curPadding[0]+curPadding[2];
+					nextNewline=curStyle.lineElement;
+					newLine=newLine || ((x+w)> width && curStyle.wordWrap);
+					newLine && addLine();
+				}
+				curLine.elements.push(oneLayout);
+				curLine.h=Math.max(curLine.h,h);
+				oneLayout.x=x;
+				oneLayout.y=y;
+				x+=w;
+				curLine.w=x-letterSpacing;
+				curLine.y=y;
+				maxWidth=Math.max(x+exWidth,maxWidth);
+			}
+			y=curLine.y+curLine.h;
+			if (endAdjust){
+				var tY=0;
+				var tWidth=width;
+				for (i=0,n=lines.length;i < n;i++){
+					lines[i].updatePos(0,tWidth,i,tY,align,valign,lineHeight);
+					tY+=Math.max(lineHeight,lines[i].h+leading);
+				}
+				y=tY;
+			}
+			widthAuto && (element.width=maxWidth);
+			(y > element.height)&& (element.height=y);
+			for (i=0,n=lines.length;i < n;i++){
+				lines[i].revertOrder(width);
+			}
+			return [maxWidth,y];
+		}
+
 		Layout._will=null
 		Layout.DIV_ELEMENT_PADDING=0;
 		return Layout;
@@ -316,6 +441,21 @@
 			}
 		}
 
+		/**
+		*布局反向,目前用于将ltr模式布局转为rtl模式布局
+		*/
+		__proto.revertOrder=function(width){
+			var one
+			if (this.elements.length > 0){
+				var i=0,len=0;
+				len=this.elements.length;
+				for (i=0;i < len;i++){
+					one=this.elements[i];
+					one.x=width-one.x-one.width;
+				}
+			}
+		}
+
 		return LayoutLine;
 	})()
 
@@ -348,14 +488,61 @@
 				}
 			};
 			var word=this._getWords();
-			word&&HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color,this.style.underLine);
+			word ? laya.html.dom.HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color,this.style.underLine):this.graphics.clear();
 		}
 
 		__proto.appendChild=function(c){
 			return this.addChild(c);
 		}
 
+		/**
+		*rtl模式的getWords函數
+		*/
+		__proto._getWords2=function(){
+			var txt=this._text.text;
+			if (!txt || txt.length===0)
+				return null;
+			var i=0,n=0;
+			var realWords;
+			var drawWords;
+			if (!this._text.drawWords){
+				realWords=txt.split(" ");
+				n=realWords.length-1;
+				drawWords=[];
+				for (i=0;i < n;i++){
+					drawWords.push(realWords[i]," ")
+				}
+				if(n>=0)
+					drawWords.push(realWords[n]);
+				this._text.drawWords=drawWords;
+				}else{
+				drawWords=this._text.drawWords;
+			};
+			var words=this._text.words;
+			if (words && words.length===drawWords.length)
+				return words;
+			words===null && (this._text.words=words=[]);
+			words.length=drawWords.length;
+			var size;
+			var style=this.style;
+			var fontStr=style.font;
+			for (i=0,n=drawWords.length;i < n;i++){
+				size=Utils.measureText(drawWords[i],fontStr);
+				var tHTMLChar=words[i]=new HTMLChar(drawWords[i],size.width,size.height || style.fontSize,style);
+				if (tHTMLChar.char.length > 1){
+					tHTMLChar.charNum=tHTMLChar.char;
+				}
+				if (this.href){
+					var tSprite=new Sprite();
+					this.addChild(tSprite);
+					tHTMLChar.setSprite(tSprite);
+				}
+			}
+			return words;
+		}
+
 		__proto._getWords=function(){
+			if (!Text.CharacterCache)return this._getWords2();
 			var txt=this._text.text;
 			if (!txt || txt.length===0)
 				return null;
@@ -501,6 +688,7 @@
 				this._text.text=value;
 				this._text.words && (this._text.words.length=0);
 			}
+			Render.isConchApp && this.layaoutCallNative();
 			this._renderType |=/*laya.renders.RenderSprite.CHILDS*/0x800;
 			this.repaint();
 			this.updateHref();
@@ -612,6 +800,7 @@
 		*对显示内容进行排版
 		*/
 		__proto.layout=function(){
+			if (!this.style)return;
 			this.style._type |=/*laya.display.css.CSSStyle.ADDLAYOUTED*/0x200;
 			var tArray=Layout.layout(this);
 			if (tArray){

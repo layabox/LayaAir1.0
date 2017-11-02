@@ -67,15 +67,13 @@ package physicsModule {
             
             //方向光
             var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
-            directionLight.ambientColor = new Vector3(0.6, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(0.6, 0.6, 0.6);
-            directionLight.diffuseColor = new Vector3(0.6, 0.6, 0.6);
+            directionLight.color = new Vector3(0.6, 0.6, 0.6);
             directionLight.direction = new Vector3(1, -1, -1);
             
             var plane:MeshSprite3D = scene.addChild(new MeshSprite3D(new PlaneMesh(6, 6, 10, 10))) as MeshSprite3D;
             var planeMat:StandardMaterial = new StandardMaterial();
             planeMat.diffuseTexture = Texture2D.load("../../../../res/threeDimen/texture/layabox.png");
-            planeMat.albedo = new Vector3(0.9, 0.9, 0.9, 1);
+            planeMat.albedo = new Vector4(0.9, 0.9, 0.9, 1);
             plane.meshRender.material = planeMat;
             plane.addComponent(MeshCollider);
             

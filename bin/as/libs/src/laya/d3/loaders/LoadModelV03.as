@@ -28,6 +28,7 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
 	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureTangent;
+	import laya.d3.graphics.VertexPositionTexture0;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
@@ -41,7 +42,33 @@ package laya.d3.loaders {
 	 */
 	public class LoadModelV03 {
 		/**@private */
-		private static var _attrReg:RegExp =/*[STATIC SAFE]*/ new RegExp("(\\w+)|([:,;])", "g");//切割字符串正则
+		public static var _vertexDeclarationMap:Object = {
+			"POSITION,NORMAL,COLOR,UV,UV1,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,UV1,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorTexture0Texture1Skin.vertexDeclaration, 
+			"POSITION,NORMAL,TANGENT,BINORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES,": VertexPositionNTBTexture0Texture1Skin.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalTexture0Texture1Skin.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorTextureSkinTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorTextureSkin.vertexDeclaration, 
+			"POSITION,NORMAL,UV,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalTextureSkinTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalTextureSkin.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorSkinTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorSkin.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,UV1,TANGENT": VertexPositionNormalColorTexture0Texture1Tangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,UV1": VertexPositionNormalColorTexture0Texture1.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1,TANGENT": VertexPositionNormalTexture0Texture1Tangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1": VertexPositionNormalTexture0Texture1.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,TANGENT": VertexPositionNormalColorTextureTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,TANGENT,BINORMAL": VertexPositionNTBTexture.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV": VertexPositionNormalColorTexture.vertexDeclaration, 
+			"POSITION,NORMAL,UV,TANGENT": VertexPositionNormalTextureTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV": VertexPositionNormalTexture.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,TANGENT": VertexPositionNormalColorTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR": VertexPositionNormalColor.vertexDeclaration, 
+			"POSITION,NORMAL,TANGENT": VertexPositionNormalTangent.vertexDeclaration, 
+			"POSITION,NORMAL": VertexPositionNormal.vertexDeclaration, 
+			"POSITION,UV": VertexPositionTexture0.vertexDeclaration, 
+			"POSITION": VertexPosition.vertexDeclaration};
 		/**@private */
 		private static var _BLOCK:Object = {count: 0};
 		/**@private */
@@ -150,8 +177,10 @@ package laya.d3.loaders {
 				var vbLength:uint = _readData.getUint32();
 				var vbDatas:Float32Array = new Float32Array(arrayBuffer.slice(vbStart, vbStart + vbLength));
 				var bufferAttribute:String = _readString();
-				var shaderAttributes:Array = bufferAttribute.match(_attrReg);
-				var vertexDeclaration:VertexDeclaration = _getVertexDeclaration(shaderAttributes);
+				var vertexDeclaration:VertexDeclaration = _vertexDeclarationMap[bufferAttribute];
+				if (!vertexDeclaration)
+					throw new Error("LoadModelV03: unknown vertexDeclaration.");
+				
 				var vertexBuffer:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, (vbDatas.length * 4) / vertexDeclaration.vertexStride, WebGLContext.STATIC_DRAW, true);
 				vertexBuffer.setData(vbDatas);
 				_mesh._vertexBuffers.push(vertexBuffer);
@@ -225,99 +254,6 @@ package laya.d3.loaders {
 			
 			_subMeshes.push(submesh);
 			return true;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getVertexDeclaration(shaderAttributes:Array):VertexDeclaration {
-			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, tangent:Boolean, blendWeight:Boolean, blendIndex:Boolean;
-			var binormal:Boolean = false;
-			for (var i:int = 0; i < shaderAttributes.length; i++) {
-				switch (shaderAttributes[i]) {
-				case "POSITION": 
-					position = true;
-					break;
-				case "NORMAL": 
-					normal = true;
-					break;
-				case "COLOR": 
-					color = true;
-					break;
-				case "UV": 
-					texcoord0 = true;
-					break;
-				case "UV1": 
-					texcoord1 = true;
-					break;
-				case "BLENDWEIGHT": 
-					blendWeight = true;
-					break;
-				case "BLENDINDICES": 
-					blendIndex = true;
-					break;
-				case "TANGENT": 
-					tangent = true;
-					break;
-				case "BINORMAL": 
-					binormal = true;
-					break;
-				}
-			}
-			var vertexDeclaration:VertexDeclaration;
-			
-			if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex && tangent)
-				vertexDeclaration = VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Skin.vertexDeclaration;
-			else if (position && normal && tangent && binormal && texcoord0 && texcoord1 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNTBTexture0Texture1Skin.vertexDeclaration;
-			else if (position && normal && texcoord0 && texcoord1 && blendWeight && blendIndex && tangent)
-				vertexDeclaration = VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && texcoord1 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalTexture0Texture1Skin.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && blendWeight && blendIndex && tangent)
-				vertexDeclaration = VertexPositionNormalColorTextureSkinTangent.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalColorTextureSkin.vertexDeclaration;
-			else if (position && normal && texcoord0 && blendWeight && blendIndex && tangent)
-				vertexDeclaration = VertexPositionNormalTextureSkinTangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalTextureSkin.vertexDeclaration;
-			else if (position && normal && color && blendWeight && blendIndex && tangent)
-				vertexDeclaration = VertexPositionNormalColorSkinTangent.vertexDeclaration;
-			else if (position && normal && color && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalColorSkin.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && texcoord1 && tangent)
-				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Tangent.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && texcoord1)
-				vertexDeclaration = VertexPositionNormalColorTexture0Texture1.vertexDeclaration;
-			else if (position && normal && texcoord0 && texcoord1 && tangent)
-				vertexDeclaration = VertexPositionNormalTexture0Texture1Tangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && texcoord1)
-				vertexDeclaration = VertexPositionNormalTexture0Texture1.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && tangent)
-				vertexDeclaration = VertexPositionNormalColorTextureTangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && tangent && binormal)
-				vertexDeclaration = VertexPositionNTBTexture.vertexDeclaration;
-			else if (position && normal && color && texcoord0)
-				vertexDeclaration = VertexPositionNormalColorTexture.vertexDeclaration;
-			else if (position && normal && texcoord0 && tangent)
-				vertexDeclaration = VertexPositionNormalTextureTangent.vertexDeclaration;
-			else if (position && normal && texcoord0)
-				vertexDeclaration = VertexPositionNormalTexture.vertexDeclaration;
-			else if (position && normal && color && tangent)
-				vertexDeclaration = VertexPositionNormalColorTangent.vertexDeclaration;
-			else if (position && normal && color)
-				vertexDeclaration = VertexPositionNormalColor.vertexDeclaration;
-			else if (position && normal && tangent)
-				vertexDeclaration = VertexPositionNormalTangent.vertexDeclaration;
-			else if (position && normal)
-				vertexDeclaration = VertexPositionNormal.vertexDeclaration;
-			else
-				vertexDeclaration = VertexPosition.vertexDeclaration;
-			
-			return vertexDeclaration;
 		}
 	
 	}

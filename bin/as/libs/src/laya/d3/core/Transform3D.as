@@ -272,7 +272,7 @@ package laya.d3.core {
 				if (_parent != null) {
 					var parentPosition:Vector3 = _parent.position;
 					Vector3.transformQuat(_localPosition, _parent.rotation, _tempVector30);
-					Vector3.multiply(_tempVector30,_parent.scale, _tempVector30);
+					Vector3.multiply(_tempVector30, _parent.scale, _tempVector30);
 					Vector3.add(parentPosition, _tempVector30, _position);
 				} else {
 					_localPosition.cloneTo(_position);
@@ -290,6 +290,18 @@ package laya.d3.core {
 		public function set position(value:Vector3):void {
 			if (_parent != null) {
 				Vector3.subtract(value, _parent.position, _localPosition);
+				
+				var parentScaleE:Float32Array = _parent.scale.elements;
+				var psX:Number = parentScaleE[0], psY:Number = parentScaleE[1], psZ:Number = parentScaleE[2];
+				if (psX !== 1.0 || psY !== 1.0 || psZ !== 1.0) {
+					var invertScale:Vector3 = _tempVector30;
+					var invertScaleE:Float32Array = invertScale.elements;
+					invertScaleE[0] = 1.0 / psX;
+					invertScaleE[1] = 1.0 / psY;
+					invertScaleE[2] = 1.0 / psZ;
+					Vector3.multiply(_localPosition, invertScale, _localPosition);
+				}
+				
 				var parentRotation:Quaternion = _parent.rotation;
 				parentRotation.invert(_tempQuaternion0);
 				Vector3.transformQuat(_localPosition, _tempQuaternion0, _localPosition);

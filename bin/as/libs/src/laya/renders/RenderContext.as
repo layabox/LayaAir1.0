@@ -30,6 +30,7 @@ package laya.renders {
 			if (canvas) {
 				canvas.destroy();
 				canvas = null;
+				ctx = null;
 			}
 			if (ctx) {
 				ctx.destroy();
@@ -514,5 +515,11 @@ package laya.renders {
 		public var _drawParticle:Function = function(x:Number, y:Number, args:Array):void {
 			this.ctx.drawParticle(x + this.x, y + this.y, args[0]);
 		}
+		
+		
+		public var _setFilters:Function = function(x:Number, y:Number, args:Array):void {
+			this.ctx.setFilters(args);
+		}
+		//(f:ColorFilter):void
 	}
 }

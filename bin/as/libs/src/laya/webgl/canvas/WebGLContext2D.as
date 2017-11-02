@@ -70,6 +70,7 @@ package laya.webgl.canvas {
 			 
 		private static var _fontTemp:FontInContext = new FontInContext();
 		private static var _drawStyleTemp:DrawStyle = new DrawStyle(null);
+		private static var _contextcount:int = 0;
 		
 		public static function __init__():void {
 			ContextParams.DEFAULT = new ContextParams();
@@ -91,7 +92,7 @@ package laya.webgl.canvas {
 		private var _isMain:Boolean = false;
 		private var _atlasResourceChange:int = 0;
 		
-		public var _submits:* = [];
+		public var _submits:* = null;
 		public var _curSubmit:* = null;
 		public var _ib:IndexBuffer2D = null;
 		public var _vb:VertexBuffer2D = null; // 不同的顶点格式，使用不同的顶点缓冲区		
@@ -103,7 +104,7 @@ package laya.webgl.canvas {
 		public var _renderKey:Number;
 		
 		public var _saveMark:SaveMark = null;
-		public var _shader2D:Shader2D = new Shader2D();
+		public var _shader2D:Shader2D = null;
 		
 		/**所cacheAs精灵*/
 		public var sprite:Sprite;
@@ -114,20 +115,13 @@ package laya.webgl.canvas {
 			
 			_canvas = c;
 			
-			_curMat = Matrix.create();
+			_contextcount++;
 			
 			if (Render.isFlash) {
 				_ib = IndexBuffer2D.create(WebGLContext.STATIC_DRAW);
 				GlUtils.fillIBQuadrangle(_ib, 16);
 			} else
 				_ib = IndexBuffer2D.QuadrangleIB;
-			
-			_vb = VertexBuffer2D.create(-1);
-			
-			_other = ContextParams.DEFAULT;
-			
-			_save = [SaveMark.Create(this)];
-			_save.length = 10;
 			
 			clear();
 		}
@@ -146,30 +140,63 @@ package laya.webgl.canvas {
 			return _submits;
 		}
 		
-		override public function destroy():void {
-			sprite = null;
-			_curMat && _curMat.destroy();
-			
-			_targets && _targets.destroy();
-			_targets = null;
+private function _releaseMem():void
+		{			
+			if (!_submits)
+				return;
+				
+			_curMat.destroy();
+			_curMat = null;			
+			_shader2D.destroy();
+			_shader2D = null;
 			for (var i:int = 0, n:int = _submits._length; i < n; i++)
 				_submits[i].releaseRender();
 			_submits.length = 0;
 			_submits._length = 0;
+			_submits = null;
 			_curSubmit = null;
+
 			_path && _path.recover();
 			_path = null;
-			if (_vb) {
+			_other && (_other.font = null);
+			_save = null;			
+			
+			if (_vb)
+			{
 				_vb.releaseResource();
 				_vb.dispose();
 				_vb.destory();
 				_vb = null;
 			}
+		}
+		
+		override public function destroy():void
+		{
+			--_contextcount;
+			
+			sprite = null;
+			
+			_releaseMem();
+			
+			_targets && _targets.destroy();
+			_targets = null;
 			_canvas = null;
 			_ib && (_ib != IndexBuffer2D.QuadrangleIB) && _ib.releaseResource();
 		}
 		
-		override public function clear():void {
+		override public function clear():void
+		{
+			if (!_submits)
+			{
+				_other = ContextParams.DEFAULT;
+				_curMat = Matrix.create();
+				_vb = VertexBuffer2D.create( -1);
+				_submits = [];
+				_save = [SaveMark.Create(this)];
+				_save.length = 10;
+				_shader2D = new Shader2D();				
+			}
+			
 			_vb.clear();
 			
 			_targets && (_targets.repaint = true);
@@ -231,6 +258,7 @@ package laya.webgl.canvas {
 					_canvas.memorySize -= _canvas.memorySize;//webGLCanvas为0;
 				}
 			}
+			if (w === 0 && h === 0) _releaseMem();
 		}
 		
 		public function set asBitmap(value:Boolean):void {
@@ -696,6 +724,7 @@ package laya.webgl.canvas {
 		}
 		
 		private function _repaintSprite():void {
+			if(sprite)
 			sprite.repaint();
 		}
 		
@@ -960,7 +989,7 @@ package laya.webgl.canvas {
 				var submitStencil1:SubmitStencil = SubmitStencil.create(5);
 				addRenderObject(submitStencil1);
 				
-				/*
+				
 				//4、计算clipRect
 				var vbdata:* = vb.getFloat32Array();
 				var minx:Number = Math.min(Math.min(Math.min(vbdata[nPos + 0], vbdata[nPos + 4]), vbdata[nPos + 8]), vbdata[nPos + 12]);
@@ -968,19 +997,12 @@ package laya.webgl.canvas {
 				var miny:Number = Math.min(Math.min(Math.min(vbdata[nPos + 1], vbdata[nPos + 5]), vbdata[nPos + 9]), vbdata[nPos + 13]);
 				var maxy:Number = Math.max(Math.max(Math.max(vbdata[nPos + 1], vbdata[nPos + 5]), vbdata[nPos + 9]), vbdata[nPos + 13]);
 				
-				SaveClipRectStencil.save(this, submitStencil1);
 				_clipRect.x = minx;
 				_clipRect.y = miny;
 				_clipRect.width = maxx - minx;
 				_clipRect.height = maxy - miny;
-				*/
-				
-				_clipRect.x = x;
-				_clipRect.y = y;
-				_clipRect.width = width;
-				_clipRect.height = height;
 
-				SaveClipRectStencil.save(this, submitStencil1);
+				SaveClipRectStencil.save(this, submitStencil1, x, y, width, height);
 				
 				_curSubmit = Submit.RENDERBASE;
 				//5、在restore中进行恢复
@@ -990,6 +1012,18 @@ package laya.webgl.canvas {
 				height *= _curMat.d;
 				var p:Point = Point.TEMP;
 				this._curMat.transformPoint(p.setTo(x, y));
+				
+				if (width < 0)
+				{
+					p.x = p.x + width;
+					width = -width;
+				}
+				if (height < 0)
+				{
+					p.y = p.y + height;
+					height = -height;
+				}
+
 				_renderKey = 0;
 				var submitSc:SubmitScissor = _curSubmit = SubmitScissor.create(this);
 				_submits[this._submits._length++] = submitSc;

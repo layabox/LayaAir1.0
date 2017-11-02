@@ -27,7 +27,7 @@ package lightModule {
             Laya.stage.screenMode = Stage.SCREEN_NONE;
             Stat.show();
             
-            var scene:Scene = Laya.stage.addChild(new Scene());
+            var scene:Scene = Laya.stage.addChild(new Scene()) as Scene;
             
             var camera:Camera = (scene.addChild(new Camera(0, 0.1, 1000))) as Camera;
             camera.transform.translate(new Vector3(0, 0.7, 1.3));
@@ -36,16 +36,14 @@ package lightModule {
             
 			//方向光
             var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
-            directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(1.0, 1.0, 1.0);
-            directionLight.diffuseColor = new Vector3(1, 1, 1);
+            directionLight.color = new Vector3(1, 1, 1);
             directionLight.direction = new Vector3(0, -1.0, -1.0);
             
             var grid:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/staticModel/grid/plane.lh")) as Sprite3D;
             
             var layaMonkey:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/LayaMonkey/LayaMonkey.lh")) as Sprite3D;
             layaMonkey.once(Event.HIERARCHY_LOADED, this, function():void {
-                var aniSprite3d:Sprite3D = layaMonkey.getChildAt(0);
+                var aniSprite3d:Sprite3D = layaMonkey.getChildAt(0) as Sprite3D;
                 var animator:Animator = aniSprite3d.getComponentByType(Animator) as Animator;
                 animator.play(null, 1.0, 40, 70);
             });

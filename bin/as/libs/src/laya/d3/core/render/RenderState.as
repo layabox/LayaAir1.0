@@ -33,10 +33,7 @@ package laya.d3.core.render {
 		/** @private */
 		public var _viewport:Viewport;
 		/** @private */
-		public var _boundFrustum:BoundFrustum;
-		/** @private */
 		public var _shader:Shader3D;
-		
 		
 		
 		/**距上一帧间隔时间。*/
@@ -49,8 +46,6 @@ package laya.d3.core.render {
 		public var renderElement:RenderElement;
 		/**当前摄像机。*/
 		public var camera:BaseCamera;
-		
-		public var cameraBoundingFrustum:BoundFrustum;
 	
 		
 		/**

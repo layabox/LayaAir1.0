@@ -1,5 +1,4 @@
 package laya.d3.graphics {
-	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
@@ -7,9 +6,6 @@ package laya.d3.graphics {
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.SubMeshRenderElement;
-	import laya.d3.core.scene.Scene;
-	import laya.d3.math.Matrix4x4;
-	import laya.d3.resource.models.SubMesh;
 	
 	/**
 	 * @private

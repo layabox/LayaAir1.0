@@ -1,22 +1,15 @@
 package laya.d3.animation {
-	import laya.d3.component.Animator;
-	import laya.d3.core.Avatar;
 	import laya.d3.core.IClone;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.SkinnedMeshRender;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.utils.Utils3D;
 	
 	/**
 	 * <code>BoneNode</code> 类用于实现骨骼节点。
@@ -62,8 +55,6 @@ package laya.d3.animation {
 		
 		/**@private */
 		private var _childs:Vector.<AnimationNode>;
-		/**@private */
-		private var _attchSprite3Ds:Vector.<Sprite3D>;//TODO:暂时未使用
 		
 		/**@private */
 		public var _parent:AnimationNode;
@@ -84,167 +75,188 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		private static function _getLocalPosition(animationNode:AnimationNode):Float32Array {
-			return animationNode._transform.localPosition.elements;
+		private static function _getLocalPosition(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			if (animationNode)
+				return animationNode._transform.localPosition.elements;
+			else
+				return sprite3D._transform.localPosition.elements;
 		}
 		
 		/**
 		 * @private
 		 */
-		private static function _setLocalPosition(animationNode:AnimationNode, value:Float32Array):void {
-			var transform:AnimationTransform3D = animationNode._transform;
-			var localPosition:Vector3 = transform._localPosition;
-			localPosition.elements = value;
-			transform._setLocalPosition(localPosition);
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getLocalRotation(animationNode:AnimationNode):Float32Array {
-			return animationNode._transform.localRotation.elements;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _setLocalRotation(animationNode:AnimationNode, value:Float32Array):void {
-			var transform:AnimationTransform3D = animationNode._transform;
-			var localRotation:Quaternion = transform._localRotation;
-			localRotation.elements = value;
-			transform._setLocalRotation(localRotation);
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getLocalScale(animationNode:AnimationNode):Float32Array {
-			return animationNode._transform.localScale.elements;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _setLocalScale(animationNode:AnimationNode, value:Float32Array):void {
-			var transform:AnimationTransform3D = animationNode._transform;
-			var localScale:Vector3 = transform._localScale;
-			localScale.elements = value;
-			transform._setLocalScale(localScale);
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getLocalRotationEuler(animationNode:AnimationNode):Float32Array {
-			return animationNode._transform.localRotationEuler.elements;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _setLocalRotationEuler(animationNode:AnimationNode, value:Float32Array):void {
-			var transform:AnimationTransform3D = animationNode._transform;
-			var localRotationEuler:Vector3 = transform._localRotationEuler;
-			localRotationEuler.elements = value;
-			transform._setLocalRotationEuler(localRotationEuler);
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode):Float32Array {
-			var entity:Transform3D = animationNode._transform._entity;//以下类似处理均为防止AnimationNode无关联实体节点
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
-				return material.tilingOffset.elements;
-			} else
-				return null;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _setMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, value:Float32Array):void {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
-				var tilingOffset:Vector4 = material.tilingOffset;
-				tilingOffset.elements = value;
-				material.tilingOffset = tilingOffset;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode):Float32Array {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
-				return material.albedo.elements;
-			} else
-				return null;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _setMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, value:Float32Array):void {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
-				var albedo:Vector4 = material.albedo;
-				albedo.elements = value;
-				material.albedo = albedo;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode):Float32Array {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
-				return material.tilingOffset.elements;
-			} else
-				return null;
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _setSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, value:Float32Array):void {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
-				var tilingOffset:Vector4 = material.tilingOffset;
-				tilingOffset.elements = value;
-				material.tilingOffset = tilingOffset;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private static function _getSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode):Float32Array {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
-				return material.albedo.elements;
+		private static function _setLocalPosition(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var localPosition:Vector3;
+			if (animationNode) {
+				var transform:AnimationTransform3D = animationNode._transform;
+				localPosition = transform._localPosition;
+				localPosition.elements = value;
+				transform._setLocalPosition(localPosition);
 			} else {
-				return null;
+				var spriteTransform:Transform3D = sprite3D._transform;
+				localPosition = spriteTransform.localPosition;
+				localPosition.elements = value;
+				spriteTransform.localPosition = localPosition;
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		private static function _setSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, value:Float32Array):void {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:StandardMaterial = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
-				var albedo:Vector4 = material.albedo;
+		private static function _getLocalRotation(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			if (animationNode)
+				return animationNode._transform.localRotation.elements;
+			else
+				return sprite3D._transform.localRotation.elements;
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setLocalRotation(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var localRotation:Quaternion;
+			if (animationNode) {
+				var transform:AnimationTransform3D = animationNode._transform;
+				localRotation = transform._localRotation;
+				localRotation.elements = value;
+				transform._setLocalRotation(localRotation);
+			} else {
+				var spriteTransform:Transform3D = sprite3D._transform;
+				localRotation = spriteTransform.localRotation;
+				localRotation.elements = value;
+				spriteTransform.localRotation = localRotation;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _getLocalScale(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			if (animationNode)
+				return animationNode._transform.localScale.elements;
+			else
+				return sprite3D._transform.localScale.elements;
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setLocalScale(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var localScale:Vector3;
+			if (animationNode) {
+				var transform:AnimationTransform3D = animationNode._transform;
+				localScale = transform._localScale;
+				localScale.elements = value;
+				transform._setLocalScale(localScale);
+			} else {
+				var spriteTransform:Transform3D = sprite3D._transform;
+				localScale = spriteTransform.localScale;
+				localScale.elements = value;
+				spriteTransform.localScale = localScale;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _getLocalRotationEuler(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			if (animationNode)
+				return animationNode._transform.localRotationEuler.elements;
+			else
+				return sprite3D._transform.localRotationEuler.elements;
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setLocalRotationEuler(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var localRotationEuler:Vector3;
+			if (animationNode) {
+				var transform:AnimationTransform3D = animationNode._transform;
+				localRotationEuler = transform._localRotationEuler;
+				localRotationEuler.elements = value;
+				transform._setLocalRotationEuler(localRotationEuler);
+			} else {
+				var spriteTransform:Transform3D = sprite3D._transform;
+				localRotationEuler = spriteTransform.localRotationEuler;
+				localRotationEuler.elements = value;
+				spriteTransform.localRotationEuler = localRotationEuler;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _getMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			var material:StandardMaterial;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;//以下类似处理均为防止AnimationNode无关联实体节点
+				if (entity) {
+					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+					return material.tilingOffset.elements;
+				} else
+					return null;
+			} else {
+				material = (sprite3D as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+				return material.tilingOffset.elements;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var material:StandardMaterial, tilingOffset:Vector4;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
+					tilingOffset = material.tilingOffset;
+					tilingOffset.elements = value;
+					material.tilingOffset = tilingOffset;
+				}
+			} else {
+				material = (sprite3D as MeshSprite3D).meshRender.material as StandardMaterial;
+				tilingOffset = material.tilingOffset;
+				tilingOffset.elements = value;
+				material.tilingOffset = tilingOffset;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _getMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			var material:StandardMaterial;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+					return material.albedo.elements;
+				} else
+					return null;
+			} else {
+				material = (sprite3D as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+				return material.albedo.elements;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var material:StandardMaterial, albedo:Vector4;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
+					albedo = material.albedo;
+					albedo.elements = value;
+					material.albedo = albedo;
+				}
+			} else {
+				material = (sprite3D as MeshSprite3D).meshRender.material as StandardMaterial;
+				albedo = material.albedo;
 				albedo.elements = value;
 				material.albedo = albedo;
 			}
@@ -253,34 +265,119 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		private static function _getParticleRenderSharedMaterialTintColor(animationNode:AnimationNode):Float32Array {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:ShurikenParticleMaterial = (entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial;
-				return material.tintColor.elements;
-			} else
-				return null;
+		private static function _getSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			var material:StandardMaterial;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+					return material.tilingOffset.elements;
+				} else
+					return null;
+			} else {
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+				return material.tilingOffset.elements;
+			}
 		}
 		
 		/**
 		 * @private
 		 */
-		private static function _setParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, value:Float32Array):void {
-			var entity:Transform3D = animationNode._transform._entity;
-			if (entity) {
-				var material:ShurikenParticleMaterial = (entity.owner as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial;
-				var tintColor:Vector4 = material.tintColor;
+		private static function _setSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var material:StandardMaterial, tilingOffset:Vector4;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+					tilingOffset = material.tilingOffset;
+					tilingOffset.elements = value;
+					material.tilingOffset = tilingOffset;
+				}
+			} else {
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+				tilingOffset = material.tilingOffset;
+				tilingOffset.elements = value;
+				material.tilingOffset = tilingOffset;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _getSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			var material:StandardMaterial;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+					return material.albedo.elements;
+				} else {
+					return null;
+				}
+			} else {
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+				return material.albedo.elements;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var material:StandardMaterial, albedo:Vector4;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+					albedo = material.albedo;
+					albedo.elements = value;
+					material.albedo = albedo;
+				}
+			} else {
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+				albedo = material.albedo;
+				albedo.elements = value;
+				material.albedo = albedo;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _getParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
+			var material:ShurikenParticleMaterial;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial;
+					return material.tintColor.elements;
+				} else
+					return null;
+			} else {
+				material = (sprite3D as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial;
+				return material.tintColor.elements;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private static function _setParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
+			var material:ShurikenParticleMaterial, tintColor:Vector4;
+			if (animationNode) {
+				var entity:Transform3D = animationNode._transform._entity;
+				if (entity) {
+					material = (entity.owner as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial;
+					tintColor = material.tintColor;
+					tintColor.elements = value;
+					material.tintColor = tintColor;
+				}
+			} else {
+				material = (sprite3D as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial;
+				tintColor = material.tintColor;
 				tintColor.elements = value;
 				material.tintColor = tintColor;
 			}
-		}
-		
-		/**
-		 * 获取挂点精灵集合。
-		 * @return 挂点精灵集合。
-		 */
-		public function get attchSprite3Ds():Vector.<Sprite3D> {//TODO:暂时未使用
-			return _attchSprite3Ds;
 		}
 		
 		/**
@@ -289,8 +386,7 @@ package laya.d3.animation {
 		public function AnimationNode() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_childs = new Vector.<AnimationNode>();
-			_attchSprite3Ds = new Vector.<Sprite3D>();
-			_transform = new AnimationTransform3D();
+			_transform = new AnimationTransform3D(this);
 		}
 		
 		/**

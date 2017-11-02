@@ -45,7 +45,7 @@ package
 		
 		private function onError(error:Error):void
 		{
-			alert(error.message);
+			alert(error.name + ":" + error.message);
 		}
 	}
 }

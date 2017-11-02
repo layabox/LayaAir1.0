@@ -40,7 +40,7 @@ package laya.d3.animation {
 		/** @private */
 		private var _childs:Vector.<AnimationTransform3D>;
 		/**@private */
-		private var _associatedAnimationNode:AnimationNode;
+		public var _owner:AnimationNode;
 		/** @private */
 		public var _worldUpdate:Boolean = true;
 		
@@ -189,18 +189,11 @@ package laya.d3.animation {
 		}
 		
 		/**
-		 *获取关联虚拟节点。
-		 * @return 虚拟节点。
-		 */
-		public function get associatedAnimationNode():AnimationNode {
-			return _associatedAnimationNode;
-		}
-		
-		/**
 		 * 创建一个 <code>Transform3D</code> 实例。
 		 * @param owner 所属精灵。
 		 */
-		public function AnimationTransform3D() {
+		public function AnimationTransform3D(owner:AnimationNode) {
+			_owner = owner;
 			_childs = new Vector.<AnimationTransform3D>();
 		}
 		

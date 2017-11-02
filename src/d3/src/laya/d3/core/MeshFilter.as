@@ -1,11 +1,8 @@
 package laya.d3.core {
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.events.Event;
-	import laya.events.EventDispatcher;
-	import laya.resource.IDestroy;
 	
 	/**更换sharedMesh时调度。
 	 * @eventType Event.MESH_CHANGED

@@ -7,6 +7,7 @@ package laya.d3.component.animation {
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.events.Event;
+	import laya.d3.core.ComponentNode;
 	
 	/**
 	 * <code>RigidAnimations</code> 类用于创建变换动画组件。
@@ -144,7 +145,7 @@ package laya.d3.component.animation {
 		 * 初始化载入摄像机动画组件。
 		 * @param	owner 所属精灵对象。
 		 */
-		override public function _load(owner:Sprite3D):void {
+		override public function _load(owner:ComponentNode):void {
 			super._load(owner);
 			_player.on(Event.STOPPED, this, _animtionStop);
 			_player.on(Event.PLAYED, this, _animtionPlay);
@@ -211,7 +212,7 @@ package laya.d3.component.animation {
 		 * @private
 		 * 卸载组件时执行。
 		 */
-		override public function _unload(owner:Sprite3D):void {
+		override public function _unload(owner:ComponentNode):void {
 			super._unload(owner);
 			_animationSprites = null;
 			_animationSpritesInitLocalMatrix = null;

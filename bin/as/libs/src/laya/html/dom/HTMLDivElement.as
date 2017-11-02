@@ -100,6 +100,7 @@ package laya.html.dom {
 		 * 对显示内容进行排版
 		 */
 		public function layout():void {
+			if (!style) return;
 			style._type |= CSSStyle.ADDLAYOUTED;
 			var tArray:Array = Layout.layout(this);
 			if (tArray) {

@@ -1,23 +1,14 @@
 package laya.d3.core.glitter {
 	import laya.d3.core.GlitterRender;
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.tempelet.GlitterTemplet;
-	import laya.display.Node;
 	import laya.events.Event;
-	import laya.net.Loader;
-	import laya.utils.Handler;
-	import laya.utils.Stat;
-	import laya.webgl.resource.WebGLImage;
 	
 	/**
 	 * <code>Glitter</code> 类用于创建闪光。

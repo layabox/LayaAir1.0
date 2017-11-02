@@ -40,16 +40,15 @@ package animationModule
 			
 			var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.direction = new Vector3(0, -0.8, -1);
-			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-			directionLight.specularColor = new Vector3(0.4, 0.4, 0.3);
-			directionLight.diffuseColor = new Vector3(1, 1, 1);
+			directionLight.color = new Vector3(1, 1, 1);
 			
 			var plane:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/Zombie/new/Plane.lh")) as Sprite3D;
 			
 			var zombie:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/Zombie/new/Zombie.lh")) as Sprite3D;
 			zombie.once(Event.HIERARCHY_LOADED, this, function():void{
 				//获取Animator动画组件
-				zombieAnimator = zombie.getChildAt(0).getComponentByType(Animator);
+				zombieAnimator = (zombie.getChildAt(0) as Sprite3D).getComponentByType(Animator) as Animator;
+				zombieAnimator.clip.islooping = true;
 				loadUI();
 			});
 		}
@@ -68,6 +67,11 @@ package animationModule
 				changeActionButton.on(Event.CLICK, this, function():void{
 					//根据名称播放动画
 					zombieAnimator.play(clipName[++curStateIndex % clipName.length]);
+				});
+				
+				var aaa:Button = Laya.stage.addChild(new Button("../../../../res/threeDimen/ui/button.png", "aaaa")) as Button;
+				aaa.on(Event.CLICK, this, function():void{
+					zombieAnimator.stop();
 				});
 			}));
 		}

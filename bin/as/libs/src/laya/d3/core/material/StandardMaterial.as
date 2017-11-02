@@ -1,27 +1,11 @@
 package laya.d3.core.material {
-	import laya.d3.component.animation.SkinAnimations;
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
-	import laya.d3.core.render.BaseRender;
-	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
-	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.math.Matrix4x4;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ValusArray;
-	import laya.d3.utils.Utils3D;
-	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.utils.ClassUtils;
-	import laya.utils.Handler;
-	import laya.utils.Stat;
-	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * ...
@@ -69,7 +53,6 @@ package laya.d3.core.material {
 		public static var SHADERDEFINE_REFLECTMAP:int;
 		public static var SHADERDEFINE_UVTRANSFORM:int;
 		public static var SHADERDEFINE_TILINGOFFSET:int;
-		//public static var MIXUV:int;//TODO：
 		
 		public static const DIFFUSETEXTURE:int = 1;
 		public static const NORMALTEXTURE:int = 2;

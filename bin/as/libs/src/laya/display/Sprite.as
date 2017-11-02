@@ -289,8 +289,10 @@ package laya.display {
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
+			_releaseMem();
 			super.destroy(destroyChild);
 			this._style && this._style.destroy();
+			this._transform && this._transform.destroy();
 			this._transform = null;
 			this._style = null;
 			this._graphics = null;
@@ -1436,26 +1438,31 @@ package laya.display {
 			_$P.dragging && _$P.dragging.stop();
 		}
 		
+		private function _releaseMem():void
+		{
+			if (!_$P) return;
+			var cc:* = _$P.cacheCanvas;
+			//如果从显示列表移除，则销毁cache缓存
+			if (cc && cc.ctx) {
+				Pool.recover("RenderContext", cc.ctx);
+				cc.ctx.canvas.size(0, 0);
+				cc.ctx = null;
+			}
+			_$P.cacheCanvas = null;
+			var fc:* = _$P._filterCache;
+			//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
+			if (fc) {
+				fc.destroy();
+				fc.recycle();
+				this._set$P('_filterCache', null);
+			}
+			_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
+			_$P._isHaveGlowFilter = null;			
+		}
+		
 		/**@private */
 		override public function _setDisplay(value:Boolean):void {
-			if (!value) {
-				var cc:* = _$P.cacheCanvas;
-				//如果从显示列表移除，则销毁cache缓存
-				if (cc && cc.ctx) {
-					Pool.recover("RenderContext", cc.ctx);
-					cc.ctx.canvas.size(0, 0);
-					//cc.ctx.canvas.clear();
-					cc.ctx = null;
-				}
-				var fc:* = _$P._filterCache;
-				//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
-				if (fc) {
-					fc.destroy();
-					fc.recycle();
-					this._set$P('_filterCache', null);
-				}
-				_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
-			}
+			if (!value) _releaseMem();
 			super._setDisplay(value);
 		}
 		

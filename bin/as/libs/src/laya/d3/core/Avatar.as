@@ -1,5 +1,4 @@
 package laya.d3.core {
-	import laya.ani.AnimationNodeContent;
 	import laya.d3.animation.AnimationNode;
 	import laya.d3.animation.AnimationTransform3D;
 	import laya.d3.component.Animator;
@@ -12,6 +11,9 @@ package laya.d3.core {
 	 * <code>Avatar</code> 类用于创建Avatar。
 	 */
 	public class Avatar extends Resource implements IClone {
+		/**@private */
+		public var _version:String;
+		
 		/**
 		 * 加载Avatar文件。
 		 * @param url Avatar文件。
@@ -90,7 +92,13 @@ package laya.d3.core {
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			_rootNode = new AnimationNode();
-			_parseNode(data, _rootNode);
+			if (data.version){
+				_version = data.version;
+				_parseNode(data.rootNode, _rootNode);
+			}
+			else{//兼容代码
+				_parseNode(data, _rootNode);
+			}
 			_endLoaded();
 		}
 		

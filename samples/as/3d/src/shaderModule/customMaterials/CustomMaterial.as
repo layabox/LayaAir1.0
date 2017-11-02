@@ -39,5 +39,6 @@ package shaderModule.customMaterials {
 			super();
 			setShaderName("CustomShader");
 		}
+	}
 
 }

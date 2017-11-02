@@ -129,7 +129,7 @@ package laya.ani {
 			keyFrames[keyframeCount] = keyFrames[0];
 			for (var i:int = 0; i < keyframeCount; i++) {
 				var keyFrame:KeyFramesContent = keyFrames[i];
-				keyFrame.nextData =(keyFrame.duration === 0) ? keyFrame.data : keyFrames[i + 1].data;
+				keyFrame.nextData = (keyFrame.duration === 0) ? keyFrame.data : keyFrames[i + 1].data;
 			}
 			keyFrames.length--;
 		}
@@ -149,6 +149,21 @@ package laya.ani {
 			}
 			
 			_endLoaded();
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function detoryResource():void {
+			_aniVersion = null;
+			_anis = null;
+			_aniMap = null;
+			_publicExtData = null;
+			unfixedCurrentFrameIndexes = null;
+			unfixedCurrentTimes = null;
+			unfixedKeyframes = null;
+			_aniClassName = null;
+			_animationDatasCache = null;
 		}
 		
 		public function getAnimationCount():int {
@@ -206,13 +221,20 @@ package laya.ani {
 		public function getOriginalData(aniIndex:int, originalData:Float32Array, nodesFrameIndices:Array, frameIndex:int, playCurTime:Number):void {
 			var oneAni:AnimationContent = _anis[aniIndex];
 			
-			var nodes:Vector.<AnimationNodeContent> = oneAni.nodes;
+			//if (disposed)
+			//throw new Error("模型已释放");
 			
+			var nodes:Vector.<AnimationNodeContent> = oneAni.nodes;
 			var j:int = 0;
 			for (var i:int = 0, n:int = nodes.length, outOfs:int = 0; i < n; i++) {
 				var node:AnimationNodeContent = nodes[i];
 				
 				var key:KeyFramesContent;
+				//var indices:Array = nodesFrameIndices[i];
+				//var maxIndex:int = indices.length - 1;
+				//if (frameIndex > maxIndex)//加个保护
+				//frameIndex = maxIndex;
+				//key = node.keyFrame[indices[frameIndex]];
 				key = node.keyFrame[nodesFrameIndices[i][frameIndex]];
 				
 				node.dataOffset = outOfs;

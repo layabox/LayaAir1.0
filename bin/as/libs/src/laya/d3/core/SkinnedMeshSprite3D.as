@@ -1,12 +1,10 @@
 package laya.d3.core {
-	import laya.d3.animation.AnimationNode;
 	import laya.d3.component.Animator;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.SubMeshRenderElement;
-	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
@@ -144,9 +142,7 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
-			super._parseCustomProps(innerResouMap, customProps, json);
-			
+		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
 			var render:SkinnedMeshRender = skinnedMeshRender;
 			var lightmapIndex:* = customProps.lightmapIndex;
 			(lightmapIndex != null) && (render.lightmapIndex = lightmapIndex);
@@ -185,35 +181,14 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _setBelongAnimator(animator:Animator):void {
-			_belongAnimator = animator;
+		override protected function _changeHierarchyAnimator(animator:Animator):void {
 			if (animator) {
+				var render:SkinnedMeshRender = skinnedMeshRender;
+				render._cacheAnimator = animator;
 				var avatar:Avatar = animator.avatar;
-				var avatarNodes:Vector.<AnimationNode> = animator._avatarNodes;
-				if (avatarNodes) {//有_avatarNodes即为有avtar
-					for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {//TODO:换成字典
-						var node:AnimationNode = avatarNodes[i];
-						if (node.name === name && !_transform.dummy) //判断!sprite._transform.dummy重名节点可按顺序依次匹配。
-							_associateSpriteToAnimationNode(avatar, node);
-					}
-					skinnedMeshRender._setCacheAvatar(avatar);
-				}
-			} else {//TODO:做对应移除
-				
+				(avatar) && (render._setCacheAvatar(avatar));
 			}
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _associateSpriteToAnimationNode(avatar:Avatar, node:AnimationNode):void {
-			_transform.dummy = node._transform;
-			var nodeIndex:int = _belongAnimator._avatarNodes.indexOf(node);
-			var cacheSpriteToNodesMap:Vector.<int> = _belongAnimator._cacheSpriteToNodesMap;
-			_belongAnimator._cacheNodesToSpriteMap[nodeIndex] = cacheSpriteToNodesMap.length;
-			cacheSpriteToNodesMap.push(nodeIndex);
-			
-			skinnedMeshRender._setCacheAvatar(avatar);
+			super._changeHierarchyAnimator(animator);
 		}
 		
 		/**

@@ -51,9 +51,7 @@ package animationModule
 			
 			var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
 			directionLight.direction = new Vector3(0, -0.8, -1);
-			directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-			directionLight.specularColor = new Vector3(0.4, 0.4, 0.3);
-			directionLight.diffuseColor = new Vector3(1, 1, 1);
+			directionLight.color = new Vector3(1, 1, 1);
 			
 			var plane:Sprite3D = scene.addChild(Sprite3D.load("../../../../res/threeDimen/skinModel/Zombie/old/Plane.lh")) as Sprite3D;
 			

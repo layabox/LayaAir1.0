@@ -43,7 +43,7 @@ package laya.ui {
 		/**全局默认关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
 		public var popupEffectHandler:Handler = new Handler(this, popupEffect);
 		/**全局默认弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
-		public var closeEffectHandler:Handler = new Handler(this,closeEffect);
+		public var closeEffectHandler:Handler = new Handler(this, closeEffect);
 		
 		/**
 		 * 创建一个新的 <code>DialogManager</code> 类实例。
@@ -102,13 +102,14 @@ package laya.ui {
 		 * 显示对话框(非模式窗口类型)。
 		 * @param dialog 需要显示的对象框 <code>Dialog</code> 实例。
 		 * @param closeOther 是否关闭其它对话框，若值为ture，则关闭其它的对话框。
+		 * @param showEffect 是否显示弹出效果
 		 */
-		public function open(dialog:Dialog, closeOther:Boolean = false):void {
+		public function open(dialog:Dialog, closeOther:Boolean = false, showEffect:Boolean):void {
 			if (closeOther) _closeAll();
 			if (dialog.popupCenter) _centerDialog(dialog);
 			addChild(dialog);
 			if (dialog.isModal || this._$P["hasZorder"]) timer.callLater(this, _checkMask);
-			if (dialog.popupEffect != null) dialog.popupEffect.runWith(dialog);
+			if (showEffect && dialog.popupEffect != null) dialog.popupEffect.runWith(dialog);
 			else doOpen(dialog);
 			event(Event.OPEN);
 		}
@@ -136,10 +137,11 @@ package laya.ui {
 		 * 关闭对话框。
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
 		 * @param type	关闭的类型，默认为空
+		 * @param showEffect 是否显示弹出效果
 		 */
-		public function close(dialog:Dialog, type:String = null):void {
-			if (dialog.closeEffect != null) dialog.closeEffect.runWith([dialog, type]);
-			else doClose(dialog,type);
+		public function close(dialog:Dialog, type:String = null, showEffect:Boolean):void {
+			if (showEffect && dialog.closeEffect != null) dialog.closeEffect.runWith([dialog, type]);
+			else doClose(dialog, type);
 			event(Event.CLOSE);
 		}
 		
@@ -167,11 +169,12 @@ package laya.ui {
 		private function _closeAll():void {
 			for (var i:int = numChildren - 1; i > -1; i--) {
 				var item:Dialog = getChildAt(i) as Dialog;
-				if (item.close!=null) {
+				if (item && item.close != null) {
 					doClose(item);
 				}
 			}
 		}
+		
 		/**
 		 * 根据组获取所有对话框
 		 * @param	group 组名称
@@ -181,7 +184,7 @@ package laya.ui {
 			var arr:Array = [];
 			for (var i:int = numChildren - 1; i > -1; i--) {
 				var item:Dialog = getChildAt(i) as Dialog;
-				if (item.group === group) {
+				if (item && item.group === group) {
 					arr.push(item);
 				}
 			}
@@ -197,7 +200,7 @@ package laya.ui {
 			var arr:Array = [];
 			for (var i:int = numChildren - 1; i > -1; i--) {
 				var item:Dialog = getChildAt(i) as Dialog;
-				if (item.group === group) {
+				if (item && item.group === group) {
 					item.close();
 					arr.push(item);
 				}

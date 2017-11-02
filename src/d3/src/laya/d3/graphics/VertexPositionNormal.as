@@ -1,7 +1,6 @@
 package laya.d3.graphics 
 {
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	public class VertexPositionNormal implements IVertex 
 	{
 		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration( 24, [

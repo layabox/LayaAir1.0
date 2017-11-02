@@ -33,7 +33,6 @@ package laya.d3.shader {
 		 */
 		public static function __init__():void {
 			Shader3D.addInclude("LightHelper.glsl", __INCLUDESTR__("files/LightHelper.glsl"));
-			Shader3D.addInclude("VRHelper.glsl", __INCLUDESTR__("files/VRHelper.glsl"));
 			Shader3D.addInclude("ShadowHelper.glsl", __INCLUDESTR__("files/ShadowHelper.glsl"));
 			Shader3D.addInclude("WaveFunction.glsl", __INCLUDESTR__("files/WaveFunction.glsl"));
 			
@@ -85,6 +84,7 @@ package laya.d3.shader {
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_AmbientColor': [Scene.AMBIENTCOLOR, Shader3D.PERIOD_SCENE],
 				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
@@ -433,6 +433,7 @@ package laya.d3.shader {
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_AmbientColor': [Scene.AMBIENTCOLOR, Shader3D.PERIOD_SCENE],
 				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
@@ -491,6 +492,7 @@ package laya.d3.shader {
 				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Attenuation': [Scene.SPOTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
 				'u_SpotLight.Diffuse': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_AmbientColor': [Scene.AMBIENTCOLOR, Shader3D.PERIOD_SCENE],
 				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
 				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 

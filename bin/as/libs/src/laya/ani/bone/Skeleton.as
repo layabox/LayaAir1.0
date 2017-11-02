@@ -361,7 +361,7 @@ package laya.ani.bone {
 			if (autoKey && _indexControl) {
 				return;
 			}
-			var tCurrTime:Number = Laya.timer.currTimer;
+			var tCurrTime:Number = timer.currTimer;
 			var preIndex:int = _player.currentKeyframeIndex;
 			var dTime:Number = tCurrTime - _lastTime;
 			if (autoKey) {
@@ -968,7 +968,7 @@ package laya.ani.bone {
 					if (_pause) {
 						_pause = false;
 						_lastTime = Browser.now();
-						Laya.stage.frameLoop(1, this, _update, null, true);
+						timer.frameLoop(1, this, _update, null, true);
 					}
 					_update();
 				}
@@ -984,7 +984,7 @@ package laya.ani.bone {
 				if (_player) {
 					_player.stop(true);
 				}
-				Laya.timer.clear(this, _update);
+				timer.clear(this, _update);
 			}
 		}
 		
@@ -1007,7 +1007,7 @@ package laya.ani.bone {
 				if (_player) {
 					_player.paused = true;
 				}
-				Laya.timer.clear(this, _update);
+				timer.clear(this, _update);
 			}
 		}
 		
@@ -1022,7 +1022,7 @@ package laya.ani.bone {
 					_player.paused = false;
 				}
 				_lastTime = Browser.now();
-				Laya.stage.frameLoop(1, this, _update, null, true);
+				timer.frameLoop(1, this, _update, null, true);
 			}
 		
 		}
@@ -1060,7 +1060,7 @@ package laya.ani.bone {
 			_curOriginalData = null;//当前骨骼的偏移数据
 			_boneMatrixArray.length = 0;//当前骨骼动画的最终结果数据
 			_lastTime = 0;//上次的帧时间
-			Laya.timer.clear(this, _update);
+			timer.clear(this, _update);
 		}
 		
 		/**

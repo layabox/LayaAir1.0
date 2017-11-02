@@ -62,9 +62,7 @@ package meshModule {
             camera.transform.rotate(new Vector3(-15, 0, 0), true, false);
             
             var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
-            directionLight.ambientColor = new Vector3(0.6, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(0.6, 0.6, 0.6);
-            directionLight.diffuseColor = new Vector3(0.6, 0.6, 0.6);
+            directionLight.color = new Vector3(0.6, 0.6, 0.6);
             directionLight.direction = new Vector3(1, -1, -1);
             
             sprite3D = scene.addChild(new Sprite3D()) as Sprite3D;

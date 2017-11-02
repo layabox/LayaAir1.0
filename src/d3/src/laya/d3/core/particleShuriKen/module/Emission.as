@@ -14,8 +14,6 @@ package laya.d3.core.particleShuriKen.module {
 		/**@private 粒子发射速率,每秒发射的个数。*/
 		private var _emissionRate:int;
 		
-		/**@private 发射粒子最小时间间隔。*/
-		public var _minEmissionTime:Number;
 		/**@private 粒子数据模板,开发者禁止修改。*/
 		public var _particleSystem:ShurikenParticleSystem;
 		/**@private 粒子形状,开发者禁止修改。*/
@@ -34,10 +32,6 @@ package laya.d3.core.particleShuriKen.module {
 			if (value < 0)
 				throw new Error("ParticleBaseShape:emissionRate value must large or equal than 0.");
 			_emissionRate = value;
-			if (value === 0)
-				_minEmissionTime = /*int.MAX_VALUE*/ 2147483647;
-			else
-				_minEmissionTime = 1 / value;
 		}
 		
 		/**
@@ -148,7 +142,6 @@ package laya.d3.core.particleShuriKen.module {
 					destBursts[i] = _bursts[i].clone();
 			}
 			
-			destEmission._minEmissionTime = _minEmissionTime;
 			destEmission._emissionRate = _emissionRate;
 			destEmission.enbale = enbale;
 		}

@@ -61,7 +61,7 @@ package laya.webgl.resource {
 		 * 是否创建私有Source
 		 * @return 是否创建
 		 */
-		public function get enableMerageInAtlas():Boolean {
+		override public function get enableMerageInAtlas():Boolean {
 			return _enableMerageInAtlas;
 		}
 		
@@ -69,7 +69,7 @@ package laya.webgl.resource {
 		 * 是否创建私有Source,通常禁止修改
 		 * @param value 是否创建
 		 */
-		public function set enableMerageInAtlas(value:Boolean):void {
+		override public function set enableMerageInAtlas(value:Boolean):void {
 			_enableMerageInAtlas = value;
 		}
 		
@@ -153,7 +153,7 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+			gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 			switch (_format) {
 			case WebGLContext.RGBA: 
 				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, _format, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
@@ -162,7 +162,7 @@ package laya.webgl.resource {
 				gl.compressedTexImage2D(WebGLContext.TEXTURE_2D, 0, _format, _w, _h, 0, _image);
 				break;
 			}
-			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			
 			var minFifter:int = this.minFifter;
 			var magFifter:int = this.magFifter;

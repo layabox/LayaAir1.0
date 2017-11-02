@@ -47,19 +47,8 @@ package materialModule {
 			//var env = 'AtticRoom';
 			//var env = 'overcloud';
 			var envinfo:String = '../../../../res/threeDimen/env/' + env + '/envinfo.json';
-			Laya.loader.load(envinfo, Handler.create(this, onEnvDescLoaded,[envinfo,'../../../../res/threeDimen/env/' + env + '/']));
-			
-		}
-		
-		public function onEnvDescLoaded(envinfo:String, envpath:String) {
-			var envinfoobj = Laya.loader.getRes(envinfo);
 			
 			var camera:Camera = new Camera(0, 0.1, 1000);
-			if( envinfoobj.ev!=undefined)
-				camera._shaderValues.setValue(BaseCamera.HDREXPOSURE, Math.pow(2, envinfoobj.ev));
-			else
-				camera._shaderValues.setValue(BaseCamera.HDREXPOSURE, Math.pow(2, 0.0));			
-				
 			scene.addChild(camera);
 			camera.transform.translate(new Vector3(0, 0, 1.0));
 			camera.addComponent(CameraMoveScript);
@@ -67,13 +56,7 @@ package materialModule {
 			
 			var skyDome:SkyDome = new SkyDome();
 			camera.sky = skyDome;
-			skyDome.texture = Texture2D.load( envpath+envinfoobj.skytex);
-			skyDome.environmentSpecular = DataTexture2D.load(envpath + envinfoobj.prefiltedEnv);
-			var irrdMat:Float32Array = new Float32Array( envinfoobj.IrradianceMat);
-			
-			skyDome.envDiffuseSHRed =  irrdMat.slice(0, 16) as Float32Array;
-			skyDome.envDiffuseSHGreen = irrdMat.slice(16, 32) as Float32Array;
-			skyDome.envDiffuseSHBlue = irrdMat.slice(32, 48 ) as Float32Array;
+			skyDome.loadEnvInfo(envinfo);
 			
 			addTestSphere();
 		}
@@ -98,7 +81,6 @@ package materialModule {
 			}
 			for ( x = 0; x < rnum; x++) {
 				mtl = new PBRMaterial();
-				mtl.use_groundtruth = false;
 				mtl.diffuseTexture = Texture2D.load('../../../../res/threeDimen/pbr/gold.png');
 				mtl.normalTexture = Texture2D.load('../../../../res/threeDimen/pbr/n1.png');
 				mtl.roughness = x / rnum;

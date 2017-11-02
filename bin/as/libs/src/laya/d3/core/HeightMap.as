@@ -9,7 +9,6 @@ package laya.d3.core {
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Picker;
-	import laya.utils.Browser;
 	
 	/**
 	 * <code>HeightMap</code> 类用于实现高度图数据。

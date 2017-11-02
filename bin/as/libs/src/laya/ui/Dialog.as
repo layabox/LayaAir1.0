@@ -231,24 +231,26 @@ package laya.ui {
 		/**
 		 * 显示对话框（以非模式窗口方式显示）。
 		 * @param closeOther 是否关闭其它的对话框。若值为true则关闭其它对话框。
+		 * @param showEffect 是否显示弹出效果
 		 */
-		public function show(closeOther:Boolean = false):void {
-			_open(false, closeOther);
+		public function show(closeOther:Boolean = false, showEffect:Boolean = true):void {
+			_open(false, closeOther, showEffect);
 		}
 		
 		/**
 		 * 显示对话框（以模式窗口方式显示）。
 		 * @param closeOther 是否关闭其它的对话框。若值为true则关闭其它对话框。
+		 * @param showEffect 是否显示弹出效果
 		 */
-		public function popup(closeOther:Boolean = false):void {
-			_open(true, closeOther);
+		public function popup(closeOther:Boolean = false, showEffect:Boolean = true):void {
+			_open(true, closeOther, showEffect);
 		}
 		
 		/**@private */
-		protected function _open(modal:Boolean, closeOther:Boolean):void {
+		protected function _open(modal:Boolean, closeOther:Boolean, showEffect:Boolean):void {
 			manager.lock(false);
 			isModal = modal;
-			manager.open(this, closeOther);
+			manager.open(this, closeOther, showEffect);
 		}
 		
 		/**打开完成后，调用此方法（如果有弹出动画，则在动画完成后执行）*/
@@ -258,9 +260,10 @@ package laya.ui {
 		/**
 		 * 关闭对话框。
 		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
+		 * @param showEffect 是否显示关闭效果
 		 */
-		public function close(type:String = null):void {
-			manager.close(this, type);
+		public function close(type:String = null, showEffect:Boolean = true):void {
+			manager.close(this, type, showEffect);
 		}
 		
 		/**关闭完成后，调用此方法（如果有关闭动画，则在动画完成后执行）

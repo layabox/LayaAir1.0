@@ -77,13 +77,13 @@ package laya.d3.core {
 		private var _farPlane:Number;
 		/**@private 视野。*/
 		private var _fieldOfView:Number;
-		/**@private 是否为正交投影。*/
-		private var _orthographic:Boolean;
 		/**@private 正交投影的垂直尺寸。*/
 		private var _orthographicVerticalSize:Number;
 		/**@private 天空。*/
 		private var _sky:Sky;
 		
+		/**@private */
+		protected var _orthographic:Boolean;
 		/** @private 渲染目标。*/
 		protected var _renderTarget:RenderTexture;
 		/**@private 是否使用用户自定义投影矩阵，如果使用了用户投影矩阵，摄像机投影矩阵相关的参数改变则不改变投影矩阵的值，需调用ResetProjectionMatrix方法。*/
@@ -261,7 +261,7 @@ package laya.d3.core {
 		 * 获取是否正交投影矩阵。
 		 * @return 是否正交投影矩阵。
 		 */
-		public function get orthographicProjection():Boolean {
+		public function get orthographic():Boolean {
 			return _orthographic;
 		}
 		
@@ -269,7 +269,7 @@ package laya.d3.core {
 		 * 设置是否正交投影矩阵。
 		 * @param 是否正交投影矩阵。
 		 */
-		public function set orthographicProjection(vaule:Boolean):void {
+		public function set orthographic(vaule:Boolean):void {
 			_orthographic = vaule;
 			_calculateProjectionMatrix();
 		}

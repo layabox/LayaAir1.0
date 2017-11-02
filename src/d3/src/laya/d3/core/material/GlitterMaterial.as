@@ -1,17 +1,7 @@
 package laya.d3.core.material {
-	import laya.d3.core.glitter.Glitter;
-	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
-	import laya.d3.math.Matrix4x4;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.Texture2D;
-	import laya.d3.resource.tempelet.GlitterTemplet;
-	import laya.events.Event;
-	import laya.net.Loader;
-	import laya.webgl.resource.WebGLImage;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * ...

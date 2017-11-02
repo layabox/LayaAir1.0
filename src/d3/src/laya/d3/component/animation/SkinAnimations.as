@@ -2,6 +2,7 @@ package laya.d3.component.animation {
 	import laya.ani.AnimationContent;
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
@@ -195,7 +196,7 @@ package laya.d3.component.animation {
 		 * 初始化载入蒙皮动画组件。
 		 * @param	owner 所属精灵对象。
 		 */
-		override public function _load(owner:Sprite3D):void {
+		override public function _load(owner:ComponentNode):void {
 			super._load(owner);
 			_ownerMesh = (owner as MeshSprite3D);
 			
@@ -344,9 +345,9 @@ package laya.d3.component.animation {
 		 * @private
 		 * 卸载组件时执行
 		 */
-		override public function _unload(owner:Sprite3D):void {
+		override public function _unload(owner:ComponentNode):void {
 			(player.state == AnimationState.playing) && (_ownerMesh._render._removeShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE));
-			(_templet&&!_templet.loaded)&&(_templet.off(Event.LOADED, this, _computeBoneIndexToMeshOnMesh));
+			(_templet && !_templet.loaded) && (_templet.off(Event.LOADED, this, _computeBoneIndexToMeshOnMesh));
 			var mesh:Mesh = _ownerMesh.meshFilter.sharedMesh as Mesh;
 			(mesh.loaded) || (mesh.off(Event.LOADED, this, _onAnimationPlayMeshLoaded));
 			super._unload(owner);

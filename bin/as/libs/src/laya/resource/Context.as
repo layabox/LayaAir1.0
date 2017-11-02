@@ -34,7 +34,7 @@ package laya.resource {
 			funs.forEach(function(i:String):void {
 				to[i] = from[i];
 			});
-			//return;
+			return;
 			
 			var canvasO:*= __JS__("HTMLCanvasElement.prototype");
 			if (!replaceCanvasGetSet(canvasO, "width")) return;
@@ -446,8 +446,8 @@ package laya.resource {
 					this.beginPath();
 					this.strokeStyle = color;
 					this.lineWidth = 1;
-					this.moveTo(x+a.x-dX, y+a.y + tHeight);
-					this.lineTo(x+a.x+a.width+dX, y+a.y+tHeight);
+					this.moveTo(x+a.x-dX+0.5, y+a.y + tHeight+0.5);
+					this.lineTo(x+a.x+a.width+dX+0.5, y+a.y+tHeight+0.5);
 					this.stroke();
 				}
 			}			

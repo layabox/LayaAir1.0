@@ -10,7 +10,7 @@ camera.transform.rotate(new Laya.Vector3(-15, 0, 0), true, false);
 
 var directionLight = scene.addChild(new Laya.DirectionLight());
 directionLight.direction = new Laya.Vector3(0, -0.8, -1);
-directionLight.color = new Laya.Vector3(0.7, 0.6, 0.6);
+directionLight.color = new Laya.Vector3(1, 1, 1);
 
 //灯光开启阴影
 directionLight.shadow = true;

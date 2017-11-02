@@ -1,18 +1,11 @@
 package laya.d3.core.material {
-	import laya.d3.core.Sprite3D;
 	import laya.d3.core.TransformUV;
-	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderQueue;
-	import laya.d3.math.Matrix4x4;
-	import laya.d3.core.render.RenderState;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.resource.DataTexture2D;
 	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ValusArray;
-	import laya.net.Loader;
 	import laya.utils.Browser;
 	import laya.webgl.WebGLContext;
-	import laya.events.Event;
 	
 	public class PBRMaterial extends BaseMaterial {
 		public static const DIFFUSETEXTURE:int = 1;

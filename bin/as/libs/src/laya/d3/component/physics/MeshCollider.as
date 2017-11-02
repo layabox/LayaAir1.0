@@ -1,4 +1,5 @@
 package laya.d3.component.physics {
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
@@ -116,7 +117,7 @@ package laya.d3.component.physics {
 		/**
 		 * @inheritDoc
 		 */
-		override public function _initialize(owner:Sprite3D):void {
+		override public function _initialize(owner:ComponentNode):void {
 			super._initialize(owner);
 			if (_owner is MeshSprite3D) {
 				var meshSprite3D:MeshSprite3D = owner as MeshSprite3D;
@@ -135,7 +136,7 @@ package laya.d3.component.physics {
 				return false;
 			
 			var maxScale:Number;
-			var transform:Transform3D = _owner.transform;
+			var transform:Transform3D = (_owner as Sprite3D).transform;
 			var scale:Vector3 = transform.scale;
 			if (scale.x >= scale.y && scale.x >= scale.z)
 				maxScale = scale.x;
@@ -148,7 +149,7 @@ package laya.d3.component.physics {
 			
 			var distance:Number = _transformBoundSphere.intersectsRayPoint(ray, hitInfo.position);
 			
-			if (distance !== -1 && distance <= maxDistance && _raycastMesh(ray, _owner, hitInfo, maxDistance)) {
+			if (distance !== -1 && distance <= maxDistance && _raycastMesh(ray, _owner as Sprite3D, hitInfo, maxDistance)) {
 				return true;
 			} else {
 				hitInfo.distance = -1;

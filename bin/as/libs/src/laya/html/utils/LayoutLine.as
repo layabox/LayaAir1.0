@@ -73,6 +73,23 @@ package laya.html.utils {
 				}
 			}
 		}
+		
+		/**
+		 * 布局反向,目前用于将ltr模式布局转为rtl模式布局 
+		 */		
+		public function revertOrder(width:Number):void
+		{
+			var one:ILayout
+			if (elements.length > 0) {
+				var i:int, len:int;
+				len = elements.length;
+				for (i = 0; i < len; i++)
+				{
+					one = elements[i];
+					one.x = width - one.x - one.width;
+				}
+			}
+		}
 	
 	}
 

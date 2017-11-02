@@ -1,42 +1,13 @@
 package laya.d3.utils {
-	import laya.d3.component.Animator;
 	import laya.d3.core.Camera;
-	import laya.d3.core.MeshRender;
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.SkinnedMeshRender;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
-	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
-	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
-	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
-	import laya.d3.core.particleShuriKen.module.Burst;
-	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
-	import laya.d3.core.particleShuriKen.module.Emission;
-	import laya.d3.core.particleShuriKen.module.FrameOverTime;
-	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
-	import laya.d3.core.particleShuriKen.module.GradientColor;
-	import laya.d3.core.particleShuriKen.module.GradientDataColor;
-	import laya.d3.core.particleShuriKen.module.GradientDataInt;
-	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
-	import laya.d3.core.particleShuriKen.module.GradientSize;
-	import laya.d3.core.particleShuriKen.module.GradientVelocity;
-	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
-	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
-	import laya.d3.core.particleShuriKen.module.StartFrame;
-	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
-	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
-	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
-	import laya.d3.core.particleShuriKen.module.shape.BoxShape;
-	import laya.d3.core.particleShuriKen.module.shape.CircleShape;
-	import laya.d3.core.particleShuriKen.module.shape.ConeShape;
-	import laya.d3.core.particleShuriKen.module.shape.HemisphereShape;
-	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -55,18 +26,9 @@ package laya.d3.utils {
 	import laya.d3.graphics.VertexPositionTexture0;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
-	import laya.d3.resource.Texture2D;
-	import laya.d3.resource.models.Mesh;
 	import laya.d3.terrain.Terrain;
-	import laya.display.Node;
-	import laya.events.Event;
-	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.utils.Handler;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -190,7 +152,7 @@ package laya.d3.utils {
 		/**
 		 * @private
 		 */
-		public static function _createNodeByJson(nodeData:Object, node:*, innerResouMap:Object):* {
+		public static function _createNodeByJson(rootNode:ComponentNode, nodeData:Object, node:*, innerResouMap:Object):* {
 			if (!node) {
 				switch (nodeData.type) {
 				case "Sprite3D": 
@@ -221,12 +183,20 @@ package laya.d3.utils {
 					node[key] = props[key];
 			
 			var customProps:Object = nodeData.customProps;
-			(customProps) && (node._parseCustomProps(innerResouMap, customProps, nodeData));//json为兼容参数，日后移除
+			if (customProps) {
+				if (node is Sprite3D) {
+					node._parseCustomRTS(customProps);
+					node._parseCustomProps(rootNode, innerResouMap, customProps, nodeData);//json为兼容参数，日后移除
+					node._parseCustomComponent(rootNode, innerResouMap, nodeData.components);
+				} else {
+					node._parseCustomProps(rootNode, innerResouMap, customProps, nodeData);//json为兼容参数，日后移除
+				}
+			}
 			
 			var childData:Array = nodeData.child;
 			if (childData) {
 				for (var i:int = 0, n:int = childData.length; i < n; i++) {
-					var child:* = _createNodeByJson(childData[i], null, innerResouMap)
+					var child:* = _createNodeByJson(rootNode, childData[i], null, innerResouMap)
 					node.addChild(child);
 				}
 			}

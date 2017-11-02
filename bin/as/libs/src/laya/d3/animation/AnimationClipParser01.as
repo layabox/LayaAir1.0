@@ -1,6 +1,4 @@
 package laya.d3.animation {
-	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector3;
 	import laya.utils.Byte;
 	
 	/**
@@ -82,7 +80,6 @@ package laya.d3.animation {
 			var node:KeyframeNode;
 			var reader:Byte = _reader;
 			var buffer:ArrayBuffer = reader.__getBuffer();
-			
 			var lengthTypes:Vector.<int> = new Vector.<int>();
 			var lenghthTypeCount:int = reader.getUint8();
 			lengthTypes.length = lenghthTypeCount;
@@ -103,6 +100,7 @@ package laya.d3.animation {
 			var nodeCount:int = reader.getInt16();
 			var nodes:Vector.<KeyframeNode> = clip._nodes = new Vector.<KeyframeNode>;
 			nodes.length = nodeCount;
+			var nodesMap:Object = clip._nodesMap = {};
 			var cachePropertyToNodeIndex:int = 0, unCachePropertyToNodeIndex:int = 0;
 			for (i = 0; i < nodeCount; i++) {
 				node = nodes[i] = new KeyframeNode();
@@ -111,7 +109,10 @@ package laya.d3.animation {
 				path.length = pathLength;
 				for (j = 0; j < pathLength; j++)
 					path[j] = _strings[reader.getUint16()];//TODO:如果只有根节点并且为空，是否可以和componentType一样优化。
-				
+				var nodePath:String = path.join("/");
+				var mapArray:Vector.<KeyframeNode> = nodesMap[nodePath];
+				(mapArray) || (nodesMap[nodePath] = mapArray = new Vector.<KeyframeNode>());
+				mapArray.push(node);
 				var componentTypeStrIndex:int = reader.getInt16();
 				(componentTypeStrIndex !== -1) && (node.componentType = _strings[componentTypeStrIndex]);
 				

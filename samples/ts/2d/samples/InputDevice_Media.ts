@@ -46,7 +46,7 @@ module laya
 		
 		private onError(error:Error):void
 		{
-			alert(error.message);
+			alert(error.name + ":" + error.message);
 		}
 	}
 }

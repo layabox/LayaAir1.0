@@ -5,7 +5,6 @@ package laya.d3.core {
 	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.resource.models.Mesh;
-	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	
@@ -23,6 +22,9 @@ package laya.d3.core {
 		private var _skinnedDatas:Float32Array;
 		/** @private */
 		private var _publicSubSkinnedDatas:Vector.<Vector.<Float32Array>>;
+		
+		/**@private */
+		public var _cacheAnimator:Animator;
 		
 		/**
 		 * 创建一个新的 <code>SkinMeshRender</code> 实例。
@@ -51,7 +53,7 @@ package laya.d3.core {
 			var meshBoneNames:Vector.<String> = _cacheMesh._boneNames;
 			var binPoseCount:int = meshBoneNames.length;
 			_cacheAnimationNode.length = binPoseCount;
-			var nodeMap:Object = _owner._belongAnimator._avatarNodeMap;
+			var nodeMap:Object = _cacheAnimator._avatarNodeMap;
 			for (var i:int = 0; i < binPoseCount; i++)
 				_cacheAnimationNode[i] = nodeMap[meshBoneNames[i]];
 		}
@@ -133,7 +135,7 @@ package laya.d3.core {
 		 */
 		override public function _renderUpdate(projectionView:Matrix4x4):void {
 			var projViewWorld:Matrix4x4;
-			var animator:Animator = _owner._belongAnimator;
+			var animator:Animator = _cacheAnimator;
 			var subMeshCount:int = _cacheMesh.subMeshCount;
 			if (animator) {
 				var animatorOwner:Sprite3D = animator.owner as Sprite3D;//根节点不缓存
@@ -142,7 +144,7 @@ package laya.d3.core {
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 				
 				if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
-					var i:int,n:int, j:int;
+					var i:int, n:int, j:int;
 					var subSkinnedDatas:Vector.<Vector.<Float32Array>>, boneIndicesCount:int, inverseBindPoses:Vector.<Matrix4x4>, boneIndicesList:Vector.<Uint8Array>, subMeshDatas:Vector.<Float32Array>;
 					if (animator.playState !== AnimationState.stopped && animator._canCache) {//停止时使用非缓存模式
 						subSkinnedDatas = animator.currentPlayClip._getSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, animator.cachePlayRate, animator.currentFrameIndex);

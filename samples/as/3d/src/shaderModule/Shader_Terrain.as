@@ -48,7 +48,7 @@ package shaderModule {
             camera.addComponent(CameraMoveScript);
             
             scene.once(Event.HIERARCHY_LOADED, this, function():void {
-                setCustomMaterial(scene.getChildAt(2));
+                setCustomMaterial(scene.getChildAt(2) as Sprite3D);
             });
         }
         
@@ -82,7 +82,30 @@ package shaderModule {
         private function initShader():void {
             
             var attributeMap:Object = {'a_Position': VertexElementUsage.POSITION0, 'a_Normal': VertexElementUsage.NORMAL0, 'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 'a_Texcoord1': VertexElementUsage.TEXTURECOORDINATE1};
-            var uniformMap:Object = {'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 'u_SplatAlphaTexture': [CustomTerrainMaterial.SPLATALPHATEXTURE, Shader3D.PERIOD_MATERIAL], 'u_NormalTexture': [CustomTerrainMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 'u_LightMapTexture': [CustomTerrainMaterial.LIGHTMAPTEXTURE, Shader3D.PERIOD_MATERIAL], 'u_DiffuseTexture1': [CustomTerrainMaterial.DIFFUSETEXTURE1, Shader3D.PERIOD_MATERIAL], 'u_DiffuseTexture2': [CustomTerrainMaterial.DIFFUSETEXTURE2, Shader3D.PERIOD_MATERIAL], 'u_DiffuseTexture3': [CustomTerrainMaterial.DIFFUSETEXTURE3, Shader3D.PERIOD_MATERIAL], 'u_DiffuseTexture4': [CustomTerrainMaterial.DIFFUSETEXTURE4, Shader3D.PERIOD_MATERIAL], 'u_DiffuseTexture5': [CustomTerrainMaterial.DIFFUSETEXTURE5, Shader3D.PERIOD_MATERIAL], 'u_DiffuseScale1': [CustomTerrainMaterial.DIFFUSESCALE1, Shader3D.PERIOD_MATERIAL], 'u_DiffuseScale2': [CustomTerrainMaterial.DIFFUSESCALE2, Shader3D.PERIOD_MATERIAL], 'u_DiffuseScale3': [CustomTerrainMaterial.DIFFUSESCALE3, Shader3D.PERIOD_MATERIAL], 'u_DiffuseScale4': [CustomTerrainMaterial.DIFFUSESCALE4, Shader3D.PERIOD_MATERIAL], 'u_DiffuseScale5': [CustomTerrainMaterial.DIFFUSESCALE5, Shader3D.PERIOD_MATERIAL], 'u_lightmapScaleOffset': [CustomTerrainMaterial.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_MATERIAL], 'u_MaterialDiffuse': [CustomTerrainMaterial.MATERIALDIFFUSE, Shader3D.PERIOD_MATERIAL], 'u_MaterialAmbient': [CustomTerrainMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 'u_MaterialSpecular': [CustomTerrainMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 'u_DirectionLight.Diffuse': [Scene.LIGHTDIRDIFFUSE, Shader3D.PERIOD_SCENE], 'u_DirectionLight.Ambient': [Scene.LIGHTDIRAMBIENT, Shader3D.PERIOD_SCENE], 'u_DirectionLight.Specular': [Scene.LIGHTDIRSPECULAR, Shader3D.PERIOD_SCENE]};
+            var uniformMap:Object = {
+				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
+				'u_SplatAlphaTexture': [CustomTerrainMaterial.SPLATALPHATEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_NormalTexture': [CustomTerrainMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_LightMapTexture': [CustomTerrainMaterial.LIGHTMAPTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture1': [CustomTerrainMaterial.DIFFUSETEXTURE1, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture2': [CustomTerrainMaterial.DIFFUSETEXTURE2, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture3': [CustomTerrainMaterial.DIFFUSETEXTURE3, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture4': [CustomTerrainMaterial.DIFFUSETEXTURE4, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture5': [CustomTerrainMaterial.DIFFUSETEXTURE5, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScale1': [CustomTerrainMaterial.DIFFUSESCALE1, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScale2': [CustomTerrainMaterial.DIFFUSESCALE2, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScale3': [CustomTerrainMaterial.DIFFUSESCALE3, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScale4': [CustomTerrainMaterial.DIFFUSESCALE4, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseScale5': [CustomTerrainMaterial.DIFFUSESCALE5, Shader3D.PERIOD_MATERIAL], 
+				'u_lightmapScaleOffset': [CustomTerrainMaterial.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialDiffuse': [CustomTerrainMaterial.MATERIALDIFFUSE, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialAmbient': [CustomTerrainMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialSpecular': [CustomTerrainMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 
+				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Diffuse': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE]
+			};
             var customTerrianShader:int = Shader3D.nameKey.add("CustomTerrainShader");
             var vs:String = __INCLUDESTR__("customShader/terrainShader.vs");
             var ps:String = __INCLUDESTR__("customShader/terrainShader.ps");

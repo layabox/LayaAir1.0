@@ -342,28 +342,16 @@ package laya.d3.math {
 		 * @param	far 远裁面。
 		 * @param	out 输出矩阵。
 		 */
-		public static function createPerspective(fov:Number, aspect:Number, near:Number, far:Number, out:Matrix4x4):void {
+		public static function createPerspective(fov:Number, aspect:Number, near:Number, far:Number, out:Matrix4x4):void {//适用于OPENGL规则
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			//var oe:Float32Array = out.elements;
-			//
-			//var f:Number = 1.0 / Math.tan(fov / 2), nf:Number = 1 / (near - far);
-			//oe[0] = f / aspect;
-			//oe[5] = f;
-			//oe[10] = (far + near) * nf;
-			//oe[11] = -1;
-			//oe[14] = (2 * far * near) * nf;
-			//oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[12] = oe[13] = oe[15] = 0;
-			
 			var oe:Float32Array = out.elements;
 			
-			var yScale:Number = 1.0 / Math.tan(fov * 0.5);
-			var q:Number = far / (near - far);
-			
-			oe[0] = yScale / aspect;
-			oe[5] = yScale;
-			oe[10] = q;
-			oe[11] = -1.0;
-			oe[14] = q * near;
+			var f:Number = 1.0 / Math.tan(fov / 2), nf:Number = 1 / (near - far);
+			oe[0] = f / aspect;
+			oe[5] = f;
+			oe[10] = (far + near) * nf;
+			oe[11] = -1;
+			oe[14] = (2 * far * near) * nf;
 			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[12] = oe[13] = oe[15] = 0;
 		}
 		
@@ -377,7 +365,7 @@ package laya.d3.math {
 		 * @param	far 视椎远边界。
 		 * @param	out 输出矩阵。
 		 */
-		public static function createOrthogonal(left:Number, right:Number, bottom:Number, top:Number, near:Number, far:Number, out:Matrix4x4):void {
+		public static function createOrthoOffCenterRH(left:Number, right:Number, bottom:Number, top:Number, near:Number, far:Number, out:Matrix4x4):void {//适用于OPENGL规则
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var oe:Float32Array = out.elements;
 			

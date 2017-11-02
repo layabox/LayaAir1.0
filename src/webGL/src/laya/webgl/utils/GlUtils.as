@@ -110,7 +110,7 @@ package laya.webgl.utils {
 		}
 		
 		public static function fillTranglesVB(vb:VertexBuffer2D, x:Number, y:Number, points:Array, m:Matrix, _x:Number, _y:Number):Boolean {
-			'use strict';
+			//'use strict';
 			//x |= 0; y |= 0;_x |= 0; _y |= 0;
 			
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + points.length;///    Context._RECTVBSIZE;
@@ -147,23 +147,33 @@ package laya.webgl.utils {
 			return true;
 		}
 
-		public static function copyPreImgVb(vb:VertexBuffer2D, dx:Number, dy:Number):void {
+		public static function copyPreImgVb(vb:VertexBuffer2D, dx:Number, dy:Number):void
+		{
 			
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/;// + WebGLContext2D._RECTVBSIZE;
 			vb.byteLength = ((vpos + WebGLContext2D._RECTVBSIZE) << 2);
 			var vbdata:* = vb.getFloat32Array();
-			for (var i:int=0,ci:int=vpos -16; i < 4; i++) {
-				vbdata[vpos] = vbdata[ci] + dx;++vpos;++ci;
-				vbdata[vpos] = vbdata[ci] + dy;++vpos;++ci;				
-				vbdata[vpos] = vbdata[ci];++vpos;++ci;
-				vbdata[vpos] = vbdata[ci];++vpos;++ci;
+			for (var i:int = 0, ci:int = vpos - 16; i < 4; i++)
+			{
+				vbdata[vpos] = vbdata[ci] + dx;
+				++vpos;
+				++ci;
+				vbdata[vpos] = vbdata[ci] + dy;
+				++vpos;
+				++ci;
+				vbdata[vpos] = vbdata[ci];
+				++vpos;
+				++ci;
+				vbdata[vpos] = vbdata[ci];
+				++vpos;
+				++ci;
 			}
 			vb._upload = true;
 		}
 		
 		public static function fillRectImgVb(vb:VertexBuffer2D, clip:Rectangle, x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix, _x:Number, _y:Number, dx:Number, dy:Number, round:Boolean = false):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			'use strict';
+			//'use strict';
 			
 			var mType:int = 1;
 			var toBx:Number, toBy:Number, toEx:Number, toEy:Number;
@@ -198,8 +208,14 @@ package laya.webgl.utils {
 			{
 				cBx = clip.x, cBy = clip.y, cEx = clip.width + cBx, cEy = clip.height + cBy;
 			}
-			if (mType !== 1 && ( Math.min(toBx,toEx) >= cEx ||  Math.min(toBy ,toEy)>= cEy ||  Math.max(toEx,toBx) <= cBx || Math.max(toEy,toBy) <= cBy))
-				return false;
+			
+			if (mType !== 1)
+			{
+				if (Math.min(toBx, toEx) >= cEx) return false;
+				if (Math.min(toBy, toEy) >= cEy) return false;
+				if (Math.max(toEx, toBx) <= cBx) return false;
+				if (Math.max(toEy, toBy) <= cBy) return false;
+			}
 			
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/;// + WebGLContext2D._RECTVBSIZE;
 			vb.byteLength = ((vpos + WebGLContext2D._RECTVBSIZE) << 2);

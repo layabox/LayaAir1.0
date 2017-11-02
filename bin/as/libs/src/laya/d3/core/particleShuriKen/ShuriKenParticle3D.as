@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen {
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.particleShuriKen.module.Burst;
@@ -29,7 +30,6 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.Texture2D;
-	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.net.Loader;
 	
@@ -289,9 +289,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, nodeData:Object):void {
-			super._parseCustomProps(innerResouMap, customProps, nodeData);
-			
+		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, nodeData:Object):void {
 			const anglelToRad:Number = Math.PI / 180.0;
 			var i:int, n:int;
 			

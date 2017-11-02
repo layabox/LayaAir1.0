@@ -71,6 +71,8 @@ package laya.d3.core.scene {
 		public static const SHADOWMAPTEXTURE2:int = 19;
 		public static const SHADOWMAPTEXTURE3:int = 20;
 		
+		public static const AMBIENTCOLOR:int = 21;
+		
 		/**
 		 * @private
 		 */
@@ -124,6 +126,9 @@ package laya.d3.core.scene {
 		protected var _fogRange:Number;
 		/** @private */
 		protected var _fogColor:Vector3;
+		
+		/** @private */
+		protected var _ambientColor:Vector3;
 		
 		/** @private */
 		public var _shaderValues:ValusArray;
@@ -286,6 +291,23 @@ package laya.d3.core.scene {
 		}
 		
 		/**
+		 * 获取环境光颜色。
+		 * @return 环境光颜色。
+		 */
+		public function get ambientColor():Vector3 {
+			return _ambientColor;
+		}
+		
+		/**
+		 * 设置环境光颜色。
+		 * @param value 环境光颜色。
+		 */
+		public function set ambientColor(value:Vector3):void {
+			_ambientColor = value;
+			_shaderValues.setValue(Scene.AMBIENTCOLOR, value.elements);
+		}
+		
+		/**
 		 * 获取当前场景。
 		 * @return 当前场景。
 		 */
@@ -316,6 +338,7 @@ package laya.d3.core.scene {
 			fogStart = 300;
 			fogRange = 1000;
 			fogColor = new Vector3(0.7, 0.7, 0.7);
+			ambientColor = new Vector3(0.212, 0.227, 0.259);
 			(WebGL.shaderHighPrecision) && (addShaderDefine(ShaderCompile3D.SHADERDEFINE_HIGHPRECISION));
 			on(Event.DISPLAY, this, _onDisplay);
 			on(Event.UNDISPLAY, this, _onUnDisplay);
@@ -406,7 +429,7 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		public function _preRenderScene(gl:WebGLContext, state:RenderState):void {
+		public function _preRenderScene(gl:WebGLContext, state:RenderState,boundFrustum:BoundFrustum):void {
 			var view:Matrix4x4 = state._viewMatrix;
 			var projection:Matrix4x4 = state._projectionMatrix;
 			var projectionView:Matrix4x4 = state._projectionViewMatrix;
@@ -414,9 +437,9 @@ package laya.d3.core.scene {
 			var camera:BaseCamera = state.camera;
 			if (camera.useOcclusionCulling) {
 				if (treeRoot)
-					FrustumCulling.renderObjectCullingOctree(state._boundFrustum, this, camera, view, projection, projectionView);
+					FrustumCulling.renderObjectCullingOctree(boundFrustum, this, camera, view, projection, projectionView);
 				else
-					FrustumCulling.renderObjectCulling(state._boundFrustum, this, camera, view, projection, projectionView);
+					FrustumCulling.renderObjectCulling(boundFrustum, this, camera, view, projection, projectionView);
 			} else {
 				FrustumCulling.renderObjectCullingNoBoundFrustum(this, camera, view, projection, projectionView);
 			}
@@ -566,7 +589,7 @@ package laya.d3.core.scene {
 		/**
 		 *@private
 		 */
-		protected function _parseCustomProps(innerResouMap:Object, customProps:Object, nodeData:Object):void {
+		protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, nodeData:Object):void {
 			var lightMapsData:Array = nodeData.customProps.lightmaps;
 			var lightMapCount:int = lightMapsData.length;
 			var lightmaps:Vector.<Texture2D> = _lightmaps;
@@ -575,6 +598,9 @@ package laya.d3.core.scene {
 				lightmaps[i] = Loader.getRes(innerResouMap[lightMapsData[i].replace("exr", "png")]);
 			
 			setlightmaps(lightmaps);
+			
+			var ambientColorData:Array = nodeData.customProps.ambientColor;
+			(ambientColorData)&&(ambientColor = new Vector3(ambientColorData[0],ambientColorData[1],ambientColorData[2]));
 		}
 		
 		/**
@@ -870,7 +896,7 @@ package laya.d3.core.scene {
 		 * @return 渲染队列。
 		 */
 		public function getRenderQueue(index:int):RenderQueue {
-			return (_quenes[index] || (_quenes[index] = new RenderQueue(this)));
+			return _quenes[index] || (_quenes[index] = new RenderQueue(this));
 		}
 		
 		/**
@@ -1006,9 +1032,34 @@ package laya.d3.core.scene {
 				throw new Error("Scene: the .lh file root type must be Scene,please use other function to  load  this file.");
 			
 			var innerResouMap:Object = data[1];
-			Utils3D._createNodeByJson(json, this, innerResouMap);
+			Utils3D._createNodeByJson(this as ComponentNode, json, this, innerResouMap);//TODO:this as ComponentNode代码需等待结构统一
 			event(Event.HIERARCHY_LOADED, [this]);
 			__loaded = true;
+		}
+		
+		/**
+		 *@private
+		 */
+		override public function destroy(destroyChild:Boolean = true):void {
+			if (destroyed)
+				return;
+			super.destroy(destroyChild);
+			_renderState = null;
+			_lights = null;
+			_lightmaps = null;
+			_renderTargetTexture = null;
+			_shaderValues = null;
+			_cullingRenders = null;
+			_dynamicBatchManager = null;
+			_quenes = null;
+			_cameraPool = null;
+			_renderableSprite3Ds = null;
+			treeRoot = null;
+			treeSize = null;
+			parallelSplitShadowMaps = null;
+			_typeComponentsIndices = null;
+			_components = null;
+			Loader.clearRes(url);
 		}
 		
 		/**
@@ -1054,7 +1105,7 @@ package laya.d3.core.scene {
 			var component:Component3D = ClassUtils.getInstance(type);
 			typeComponentIndex.push(_components.length);
 			_components.push(component);
-			var _this:*= this;//兼容代码
+			var _this:* = this;//兼容代码
 			component._initialize(_this);
 			return component;
 		}

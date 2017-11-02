@@ -4,8 +4,6 @@ package laya.d3.core.light {
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ValusArray;
-	import laya.utils.Stat;
-	import laya.webgl.utils.Buffer2D;
 	
 	/**
 	 * <code>PointLight</code> 类用于创建点光。

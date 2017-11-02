@@ -1,6 +1,4 @@
 package laya.d3.core {
-	import laya.d3.animation.AnimationNode;
-	import laya.d3.component.Animator;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.render.IRenderable;
@@ -189,15 +187,12 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(innerResouMap:Object, customProps:Object, json:Object):void {
-			super._parseCustomProps(innerResouMap, customProps, json);
-			
+		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
 			var render:MeshRender = meshRender;
 			var lightmapIndex:* = customProps.lightmapIndex;
 			(lightmapIndex != null) && (render.lightmapIndex = lightmapIndex);
 			var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
 			(lightmapScaleOffsetArray) && (render.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
-			
 			var meshPath:String, mesh:Mesh;
 			if (json.instanceParams) {//兼容代码
 				meshPath = json.instanceParams.loadPath;
@@ -215,6 +210,7 @@ package laya.d3.core {
 					mesh = Loader.getRes(innerResouMap[meshPath]);
 					meshFilter.sharedMesh = mesh;
 				}
+				
 				var materials:Array = customProps.materials;
 				if (materials) {
 					var sharedMaterials:Vector.<BaseMaterial> = render.sharedMaterials;

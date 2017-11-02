@@ -33,16 +33,14 @@ package advancedModule {
             Laya.stage.screenMode = Stage.SCREEN_NONE;
             Stat.show();
             
-            scene = Laya.stage.addChild(new Scene());
+            scene = Laya.stage.addChild(new Scene()) as Scene;
             
             var camera:Camera = (scene.addChild(new Camera(0, 0.1, 100))) as Camera;
             camera.transform.translate(new Vector3(0, 0.7, 1.2));
             camera.transform.rotate(new Vector3(-15, 0, 0), true, false);
             
             var directionLight:DirectionLight = scene.addChild(new DirectionLight()) as DirectionLight;
-            directionLight.ambientColor = new Vector3(0.7, 0.6, 0.6);
-            directionLight.specularColor = new Vector3(1.0, 1.0, 1.0);
-            directionLight.diffuseColor = new Vector3(1, 1, 1);
+            directionLight.color = new Vector3(1, 1, 1);
             directionLight.direction = new Vector3(0, -1.0, -1.0);
 			
 			//灯光开启阴影

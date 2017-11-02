@@ -105,7 +105,7 @@ package laya.utils {
 				_ctx.textBaseline = "top";
 				_ctx.font = _fontSize + "px Sans-serif";
 				
-				_canvas.source.style.cssText = "pointer-events:none;background:rgba(150,150,150,0.8);z-index:100000;position: absolute;left:" + x + "px;top:" + y + "px;width:" + (_width / pixel) + "px;height:" + (_height / pixel) + "px;";
+				_canvas.source.style.cssText = "pointer-events:none;background:rgba(150,150,150,0.8);z-index:100000;position: absolute;direction:ltr;left:" + x + "px;top:" + y + "px;width:" + (_width / pixel) + "px;height:" + (_height / pixel) + "px;";
 			}
 			_first = true;
 			loop();

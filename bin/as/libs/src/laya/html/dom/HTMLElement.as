@@ -3,9 +3,11 @@ package laya.html.dom
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.display.css.CSSStyle;
+	import laya.display.Text;
 	import laya.events.Event;
 	import laya.html.utils.Layout;
 	import laya.net.URL;
+	import laya.renders.Render;
 	import laya.renders.RenderSprite;
 	import laya.utils.HTMLChar;
 	import laya.utils.Utils;
@@ -45,7 +47,7 @@ package laya.html.dom
 				}
 			}
 			var word:Vector.<HTMLChar> = _getWords();
-			word&&fillWords(this, word, 0, 0, style.font, style.color,style.underLine);
+			word ? HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color,this.style.underLine) : this.graphics.clear();
 			
 		}
 		
@@ -65,6 +67,7 @@ package laya.html.dom
 				_text.text = value;
 				_text.words && (_text.words.length = 0);
 			}
+			Render.isConchApp && this.layaoutCallNative();
 			_renderType |= RenderSprite.CHILDS;
 			repaint();
 			updateHref();
@@ -106,9 +109,68 @@ package laya.html.dom
 		{
 			return _style as CSSStyle;
 		}
+
+		/**
+		 * rtl模式的getWords函數 
+		 */		
+		public function _getWords2():Vector.<HTMLChar>
+		{
+			var txt:String = _text.text;
+			if (!txt || txt.length === 0)
+				return null;
+			var i:int = 0, n:int;
+			var realWords:Array;
+			var drawWords:Array;
+			if (!_text.drawWords)
+			{
+				realWords = txt.split(" ");
+				n = realWords.length-1;
+				
+				drawWords = [];
+				for (i = 0; i < n; i++)
+				{
+					drawWords.push(realWords[i]," ")
+				}
+				if(n>=0)
+				drawWords.push(realWords[n]);
+				_text.drawWords = drawWords;
+			}else
+			{
+				drawWords = _text.drawWords;
+			}
+				
+			var words:Vector.<HTMLChar> = _text.words;
+			if (words && words.length === drawWords.length)
+				return words as Vector.<HTMLChar>;
+			words === null && (_text.words = words = new Vector.<HTMLChar>());
+			words.length = drawWords.length;
+			
+			var size:Object;
+			var style:CSSStyle = this.style;
+			var fontStr:String = style.font;
+
+			for (i= 0, n = drawWords.length; i < n; i++)
+			{
+				size = Utils.measureText(drawWords[i], fontStr);
+				
+				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(drawWords[i], size.width, size.height || style.fontSize, style);
+				if (tHTMLChar.char.length > 1)
+				{
+					tHTMLChar.charNum = tHTMLChar.char as Number;
+				}
+				if (href)
+				{
+					var tSprite:Sprite = new Sprite();
+					addChild(tSprite);
+					tHTMLChar.setSprite(tSprite);
+				}
+			}
+			return words;
+		}
 		
 		override public function _getWords():Vector.<HTMLChar>
 		{
+			if (!Text.CharacterCache) return _getWords2();
 			var txt:String = _text.text;
 			if (!txt || txt.length === 0)
 				return null;

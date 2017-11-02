@@ -20,7 +20,6 @@ package laya.d3.core {
 	import laya.net.Loader;
 	import laya.resource.ICreateResource;
 	import laya.utils.ClassUtils;
-	import laya.utils.Handler;
 	import laya.utils.Stat;
 	
 	/**
@@ -95,16 +94,23 @@ package laya.d3.core {
 		/** @private */
 		public var _shaderValues:ValusArray;
 		/** @private */
-		public var _belongAnimator:Animator;
-		/** @private */
 		public var _colliders:Vector.<Collider>;
 		/**@private */
 		public var _scene:Scene;
 		/**@private */
 		public var _transform:Transform3D;
+		/** @private */
+		public var _hierarchyAnimator:Animator;
 		
-		/**是否静态,静态包含一系列的静态处理*/
+		/**是否静态,静态包含一系列的静态处理。*/
 		public var isStatic:Boolean;
+		
+		/**
+		 * @private
+		 */
+		public function set _loaded(value:Boolean):void {
+			__loaded = value;
+		}
 		
 		/**
 		 * 获取唯一标识ID。
@@ -236,7 +242,7 @@ package laya.d3.core {
 			_shaderValues = new ValusArray();
 			_colliders = new Vector.<Collider>();
 			
-			(name) ? (this.name = name) : (this.name = "Sprite3D-" + _nameNumberCounter++);
+			this.name = name ? name : "Sprite3D-" + _nameNumberCounter++;
 			_activeInHierarchy = false;
 			_id = ++_uniqueIDCounter;
 			layer = Layer.currentCreationLayer;
@@ -245,63 +251,170 @@ package laya.d3.core {
 		}
 		
 		/**
+		 *@private
+		 */
+		private function _parseCustomRTS(customProps:Object):void {
+			var transValue:Array = customProps.translate;
+			var loccalPosition:Vector3 = transform.localPosition;
+			var loccalPositionElments:Float32Array = loccalPosition.elements;
+			loccalPositionElments[0] = transValue[0];
+			loccalPositionElments[1] = transValue[1];
+			loccalPositionElments[2] = transValue[2];
+			transform.localPosition = loccalPosition;
+			var rotValue:Array = customProps.rotation;
+			var localRotation:Quaternion = transform.localRotation;
+			var localRotationElement:Float32Array = localRotation.elements;
+			localRotationElement[0] = rotValue[0];
+			localRotationElement[1] = rotValue[1];
+			localRotationElement[2] = rotValue[2];
+			localRotationElement[3] = rotValue[3];
+			transform.localRotation = localRotation;
+			var scaleValue:Array = customProps.scale;
+			var localScale:Vector3 = transform.localScale;
+			var localSceleElement:Float32Array = localScale.elements;
+			localSceleElement[0] = scaleValue[0];
+			localSceleElement[1] = scaleValue[1];
+			localSceleElement[2] = scaleValue[2];
+			transform.localScale = localScale;
+		}
+		
+		/**
+		 *@private
+		 */
+		private function _parseCustomComponent(rootNode:ComponentNode, innerResouMap:Object, componentsData:Object):void {
+			for (var k:String in componentsData) {
+				var component:Object = componentsData[k];
+				switch (k) {
+				case "Animator": 
+					var animator:Animator = addComponent(Animator) as Animator;
+					if (component.avatarPath) {//兼容代码
+						animator.avatar = Loader.getRes(innerResouMap[component.avatarPath]);
+					} else {
+						var avatarData:Object = component.avatar;
+						if (avatarData) {
+							animator.avatar = Loader.getRes(innerResouMap[avatarData.path]);
+							var linkSprites:Object = avatarData.linkSprites;
+							(linkSprites) && (rootNode.once(Event.HIERARCHY_LOADED, this, _onRootNodeHierarchyLoaded, [animator, linkSprites]));
+						}
+					}
+					
+					var clipPaths:Vector.<String> = component.clipPaths;
+					var clipCount:int = clipPaths.length;
+					for (var i:int = 0; i < clipCount; i++)
+						animator.addClip(Loader.getRes(innerResouMap[clipPaths[i]]));
+					animator.clip = Loader.getRes(innerResouMap[clipPaths[0]]);//TODO:单处存储模型动画路径
+					
+					var entryPlayIndex:int = component.entryPlayIndex;
+					if (entryPlayIndex >= 0)
+						animator.play(Loader.getRes(innerResouMap[clipPaths[entryPlayIndex]]).name);
+					break;
+				default: 
+				}
+			}
+		}
+		
+		/**
 		 * @private
 		 */
-		protected function _setBelongAnimator(animator:Animator):void {
-			_belongAnimator = animator;
-			if (animator) {
-				var avatar:Avatar = animator.avatar;
-				var avatarNodes:Vector.<AnimationNode> = animator._avatarNodes;
-				if (avatarNodes) {//有_avatarNodes即为有avtar
-					for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {//TODO:换成字典
-						var node:AnimationNode = avatarNodes[i];
-						if (node.name === name && !_transform.dummy) //判断!sprite._transform.dummy重名节点可按顺序依次匹配。
-							_associateSpriteToAnimationNode(avatar, node);
+		private function _onRootNodeHierarchyLoaded(animator:Animator, linkSprites:Object):void {
+			for (var k:String in linkSprites) {
+				var nodeOwner:Sprite3D = this;
+				var path:Vector.<String> = linkSprites[k];
+				for (var j:int = 0, m:int = path.length; j < m; j++) {
+					var p:String = path[j];
+					if (p === "") {
+						break;
+					} else {
+						nodeOwner = nodeOwner.getChildByName(p) as Sprite3D;
+						if (!nodeOwner)
+							break;
 					}
 				}
-			} else {//TODO:做对应移除
-				
+				(nodeOwner) && (animator.linkSprite3DToAvatarNode(k, nodeOwner));//此时Avatar文件已经加载完成
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _associateSpriteToAnimationNode(avatar:Avatar, node:AnimationNode):void {
-			_transform.dummy = node._transform;
-			var nodeIndex:int = _belongAnimator._avatarNodes.indexOf(node);
-			var cacheSpriteToNodesMap:Vector.<int> = _belongAnimator._cacheSpriteToNodesMap;
-			_belongAnimator._cacheNodesToSpriteMap[nodeIndex] = cacheSpriteToNodesMap.length;
-			cacheSpriteToNodesMap.push(nodeIndex);
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _setAnimator(animator:Animator, parentAnimator:Animator):void {
-			_setBelongAnimator(animator);
+		private function _setHierarchyAnimator(animator:Animator, parentAnimator:Animator):void {
+			_changeHierarchyAnimator(animator);
 			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
 				var child:Sprite3D = _childs[i];
-				(child._belongAnimator == parentAnimator) && (child._setAnimator(animator, parentAnimator));
+				(child._hierarchyAnimator == parentAnimator) && (child._setHierarchyAnimator(animator, parentAnimator));
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _clearAnimator(animator:Animator, parentAnimator:Animator):void {
-			_setBelongAnimator(parentAnimator);
+		private function _clearHierarchyAnimator(animator:Animator, parentAnimator:Animator):void {
+			_changeHierarchyAnimator(parentAnimator);
 			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
 				var child:Sprite3D = _childs[i];
-				(child._belongAnimator == animator) && (child._clearAnimator(animator, parentAnimator));
+				(child._hierarchyAnimator == animator) && (child._clearHierarchyAnimator(animator, parentAnimator));
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		public function set _loaded(value:Boolean):void {
-			__loaded = value;
+		private function _getAnimatorToLinkSprite3D(sprite3D:Sprite3D, isLink:Boolean, path:Vector.<String>):void {
+			var animator:Animator = getComponentByType(Animator) as Animator;
+			if (animator) {
+				if (animator.avatar) {
+					(animator.avatar._version) || (sprite3D._setAnimatorToLinkAvatar(animator, isLink));//兼容代码
+				} else {
+					sprite3D._setAnimatorToLinkSprite3DNoAvatar(animator, isLink, path);
+				}
+			}
+			
+			if (_parent && _parent is Sprite3D) {
+				path.unshift(_parent.name);
+				var p:Sprite3D = _parent as Sprite3D;
+				(p._hierarchyAnimator) && (p._getAnimatorToLinkSprite3D(sprite3D, isLink, path));
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setAnimatorToLinkSprite3DNoAvatar(animator:Animator, isLink:Boolean, path:Vector.<String>):void {
+			var i:int, n:int;
+			for (i = 0, n = animator.getClipCount(); i < n; i++)
+				animator._handleSpriteOwnersBySprite(i, isLink, path, this);
+			
+			for (i = 0, n = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i];
+				path.push(child.name);
+				child._setAnimatorToLinkSprite3DNoAvatar(animator, isLink, path);
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _changeHierarchyAnimator(animator:Animator):void {
+			_hierarchyAnimator = animator;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _isLinkSpriteToAnimationNode(animator:Animator, node:AnimationNode, isLink:Boolean):void {
+			var nodeIndex:int = animator._avatarNodes.indexOf(node);
+			var cacheSpriteToNodesMap:Vector.<int> = animator._cacheSpriteToNodesMap;
+			
+			if (isLink) {
+				_transform.dummy = node._transform;
+				animator._cacheNodesToSpriteMap[nodeIndex] = cacheSpriteToNodesMap.length;
+				cacheSpriteToNodesMap.push(nodeIndex);
+			} else {
+				_transform.dummy = null;
+				var index:int = animator._cacheNodesToSpriteMap[nodeIndex];
+				animator._cacheNodesToSpriteMap[nodeIndex] = null;
+				cacheSpriteToNodesMap.splice(index, 1);
+			}
 		}
 		
 		/**
@@ -374,8 +487,8 @@ package laya.d3.core {
 				_colliders.push(component);
 			} else if (component is Animator) {
 				var animator:Animator = component as Animator;
-				//animator._cacheRootSprite = this;
-				_setAnimator(animator, _parent ? (_parent as Sprite3D)._belongAnimator : null);
+				_setHierarchyAnimator(animator, _parent ? (_parent as Sprite3D)._hierarchyAnimator : null);
+				_setAnimatorToLinkSprite3DNoAvatar(animator, true, new <String>[]);//此时一定没有Avatar
 			}
 			component._initialize(this);
 			return component;
@@ -396,8 +509,7 @@ package laya.d3.core {
 				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
 			} else if (component is Animator) {
 				var animator:Animator = component as Animator;
-				//animator._cacheRootSprite = null;
-				_clearAnimator(animator, _parent ? (_parent as Sprite3D)._belongAnimator : null);
+				_clearHierarchyAnimator(animator, _parent ? (_parent as Sprite3D)._hierarchyAnimator : null);
 			}
 			
 			_components.splice(componentIndex, 1);
@@ -440,50 +552,7 @@ package laya.d3.core {
 		/**
 		 *@private
 		 */
-		protected function _parseCustomProps(innerResouMap:Object, customProps:Object, nodeData:Object):void {
-			var transValue:Array = customProps.translate;
-			var loccalPosition:Vector3 = transform.localPosition;
-			var loccalPositionElments:Float32Array = loccalPosition.elements;
-			loccalPositionElments[0] = transValue[0];
-			loccalPositionElments[1] = transValue[1];
-			loccalPositionElments[2] = transValue[2];
-			transform.localPosition = loccalPosition;
-			var rotValue:Array = customProps.rotation;
-			var localRotation:Quaternion = transform.localRotation;
-			var localRotationElement:Float32Array = localRotation.elements;
-			localRotationElement[0] = rotValue[0];
-			localRotationElement[1] = rotValue[1];
-			localRotationElement[2] = rotValue[2];
-			localRotationElement[3] = rotValue[3];
-			transform.localRotation = localRotation;
-			var scaleValue:Array = customProps.scale;
-			var localScale:Vector3 = transform.localScale;
-			var localSceleElement:Float32Array = localScale.elements;
-			localSceleElement[0] = scaleValue[0];
-			localSceleElement[1] = scaleValue[1];
-			localSceleElement[2] = scaleValue[2];
-			transform.localScale = localScale;
-			
-			var components:Object = nodeData.components;
-			for (var k:String in components) {
-				var component:Object = components[k];
-				switch (k) {
-				case "Animator": 
-					var animator:Animator = addComponent(Animator) as Animator;
-					animator.avatar = Loader.getRes(innerResouMap[component.avatarPath]);
-					var clipPaths:Vector.<String> = component.clipPaths;
-					var clipCount:int = clipPaths.length;
-					for (var i:int = 0; i < clipCount; i++)
-						animator.addClip(Loader.getRes(innerResouMap[clipPaths[i]]));
-					animator.clip = Loader.getRes(innerResouMap[clipPaths[0]]);//TODO:单处存储模型动画路径
-					
-					var entryPlayIndex:int = component.entryPlayIndex;
-					if (entryPlayIndex >= 0)
-						animator.play(Loader.getRes(innerResouMap[clipPaths[entryPlayIndex]]).name);
-					break;
-				default: 
-				}
-			}
+		protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, nodeData:Object):void {
 		}
 		
 		/**
@@ -592,7 +661,11 @@ package laya.d3.core {
 					
 					var sprite3D:Sprite3D = node as Sprite3D;
 					sprite3D.transform.parent = transform;
-					(_belongAnimator && !sprite3D._belongAnimator) && (sprite3D._setAnimator(_belongAnimator, null));//执行条件为sprite3D._belongAnimator==parentAnimator,只有一种情况sprite3D._belongAnimator=null成立,且_belongAnimator不为空有意义
+					if (_hierarchyAnimator) {
+						(/*_hierarchyAnimator &&*/!sprite3D._hierarchyAnimator) && (sprite3D._setHierarchyAnimator(_hierarchyAnimator, null));//执行条件为sprite3D._hierarchyAnimator==parentAnimator,只有一种情况sprite3D._hierarchyAnimator=null成立,且_belongAnimator不为空有意义
+						_getAnimatorToLinkSprite3D(sprite3D, true, new <String>[sprite3D.name]);
+					}
+					
 					if (_scene) {
 						sprite3D._setBelongScene(_scene);
 						(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
@@ -635,7 +708,11 @@ package laya.d3.core {
 				
 				var sprite3D:Sprite3D = node as Sprite3D;
 				sprite3D.transform.parent = transform;
-				(_belongAnimator && !sprite3D._belongAnimator) && (sprite3D._setAnimator(_belongAnimator, null));//执行条件为sprite3D._belongAnimator==parentAnimator,只有一种情况sprite3D._belongAnimator=null成立,且_belongAnimator不为空有意义
+				if (_hierarchyAnimator) {
+					(/*_hierarchyAnimator &&*/!sprite3D._hierarchyAnimator) && (sprite3D._setHierarchyAnimator(_hierarchyAnimator, null));//执行条件为sprite3D._hierarchyAnimator==parentAnimator,只有一种情况sprite3D._hierarchyAnimator=null成立,且_belongAnimator不为空有意义
+					_getAnimatorToLinkSprite3D(sprite3D, true, new <String>[sprite3D.name]);
+				}
+				
 				if (_scene) {
 					sprite3D._setBelongScene(_scene);
 					(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
@@ -658,7 +735,11 @@ package laya.d3.core {
 					(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
 					sprite3D._setUnBelongScene();
 				}
-				(_belongAnimator && (sprite3D._belongAnimator == _belongAnimator)) && (sprite3D._clearAnimator(_belongAnimator, null));//_belongAnimator不为空有意义
+				if (_hierarchyAnimator) {
+					(/*_hierarchyAnimator &&*/(sprite3D._hierarchyAnimator == _hierarchyAnimator)) && (sprite3D._clearHierarchyAnimator(_hierarchyAnimator, null));//_belongAnimator不为空有意义
+					_getAnimatorToLinkSprite3D(sprite3D, false, new <String>[sprite3D.name]);
+				}
+				
 				this._childs.splice(index, 1);
 				conchModel && conchModel.removeChild(node.conchModel);
 				node.parent = null;
@@ -686,7 +767,11 @@ package laya.d3.core {
 						(_activeInHierarchy && sprite3D._active) && (sprite3D._inActiveHierarchy());
 						sprite3D._setUnBelongScene();
 					}
-					(_belongAnimator && (sprite3D._belongAnimator == _belongAnimator)) && (sprite3D._clearAnimator(_belongAnimator, null));//_belongAnimator不为空有意义
+					if (_hierarchyAnimator) {
+						(/*_hierarchyAnimator &&*/(sprite3D._hierarchyAnimator == _hierarchyAnimator)) && (sprite3D._clearHierarchyAnimator(_hierarchyAnimator, null));//_belongAnimator不为空有意义
+						_getAnimatorToLinkSprite3D(sprite3D, false, new <String>[sprite3D.name]);
+					}
+					
 					conchModel && conchModel.removeChild(arr[i].conchModel);
 				}
 			}
@@ -766,7 +851,7 @@ package laya.d3.core {
 				throw new Error("Sprite3D: The .lh file root type must be Sprite3D,please use other function to  load  this file.");
 			
 			var innerResouMap:Object = data[1];
-			Utils3D._createNodeByJson(json, this, innerResouMap);
+			Utils3D._createNodeByJson(this, json, this, innerResouMap);
 			event(Event.HIERARCHY_LOADED, [this]);
 			__loaded = true;
 		}
@@ -842,6 +927,29 @@ package laya.d3.core {
 			_colliders = null;
 			Loader.clearRes(url);
 		}
-	
+		
+		//兼容代码
+		/**
+		 * @private
+		 */
+		private function _handleSpriteToAvatar(animator:Animator, isLink:Boolean):void {
+			var i:int, n:int;
+			var avatarNodes:Vector.<AnimationNode> = animator._avatarNodes;
+			var node:AnimationNode = animator._avatarNodeMap[name];//TODO:骨骼重名时存在问题
+			if (node && node.name === name && !_transform.dummy) //判断!sprite._transform.dummy重名节点可按顺序依次匹配。
+				_isLinkSpriteToAnimationNode(animator, node, isLink);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setAnimatorToLinkAvatar(animator:Animator, isLink:Boolean):void {
+			_handleSpriteToAvatar(animator, isLink);
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var child:Sprite3D = _childs[i];
+				child._setAnimatorToLinkAvatar(animator, isLink);
+			}
+		}
+		//兼容代码
 	}
 }

@@ -6,7 +6,6 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Physics;
-	import laya.utils.Stat;
 	
 	/**
 	 * <code>ShurikenParticleRender</code> 类用于创建3D粒子渲染器。

@@ -1,4 +1,3 @@
-#include?VR "VRHelper.glsl";
 attribute vec4 a_Position;
 uniform mat4 u_MvpMatrix;
 
@@ -7,10 +6,6 @@ uniform mat4 u_MvpMatrix;
 #if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))||(defined(LIGHTMAP)&&defined(UV))
 attribute vec2 a_Texcoord0;
 varying vec2 v_Texcoord0;
-  #ifdef MIXUV
-  attribute vec2 a_TexcoordNext0;
-  uniform float  u_UVAge;
-  #endif
   #ifdef UVTRANSFORM 
   uniform mat4 u_UVMatrix;
   #endif
@@ -74,17 +69,9 @@ void main_castShadow()
 	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
 	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
 	vec4 position=skinTransform*a_Position;
-	#ifdef VR
-		gl_Position = DistortFishEye(u_MvpMatrix * position);
-	#else
-		gl_Position = u_MvpMatrix * position;
-	#endif
+	gl_Position = u_MvpMatrix * position;
 #else
-	#ifdef VR
-		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);
-	#else
-		gl_Position = u_MvpMatrix * a_Position;
-	#endif
+	gl_Position = u_MvpMatrix * a_Position;
 #endif
  
 //TODO没考虑UV动画呢
@@ -103,17 +90,9 @@ void main_normal()
 	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
 	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
 	vec4 position=skinTransform*a_Position;
-	#ifdef VR
-		gl_Position = DistortFishEye(u_MvpMatrix * position);
-	#else
-		gl_Position = u_MvpMatrix * position;
-	#endif
+	gl_Position = u_MvpMatrix * position;
 #else
-	#ifdef VR
-		gl_Position = DistortFishEye(u_MvpMatrix * a_Position);
-	#else
-		gl_Position = u_MvpMatrix * a_Position;
-	#endif
+	gl_Position = u_MvpMatrix * a_Position;
 #endif
 
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
@@ -138,11 +117,7 @@ void main_normal()
 #endif
 
 #if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(COLOR)&&defined(SPECULARMAP)||defined(NORMALMAP)))
-	#ifdef MIXUV
-		v_Texcoord0=mix(a_Texcoord0,a_TexcoordNext0,u_UVAge);
-	#else
-		v_Texcoord0=a_Texcoord0;
-	#endif
+	v_Texcoord0=a_Texcoord0;
 	#ifdef TILINGOFFSET
 		v_Texcoord0=(v_Texcoord0*u_TilingOffset.xy)+u_TilingOffset.zw;
 	#endif

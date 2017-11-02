@@ -5,7 +5,6 @@ package laya.d3.core.render {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.scene.ITreeNode;
 	import laya.d3.core.scene.Scene;
-	import laya.d3.graphics.StaticBatch;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;

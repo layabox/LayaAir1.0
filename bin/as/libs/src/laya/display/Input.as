@@ -311,6 +311,10 @@ package laya.display {
 			
 			inputElement = (_multiline ? area : input);
 			inputContainer.appendChild(inputElement);
+			if (Text.RightToLeft)
+			{
+				inputElement.style.direction = "rtl";
+			}
 		}
 		
 		private function _focusIn():void {

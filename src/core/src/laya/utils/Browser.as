@@ -44,6 +44,10 @@ package laya.utils {
 		public static var onMQQBrowser:Boolean;
 		/** 表示是否在移动端 Safari。*/
 		public static var onSafari:Boolean;
+		/** 表示是否在Firefox。*/
+		public static var onFirefox:Boolean;
+		/** 表示是否在Edge。*/
+		public static var onEdge:Boolean;
 		/** 表示是否在IE浏览器内*/
 		public static var onIE:Boolean;
 		/** 微信内*/
@@ -102,6 +106,8 @@ package laya.utils {
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
 			onSafari = /*[STATIC SAFE]*/ !!u.match(/Version\/\d+\.\d\x20Mobile\/\S+\x20Safari/);
+			onFirefox = /*[STATIC SAFE]*/ u.indexOf('Firefox') > -1;
+			onEdge = /*[STATIC SAFE]*/ u.indexOf('Edge') > -1;
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			
 			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;

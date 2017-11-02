@@ -653,7 +653,7 @@ package laya.d3.shadowMap {
 			tempPosElement[2] = tempValueElement[2] - tempPosElement[2];
 			curLightCamera.transform.position = _tempPos;
 			curLightCamera.transform.lookAt(_tempLookAt3, _tempLightUp, false);
-			Matrix4x4.createOrthogonal(tempMinElements[0], tempMaxElements[0], tempMinElements[1], tempMaxElements[1], 1.0, farPlane + 0.5 * (tempMaxElements[2] - tempMinElements[2]), curLightCamera.projectionMatrix);
+			Matrix4x4.createOrthoOffCenterRH(tempMinElements[0], tempMaxElements[0], tempMinElements[1], tempMaxElements[1], 1.0, farPlane + 0.5 * (tempMaxElements[2] - tempMinElements[2]), curLightCamera.projectionMatrix);
 			
 			//calc frustum
 			curLightCamera.projectionViewMatrix.cloneTo(_lightVPMatrix[_currentPSSM]);

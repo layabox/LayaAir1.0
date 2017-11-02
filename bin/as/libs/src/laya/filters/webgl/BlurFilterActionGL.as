@@ -37,12 +37,12 @@ package laya.filters.webgl {
 		}
 		
 		override public function setValue(shader:*):void {
-			shader.strength = data.strength;//
-			var sigma:Number = data.strength/3.0;//
+			shader.strength = data.strength;//���shader�в����ã�����ע�͵���ʲô������ʾ��
+			var sigma:Number = data.strength/3.0;//3������Ӱ���С��������=1��ʱ�򣬰뾶Ϊ3;
 			var sigma2:Number = sigma*sigma;
 			data.strength_sig2_2sig2_gauss1[0] = data.strength;
 			//data.strength_sig2_2sig2_gauss1[1] = sigma;
-			data.strength_sig2_2sig2_gauss1[1] = sigma2;			//
+			data.strength_sig2_2sig2_gauss1[1] = sigma2;			//��һЩԤ���㴫��shader�����Ч��
 			data.strength_sig2_2sig2_gauss1[2] = 2.0*sigma2;
 			data.strength_sig2_2sig2_gauss1[3] = 1.0/(2.0*Math.PI*sigma2);
 			shader.strength_sig2_2sig2_gauss1 = data.strength_sig2_2sig2_gauss1;

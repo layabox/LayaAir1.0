@@ -11,7 +11,6 @@ package laya.d3.shader {
 		public static var debugMode:Boolean = false;
 		
 		public static var SHADERDEFINE_HIGHPRECISION:int = 0x1;
-		public static var SHADERDEFINE_VR:int = 0x2;
 		public static var SHADERDEFINE_FOG:int = 0x4;
 		public static var SHADERDEFINE_DIRECTIONLIGHT:int = 0x8;
 		public static var SHADERDEFINE_POINTLIGHT:int = 0x10;
@@ -34,7 +33,6 @@ package laya.d3.shader {
 		 */
 		public static function __init__():void {
 			_globalRegDefine("HIGHPRECISION", SHADERDEFINE_HIGHPRECISION);
-			_globalRegDefine("VR", SHADERDEFINE_VR);
 			_globalRegDefine("FOG", SHADERDEFINE_FOG);
 			_globalRegDefine("DIRECTIONLIGHT", SHADERDEFINE_DIRECTIONLIGHT);
 			_globalRegDefine("POINTLIGHT", SHADERDEFINE_POINTLIGHT);

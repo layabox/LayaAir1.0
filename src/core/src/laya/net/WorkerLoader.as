@@ -157,10 +157,13 @@ package laya.net
 					break;
 				case "imageBitmap":
 					imageData = data.imageBitmap;
-					if (!Render.isWebGL){
+					if (!Render.isWebGL) {
+						canvas = new HTMLCanvas("2D");
+						ctx = canvas.source.getContext("2d");
 						canvas.size(imageData.width, imageData.height);
 						ctx.drawImage(imageData, 0, 0);
-					}
+						canvas.src = data.url;
+					}else
 					canvas = imageData;
 					break;
 			}

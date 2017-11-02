@@ -234,8 +234,8 @@ package laya.d3.math {
 			var _tempV32eZ:Number = _tempV32e[2];
 			
 			_tempV32eX = (rayDeY * _tempV31eZ) - (rayDeZ * _tempV31eY);
-            _tempV32eY = (rayDeZ * _tempV31eX) - (rayDeX * _tempV31eZ);
-            _tempV32eZ = (rayDeX * _tempV31eY) - (rayDeY * _tempV31eX);
+			_tempV32eY = (rayDeZ * _tempV31eX) - (rayDeX * _tempV31eZ);
+			_tempV32eZ = (rayDeX * _tempV31eY) - (rayDeY * _tempV31eX);
 			
 			var determinant:Number = (_tempV30eX * _tempV32eX) + (_tempV30eY * _tempV32eY) + (_tempV30eZ * _tempV32eZ);
 			
@@ -994,8 +994,8 @@ package laya.d3.math {
 				return ContainmentType.Disjoint;
 				
 			if ((((boxMineX + sphereR <= sphereCeX) && (sphereCeX <= boxMaxeX - sphereR)) && ((boxMaxeX - boxMineX > sphereR) &&
-                (boxMineY + sphereR <= sphereCeY))) && (((sphereCeY <= boxMaxeY - sphereR) && (boxMaxeY - boxMineY > sphereR)) &&
-                (((boxMineZ + sphereR <= sphereCeZ) && (sphereCeZ <= boxMaxeZ - sphereR)) && (boxMaxeZ - boxMineZ > sphereR))))
+			    (boxMineY + sphereR <= sphereCeY))) && (((sphereCeY <= boxMaxeY - sphereR) && (boxMaxeY - boxMineY > sphereR)) &&
+			    (((boxMineZ + sphereR <= sphereCeZ) && (sphereCeZ <= boxMaxeZ - sphereR)) && (boxMaxeZ - boxMineZ > sphereR))))
 				return ContainmentType.Contains;
 			
 			return ContainmentType.Intersects;
@@ -1010,9 +1010,9 @@ package laya.d3.math {
 		public static function sphereContainsPoint(sphere:BoundSphere, point:Vector3):int{
 			
 			if (Vector3.distanceSquared(point, sphere.center) <= sphere.radius * sphere.radius)
-                return ContainmentType.Contains;
+			    return ContainmentType.Contains;
 
-            return ContainmentType.Disjoint;
+			return ContainmentType.Disjoint;
 		}
 		
 		/**
@@ -1077,50 +1077,50 @@ package laya.d3.math {
 			var radiusSquared:Number = sphereR * sphereR;
 			
 			_tempV30eX = sphereCeX - boxMineX;
-            _tempV30eY = sphereCeY - boxMaxeY;
-            _tempV30eZ = sphereCeZ - boxMaxeZ;
+			_tempV30eY = sphereCeY - boxMaxeY;
+			_tempV30eZ = sphereCeZ - boxMaxeZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
 			_tempV30eX = sphereCeX - boxMaxeX;
-            _tempV30eY = sphereCeY - boxMaxeY;
-            _tempV30eZ = sphereCeZ - boxMaxeZ;
+			_tempV30eY = sphereCeY - boxMaxeY;
+			_tempV30eZ = sphereCeZ - boxMaxeZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
 			_tempV30eX = sphereCeX - boxMaxeX;
-            _tempV30eY = sphereCeY - boxMineY;
-            _tempV30eZ = sphereCeZ - boxMaxeZ;
+			_tempV30eY = sphereCeY - boxMineY;
+			_tempV30eZ = sphereCeZ - boxMaxeZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
 			_tempV30eX = sphereCeX - boxMineX;
-            _tempV30eY = sphereCeY - boxMineY;
-            _tempV30eZ = sphereCeZ - boxMaxeZ;
+			_tempV30eY = sphereCeY - boxMineY;
+			_tempV30eZ = sphereCeZ - boxMaxeZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
 			_tempV30eX = sphereCeX - boxMineX;
-            _tempV30eY = sphereCeY - boxMaxeY;
-            _tempV30eZ = sphereCeZ - boxMineZ;
+			_tempV30eY = sphereCeY - boxMaxeY;
+			_tempV30eZ = sphereCeZ - boxMineZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
 			_tempV30eX = sphereCeX - boxMaxeX;
-            _tempV30eY = sphereCeY - boxMaxeY;
-            _tempV30eZ = sphereCeZ - boxMineZ;
+			_tempV30eY = sphereCeY - boxMaxeY;
+			_tempV30eZ = sphereCeZ - boxMineZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
 			_tempV30eX = sphereCeX - boxMaxeX;
-            _tempV30eY = sphereCeY - boxMineY;
-            _tempV30eZ = sphereCeZ - boxMineZ;
+			_tempV30eY = sphereCeY - boxMineY;
+			_tempV30eZ = sphereCeZ - boxMineZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 			
 			_tempV30eX = sphereCeX - boxMineX;
-            _tempV30eY = sphereCeY - boxMineY;
-            _tempV30eZ = sphereCeZ - boxMineZ;
+			_tempV30eY = sphereCeY - boxMineY;
+			_tempV30eZ = sphereCeZ - boxMineZ;
 			if (Vector3.scalarLengthSquared(_tempV30) > radiusSquared)
 				return ContainmentType.Intersects;
 				
@@ -1207,7 +1207,7 @@ package laya.d3.math {
 			}
 			
 			var va:Number = d3 * d6 - d5 * d4;
-            if (va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0){
+			if (va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0){
 				var w3:Number = (d4 - d3) / ((d4 - d3) + (d5 - d6));
 				Vector3.subtract(vertex3, vertex2, out);
 				Vector3.scale(out, w3, out);

@@ -3,6 +3,7 @@ package laya.d3.component {
 	import laya.ani.AnimationState;
 	import laya.ani.AnimationTemplet;
 	import laya.d3.component.animation.SkinAnimations;
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
@@ -39,9 +40,9 @@ package laya.d3.component {
 		 * 初始化载入挂点组件。
 		 * @param	owner 所属精灵对象。
 		 */
-		override public function _load(owner:Sprite3D):void {
+		override public function _load(owner:ComponentNode):void {
 			super._load(owner);
-			_attachSkeleton = owner.getComponentByType(SkinAnimations) as SkinAnimations;
+			_attachSkeleton = (owner as Sprite3D).getComponentByType(SkinAnimations) as SkinAnimations;
 		}
 		
 		/**
@@ -57,7 +58,7 @@ package laya.d3.component {
 			var templet:AnimationTemplet = _attachSkeleton.templet;
 			matrixs.length = attachBones.length;
 			var boneDatas:Float32Array = _attachSkeleton.curBonesDatas;
-			var worldMatrix:Matrix4x4 = owner.transform.worldMatrix;
+			var worldMatrix:Matrix4x4 = (owner as Sprite3D).transform.worldMatrix;
 			for (var i:int, n:int = attachBones.length; i < n; i++) {
 				var startIndex:int = templet.getNodeIndexWithName(player.currentAnimationClipIndex, attachBones[i]) * 16;
 				var matrix:Matrix4x4 = matrixs[i];

@@ -44,8 +44,8 @@ var CustomMesh = (function () {
         this.loadUI();
     }
     CustomMesh.prototype.loadUI = function () {
-        Laya.loader.load(["res/threeDimen/ui/button.png"], Laya.Handler.create(this, function () {
-            var changeActionButton = Laya.stage.addChild(new Laya.Button("res/threeDimen/ui/button.png", "正常模式"));
+        Laya.loader.load(["../../res/threeDimen/ui/button.png"], Laya.Handler.create(this, function () {
+            var changeActionButton = Laya.stage.addChild(new Laya.Button("../../res/threeDimen/ui/button.png", "正常模式"));
             changeActionButton.size(160, 40);
             changeActionButton.labelBold = true;
             changeActionButton.labelSize = 30;

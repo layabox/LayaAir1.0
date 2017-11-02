@@ -37,6 +37,8 @@
 	uniform SpotLight u_SpotLight;
 #endif
 
+uniform vec3 u_AmbientColor;
+
 #include "ShadowHelper.glsl"
 #ifdef RECEIVESHADOW
 	#if defined(SHADOWMAP_PSSM2)||defined(SHADOWMAP_PSSM3)
@@ -118,21 +120,21 @@ void main()
 #endif
 
 #ifdef DIRECTIONLIGHT
-	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,normal,toEye, dif, amb, spe);
+	computeDirectionLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_DirectionLight,u_AmbientColor,normal,toEye, dif, amb, spe);
 	diffuse+=dif;
 	ambient+=amb;
 	specular+=spe;
 #endif
  
 #ifdef POINTLIGHT
-	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,v_PositionWorld,normal,toEye, dif, amb, spe);
+	computePointLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_PointLight,u_AmbientColor,v_PositionWorld,normal,toEye, dif, amb, spe);
 	diffuse+=dif;
 	ambient+=amb;
 	specular+=spe;
 #endif
 
 #ifdef SPOTLIGHT
-	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,v_PositionWorld,normal,toEye, dif, amb, spe);
+	ComputeSpotLight(u_MaterialDiffuse,u_MaterialAmbient,u_MaterialSpecular,u_SpotLight,u_AmbientColor,v_PositionWorld,normal,toEye, dif, amb, spe);
 	diffuse+=dif;
 	ambient+=amb;
 	specular+=spe;

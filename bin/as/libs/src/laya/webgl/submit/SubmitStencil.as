@@ -1,24 +1,17 @@
 package laya.webgl.submit {
 	import laya.maths.Matrix;
 	import laya.maths.Rectangle;
-	import laya.webgl.canvas.BlendMode;
-	import laya.webgl.canvas.WebGLContext2D;
-	import laya.webgl.submit.ISubmit;
+	import laya.resource.Texture;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.utils.GlUtils;
-	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.VertexBuffer2D;
-	import laya.resource.Texture;
-	import laya.webgl.shader.Shader;
+	import laya.webgl.canvas.BlendMode;
+	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
-	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
-	import laya.webgl.shader.d2.value.FillTextureSV;
-	import laya.webgl.shader.d2.value.PrimitiveSV;
-	import laya.webgl.shader.d2.value.TextSV;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.shader.d2.value.Color2dSV;
+	import laya.webgl.utils.Buffer2D;
+	import laya.webgl.utils.GlUtils;
+	import laya.webgl.utils.VertexBuffer2D;
 
 	public class SubmitStencil implements ISubmit
 	{
