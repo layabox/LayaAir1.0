@@ -1024,7 +1024,6 @@ package laya.d3.math {
 		 * @return  返回空间位置关系
 		 */
 		public static function sphereContainsTriangle(sphere:BoundSphere, vertex1:Vector3, vertex2:Vector3, vertex3:Vector3):int{
-			
 			var test1:int = sphereContainsPoint(sphere, vertex1);
 			var test2:int = sphereContainsPoint(sphere, vertex2);
 			var test3:int = sphereContainsPoint(sphere, vertex3);

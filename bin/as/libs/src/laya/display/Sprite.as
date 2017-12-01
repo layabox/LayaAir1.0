@@ -1448,7 +1448,7 @@ package laya.display {
 				cc.ctx.canvas.size(0, 0);
 				cc.ctx = null;
 			}
-			_$P.cacheCanvas = null;
+			//_$P.cacheCanvas = null;
 			var fc:* = _$P._filterCache;
 			//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
 			if (fc) {

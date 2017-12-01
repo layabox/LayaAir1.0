@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var VRCameraMoveScript = (function (_super) {
+var VRCameraMoveScript = /** @class */ (function (_super) {
     __extends(VRCameraMoveScript, _super);
     function VRCameraMoveScript() {
         var _this = _super.call(this) || this;

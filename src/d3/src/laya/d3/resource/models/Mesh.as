@@ -36,12 +36,41 @@ package laya.d3.resource.models {
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;
 		
+		
+		
 		/**
-		 * 获取网格顶点
+		 * 获取材质队列的浅拷贝。
+		 * @return  材质队列的浅拷贝。
+		 */
+		public function get materials():Vector.<BaseMaterial> {//兼容代码
+			return _materials.slice();
+		}
+		
+		/**
+		 * 获取网格的全局默认绑定动作逆矩阵。
+		 * @return  网格的全局默认绑定动作逆矩阵。
+		 */
+		public function get InverseAbsoluteBindPoses():Vector.<Matrix4x4> {
+			return _inverseBindPoses;
+		}
+		
+		/**
+		 * 创建一个 <code>Mesh</code> 实例,禁止使用。
+		 * @param url 文件地址。
+		 */
+		public function Mesh() {
+			super();
+			_subMeshes = new Vector.<SubMesh>();
+			_materials = new Vector.<BaseMaterial>();
+			_vertexBuffers = new Vector.<VertexBuffer3D>();
+		}
+		
+		/**
+		 * 获取网格顶点，并产生数据
 		 * @return 网格顶点。
 		 */
-		override public function get positions():Array {
-			var vertices:Array = [];
+		override public function _getPositions():Vector.<Vector3> {
+			var vertices:Vector.<Vector3> = new Vector.<Vector3>();
 			var i:int, j:int, vertexBuffer:VertexBuffer3D, positionElement:VertexElement, vertexElements:Array, vertexElement:VertexElement, ofset:int, verticesData:Float32Array;
 			if (_vertexBuffers.length !== 0) {
 				var vertexBufferCount:int = _vertexBuffers.length;
@@ -89,33 +118,6 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 获取材质队列的浅拷贝。
-		 * @return  材质队列的浅拷贝。
-		 */
-		public function get materials():Vector.<BaseMaterial> {//兼容代码
-			return _materials.slice();
-		}
-		
-		/**
-		 * 获取网格的全局默认绑定动作逆矩阵。
-		 * @return  网格的全局默认绑定动作逆矩阵。
-		 */
-		public function get InverseAbsoluteBindPoses():Vector.<Matrix4x4> {
-			return _inverseBindPoses;
-		}
-		
-		/**
-		 * 创建一个 <code>Mesh</code> 实例,禁止使用。
-		 * @param url 文件地址。
-		 */
-		public function Mesh() {
-			super();
-			_subMeshes = new Vector.<SubMesh>();
-			_materials = new Vector.<BaseMaterial>();
-			_vertexBuffers = new Vector.<VertexBuffer3D>();
-		}
-		
-		/**
 		 * 添加子网格（开发者禁止修改）。
 		 * @param subMesh 子网格。
 		 */
@@ -126,7 +128,7 @@ package laya.d3.resource.models {
 			
 			for (var i:int = 0; i < _subMeshCount; i++)
 				subMeshes[i]._indexInMesh = i;
-			
+			_positions = _getPositions();
 			_generateBoundingObject();
 		}
 		

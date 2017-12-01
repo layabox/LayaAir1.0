@@ -1,4 +1,4 @@
-var Shader_Terrain = (function () {
+var Shader_Terrain = /** @class */ (function () {
     function Shader_Terrain() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

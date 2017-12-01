@@ -2,6 +2,8 @@ package {
 	import laya.ani.AnimationTemplet;
 	import laya.d3.animation.AnimationClip;
 	import laya.d3.animation.AnimationNode;
+	import laya.d3.component.Script;
+	import laya.d3.component.physics.Collider;
 	import laya.d3.core.Avatar;
 	import laya.d3.core.Layer;
 	import laya.d3.core.MeshSprite3D;
@@ -13,6 +15,9 @@ package {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.OctreeNode;
 	import laya.d3.core.scene.Scene;
+	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Collision;
+	import laya.d3.math.ContainmentType;
 	import laya.d3.resource.DataTexture2D;
 	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.TextureCube;
@@ -21,6 +26,8 @@ package {
 	import laya.d3.shader.ShaderInit3D;
 	import laya.d3.terrain.TerrainHeightData;
 	import laya.d3.terrain.TerrainRes;
+	import laya.d3.utils.CollisionManager;
+	import laya.d3.utils.Physics;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -34,6 +41,7 @@ package {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
+	import zTest.BoneAttachPoint;
 	
 	/**
 	 * <code>Laya3D</code> 类用于初始化3D设置。
@@ -247,10 +255,9 @@ package {
 				switch (k) {
 				case "Animator": 
 					var avatarPath:String = component.avatarPath;
-					if (avatarPath){//兼容代码
+					if (avatarPath) {//兼容代码
 						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, avatarPath, Avatar);
-					}
-					else{
+					} else {
 						var avatarData:Object = component.avatar;
 						(avatarData) && (_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, avatarData.path, Avatar));
 					}
@@ -272,13 +279,13 @@ package {
 		 */
 		private static function _loadHierarchy(loader:Loader):void {
 			loader.on(Event.LOADED, null, _onHierarchylhLoaded, [loader]);
-			loader.load(loader.url, Loader.TEXT, false, null, true);
+			loader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
 		/**
 		 *@private
 		 */
-		private static function _onHierarchylhLoaded(loader:Loader, lhData:String):void {
+		private static function _onHierarchylhLoaded(loader:Loader, lhData:Object):void {
 			var url:String = loader.url;
 			var urlVersion:String = Utils3D.getURLVerion(url);
 			var hierarchyBasePath:String = URL.getPath(URL.formatURL(url));
@@ -286,8 +293,7 @@ package {
 			var secondLevUrls:Array = [];
 			var forthLevUrls:Array = [];
 			var urlMap:Object = {};
-			var hierarchyData:Object = JSON.parse(lhData);
-			_getSprite3DHierarchyInnerUrls(hierarchyData, firstLevUrls, secondLevUrls, forthLevUrls, urlMap, urlVersion, hierarchyBasePath);
+			_getSprite3DHierarchyInnerUrls(lhData, firstLevUrls, secondLevUrls, forthLevUrls, urlMap, urlVersion, hierarchyBasePath);
 			var urlCount:int = firstLevUrls.length + secondLevUrls.length + forthLevUrls.length;
 			var totalProcessCount:int = urlCount + 1;
 			var weight:Number = 1 / totalProcessCount;
@@ -447,6 +453,7 @@ package {
 			switch (version) {
 			case "LAYAMODEL:02": 
 			case "LAYAMODEL:03": 
+			case "LAYAMODEL:0301": 
 				var dataOffset:uint = _readData.getUint32();
 				_readData.pos = _readData.pos + 4;//跳过数据信息区
 				
@@ -680,12 +687,18 @@ package {
 			(process < 1.0) && (loader.event(Event.PROGRESS, process));
 		}
 		
+		
+		
 		/**
 		 * 初始化Laya3D相关设置。
 		 * @param	width  3D画布宽度。
 		 * @param	height 3D画布高度。
 		 */
 		public static function init(width:Number, height:Number, antialias:Boolean = false, alpha:Boolean = false, premultipliedAlpha:Boolean = true, stencil:Boolean = true):void {
+			RunDriver.update3DLoop = function():void {
+				CollisionManager._triggerCollision();
+			}
+			
 			Config.isAntialias = antialias;
 			Config.isAlpha = alpha;
 			Config.premultipliedAlpha = premultipliedAlpha;
@@ -700,6 +713,7 @@ package {
 			Render.is3DMode = true;
 			Laya.init(width, height);
 			Layer.__init__();
+			Physics.__init__();
 			ShaderCompile3D.__init__();
 			ShaderInit3D.__init__();
 			MeshSprite3D.__init__();

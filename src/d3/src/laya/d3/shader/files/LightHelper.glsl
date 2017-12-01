@@ -24,6 +24,24 @@ struct SpotLight
 };
 
 
+vec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangent)
+{
+	vec3 normalT = 2.0*normalMapSample - 1.0;
+
+	// Build orthonormal basis.
+	vec3 N = normalize(unitNormal);
+	vec3 T = normalize(tangent- dot(tangent, N)*N);
+	vec3 B = cross(T, N);
+
+	mat3 TBN = mat3(T, B, N);
+
+	// Transform from tangent space to world space.
+	vec3 bumpedNormal = TBN*normalT;
+
+	return bumpedNormal;
+}
+
+
 void  computeDirectionLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in DirectionLight dirLight,in vec3 ambinentColor,in vec3 normal,in vec3 toEye,out vec3 dif,out vec3 amb,out vec3 spec)
 {
 	dif=vec3(0.0);//不初始化在IOS中闪烁，PC中不会闪烁
@@ -115,19 +133,3 @@ void ComputeSpotLight(in vec3 matDif,in vec3 matAmb,in vec4 matSpe,in SpotLight 
 	spec*= attenuate;
 }
 
-vec3 NormalSampleToWorldSpace(vec3 normalMapSample, vec3 unitNormal, vec3 tangent)
-{
-	vec3 normalT = 2.0*normalMapSample - 1.0;
-
-	// Build orthonormal basis.
-	vec3 N = normalize(unitNormal);
-	vec3 T = normalize(tangent- dot(tangent, N)*N);
-	vec3 B = cross(T, N);
-
-	mat3 TBN = mat3(T, B, N);
-
-	// Transform from tangent space to world space.
-	vec3 bumpedNormal = TBN*normalT;
-
-	return bumpedNormal;
-}

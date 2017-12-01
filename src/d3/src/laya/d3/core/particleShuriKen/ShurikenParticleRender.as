@@ -2,6 +2,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
@@ -135,7 +136,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _calculateBoundingBox():void {
+		override protected function _calculateBoundingBox():void {//TODO:日后需要计算包围盒的更新
 			//var particleSystem:ShurikenParticleSystem = (_owner as ShuriKenParticle3D).particleSystem;
 			//particleSystem._generateBoundingBox();
 			//var rotation:Quaternion = _owner.transform.rotation;
@@ -157,12 +158,22 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _calculateBoundingSphere():void {//TODO:更具粒子参数计算
-			var centerE:Float32Array = _boundingSphere.center.elements;
-			centerE[0] = 0;
-			centerE[1] = 0;
-			centerE[2] = 0;
-			_boundingSphere.radius = Number.MAX_VALUE;
+		override protected function _calculateBoundingSphere():void {
+			var oriBoundSphere:BoundSphere = (_owner as ShuriKenParticle3D).particleSystem._boundingSphere;
+			var maxScale:Number;
+			var transform:Transform3D = _owner.transform;
+			var scaleE:Float32Array = transform.scale.elements;
+			var scaleX:Number = Math.abs(scaleE[0]);
+			var scaleY:Number = Math.abs(scaleE[1]);
+			var scaleZ:Number = Math.abs(scaleE[2]);
+			
+			if (scaleX >= scaleY && scaleX >= scaleZ)
+				maxScale = scaleX;
+			else
+				maxScale = scaleY >= scaleZ ? scaleY : scaleZ;
+			
+			Vector3.transformCoordinate(oriBoundSphere.center, transform.worldMatrix, _boundingSphere.center);
+			_boundingSphere.radius = oriBoundSphere.radius * maxScale;
 		}
 		
 		/**

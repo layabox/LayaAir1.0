@@ -333,16 +333,16 @@ package laya.d3.shadowMap {
 			sceneSV.setValue(Scene.SHADOWMAPPCFOFFSET, _shadowPCFOffset.elements);
 			switch (_numberOfPSSM) {
 			case 3: 
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2).source);
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE3, getRenderTarget(3).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1));
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2));
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE3, getRenderTarget(3));
 				break;
 			case 2: 
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1));
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2));
 				break;
 			case 1: 
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1).source);
+				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1));
 				break;
 			}
 		}
@@ -619,7 +619,7 @@ package laya.d3.shadowMap {
 			 */
 			Matrix4x4.multiply(curLightCamera.viewMatrix, cameraMatViewInv, _tempMatrix44);
 			var tempValueElement:Float32Array = _tempValue.elements;
-			var corners:Array =[];
+			var corners:Vector.<Vector3> =new Vector.<Vector3>();
 			corners.length = 8;
 			_boundingBox[_currentPSSM].getCorners(corners);
 			for (var i:int = 0; i < 8; i++) {

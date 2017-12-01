@@ -1,4 +1,4 @@
-var StandardMaterial_ReflectMap = (function () {
+var StandardMaterial_ReflectMap = /** @class */ (function () {
     function StandardMaterial_ReflectMap() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

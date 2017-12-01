@@ -139,20 +139,18 @@ package laya.d3.core.material {
 			case RENDERMODE_OPAQUE: 
 				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = true;
-				depthTest = true;
 				cull = CULL_BACK;
 				blend = BLEND_DISABLE;
-				depthFunc = DEPTHFUNC_LESS;
+				depthTest = DEPTHTEST_LESS;
 				break;
 			case RENDERMODE_TRANSPARENT: 
 				renderQueue = RenderQueue.OPAQUE;
 				depthWrite = false;
-				depthTest = true;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
 				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				depthFunc = DEPTHFUNC_LEQUAL;
+				depthTest = DEPTHTEST_LEQUAL;
 				break;
 			default: 
 				throw new Error("TerrainMaterial:renderMode value error.");

@@ -1,15 +1,22 @@
 package laya.d3.animation {
+	import laya.d3.component.Animator;
+	import laya.d3.core.Avatar;
 	import laya.d3.core.IClone;
 	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.RenderableSprite3D;
+	import laya.d3.core.SkinnedMeshRender;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.utils.Utils3D;
 	
 	/**
 	 * <code>BoneNode</code> 类用于实现骨骼节点。

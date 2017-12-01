@@ -69,7 +69,8 @@ package physicsModule {
             planeMat.diffuseTexture = Texture2D.load("../../../../res/threeDimen/texture/layabox.png");
             planeMat.albedo = new Vector4(0.9, 0.9, 0.9, 1);
             plane.meshRender.material = planeMat;
-            plane.addComponent(BoxCollider);
+            var boxCollider:BoxCollider = plane.addComponent(BoxCollider) as BoxCollider;
+			boxCollider.setFromBoundBox(plane.meshFilter.sharedMesh.boundingBox);
             plane.name = "平面";
             
             //正方体
@@ -79,7 +80,8 @@ package physicsModule {
             box.meshRender.material = boxMat;
             box.transform.position = new Vector3(1.5, 0.25, 0.5);
             box.transform.rotate(new Vector3(0, 30, 0), false, false);
-            box.addComponent(BoxCollider);
+			var boxCollider1:BoxCollider = box.addComponent(BoxCollider) as BoxCollider;
+			boxCollider1.setFromBoundBox(box.meshFilter.sharedMesh.boundingBox);
             box.name = "正方体";
             
             //球体
@@ -89,7 +91,9 @@ package physicsModule {
             sphere.meshRender.material = sphereMat;
             sphere.transform.position = new Vector3(0.5, 0.25, 0.5);
             sphere.transform.rotate(new Vector3(0, 90, 0), false, false);
-            sphere.addComponent(SphereCollider);
+			var sphereCollider:SphereCollider = sphere.addComponent(SphereCollider) as SphereCollider;
+			sphereCollider.center = sphere.meshFilter.sharedMesh.boundingSphere.center.clone();
+			sphereCollider.radius = sphere.meshFilter.sharedMesh.boundingSphere.radius;
             sphere.name = "球体";
             
             //圆柱体
@@ -99,7 +103,8 @@ package physicsModule {
             cylinder.meshRender.material = cylinderMat;
             cylinder.transform.position = new Vector3(-0.5, 0.5, 0.5);
             cylinder.transform.rotate(new Vector3(0, -45, 0), false, false);
-            cylinder.addComponent(MeshCollider);
+			var cylinderMeshCollider:MeshCollider = cylinder.addComponent(MeshCollider) as MeshCollider;
+			cylinderMeshCollider.mesh = cylinder.meshFilter.sharedMesh;
             cylinder.name = "圆柱体";
             
             //胶囊体
@@ -109,7 +114,8 @@ package physicsModule {
             capsule.meshRender.material = capsuleMat;
             capsule.transform.position = new Vector3(-1.5, 0.5, 0.5);
             capsule.transform.rotate(new Vector3(0, -45, 0), false, false);
-            capsule.addComponent(MeshCollider);
+			var capsuleMeshCollider:MeshCollider = capsule.addComponent(MeshCollider) as MeshCollider;
+			capsuleMeshCollider.mesh = capsule.meshFilter.sharedMesh;
             capsule.name = "胶囊体";
             
             Laya.timer.frameLoop(1, this, checkHit);

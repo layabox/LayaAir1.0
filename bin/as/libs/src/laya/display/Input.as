@@ -295,6 +295,7 @@ package laya.display {
 				} else {
 					input.target = null;
 					_focusOut();
+					Browser.document.body.scrollTop = 0;
 					input.blur();
 					
 					if (Render.isConchApp) {

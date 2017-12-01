@@ -1,4 +1,4 @@
-var RenderTextureDemo = (function () {
+var RenderTextureDemo = /** @class */ (function () {
     function RenderTextureDemo() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

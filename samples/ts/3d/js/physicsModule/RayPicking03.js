@@ -1,4 +1,4 @@
-var RayPicking03 = (function () {
+var RayPicking03 = /** @class */ (function () {
     function RayPicking03() {
         this.point = new Laya.Vector2();
         this._offsetVector3 = new Laya.Vector3(0, 0.25, 0);
@@ -29,7 +29,8 @@ var RayPicking03 = (function () {
         planeMat.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/texture/layabox.png");
         planeMat.albedo = new Laya.Vector4(0.9, 0.9, 0.9, 1);
         plane.meshRender.material = planeMat;
-        plane.addComponent(Laya.MeshCollider);
+        var meshCollider = plane.addComponent(Laya.MeshCollider);
+        meshCollider.mesh = plane.meshFilter.sharedMesh;
         this.box = scene.addChild(new Laya.MeshSprite3D(new Laya.BoxMesh(0.5, 0.5, 0.5)));
         var mat = new Laya.StandardMaterial();
         mat.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/texture/layabox.png");

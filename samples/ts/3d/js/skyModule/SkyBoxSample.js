@@ -1,4 +1,4 @@
-var SkyBoxSample = (function () {
+var SkyBoxSample = /** @class */ (function () {
     function SkyBoxSample() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

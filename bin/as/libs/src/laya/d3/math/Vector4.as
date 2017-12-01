@@ -108,6 +108,18 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 从Array数组拷贝值。
+		 * @param  array 数组。
+		 * @param  offset 数组偏移。
+		 */
+		public function fromArray(array:Array, offset:int = 0):void {
+			elements[0] = array[offset + 0];
+			elements[1] = array[offset + 1];
+			elements[2] = array[offset + 2];
+			elements[3] = array[offset + 3];
+		}
+		
+		/**
 		 * 克隆。
 		 * @param	destObject 克隆源。
 		 */

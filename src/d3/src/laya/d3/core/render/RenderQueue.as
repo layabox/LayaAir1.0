@@ -1,4 +1,5 @@
 package laya.d3.core.render {
+	import laya.d3.component.Component3D;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;

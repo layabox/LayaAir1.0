@@ -657,14 +657,17 @@ package laya.display {
 					}
 					return;
 				}
-				if (Render.isWebGL && renderingEnabled) {
-					context.clear();
-					super.render(context, x, y);
-				}
+				//if (Render.isWebGL && renderingEnabled) {
+					//context.clear();
+					//super.render(context, x, y);
+				//}
 			}
 			if (Render.isConchNode) return;//NATIVE
 			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
 				if (Render.isWebGL) {
+					context.clear();
+					super.render(context, x, y);
+					
 					RunDriver.clear(_bgColor);
 					RunDriver.beginFlush();
 					context.flush();

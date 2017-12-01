@@ -31,12 +31,12 @@ package laya.d3.math {
 		private static var _tempM1:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		private static var _corners:* = new Vector.<Vector3>();
+		private static var _corners:* = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
 		/** @private */
-		private static var _rows1:Vector.<Vector3> = new Vector.<Vector3>();
+		private static var _rows1:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3()];
 		/** @private */
-		private static var _rows2:Vector.<Vector3> = new Vector.<Vector3>();
+		private static var _rows2:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3()];
 		
 		/** @private */
 		private static var _ray:Ray = new Ray(new Vector3(), new Vector3());
@@ -63,7 +63,7 @@ package laya.d3.math {
 		 * 根据AABB包围盒创建一个 <code>OrientedBoundBox</code> 实例。
 		 * @param	box AABB包围盒。
 		 */
-		public static function createByBoundBox(box:BoundBox,out:OrientedBoundBox):void {
+		public static function createByBoundBox(box:BoundBox, out:OrientedBoundBox):void {
 			var min:Vector3 = box.min;
 			var max:Vector3 = box.max;
 			
@@ -104,20 +104,11 @@ package laya.d3.math {
 		 * @param	corners 返回顶点的输出队列。
 		 */
 		public function getCorners(corners:Vector.<Vector3>):void {
+			var xve:Float32Array = _tempV30.elements;//_tempV30 xv 
+			var yve:Float32Array = _tempV31.elements;//_tempV31 yv 
+			var zve:Float32Array = _tempV32.elements;//_tempV32 zv 
 			
 			var extentsE:Float32Array = extents.elements;
-			
-			corners.length = 8;
-			
-			//_tempV30 xv 
-			//_tempV31 yv 
-			//_tempV32 zv 
-			//_tempV33 center
-			
-			var xve:Float32Array = _tempV30.elements;
-			var yve:Float32Array = _tempV31.elements;
-			var zve:Float32Array = _tempV32.elements;
-			
 			xve[0] = extentsE[0];
 			xve[1] = xve[2] = 0;
 			
@@ -131,9 +122,10 @@ package laya.d3.math {
 			Vector3.TransformNormal(_tempV31, transformation, _tempV31);
 			Vector3.TransformNormal(_tempV32, transformation, _tempV32);
 			
-			var center:Vector3 = _tempV33;
+			var center:Vector3 = _tempV33;//_tempV33 center
 			transformation.getTranslationVector(center);
 			
+			corners.length = 8;
 			Vector3.add(center, _tempV30, _tempV34);
 			Vector3.add(_tempV34, _tempV31, _tempV34);
 			Vector3.add(_tempV34, _tempV32, corners[0]);
@@ -353,8 +345,6 @@ package laya.d3.math {
 				Vector3.scale(Vector3.UnitX, sphereR, _tempV31);
 				Vector3.TransformNormal(_tempV31, _tempM0, _tempV31);
 				locRadius = Vector3.scalarLength(_tempV31);
-				;
-				;
 			}
 			
 			Vector3.scale(extents, -1, _tempV32);
@@ -382,7 +372,6 @@ package laya.d3.math {
 		}
 		
 		private static function _getRows(mat:Matrix4x4, out:Vector.<Vector3>):void {
-			
 			out.length = 3;
 			
 			var mate:Float32Array = mat.elements;
@@ -409,9 +398,7 @@ package laya.d3.math {
 		 * @return  返回位置关系
 		 */
 		public function containsOrientedBoundBox(obb:OrientedBoundBox):int {
-			
 			var i:int, k:int;
-			
 			obb.getCorners(_corners);
 			var cornersCheck:int = containsPoints(_corners);
 			if (cornersCheck != ContainmentType.Disjoint)
@@ -425,12 +412,16 @@ package laya.d3.math {
 			_getRows(obb.transformation, _rows2);
 			
 			var extentA:Number, extentB:Number, separation:Number, dotNumber:Number;
-			
-			for (i = 0; i < 3; i++) {
-				for (k = 0; k < 3; k++) {
-					dotNumber = Vector3.dot(_rows1[i], _rows2[k]);
-					_tempM0.setElementByRowColumn(i, k, dotNumber);
-					_tempM1.setElementByRowColumn(i, k, Math.abs(dotNumber));
+			for (i = 0; i < 4; i++) {
+				for (k = 0; k < 4; k++) {
+					if (i == 3 || k == 3) {
+						_tempM0.setElementByRowColumn(i, k, 0);
+						_tempM1.setElementByRowColumn(i, k, 0);
+					} else {
+						dotNumber = Vector3.dot(_rows1[i], _rows2[k]);
+						_tempM0.setElementByRowColumn(i, k, dotNumber);
+						_tempM1.setElementByRowColumn(i, k, Math.abs(dotNumber));
+					}
 				}
 			}
 			
@@ -484,7 +475,7 @@ package laya.d3.math {
 					
 					var i1:Number = (i + 1) % 3, i2:Number = (i + 2) % 3;
 					var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
-					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeBe[i2] * _tempM1.getElementByRowColumn(i2, k);
+					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeBe[i2] * _tempM1.getElementByRowColumn(i1, k);
 					extentB = sizeAe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
 					separation = Math.abs(vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
 					if (separation > extentA + extentB)

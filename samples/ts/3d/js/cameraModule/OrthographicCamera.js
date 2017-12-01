@@ -1,4 +1,4 @@
-var OrthographicCamera = (function () {
+var OrthographicCamera = /** @class */ (function () {
     function OrthographicCamera() {
         this.pos = new Laya.Vector3(310, 500, 0);
         this._translate = new Laya.Vector3(0, 0, 0);
@@ -11,6 +11,7 @@ var OrthographicCamera = (function () {
         var camera = scene.addChild(new Laya.Camera(0, 0.1, 1000));
         camera.transform.rotate(new Laya.Vector3(-45, 0, 0), false, false);
         camera.transform.translate(new Laya.Vector3(0, 0.5, 500));
+        camera.orthographicProjection = true;
         camera.orthographic = true;
         //正交投影垂直矩阵尺寸
         camera.orthographicVerticalSize = 10;

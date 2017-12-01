@@ -1,4 +1,4 @@
-var Sprite3DClone = (function () {
+var Sprite3DClone = /** @class */ (function () {
     function Sprite3DClone() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

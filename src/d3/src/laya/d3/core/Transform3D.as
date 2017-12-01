@@ -270,7 +270,7 @@ package laya.d3.core {
 		public function get position():Vector3 {
 			if (_positionUpdate) {
 				if (_parent != null) {
-					var parentPosition:Vector3 = _parent.position;
+					var parentPosition:Vector3 = _parent.position;//放到下面会影响_tempVector30计算，造成混乱
 					Vector3.transformQuat(_localPosition, _parent.rotation, _tempVector30);
 					Vector3.multiply(_tempVector30, _parent.scale, _tempVector30);
 					Vector3.add(parentPosition, _tempVector30, _position);
@@ -290,7 +290,6 @@ package laya.d3.core {
 		public function set position(value:Vector3):void {
 			if (_parent != null) {
 				Vector3.subtract(value, _parent.position, _localPosition);
-				
 				var parentScaleE:Float32Array = _parent.scale.elements;
 				var psX:Number = parentScaleE[0], psY:Number = parentScaleE[1], psZ:Number = parentScaleE[2];
 				if (psX !== 1.0 || psY !== 1.0 || psZ !== 1.0) {
@@ -301,15 +300,13 @@ package laya.d3.core {
 					invertScaleE[2] = 1.0 / psZ;
 					Vector3.multiply(_localPosition, invertScale, _localPosition);
 				}
-				
 				var parentRotation:Quaternion = _parent.rotation;
 				parentRotation.invert(_tempQuaternion0);
 				Vector3.transformQuat(_localPosition, _tempQuaternion0, _localPosition);
-				localPosition = _localPosition;
 			} else {
 				value.cloneTo(_localPosition);
-				localPosition = _localPosition;
 			}
+			localPosition = _localPosition;
 			_position = value;
 			_positionUpdate = false;
 		}
@@ -338,12 +335,10 @@ package laya.d3.core {
 			if (_parent != null) {
 				_parent.rotation.invert(_tempQuaternion0);
 				Quaternion.multiply(value, _tempQuaternion0, _localRotation);
-				localRotation = _localRotation;
 			} else {
 				value.cloneTo(_localRotation);
-				localRotation = _localRotation;
 			}
-			
+			localRotation = _localRotation;
 			_rotation = value;
 			_rotationUpdate = false;
 		}
@@ -355,14 +350,33 @@ package laya.d3.core {
 		public function get scale():Vector3 {
 			if (!_scaleUpdate)
 				return _scale;
-			if (_parent !== null) {
+			if (_parent !== null)
 				Vector3.multiply(_parent.scale, _localScale, _scale);
-			} else {
+			else
 				_localScale.cloneTo(_scale);
-			}
 			
 			_scaleUpdate = false;
 			return _scale;
+		}
+		
+		/**
+		 * 设置世界缩放。
+		 * @param value	世界缩放。
+		 */
+		public function set scale(value:Vector3):void {
+			if (_parent !== null) {
+				var pScaleE:Float32Array = _parent.scale.elements;
+				var invPScaleE:Float32Array = _tempVector30.elements;
+				invPScaleE[0] = 1.0 / pScaleE[0];
+				invPScaleE[1] = 1.0 / pScaleE[1];
+				invPScaleE[2] = 1.0 / pScaleE[2];
+				Vector3.multiply(value, _tempVector30, _localScale);
+			} else {
+				value.cloneTo(_localScale);
+			}
+			localScale = _localScale;
+			_scale = value;
+			_scaleUpdate = false;
 		}
 		
 		/**

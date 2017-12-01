@@ -19,10 +19,6 @@ package laya.d3.resource {
 		/**@private */
 		private var _pixels:Uint8Array;
 		
-		override public function get source():* {
-			return super.source;
-		}
-		
 		/**
 		 * 创建一个 <code>SolidColorTexture2D</code> 实例。
 		 */

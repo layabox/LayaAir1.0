@@ -6,5 +6,5 @@ uniform float alpha;
 void main() {
 	vec4 t_color = texture2D(texture, v_texcoord);
 	gl_FragColor = t_color.rgba * v_color;
-	gl_FragColor.a = gl_FragColor.a * alpha;
+	gl_FragColor *= alpha;
 }

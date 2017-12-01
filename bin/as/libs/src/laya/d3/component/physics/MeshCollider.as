@@ -1,17 +1,22 @@
 package laya.d3.component.physics {
+	import laya.d3.component.Component3D;
 	import laya.d3.core.ComponentNode;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Collision;
+	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.utils.Picker;
 	import laya.d3.utils.RaycastHit;
+	import laya.events.Event;
 	
 	/**
 	 * <code>MeshCollider</code> 类用于创建网格碰撞器。
@@ -25,11 +30,24 @@ package laya.d3.component.physics {
 		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
 		/** @private */
 		private static var _tempRaycastHit:RaycastHit = new RaycastHit();
+		/**@private */
+		private static var _tempBoundBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
 		/** @private */
-		public var _transformBoundSphere:BoundSphere;
+		private var _transformBoundingBox:BoundBox;
 		/** @private */
 		private var _mesh:BaseMesh;
+		
+		///** @private */
+		//public var _transformBoundSphere:BoundSphere;//TODO:是否换成盒子
+		
+		/**
+		 * @private 只读,不允许修改。
+		 */
+		public function get _boundBox():BoundBox {
+			_updateBoundBoxCollider();
+			return _transformBoundingBox;
+		}
 		
 		/**
 		 * 获取碰撞器网格。
@@ -51,13 +69,29 @@ package laya.d3.component.physics {
 		 * 创建一个 <code>SphereCollider</code> 实例。
 		 */
 		public function MeshCollider() {
-			_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
+			//_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
+			_transformBoundingBox = new BoundBox(new Vector3(), new Vector3());
+			_needUpdate = false;
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _raycastMesh(ray:Ray, sprite3D:Sprite3D, outHitInfo:RaycastHit, maxDistance:Number = Number.MAX_VALUE):Boolean {
+		private function _updateBoundBoxCollider():void {
+			if (_needUpdate) {
+				var worldMat:Matrix4x4 = (_owner as MeshSprite3D).transform.worldMatrix;
+				var corners:Vector.<Vector3> = _mesh.boundingBoxCorners;
+				for (var i:int = 0; i < 8; i++)
+					Vector3.transformCoordinate(corners[i], worldMat, _tempBoundBoxCorners[i]);
+				BoundBox.createfromPoints(_tempBoundBoxCorners, _transformBoundingBox);
+				_needUpdate = false;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _raycastMesh(ray:Ray, sprite3D:Sprite3D, outHitInfo:RaycastHit, maxDistance:Number = 1.79e+308/*Number.MAX_VALUE*/):Boolean {
 			var worldMatrix:Matrix4x4 = sprite3D.transform.worldMatrix;
 			
 			var invertWorldMatrix:Matrix4x4 = _tempMatrix4x40;
@@ -115,40 +149,108 @@ package laya.d3.component.physics {
 		}
 		
 		/**
+		 * @private
+		 */
+		private function _onWorldMatrixChanged():void {
+			_needUpdate = true;
+		}
+		
+		/**
 		 * @inheritDoc
 		 */
 		override public function _initialize(owner:ComponentNode):void {
 			super._initialize(owner);
-			if (_owner is MeshSprite3D) {
-				var meshSprite3D:MeshSprite3D = owner as MeshSprite3D;
-				_mesh = meshSprite3D.meshFilter.sharedMesh;
+			//if (_owner is MeshSprite3D) {
+			//var meshSprite3D:MeshSprite3D = owner as MeshSprite3D;
+			//_mesh = meshSprite3D.meshFilter.sharedMesh;
+			//}
+			
+			(owner as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+			_needUpdate = true;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _getType():int {
+			return 2;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _collisonTo(other:Collider):Boolean {
+			var i:int, n:int;
+			var positions:Vector.<Vector3> = mesh._positions;
+			switch (other._getType()) {
+			case 0://SphereCollider
+				var otherSphere:SphereCollider = other as SphereCollider;
+				if (Collision.sphereContainsBox(otherSphere.boundSphere, _boundBox) !== ContainmentType.Disjoint) {
+					for (i = 0, n = positions.length; i < n; i++) {
+						if (Collision.sphereContainsPoint(otherSphere.boundSphere, positions[i]) === ContainmentType.Contains)
+							return true
+					}
+					return false;
+				} else {
+					return false;
+				}
+				break;
+			case 1: //BoxCollider
+				var otherBox:BoxCollider = other as BoxCollider;
+				if (otherBox.boundBox.containsBoundBox(_boundBox) !== ContainmentType.Disjoint) {
+					for (i = 0, n = positions.length; i < n; i++) {
+						if (otherBox.boundBox.containsPoint(positions[i]) === ContainmentType.Contains)
+							return true
+					}
+					return false;
+					break;
+				} else {
+					return false;
+				}
+			
+			case 2: //MeshCollider
+				var otherMesh:MeshCollider = other as MeshCollider;
+				if (Collision.intersectsBoxAndBox(otherMesh._boundBox, _boundBox) !== ContainmentType.Contains) {
+					return true;//TODO:补充
+				} else {
+					return false;
+				}
+				
+				throw new Error("MeshCollider:unknown collider type.");
+				break;
+			default: 
+				throw new Error("MeshCollider:unknown collider type.");
 			}
 		}
 		
 		/**
-		 * 在场景中投下可与网格碰撞器碰撞的一条光线,获取发生碰撞的网格碰撞器信息。
-		 * @param  ray        射线
-		 * @param  outHitInfo 与该射线发生碰撞网格碰撞器的碰撞信息
-		 * @param  distance   射线长度,默认为最大值 
+		 * @inheritDoc
 		 */
-		override public function raycast(ray:Ray, hitInfo:RaycastHit, maxDistance:Number = Number.MAX_VALUE):Boolean {
+		override public function _cloneTo(dest:Component3D):void {
+			var destCollider:MeshCollider = dest as MeshCollider;
+			destCollider.mesh = _mesh;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function raycast(ray:Ray, hitInfo:RaycastHit, maxDistance:Number = 1.79e+308/*Number.MAX_VALUE*/):Boolean {
 			if (_mesh == null || !_mesh.loaded)
 				return false;
 			
-			var maxScale:Number;
-			var transform:Transform3D = (_owner as Sprite3D).transform;
-			var scale:Vector3 = transform.scale;
-			if (scale.x >= scale.y && scale.x >= scale.z)
-				maxScale = scale.x;
-			else
-				maxScale = scale.y >= scale.z ? scale.y : scale.z;
-			
-			var originalBoundSphere:BoundSphere = _mesh.boundingSphere;
-			Vector3.transformCoordinate(originalBoundSphere.center, transform.worldMatrix, _transformBoundSphere.center);
-			_transformBoundSphere.radius = originalBoundSphere.radius * maxScale;
-			
-			var distance:Number = _transformBoundSphere.intersectsRayPoint(ray, hitInfo.position);
-			
+			//var maxScale:Number;
+			//var transform:Transform3D = (_owner as Sprite3D).transform;
+			//var scale:Vector3 = transform.scale;
+			//if (scale.x >= scale.y && scale.x >= scale.z)
+			//maxScale = scale.x;
+			//else
+			//maxScale = scale.y >= scale.z ? scale.y : scale.z;
+			//
+			//var originalBoundSphere:BoundSphere = _mesh.boundingSphere;
+			//Vector3.transformCoordinate(originalBoundSphere.center, transform.worldMatrix, _transformBoundSphere.center);
+			//_transformBoundSphere.radius = originalBoundSphere.radius * maxScale;
+			//var distance:Number = _transformBoundSphere.intersectsRayPoint(ray, hitInfo.position);
+			var distance:Number = Collision.intersectsRayAndBoxRD(ray, _boundBox);
 			if (distance !== -1 && distance <= maxDistance && _raycastMesh(ray, _owner as Sprite3D, hitInfo, maxDistance)) {
 				return true;
 			} else {

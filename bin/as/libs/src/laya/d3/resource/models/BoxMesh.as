@@ -88,6 +88,7 @@ package laya.d3.resource.models {
 			_width = width;
 			_height = height;
 			activeResource();
+			_positions = _getPositions();
 			_generateBoundingObject();
 		}
 		

@@ -5,6 +5,9 @@ package laya.d3.core {
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
@@ -175,6 +178,24 @@ package laya.d3.core {
 						sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
 					render.sharedMaterials = sharedMaterials;
 				}
+				
+				var rootBone:String = customProps.rootBone;
+				(rootBone) && (render._setRootBone(rootBone));
+				var boundBox:Object = customProps.boundBox;
+				if (boundBox) {
+					var min:Array = boundBox.min;
+					var max:Array = boundBox.max;
+					var localBoundBox:BoundBox = new BoundBox(new Vector3(min[0], min[2], min[2]), new Vector3(max[0], max[2], max[2]));
+					render.localBoundBox = localBoundBox;
+				} else {
+					render._hasIndependentBound = false;
+				}
+				var boundSphere:Object = customProps.boundSphere;
+				if (boundSphere) {
+					var center:Array = boundSphere.center;
+					var localBoundSphere:BoundSphere = new BoundSphere(new Vector3(center[0], center[1], center[2]), boundSphere.radius);
+					render.localBoundSphere = localBoundSphere;
+				}
 			}
 		}
 		
@@ -233,6 +254,12 @@ package laya.d3.core {
 			lightmapScaleOffset && (destMeshRender.lightmapScaleOffset = lightmapScaleOffset.clone());
 			destMeshRender.receiveShadow = meshRender.receiveShadow;
 			destMeshRender.sortingFudge = meshRender.sortingFudge;
+			destMeshRender._rootBone = meshRender._rootBone;
+			var lbp:BoundSphere = meshRender.localBoundSphere;
+			(lbp) && (destMeshRender.localBoundSphere = lbp.clone());
+			var lbb:BoundBox = meshRender.localBoundBox;
+			(lbb) && (destMeshRender.localBoundBox = lbb.clone());
+			destMeshRender._hasIndependentBound = meshRender._hasIndependentBound;//兼容代码
 		}
 		
 		/**

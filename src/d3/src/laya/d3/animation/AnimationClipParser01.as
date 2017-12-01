@@ -1,4 +1,6 @@
 package laya.d3.animation {
+	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector3;
 	import laya.utils.Byte;
 	
 	/**

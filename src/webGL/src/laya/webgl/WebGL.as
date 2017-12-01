@@ -173,7 +173,8 @@ package laya.webgl {
 			
 			RunDriver.getWebGLContext = function getWebGLContext(canvas:*):WebGLContext {
 				var gl:WebGLContext;
-				var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+				//forxiaochengxu
+				var names:Array = Laya.EnvConfig.webglNames||["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 				for (var i:int = 0; i < names.length; i++) {
 					try {
 						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});//antialias为true,premultipliedAlpha为false,IOS和部分安卓QQ浏览器有黑屏或者白屏底色BUG
@@ -261,14 +262,14 @@ package laya.webgl {
 			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
 				offsetX -= sprite.x;
 				offsetY -= sprite.y;
-				var renderTarget:RenderTarget2D = new RenderTarget2D(canvasWidth, canvasHeight, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0, false);
+				var renderTarget:RenderTarget2D = RenderTarget2D.create(canvasWidth, canvasHeight, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0, false);
 				renderTarget.start();
 				Render.context.clear();
 				sprite.render(Render.context, offsetX, RenderState2D.height - canvasHeight + offsetY);
 				Render.context.flush();
 				renderTarget.end();
 				var pixels:Uint8Array = renderTarget.getData(0, 0, renderTarget.width, renderTarget.height);
-				renderTarget.dispose();
+				renderTarget.recycle();
 				
 				var htmlCanvas:* = new WebGLCanvas();
 				htmlCanvas._canvas = Browser.createElement("canvas");

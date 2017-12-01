@@ -184,7 +184,7 @@ package laya.d3.core.particleShuriKen {
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENT: 
 				renderQueue = RenderQueue.TRANSPARENT;
-				depthTest = false;
+				depthTest = DEPTHTEST_LESS;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
@@ -194,7 +194,7 @@ package laya.d3.core.particleShuriKen {
 				break;
 			case RENDERMODE_NONDEPTH_TRANSPARENTDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
-				depthTest = false;
+				depthTest = DEPTHTEST_LESS;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
@@ -204,7 +204,7 @@ package laya.d3.core.particleShuriKen {
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVE: 
 				renderQueue = RenderQueue.TRANSPARENT;
-				depthTest = false;
+				depthTest = DEPTHTEST_LESS;
 				cull = CULL_BACK;
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;
@@ -214,7 +214,7 @@ package laya.d3.core.particleShuriKen {
 				break;
 			case RENDERMODE_NONDEPTH_ADDTIVEDOUBLEFACE: 
 				renderQueue = RenderQueue.TRANSPARENT;
-				depthTest = false;
+				depthTest = DEPTHTEST_LESS;
 				cull = CULL_NONE;
 				blend = BLEND_ENABLE_ALL;
 				srcBlend = BLENDPARAM_SRC_ALPHA;

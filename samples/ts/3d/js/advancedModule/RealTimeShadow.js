@@ -1,4 +1,4 @@
-var RealTimeShadow = (function () {
+var RealTimeShadow = /** @class */ (function () {
     function RealTimeShadow() {
         this._quaternion = new Laya.Quaternion();
         Laya3D.init(0, 0, true);

@@ -1,4 +1,4 @@
-var Sprite3DTransform = (function () {
+var Sprite3DTransform = /** @class */ (function () {
     function Sprite3DTransform() {
         this.scaleDelta = 0;
         this.scaleValue = 0;

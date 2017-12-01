@@ -52,6 +52,13 @@ package laya.d3.animation {
 		public var islooping:Boolean;
 		
 		/**
+		 * 获取动画片段时长。
+		 */
+		public function duration():Number {
+			return _duration;
+		}
+		
+		/**
 		 * 创建一个 <code>AnimationClip</code> 实例。
 		 */
 		public function AnimationClip() {
@@ -182,16 +189,16 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _evaluateAnimationlDatasCacheFrame(nodesFrameIndices:Array, animator:Animator, publicAnimationDatas:Vector.<Float32Array>, cacheAnimationDatas:Vector.<Float32Array>, nodeOwners:Vector.<AnimationNode>):void {
+		public function _evaluateAnimationlDatasCacheMode(nodeOwners:*/*Vector.<AnimationNode>或Vector.<Sprite3D>*/, nodesFrameIndices:Array, animator:Animator, clipDatas:Vector.<Float32Array>, propertyMap:Int32Array):void {
 			var j:int, m:int;
-			for (var i:int = 0, n:int = _nodes.length; i < n; i++) {
-				var node:KeyframeNode = _nodes[i];
+			for (var i:int = 0, n:int = propertyMap ? propertyMap.length : _nodes.length; i < n; i++) {
+				var nodeIndex:int = propertyMap ? propertyMap[i] : i;
+				var node:KeyframeNode = _nodes[nodeIndex];
 				var cacheProperty:Boolean = node._cacheProperty;
-				if (nodeOwners)//如果有Avatar则publicAnimationDatas、nodeOwners不为空
-					if (!nodeOwners[i] || (cacheProperty && !cacheAnimationDatas))//动画节点丢失时，忽略该节点动画
-						continue;
+				if (!nodeOwners[nodeIndex])//动画节点丢失时，忽略该节点动画
+					continue;
 				
-				var frameIndices:Int32Array = nodesFrameIndices[i];
+				var frameIndices:Int32Array = nodesFrameIndices[nodeIndex];
 				var realFrameIndex:int = frameIndices[animator.currentFrameIndex];
 				
 				var outDatas:Float32Array;
@@ -200,17 +207,17 @@ package laya.d3.animation {
 					var frame:Keyframe = node.keyFrames[realFrameIndex];
 					var nextKeyFrame:Keyframe = frame.next;
 					if (nextKeyFrame) {
-						if (publicAnimationDatas) {
+						if (propertyMap) {
 							if (cacheProperty) {
 								outDatas = new Float32Array(node.keyFrameWidth);
-								cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
+								clipDatas[i] = outDatas;
 							} else {
-								outDatas = publicAnimationDatas[i];
-								(outDatas) || (outDatas = publicAnimationDatas[i] = new Float32Array(node.keyFrameWidth));
+								outDatas = clipDatas[nodeIndex];
+								(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
 							}
 						} else {
 							outDatas = new Float32Array(node.keyFrameWidth);
-							cacheAnimationDatas[i] = outDatas;
+							clipDatas[i] = outDatas;
 						}
 						
 						var t:Number;
@@ -222,18 +229,17 @@ package laya.d3.animation {
 						_hermiteInterpolate(frame, t, d, outDatas);
 					} else {
 						
-						if (publicAnimationDatas) {
+						if (propertyMap) {
 							if (cacheProperty) {
 								lastFrameIndex = animator._lastFrameIndex;
 								if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
 									continue;
 								
 								outDatas = new Float32Array(node.keyFrameWidth);
-								cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
-								
+								clipDatas[i] = outDatas;
 							} else {
-								outDatas = publicAnimationDatas[i];
-								(outDatas) || (outDatas = publicAnimationDatas[i] = new Float32Array(node.keyFrameWidth));
+								outDatas = clipDatas[nodeIndex];
+								(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
 							}
 						} else {
 							lastFrameIndex = animator._lastFrameIndex;
@@ -241,7 +247,7 @@ package laya.d3.animation {
 								continue;
 							
 							outDatas = new Float32Array(node.keyFrameWidth);
-							cacheAnimationDatas[i] = outDatas;
+							clipDatas[i] = outDatas;
 						}
 						
 						var frameData:Float32Array = frame.data;
@@ -249,17 +255,17 @@ package laya.d3.animation {
 							outDatas[j] = frameData[j];//不能设为null，会造成跳过当前帧数据
 					}
 				} else {
-					if (publicAnimationDatas) {
+					if (propertyMap) {
 						if (cacheProperty) {
 							lastFrameIndex = animator._lastFrameIndex;
 							if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
 								continue;
 							
 							outDatas = new Float32Array(node.keyFrameWidth);
-							cacheAnimationDatas[_nodeToCachePropertyMap[i]] = outDatas;
+							clipDatas[i] = outDatas;
 						} else {
-							outDatas = publicAnimationDatas[i];
-							(outDatas) || (outDatas = publicAnimationDatas[i] = new Float32Array(node.keyFrameWidth));
+							outDatas = clipDatas[nodeIndex];
+							(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
 						}
 					} else {
 						lastFrameIndex = animator._lastFrameIndex;
@@ -267,7 +273,7 @@ package laya.d3.animation {
 							continue;
 						
 						outDatas = new Float32Array(node.keyFrameWidth);
-						cacheAnimationDatas[i] = outDatas;
+						clipDatas[i] = outDatas;
 					}
 					
 					var firstFrameDatas:Float32Array = node.keyFrames[0].data;
@@ -280,7 +286,7 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _evaluateAnimationlDatasRealTime(playCurTime:Number, outAnimationDatas:Vector.<Float32Array>):void {
+		public function _evaluateAnimationlDatasRealTime(nodeOwners:*/*Vector.<AnimationNode>或Vector.<Sprite3D>*/, playCurTime:Number, outAnimationDatas:Vector.<Float32Array>):void {
 			var i:int, n:int;
 			var nodes:Vector.<KeyframeNode> = _nodes;
 			if (!_realTimeCurrentFrameIndexes) {
@@ -331,6 +337,10 @@ package laya.d3.animation {
 					for (j = 0, m = outDatas.length; j < m; j++)
 						outDatas[j] = firstFrameDatas[j];
 				}
+				
+				var owner:AnimationNode = nodeOwners[i];
+				if (owner)
+					AnimationNode._propertySetFuncs[node.propertyNameID](owner, null, outDatas);
 			}
 		}
 		

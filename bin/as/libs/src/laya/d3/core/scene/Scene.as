@@ -1,9 +1,11 @@
 package laya.d3.core.scene {
 	import laya.d3.component.Component3D;
 	import laya.d3.component.Script;
+	import laya.d3.component.physics.Collider;
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
 	import laya.d3.core.ComponentNode;
+	import laya.d3.core.Layer;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.LightSprite;
@@ -326,6 +328,7 @@ package laya.d3.core.scene {
 		 * 创建一个 <code>Scene</code> 实例。
 		 */
 		public function Scene() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			__loaded = true;
 			_lightmaps = new Vector.<Texture2D>();
 			_shaderValues = new ValusArray();
@@ -348,6 +351,32 @@ package laya.d3.core.scene {
 			_typeComponentsIndices = new Vector.<Vector.<int>>();
 			_components = new Vector.<Component3D>();
 			//-------------------------------兼容代码--------------------------------
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _addChild3D(sprite3D:Sprite3D):void {
+			sprite3D.transform._onWorldTransform();
+			sprite3D._setBelongScene(this);
+			(sprite3D.active) && (sprite3D._activeHierarchy());
+			var colls:Vector.<Collider> = sprite3D._colliders;
+			var spLayer:Layer = sprite3D.layer;
+			for (var i:int = 0, n:int = colls.length; i < n; i++)
+				spLayer._addCollider(colls[i]);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _removeChild3D(sprite3D:Sprite3D):void {
+			sprite3D.transform.parent = null;
+			(sprite3D.active) && (sprite3D._inActiveHierarchy());
+			sprite3D._setUnBelongScene();
+			var colls:Vector.<Collider> = sprite3D._colliders;
+			var spLayer:Layer = sprite3D.layer;
+			for (var i:int = 0, n:int = colls.length; i < n; i++)
+				spLayer._removeCollider(colls[i]);
 		}
 		
 		/**
@@ -401,7 +430,7 @@ package laya.d3.core.scene {
 			if (lightCount > 0) {
 				var renderLightCount:int = 0;
 				for (var i:int = 0; i < lightCount; i++) {
-					if (!_lights[i].updateToWorldState(state))//TODO:应该直接移除
+					if (!_lights[i]._prepareToScene(state))//TODO:应该直接移除
 						continue;
 					renderLightCount++;
 					if (renderLightCount >= _enableLightCount)
@@ -429,7 +458,7 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		public function _preRenderScene(gl:WebGLContext, state:RenderState,boundFrustum:BoundFrustum):void {
+		public function _preRenderScene(gl:WebGLContext, state:RenderState, boundFrustum:BoundFrustum):void {
 			var view:Matrix4x4 = state._viewMatrix;
 			var projection:Matrix4x4 = state._projectionMatrix;
 			var projectionView:Matrix4x4 = state._projectionViewMatrix;
@@ -600,7 +629,7 @@ package laya.d3.core.scene {
 			setlightmaps(lightmaps);
 			
 			var ambientColorData:Array = nodeData.customProps.ambientColor;
-			(ambientColorData)&&(ambientColor = new Vector3(ambientColorData[0],ambientColorData[1],ambientColorData[2]));
+			(ambientColorData) && (ambientColor = new Vector3(ambientColorData[0], ambientColorData[1], ambientColorData[2]));
 		}
 		
 		/**
@@ -768,11 +797,8 @@ package laya.d3.core.scene {
 					this._childs.splice(index, 0, node);
 					conchModel && conchModel.addChildAt(node.conchModel, index);
 					node.parent = this;
+					_addChild3D(node as Sprite3D);
 					
-					var sprite3D:Sprite3D = node as Sprite3D;
-					sprite3D.transform._onWorldTransform();
-					sprite3D._setBelongScene(this);
-					(sprite3D.active) && (sprite3D._activeHierarchy());
 				}
 				return node;
 			} else {
@@ -807,11 +833,8 @@ package laya.d3.core.scene {
 				conchModel && conchModel.addChildAt(node.conchModel, this._childs.length - 1);
 				node.parent = this;
 				_childChanged();
+				_addChild3D(node as Sprite3D);
 				
-				var sprite3D:Sprite3D = node as Sprite3D;
-				sprite3D.transform._onWorldTransform();
-				sprite3D._setBelongScene(this);
-				(sprite3D.active) && (sprite3D._activeHierarchy());
 			}
 			return node;
 		}
@@ -822,10 +845,7 @@ package laya.d3.core.scene {
 		override public function removeChildAt(index:int):Node {
 			var node:Node = getChildAt(index);
 			if (node) {
-				var sprite3D:Sprite3D = node as Sprite3D;
-				sprite3D.transform.parent = null;
-				(sprite3D.active) && (sprite3D._inActiveHierarchy());
-				sprite3D._setUnBelongScene();
+				_removeChild3D(node as Sprite3D);
 				this._childs.splice(index, 1);
 				conchModel && conchModel.removeChild(node.conchModel);
 				node.parent = null;
@@ -846,11 +866,8 @@ package laya.d3.core.scene {
 					arr = childs.splice(beginIndex, endIndex - beginIndex);
 				}
 				for (var i:int = 0, n:int = arr.length; i < n; i++) {
+					_removeChild3D(arr[i] as Sprite3D);
 					arr[i].parent = null;
-					var sprite3D:Sprite3D = arr[i] as Sprite3D;
-					sprite3D.transform.parent = null;
-					(sprite3D.active) && (sprite3D._inActiveHierarchy());
-					sprite3D._setUnBelongScene();
 					conchModel && conchModel.removeChild(arr[i].conchModel);
 				}
 			}
@@ -1027,7 +1044,7 @@ package laya.d3.core.scene {
 			if (destroyed)//TODO:其它资源是否同样处理
 				return;
 			
-			var json:Object = JSON.parse(data[0] as String);
+			var json:Object = data[0]
 			if (json.type !== "Scene")
 				throw new Error("Scene: the .lh file root type must be Scene,please use other function to  load  this file.");
 			

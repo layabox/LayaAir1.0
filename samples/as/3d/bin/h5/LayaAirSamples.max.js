@@ -710,25 +710,20 @@ var Laya=window.Laya=(function(window,document){
 	})()
 
 
-	//class vrModule.VRScene2
-	var VRScene2=(function(){
-		function VRScene2(){
+	//class shaderModule.ShaderPrecompile
+	var ShaderPrecompile=(function(){
+		function ShaderPrecompile(){
 			Laya3D.init(0,0,true);
-			Laya.stage.scaleMode="full";
-			Laya.stage.screenMode="none";
-			Stat.show();
-			var scene=Laya.stage.addChild(Scene.load("../../../../res/threeDimen/scene/Arena/Arena.ls"));
-			var vrCamera=scene.addChild(new VRCamera(0.03,0,0,0.1,100));
-			vrCamera.transform.translate(new Vector3(0,2,0));
-			vrCamera.clearFlag=1;
-			vrCamera.addComponent(VRCameraMoveScript);
-			var skyBox=new SkyBox();
-			skyBox.textureCube=TextureCube.load("../../../../res/threeDimen/skyBox/skyBox2/skyCube.ltc");
-			vrCamera.sky=skyBox;
+			ShaderCompile3D.debugMode=true;
+			var sc=ShaderCompile3D.get("SIMPLE");
+			if (WebGL.shaderHighPrecision)
+				sc.precompileShaderWithShaderDefine(73,4,20);
+			else
+			sc.precompileShaderWithShaderDefine(73-ShaderCompile3D.SHADERDEFINE_HIGHPRECISION,4,20);
 		}
 
-		__class(VRScene2,'vrModule.VRScene2');
-		return VRScene2;
+		__class(ShaderPrecompile,'shaderModule.ShaderPrecompile');
+		return ShaderPrecompile;
 	})()
 
 
@@ -29544,14 +29539,6 @@ var Laya=window.Laya=(function(window,document){
 			result[resultOffset+1]=1.0+source[sourceOffset+1] *lightingMapScaleOffsetE[1]+lightingMapScaleOffsetE[3];
 		}
 
-		Utils3D.convert3DCoordTo2DScreenCoord=function(source,out){
-			var se=source.elements;
-			var oe=out.elements;
-			oe[0]=-RenderState.clientWidth / 2+se[0];
-			oe[1]=RenderState.clientHeight / 2-se[1];
-			oe[2]=se[2];
-		}
-
 		Utils3D.getURLVerion=function(url){
 			var index=url.indexOf("?");
 			return index >=0 ? url.substr(index):null;
@@ -30504,6 +30491,451 @@ var Laya=window.Laya=(function(window,document){
 		Resource._uniqueIDCounter=0;
 		Resource._loadedResources=[];
 		return Resource;
+	})(EventDispatcher)
+
+
+	/**
+	*<code>AnimationPlayer</code> 类用于动画播放器。
+	*/
+	//class laya.ani.AnimationPlayer extends laya.events.EventDispatcher
+	var AnimationPlayer=(function(_super){
+		function AnimationPlayer(){
+			this._destroyed=false;
+			this._templet=null;
+			this._currentTime=NaN;
+			this._currentFrameTime=NaN;
+			this._playStart=NaN;
+			this._playEnd=NaN;
+			this._playDuration=NaN;
+			this._overallDuration=NaN;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=NaN;
+			this._startUpdateLoopCount=NaN;
+			this._currentAnimationClipIndex=0;
+			this._currentKeyframeIndex=0;
+			this._paused=false;
+			this._cacheFrameRate=0;
+			this._cacheFrameRateInterval=NaN;
+			this._cachePlayRate=NaN;
+			this._fullFrames=null;
+			this.isCache=true;
+			this.playbackRate=1.0;
+			this.returnToZeroStopped=false;
+			AnimationPlayer.__super.call(this);
+			this._destroyed=false;
+			this._currentAnimationClipIndex=-1;
+			this._currentKeyframeIndex=-1;
+			this._currentTime=0.0;
+			this._overallDuration=Number.MAX_VALUE;
+			this._stopWhenCircleFinish=false;
+			this._elapsedPlaybackTime=0;
+			this._startUpdateLoopCount=-1;
+			this._cachePlayRate=1.0;
+			this.cacheFrameRate=60;
+			this.returnToZeroStopped=false;
+		}
+
+		__class(AnimationPlayer,'laya.ani.AnimationPlayer',_super);
+		var __proto=AnimationPlayer.prototype;
+		Laya.imps(__proto,{"laya.resource.IDestroy":true})
+		/**
+		*@private
+		*/
+		__proto._onTempletLoadedComputeFullKeyframeIndices=function(cachePlayRate,cacheFrameRate,templet){
+			if (this._templet===templet && this._cachePlayRate===cachePlayRate && this._cacheFrameRate===cacheFrameRate)
+				this._computeFullKeyframeIndices();
+		}
+
+		/**
+		*@private
+		*/
+		__proto._computeFullKeyframeIndices=function(){
+			var anifullFrames=this._fullFrames=[];
+			var templet=this._templet;
+			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			for (var i=0,iNum=templet.getAnimationCount();i < iNum;i++){
+				var aniFullFrame=[];
+				for (var j=0,jNum=templet.getAnimation(i).nodes.length;j < jNum;j++){
+					var node=templet.getAnimation(i).nodes[j];
+					var frameCount=Math.floor(node.playTime / cacheFrameInterval+0.01);
+					var nodeFullFrames=new Uint16Array(frameCount+1);
+					var lastFrameIndex=-1;
+					for (var n=0,nNum=node.keyFrame.length;n < nNum;n++){
+						var keyFrame=node.keyFrame[n];
+						var tm=keyFrame.startTime;
+						var endTm=tm+keyFrame.duration+cacheFrameInterval;
+						do {
+							var frameIndex=Math.floor(tm / cacheFrameInterval+0.5);
+							for (var k=lastFrameIndex+1;k < frameIndex;k++)
+							nodeFullFrames[k]=n;
+							lastFrameIndex=frameIndex;
+							nodeFullFrames[frameIndex]=n;
+							tm+=cacheFrameInterval;
+						}while (tm <=endTm);
+					}
+					aniFullFrame.push(nodeFullFrames);
+				}
+				anifullFrames.push(aniFullFrame);
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onAnimationTempletLoaded=function(){
+			(this.destroyed)|| (this._calculatePlayDuration());
+		}
+
+		/**
+		*@private
+		*/
+		__proto._calculatePlayDuration=function(){
+			if (this.state!==0){
+				var oriDuration=this._templet.getAniDuration(this._currentAnimationClipIndex);
+				(this._playEnd===0)&& (this._playEnd=oriDuration);
+				if (this._playEnd > oriDuration)
+					this._playEnd=oriDuration;
+				this._playDuration=this._playEnd-this._playStart;
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._setPlayParams=function(time,cacheFrameInterval){
+			this._currentTime=time;
+			this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ cacheFrameInterval+0.01);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._setPlayParamsWhenStop=function(currentAniClipPlayDuration,cacheFrameInterval){
+			this._currentTime=currentAniClipPlayDuration;
+			this._currentKeyframeIndex=Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+			this._currentAnimationClipIndex=-1;
+		}
+
+		/**
+		*@private
+		*/
+		__proto._update=function(elapsedTime){
+			if (this._currentAnimationClipIndex===-1 || this._paused || !this._templet || !this._templet.loaded)
+				return;
+			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			var time=0;
+			(this._startUpdateLoopCount!==Stat.loopCount)&& (time=elapsedTime *this.playbackRate,this._elapsedPlaybackTime+=time);
+			var currentAniClipPlayDuration=this.playDuration;
+			if ((this._overallDuration!==0 && this._elapsedPlaybackTime >=this._overallDuration)|| (this._overallDuration===0 && this._elapsedPlaybackTime >=currentAniClipPlayDuration)){
+				this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+				this.event("stopped");
+				return;
+			}
+			time+=this._currentTime;
+			if (currentAniClipPlayDuration > 0){
+				if (time >=currentAniClipPlayDuration){
+					do {
+						time-=currentAniClipPlayDuration;
+						if (this._stopWhenCircleFinish){
+							this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+							this._stopWhenCircleFinish=false;
+							this.event("stopped");
+							return;
+						}
+						if (time < currentAniClipPlayDuration){
+							this._setPlayParams(time,cacheFrameInterval);
+							this.event("complete");
+						}
+					}while (time >=currentAniClipPlayDuration)
+					}else {
+					this._setPlayParams(time,cacheFrameInterval);
+				}
+				}else {
+				if (this._stopWhenCircleFinish){
+					this._setPlayParamsWhenStop(currentAniClipPlayDuration,cacheFrameInterval);
+					this._stopWhenCircleFinish=false;
+					this.event("stopped");
+					return;
+				}
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
+				this.event("complete");
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._destroy=function(){
+			this.offAll();
+			this._templet=null;
+			this._fullFrames=null;
+			this._destroyed=true;
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStart 播放的起始时间位置。
+		*@param playEnd 播放的结束时间位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.play=function(index,playbackRate,overallDuration,playStart,playEnd){
+			(index===void 0)&& (index=0);
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=2147483647);
+			(playStart===void 0)&& (playStart=0);
+			(playEnd===void 0)&& (playEnd=0);
+			if (!this._templet)
+				throw new Error("AnimationPlayer:templet must not be null,maybe you need to set url.");
+			if (overallDuration < 0 || playStart < 0 || playEnd < 0)
+				throw new Error("AnimationPlayer:overallDuration,playStart and playEnd must large than zero.");
+			if ((playEnd!==0)&& (playStart > playEnd))
+				throw new Error("AnimationPlayer:start must less than end.");
+			this._currentTime=0;
+			this._currentFrameTime=0;
+			this._elapsedPlaybackTime=0;
+			this.playbackRate=playbackRate;
+			this._overallDuration=overallDuration;
+			this._playStart=playStart;
+			this._playEnd=playEnd;
+			this._paused=false;
+			this._currentAnimationClipIndex=index;
+			this._currentKeyframeIndex=0;
+			this._startUpdateLoopCount=Stat.loopCount;
+			this.event("played");
+			if (this._templet.loaded)
+				this._calculatePlayDuration();
+			else
+			this._templet.once("loaded",this,this._onAnimationTempletLoaded);
+			this._update(0);
+		}
+
+		/**
+		*播放动画。
+		*@param index 动画索引。
+		*@param playbackRate 播放速率。
+		*@param duration 播放时长（0为1次,Number.MAX_VALUE为循环播放）。
+		*@param playStartFrame 播放的原始起始帧率位置。
+		*@param playEndFrame 播放的原始结束帧率位置。（0为动画一次循环的最长结束时间位置）。
+		*/
+		__proto.playByFrame=function(index,playbackRate,overallDuration,playStartFrame,playEndFrame,fpsIn3DBuilder){
+			(index===void 0)&& (index=0);
+			(playbackRate===void 0)&& (playbackRate=1.0);
+			(overallDuration===void 0)&& (overallDuration=2147483647);
+			(playStartFrame===void 0)&& (playStartFrame=0);
+			(playEndFrame===void 0)&& (playEndFrame=0);
+			(fpsIn3DBuilder===void 0)&& (fpsIn3DBuilder=30);
+			var interval=1000.0 / fpsIn3DBuilder;
+			this.play(index,playbackRate,overallDuration,playStartFrame *interval,playEndFrame *interval);
+		}
+
+		/**
+		*停止播放当前动画
+		*@param immediate 是否立即停止
+		*/
+		__proto.stop=function(immediate){
+			(immediate===void 0)&& (immediate=true);
+			if (immediate){
+				this._currentTime=this._currentFrameTime=this._currentKeyframeIndex=0;
+				this._currentAnimationClipIndex=-1;
+				this.event("stopped");
+				}else {
+				this._stopWhenCircleFinish=true;
+			}
+		}
+
+		/**
+		*动画播放的结束时间位置。
+		*@return 结束时间位置。
+		*/
+		__getset(0,__proto,'playEnd',function(){
+			return this._playEnd;
+		});
+
+		/**
+		*设置动画数据模板,注意：修改此值会有计算开销。
+		*@param value 动画数据模板
+		*/
+		/**
+		*获取动画数据模板
+		*@param value 动画数据模板
+		*/
+		__getset(0,__proto,'templet',function(){
+			return this._templet;
+			},function(value){
+			if (!this.state===0)
+				this.stop(true);
+			if (this._templet!==value){
+				this._templet=value;
+				if (value.loaded)
+					this._computeFullKeyframeIndices();
+				else
+				value.once("loaded",this,this._onTempletLoadedComputeFullKeyframeIndices,[this._cachePlayRate,this._cacheFrameRate]);
+			}
+		});
+
+		/**
+		*动画播放的起始时间位置。
+		*@return 起始时间位置。
+		*/
+		__getset(0,__proto,'playStart',function(){
+			return this._playStart;
+		});
+
+		/**
+		*获取动画播放一次的总时间
+		*@return 动画播放一次的总时间
+		*/
+		__getset(0,__proto,'playDuration',function(){
+			return this._playDuration;
+		});
+
+		/**
+		*获取当前播放状态
+		*@return 当前播放状态
+		*/
+		__getset(0,__proto,'state',function(){
+			if (this._currentAnimationClipIndex===-1)
+				return 0;
+			if (this._paused)
+				return 1;
+			return 2;
+		});
+
+		/**
+		*获取当前帧数
+		*@return 当前帧数
+		*/
+		__getset(0,__proto,'currentKeyframeIndex',function(){
+			return this._currentKeyframeIndex;
+		});
+
+		/**
+		*获取动画播放的总总时间
+		*@return 动画播放的总时间
+		*/
+		__getset(0,__proto,'overallDuration',function(){
+			return this._overallDuration;
+		});
+
+		/**
+		*获取当前帧时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentFrameTime',function(){
+			return this._currentFrameTime;
+		});
+
+		/**
+		*获取当前动画索引
+		*@return value 当前动画索引
+		*/
+		__getset(0,__proto,'currentAnimationClipIndex',function(){
+			return this._currentAnimationClipIndex;
+		});
+
+		/**
+		*获取当前精确时间，不包括重播时间
+		*@return value 当前时间
+		*/
+		__getset(0,__proto,'currentPlayTime',function(){
+			return this._currentTime+this._playStart;
+		});
+
+		/**
+		*设置缓存播放速率,默认值为1.0,注意：修改此值会有计算开销。*
+		*@return value 缓存播放速率。
+		*/
+		/**
+		*获取缓存播放速率。*
+		*@return 缓存播放速率。
+		*/
+		__getset(0,__proto,'cachePlayRate',function(){
+			return this._cachePlayRate;
+			},function(value){
+			if (this._cachePlayRate!==value){
+				this._cachePlayRate=value;
+				if (this._templet)
+					if (this._templet.loaded)
+				this._computeFullKeyframeIndices();
+				else
+				this._templet.once("loaded",this,this._onTempletLoadedComputeFullKeyframeIndices,[value,this._cacheFrameRate]);
+			}
+		});
+
+		/**
+		*设置默认帧率,每秒60帧,注意：修改此值会有计算开销。*
+		*@return value 缓存帧率
+		*/
+		/**
+		*获取默认帧率*
+		*@return value 默认帧率
+		*/
+		__getset(0,__proto,'cacheFrameRate',function(){
+			return this._cacheFrameRate;
+			},function(value){
+			if (this._cacheFrameRate!==value){
+				this._cacheFrameRate=value;
+				this._cacheFrameRateInterval=1000.0 / this._cacheFrameRate;
+				if (this._templet)
+					if (this._templet.loaded)
+				this._computeFullKeyframeIndices();
+				else
+				this._templet.once("loaded",this,this._onTempletLoadedComputeFullKeyframeIndices,[this._cachePlayRate,value]);
+			}
+		});
+
+		/**
+		*设置当前播放位置
+		*@param value 当前时间
+		*/
+		__getset(0,__proto,'currentTime',null,function(value){
+			if (this._currentAnimationClipIndex===-1 || !this._templet || !this._templet.loaded)
+				return;
+			if (value < this._playStart || value > this._playEnd)
+				throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
+			this._startUpdateLoopCount=Stat.loopCount;
+			var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
+			this._currentTime=value;
+			this._currentKeyframeIndex=Math.floor(this.currentPlayTime / cacheFrameInterval);
+			this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
+		});
+
+		/**
+		*设置是否暂停
+		*@param value 是否暂停
+		*/
+		/**
+		*获取当前是否暂停
+		*@return 是否暂停
+		*/
+		__getset(0,__proto,'paused',function(){
+			return this._paused;
+			},function(value){
+			this._paused=value;
+			value && this.event("paused");
+		});
+
+		/**
+		*获取缓存帧率间隔时间
+		*@return 缓存帧率间隔时间
+		*/
+		__getset(0,__proto,'cacheFrameRateInterval',function(){
+			return this._cacheFrameRateInterval;
+		});
+
+		/**
+		*获取是否已销毁。
+		*@return 是否已销毁。
+		*/
+		__getset(0,__proto,'destroyed',function(){
+			return this._destroyed;
+		});
+
+		return AnimationPlayer;
 	})(EventDispatcher)
 
 
@@ -41773,6 +42205,165 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
+	*<code>KeyframeAnimation</code> 类用于帧动画组件的父类。
+	*/
+	//class laya.d3.component.animation.KeyframeAnimations extends laya.d3.component.Component3D
+	var KeyframeAnimations=(function(_super){
+		function KeyframeAnimations(){
+			this._player=null;
+			this._templet=null;
+			KeyframeAnimations.__super.call(this);
+			this._player=new AnimationPlayer();
+		}
+
+		__class(KeyframeAnimations,'laya.d3.component.animation.KeyframeAnimations',_super);
+		var __proto=KeyframeAnimations.prototype;
+		/**
+		*@private
+		*/
+		__proto._updateAnimtionPlayer=function(){
+			this._player._update(Laya.timer.delta);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._addUpdatePlayerToTimer=function(){
+			Laya.timer.frameLoop(1,this,this._updateAnimtionPlayer);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._removeUpdatePlayerToTimer=function(){
+			Laya.timer.clear(this,this._updateAnimtionPlayer);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onOwnerActiveHierarchyChanged=function(active){
+			if ((this._owner).displayedInStage){
+				if (active)
+					this._addUpdatePlayerToTimer();
+				else
+				this._removeUpdatePlayerToTimer();
+			}
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onDisplayInStage=function(){
+			((this._owner).activeInHierarchy)&& (this._addUpdatePlayerToTimer());
+		}
+
+		/**
+		*@private
+		*/
+		__proto._onUnDisplayInStage=function(){
+			((this._owner).activeInHierarchy)&& (this._removeUpdatePlayerToTimer());
+		}
+
+		/**
+		*@private
+		*载入组件时执行
+		*/
+		__proto._load=function(owner){
+			(owner.displayedInStage && (owner).activeInHierarchy)&& (this._addUpdatePlayerToTimer());
+			owner.on("activeinhierarchychanged",this,this._onOwnerActiveHierarchyChanged);
+			owner.on("display",this,this._onDisplayInStage);
+			owner.on("undisplay",this,this._onUnDisplayInStage);
+		}
+
+		/**
+		*@private
+		*卸载组件时执行
+		*/
+		__proto._unload=function(owner){
+			_super.prototype._unload.call(this,owner);
+			(owner.displayedInStage && (owner).activeInHierarchy)&& (this._removeUpdatePlayerToTimer());
+			owner.off("activeinhierarchychanged",this,this._onOwnerActiveHierarchyChanged);
+			owner.off("display",this,this._onDisplayInStage);
+			owner.off("undisplay",this,this._onUnDisplayInStage);
+			this._player._destroy();
+			this._player=null;
+			this._templet=null;
+		}
+
+		/**
+		*设置url地址。
+		*@param value 地址。
+		*/
+		__getset(0,__proto,'url',null,function(value){
+			console.log("Warning: discard property,please use templet property instead.");
+			var templet=Laya.loader.create(value,null,null,AnimationTemplet);
+			if (this._templet!==templet){
+				if (this._player.state!==0)
+					this._player.stop(true);
+				this._templet=templet;
+				this._player.templet=templet;
+				this.event("animationchanged",this);
+			}
+		});
+
+		/**
+		*获取动画播放器。
+		*@return 动画播放器。
+		*/
+		__getset(0,__proto,'player',function(){
+			return this._player;
+		});
+
+		/**
+		*设置动画模板。
+		*@param value 设置动画模板。
+		*/
+		/**
+		*获取动画模板。
+		*@return value 动画模板。
+		*/
+		__getset(0,__proto,'templet',function(){
+			return this._templet;
+			},function(value){
+			if (this._templet!==value){
+				if (this._player.state!==0)
+					this._player.stop(true);
+				this._templet=value;
+				this._player.templet=value;
+				this.event("animationchanged",this);
+			}
+		});
+
+		/**
+		*获取播放器帧数。
+		*@return 播放器帧数。
+		*/
+		__getset(0,__proto,'currentFrameIndex',function(){
+			return this._player.currentKeyframeIndex;
+		});
+
+		/**
+		*获取播放器的动画索引。
+		*@return 动画索引。
+		*/
+		__getset(0,__proto,'currentAnimationClipIndex',function(){
+			return this._player.currentAnimationClipIndex;
+		});
+
+		/**
+		*获取播放器当前动画的节点数量。
+		*@return 节点数量。
+		*/
+		__getset(0,__proto,'nodeCount',function(){
+			return this._templet.getNodeCount(this._player.currentAnimationClipIndex);
+		});
+
+		return KeyframeAnimations;
+	})(Component3D)
+
+
+	/**
 	*<code>Animations</code> 类用于创建动画组件。
 	*/
 	//class laya.d3.component.Animator extends laya.d3.component.Component3D
@@ -47391,77 +47982,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return TerrainRender;
 	})(BaseRender)
-
-
-	/**
-	*...
-	*@author
-	*/
-	//class common.VRCameraMoveScript extends laya.d3.component.Script
-	var VRCameraMoveScript=(function(_super){
-		function VRCameraMoveScript(){
-			this.mainCameraAnimation=null;
-			this.orientation=NaN;
-			this.camera=null;
-			VRCameraMoveScript.__super.call(this);
-			this.q0=new Quaternion();
-			this.q1=new Quaternion(-Math.sqrt(0.5),0,0,Math.sqrt(0.5));
-			this.q2=new Quaternion();
-			this.q3=new Quaternion();
-		}
-
-		__class(VRCameraMoveScript,'common.VRCameraMoveScript',_super);
-		var __proto=VRCameraMoveScript.prototype;
-		__proto._initialize=function(owner){
-			var _$this=this;
-			laya.d3.component.Component3D.prototype._initialize.call(this,owner);
-			this.camera=owner;
-			this.camera.on("componentadded",this,function(component){
-				if (Laya.__typeof(component,laya.d3.component.animation.CameraAnimations))
-					_$this.mainCameraAnimation=component;
-			});
-			this.camera.on("componentremoved",this,function(component){
-				if (Laya.__typeof(component,laya.d3.component.animation.CameraAnimations))
-					_$this.mainCameraAnimation=null;
-			});
-			Browser.window.addEventListener('deviceorientation',function(e){
-				_$this.orientation=(Browser.window.orientation || 0);
-				if (Laya.stage.canvasRotation){
-					if (Laya.stage.screenMode=="horizontal")
-						_$this.orientation+=90
-					else if (Laya.stage.screenMode=="vertical")
-					_$this.orientation-=90
-				}
-				Quaternion.createFromYawPitchRoll(e.alpha / 360 *Math.PI *2,e.beta / 360 *Math.PI *2,-e.gamma / 360 *Math.PI *2,_$this.q0);
-				Quaternion.multiply(_$this.q0,_$this.q1,_$this.q2);
-				Quaternion.createFromAxisAngle(Vector3.UnitZ,-_$this.orientation / 360 *Math.PI *2,_$this.q3);
-				Quaternion.multiply(_$this.q2,_$this.q3,_$this.camera.transform.localRotation);
-			},false);
-		}
-
-		__proto._update=function(state){
-			laya.d3.component.Component3D.prototype._update.call(this,state);
-			this.updateCamera(state.elapsedTime);
-		}
-
-		__proto.updateCamera=function(elapsedTime){
-			if ((!this.mainCameraAnimation || (this.mainCameraAnimation && this.mainCameraAnimation.player.state===0))){
-				KeyBoardManager.hasKeyDown(87)&& this.camera.moveForward(-0.002 *elapsedTime);
-				KeyBoardManager.hasKeyDown(83)&& this.camera.moveForward(0.002 *elapsedTime);
-				KeyBoardManager.hasKeyDown(65)&& this.camera.moveRight(-0.002 *elapsedTime);
-				KeyBoardManager.hasKeyDown(68)&& this.camera.moveRight(0.002 *elapsedTime);
-				KeyBoardManager.hasKeyDown(81)&& this.camera.moveVertical(0.002 *elapsedTime);
-				KeyBoardManager.hasKeyDown(69)&& this.camera.moveVertical(-0.002 *elapsedTime);
-				this.updateRotation();
-			}
-		}
-
-		__proto.updateRotation=function(){
-			this.camera.transform.localRotation=this.camera.transform.localRotation;
-		}
-
-		return VRCameraMoveScript;
-	})(Script)
 
 
 	/**
@@ -54361,6 +54881,312 @@ var Laya=window.Laya=(function(window,document){
 	})(Buffer)
 
 
+	/**
+	*<code>SkinAnimations</code> 类用于创建蒙皮动画组件。
+	*/
+	//class laya.d3.component.animation.SkinAnimations extends laya.d3.component.animation.KeyframeAnimations
+	var SkinAnimations=(function(_super){
+		function SkinAnimations(){
+			this._tempCurAnimationData=null;
+			this._tempCurBonesData=null;
+			this._curOriginalData=null;
+			this._lastFrameIndex=-1;
+			this._curMeshAnimationData=null;
+			this._curBonesDatas=null;
+			this._curAnimationDatas=null;
+			this._ownerMesh=null;
+			this._boneIndexToMeshList=null;
+			this._oldVersion=false;
+			SkinAnimations.__super.call(this);
+			this._boneIndexToMeshList=[];
+		}
+
+		__class(SkinAnimations,'laya.d3.component.animation.SkinAnimations',_super);
+		var __proto=SkinAnimations.prototype;
+		/**
+		*@private
+		*/
+		__proto._computeBoneIndexToMeshOnTemplet=function(){
+			if (this._templet.loaded)
+				this._computeBoneIndexToMeshOnMesh();
+			else
+			this._templet.once("loaded",this,this._computeBoneIndexToMeshOnMesh);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._computeBoneIndexToMeshOnMesh=function(){
+			if (this._templet._aniVersion==="LAYAANIMATION:02")
+				this._oldVersion=false;
+			else
+			this._oldVersion=true;
+			var mesh=(this._owner).meshFilter.sharedMesh;
+			if (mesh.loaded)
+				this._computeBoneIndexToMesh(mesh);
+			else
+			mesh.on("loaded",this,this._computeBoneIndexToMesh);
+		}
+
+		/**
+		*@private
+		*/
+		__proto._computeBoneIndexToMesh=function(mesh){
+			var meshBoneNames=mesh._boneNames;
+			if (meshBoneNames){
+				var binPoseCount=meshBoneNames.length;
+				var anis=this._templet._anis;
+				for (var i=0,n=anis.length;i < n;i++){
+					var boneIndexToMesh=this._boneIndexToMeshList[i];
+					(boneIndexToMesh)|| (boneIndexToMesh=this._boneIndexToMeshList[i]=[]);
+					boneIndexToMesh.length=binPoseCount;
+					var ani=anis[i];
+					for (var j=0;j < binPoseCount;j++)
+					boneIndexToMesh[j]=ani.bone3DMap[meshBoneNames[j]];
+				}
+			}
+		}
+
+		/**@private */
+		__proto._getAnimationDatasWithCache=function(rate,mesh,cacheDatas,aniIndex,frameIndex){
+			var aniDatas=cacheDatas[aniIndex];
+			if (!aniDatas){
+				return null;
+				}else {
+				var rateDatas=aniDatas[rate];
+				if (!rateDatas)
+					return null;
+				else {
+					var meshDatas=rateDatas[mesh.id];
+					if (!meshDatas)
+						return null;
+					else
+					return meshDatas[frameIndex];
+				}
+			}
+		}
+
+		/**@private */
+		__proto._setAnimationDatasWithCache=function(rate,mesh,cacheDatas,aniIndex,frameIndex,animationDatas){
+			var aniDatas=(cacheDatas[aniIndex])|| (cacheDatas[aniIndex]={});
+			var rateDatas=(aniDatas[rate])|| (aniDatas[rate]={});
+			var meshDatas=(rateDatas[mesh.id])|| (rateDatas[mesh.id]=[]);
+			meshDatas[frameIndex]=animationDatas;
+		}
+
+		/**@private */
+		__proto._onAnimationPlayMeshLoaded=function(){
+			var renderElements=this._ownerMesh.meshRender._renderElements;
+			for (var i=0,n=renderElements.length;i < n;i++)
+			renderElements[i]._canDynamicBatch=false;
+		}
+
+		/**@private */
+		__proto._onAnimationPlay=function(){
+			this._ownerMesh._render._addShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
+			var mesh=this._ownerMesh.meshFilter.sharedMesh;
+			if (mesh.loaded)
+				this._onAnimationPlayMeshLoaded();
+			else
+			mesh.once("loaded",this,this._onAnimationPlayMeshLoaded);
+		}
+
+		/**@private */
+		__proto._onAnimationStop=function(){
+			this._lastFrameIndex=-1;
+			if (this._player.returnToZeroStopped){
+				this._curBonesDatas=null;
+				this._curAnimationDatas=null;
+				this._ownerMesh._render._removeShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
+			};
+			var renderElements=this._ownerMesh.meshRender._renderElements;
+			for (var i=0,n=renderElements.length;i < n;i++)
+			renderElements[i]._canDynamicBatch=true;
+		}
+
+		/**
+		*@private
+		*初始化载入蒙皮动画组件。
+		*@param owner 所属精灵对象。
+		*/
+		__proto._load=function(owner){
+			_super.prototype._load.call(this,owner);
+			this._ownerMesh=(owner);
+			this._player.on("played",this,this._onAnimationPlay);
+			this._player.on("stopped",this,this._onAnimationStop);
+			(this._owner).meshFilter.on("meshchanged",this,this._computeBoneIndexToMeshOnTemplet);
+		}
+
+		/**
+		*@private
+		*更新蒙皮动画组件。
+		*@param state 渲染状态参数。
+		*/
+		__proto._update=function(state){
+			var mesh=this._ownerMesh.meshFilter.sharedMesh;
+			if (this._player.state!==2 || !this._templet || !this._templet.loaded || !mesh.loaded)
+				return;
+			var rate=this._player.playbackRate *Laya.timer.scale;
+			var cachePlayRate=this._player.cachePlayRate;
+			var isCache=this._player.isCache && rate >=cachePlayRate;
+			var frameIndex=isCache ? this.currentFrameIndex :-1;
+			if (frameIndex!==-1 && this._lastFrameIndex===frameIndex)
+				return;
+			var animationClipIndex=this.currentAnimationClipIndex;
+			var boneDatasCache=this._templet._animationDatasCache[0];
+			var animationDatasCache=this._templet._animationDatasCache[1];
+			if (isCache){
+				var cacheAnimationDatas=this._getAnimationDatasWithCache(cachePlayRate,mesh,animationDatasCache,animationClipIndex,frameIndex);
+				if (cacheAnimationDatas){
+					this._curAnimationDatas=cacheAnimationDatas;
+					this._curBonesDatas=this._templet.getAnimationDataWithCache(cachePlayRate,boneDatasCache,animationClipIndex,frameIndex);
+					this._lastFrameIndex=frameIndex;
+					return;
+				}
+			};
+			var isCacheBonesDatas=false;
+			if (isCache){
+				this._curBonesDatas=this._templet.getAnimationDataWithCache(cachePlayRate,boneDatasCache,animationClipIndex,frameIndex);
+				isCacheBonesDatas=this._curBonesDatas ? true :false;
+			};
+			var bones=this._templet.getNodes(animationClipIndex);
+			var boneFloatCount=bones.length *16;
+			var inverseAbsoluteBindPoses=mesh.InverseAbsoluteBindPoses;
+			if (this._oldVersion)
+				(this._curMeshAnimationData)|| (this._curMeshAnimationData=new Float32Array(boneFloatCount));
+			else
+			(this._curMeshAnimationData)|| (this._curMeshAnimationData=new Float32Array(inverseAbsoluteBindPoses.length *16));
+			var i=0,n=0,j=0;
+			var curSubAnimationDatas,subMesh,boneIndicesCount=0;
+			var subMeshCount=mesh.getSubMeshCount();
+			if (isCache){
+				this._curAnimationDatas=[];
+				this._curAnimationDatas.length=subMeshCount;
+				for (i=0;i < subMeshCount;i++){
+					curSubAnimationDatas=this._curAnimationDatas[i]=[];
+					subMesh=mesh.getSubMesh(i);
+					boneIndicesCount=subMesh._boneIndicesList.length;
+					curSubAnimationDatas.length=boneIndicesCount;
+					for (j=0;j < boneIndicesCount;j++)
+					curSubAnimationDatas[j]=new Float32Array(subMesh._boneIndicesList[j].length *16);
+				}
+				(isCacheBonesDatas)|| (this._curBonesDatas=new Float32Array(boneFloatCount));
+				}else {
+				if (!this._tempCurAnimationData){
+					this._tempCurAnimationData=[];
+					this._tempCurAnimationData.length=subMeshCount;
+					for (i=0;i < subMeshCount;i++){
+						curSubAnimationDatas=this._tempCurAnimationData[i]=[];
+						subMesh=mesh.getSubMesh(i);
+						boneIndicesCount=subMesh._boneIndicesList.length;
+						curSubAnimationDatas.length=boneIndicesCount;
+						for (j=0;j < boneIndicesCount;j++)
+						curSubAnimationDatas[j]=new Float32Array(subMesh._boneIndicesList[j].length *16);
+					}
+				}
+				(this._tempCurBonesData)|| (this._tempCurBonesData=new Float32Array(boneFloatCount));
+				this._curAnimationDatas=this._tempCurAnimationData;
+				this._curBonesDatas=this._tempCurBonesData;
+			}
+			this._curOriginalData || (this._curOriginalData=new Float32Array(this._templet.getTotalkeyframesLength(animationClipIndex)));
+			if (isCache)
+				this._templet.getOriginalData(animationClipIndex,this._curOriginalData,this._player._fullFrames[animationClipIndex],frameIndex,this._player.currentFrameTime);
+			else
+			this._templet.getOriginalDataUnfixedRate(animationClipIndex,this._curOriginalData,this._player.currentPlayTime);
+			if (this._oldVersion){
+				if (isCache && isCacheBonesDatas)
+					Utils3D._computeAnimationDatasByArrayAndMatrixFastOld(inverseAbsoluteBindPoses,this._curBonesDatas,this._curMeshAnimationData);
+				else
+				Utils3D._computeBoneAndAnimationDatasByBindPoseMatrxixOld(bones,this._curOriginalData,inverseAbsoluteBindPoses,this._curBonesDatas,this._curMeshAnimationData);
+				}else {
+				var boneIndexToMesh=this._boneIndexToMeshList[animationClipIndex];
+				if (isCache && isCacheBonesDatas)
+					Utils3D._computeAnimationDatasByArrayAndMatrixFast(inverseAbsoluteBindPoses,this._curBonesDatas,this._curMeshAnimationData,boneIndexToMesh);
+				else
+				Utils3D._computeBoneAndAnimationDatasByBindPoseMatrxix(bones,this._curOriginalData,inverseAbsoluteBindPoses,this._curBonesDatas,this._curMeshAnimationData,boneIndexToMesh);
+			}
+			for (i=0;i < subMeshCount;i++){
+				var boneIndicesList=mesh.getSubMesh(i)._boneIndicesList;
+				boneIndicesCount=boneIndicesList.length;
+				curSubAnimationDatas=this._curAnimationDatas[i]
+				for (j=0;j < boneIndicesCount;j++)
+				SkinAnimations._splitAnimationDatas(boneIndicesList[j],this._curMeshAnimationData,curSubAnimationDatas[j]);
+			}
+			if (isCache){
+				this._setAnimationDatasWithCache(cachePlayRate,mesh,animationDatasCache,animationClipIndex,frameIndex,this._curAnimationDatas);
+				(isCacheBonesDatas)|| (this._templet.setAnimationDataWithCache(cachePlayRate,boneDatasCache,animationClipIndex,frameIndex,this._curBonesDatas));
+			}
+			this._lastFrameIndex=frameIndex;
+		}
+
+		/**
+		*@private
+		*在渲染前更新蒙皮动画组件渲染参数。
+		*@param state 渲染状态参数。
+		*/
+		__proto._preRenderUpdate=function(state){
+			var subMesh=state.renderElement.renderObj;
+			if (this._curAnimationDatas)
+				subMesh._skinAnimationDatas=this._curAnimationDatas[subMesh._indexInMesh];
+			else
+			subMesh._skinAnimationDatas=null;
+		}
+
+		/**
+		*@private
+		*卸载组件时执行
+		*/
+		__proto._unload=function(owner){
+			(this.player.state==2)&& (this._ownerMesh._render._removeShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE));
+			(this._templet && !this._templet.loaded)&& (this._templet.off("loaded",this,this._computeBoneIndexToMeshOnMesh));
+			var mesh=this._ownerMesh.meshFilter.sharedMesh;
+			(mesh.loaded)|| (mesh.off("loaded",this,this._onAnimationPlayMeshLoaded));
+			_super.prototype._unload.call(this,owner);
+			this._tempCurAnimationData=null;
+			this._tempCurBonesData=null;
+			this._curOriginalData=null;
+			this._curMeshAnimationData=null;
+			this._curBonesDatas=null;
+			this._curAnimationDatas=null;
+			this._ownerMesh=null;
+		}
+
+		/**
+		*获取骨骼数据。
+		*@return 骨骼数据。
+		*/
+		__getset(0,__proto,'curBonesDatas',function(){
+			return this._curBonesDatas;
+		});
+
+		__getset(0,__proto,'templet',_super.prototype._$get_templet,function(value){
+			if (this._templet!==value){
+				if (this._player.state!==0)
+					this._player.stop(true);
+				this._templet=value;
+				this._player.templet=value;
+				this._computeBoneIndexToMeshOnTemplet();
+				this._curOriginalData=null;
+				this._curMeshAnimationData=null;
+				this._tempCurBonesData=null;
+				this._tempCurAnimationData=null;
+				(this._templet._animationDatasCache)|| (this._templet._animationDatasCache=[[],[]]);
+				this.event("animationchanged",this);
+			}
+		});
+
+		SkinAnimations._splitAnimationDatas=function(indices,bonesData,subAnimationDatas){
+			for (var i=0,n=indices.length,ii=0;i < n;i++){
+				for (var j=0;j < 16;j++,ii++){
+					subAnimationDatas[ii]=bonesData[(indices[i] << 4)+j];
+				}
+			}
+		}
+
+		return SkinAnimations;
+	})(KeyframeAnimations)
+
+
 	//class laya.d3.shader.Shader3D extends laya.webgl.shader.BaseShader
 	var Shader3D=(function(_super){
 		function Shader3D(vs,ps,attributeMap,sceneUniformMap,cameraUniformMap,spriteUniformMap,materialUniformMap,renderElementUniformMap){
@@ -57327,177 +58153,6 @@ var Laya=window.Laya=(function(window,document){
 
 		return TextureCube;
 	})(BaseTexture)
-
-
-	/**
-	*<code>Sky</code> 类用于创建天空盒。
-	*/
-	//class laya.d3.resource.models.SkyBox extends laya.d3.resource.models.Sky
-	var SkyBox=(function(_super){
-		function SkyBox(){
-			this._numberVertices=0;
-			this._numberIndices=0;
-			this._textureCube=null;
-			SkyBox.__super.call(this);
-			this.name="Skybox-"+SkyBox._nameNumber;
-			SkyBox._nameNumber++;
-			this.loadShaderParams();
-			this.recreateResource();
-			this.alphaBlending=1;
-			this.colorIntensity=1;
-		}
-
-		__class(SkyBox,'laya.d3.resource.models.SkyBox',_super);
-		var __proto=SkyBox.prototype;
-		/**
-		*@private
-		*/
-		__proto._getShader=function(state){
-			var shaderDefineValue=state.scene._shaderDefineValue;
-			this._shader=this._shaderCompile.withCompile(shaderDefineValue,0,0);
-			return this._shader;
-		}
-
-		/**
-		*@private
-		*/
-		__proto.recreateResource=function(){
-			this._numberVertices=36;
-			this._numberIndices=36;
-			var indices=new Uint16Array(this._numberIndices);
-			var vertexFloatStride=SkyBox._vertexDeclaration.vertexStride / 4;
-			var vertices=new Float32Array(this._numberVertices *vertexFloatStride);
-			var width=1.0;
-			var height=1.0;
-			var depth=1.0;
-			var halfWidth=width / 2.0;
-			var halfHeight=height / 2.0;
-			var halfDepth=depth / 2.0;
-			var topLeftFront=new Vector3(-halfWidth,halfHeight,halfDepth);
-			var bottomLeftFront=new Vector3(-halfWidth,-halfHeight,halfDepth);
-			var topRightFront=new Vector3(halfWidth,halfHeight,halfDepth);
-			var bottomRightFront=new Vector3(halfWidth,-halfHeight,halfDepth);
-			var topLeftBack=new Vector3(-halfWidth,halfHeight,-halfDepth);
-			var topRightBack=new Vector3(halfWidth,halfHeight,-halfDepth);
-			var bottomLeftBack=new Vector3(-halfWidth,-halfHeight,-halfDepth);
-			var bottomRightBack=new Vector3(halfWidth,-halfHeight,-halfDepth);
-			var vertexCount=0;
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomLeftBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topLeftFront);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightBack);
-			vertexCount=this._addVertex(vertices,vertexCount,topRightFront);
-			vertexCount=this._addVertex(vertices,vertexCount,bottomRightBack);
-			for (var i=0;i < 36;i++)
-			indices[i]=i;
-			this._vertexBuffer=new VertexBuffer3D(SkyBox._vertexDeclaration,this._numberVertices,0x88E4,true);
-			this._indexBuffer=new IndexBuffer3D("ushort",this._numberIndices,0x88E4,true);
-			this._vertexBuffer.setData(vertices);
-			this._indexBuffer.setData(indices);
-			this.memorySize=(this._vertexBuffer._byteLength+this._indexBuffer._byteLength)*2;
-			this.completeCreate();
-			if (this._conchSky){
-				this._conchSky.setVBIB(SkyBox._vertexDeclaration._conchVertexDeclaration,vertices,indices);
-				this._sharderNameID=Shader3D.nameKey.getID("SkyBox");
-				var shaderCompile=ShaderCompile3D._preCompileShader[this._sharderNameID];
-				this._conchSky.setShader(shaderCompile._conchShader);
-			}
-		}
-
-		/**
-		*@private
-		*/
-		__proto._addVertex=function(vertices,index,position){
-			var posE=position.elements;
-			vertices[index+0]=posE[0];
-			vertices[index+1]=posE[1];
-			vertices[index+2]=posE[2];
-			return index+3;
-		}
-
-		/**
-		*@private
-		*/
-		__proto.loadShaderParams=function(){
-			this._sharderNameID=Shader3D.nameKey.getID("SkyBox");
-			this._shaderCompile=ShaderCompile3D._preCompileShader[this._sharderNameID];
-		}
-
-		__proto._render=function(state){
-			if (this._textureCube && this._textureCube.loaded){
-				this._vertexBuffer._bind();
-				this._indexBuffer._bind();
-				this._shader=this._getShader(state);
-				this._shader.bind();
-				state.camera.transform.worldMatrix.cloneTo(SkyBox._tempMatrix4x40);
-				SkyBox._tempMatrix4x40.transpose();
-				Matrix4x4.multiply(state._projectionMatrix,SkyBox._tempMatrix4x40,SkyBox._tempMatrix4x41);
-				state.camera._shaderValues.setValue(4,SkyBox._tempMatrix4x41.elements);
-				this._shader.uploadCameraUniforms(state.camera._shaderValues.data);
-				this._shaderValue.setValue(1,this._colorIntensity);
-				this._shaderValue.setValue(2,this._alphaBlending);
-				this._shaderValue.setValue(3,this.textureCube.source);
-				this._shader.uploadAttributes(SkyBox._vertexDeclaration.shaderValues.data,null);
-				this._shader.uploadMaterialUniforms(this._shaderValue.data);
-				WebGL.mainContext.drawElements(0x0004,36,0x1403,0);
-				Stat.trianglesFaces+=12;
-				Stat.drawCall++;
-			}
-		}
-
-		/**
-		*设置天空立方体纹理。
-		*@param value 天空立方体纹理。
-		*/
-		/**
-		*获取天空立方体纹理。
-		*@return 天空立方体纹理。
-		*/
-		__getset(0,__proto,'textureCube',function(){
-			return this._textureCube;
-			},function(value){
-			this._textureCube=value;
-			if (this._conchSky){
-				this._conchSky.setTextureCube(this._textureCube._conchTexture,0,3);
-			}
-		});
-
-		SkyBox._nameNumber=1;
-		__static(SkyBox,
-		['_tempMatrix4x40',function(){return this._tempMatrix4x40=new Matrix4x4();},'_tempMatrix4x41',function(){return this._tempMatrix4x41=new Matrix4x4();},'_vertexDeclaration',function(){return this._vertexDeclaration=new VertexDeclaration(12,[new VertexElement(0,"vector3",0)]);}
-		]);
-		return SkyBox;
-	})(Sky)
 
 
 	/**
@@ -67894,14 +68549,16 @@ var Laya=window.Laya=(function(window,document){
 		*/
 		__proto.convertScreenCoordToOrthographicCoord=function(source,out){
 			if (this._orthographic){
-				var ratioX=this.orthographicVerticalSize *this.aspectRatio / RenderState.clientWidth;
-				var ratioY=this.orthographicVerticalSize / RenderState.clientHeight;
-				var se=source.elements;
-				var oe=out.elements;
-				oe[0]=(-RenderState.clientWidth / 2+se[0])*ratioX;
-				oe[1]=(RenderState.clientHeight / 2-se[1])*ratioY;
-				oe[2]=(this.nearPlane-this.farPlane)*(source.z+1)/ 2-this.nearPlane;
-				Vector3.transformV3ToV3(out,this.transform.worldMatrix,out);
+				var clientWidth=RenderState.clientWidth;
+				var clientHeight=RenderState.clientHeight;
+				var ratioX=this.orthographicVerticalSize *this.aspectRatio / clientWidth;
+				var ratioY=this.orthographicVerticalSize / clientHeight;
+				var sE=source.elements;
+				var oE=out.elements;
+				oE[0]=(-clientWidth / 2+sE[0])*ratioX;
+				oE[1]=(clientHeight / 2-sE[1])*ratioY;
+				oE[2]=(this.nearPlane-this.farPlane)*(sE[2]+1)/ 2-this.nearPlane;
+				Vector3.transformCoordinate(out,this.transform.worldMatrix,out);
 				return true;
 				}else {
 				return false;
@@ -69138,408 +69795,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	/**
-	*<code>Camera</code> 类用于创建VR摄像机。
-	*/
-	//class laya.d3.core.VRCamera extends laya.d3.core.BaseCamera
-	var VRCamera=(function(_super){
-		function VRCamera(pupilDistande,leftAspectRatio,rightAspectRatio,nearPlane,farPlane){
-			//this._tempMatrix=null;
-			//this._leftAspectRatio=NaN;
-			//this._leftViewport=null;
-			//this._leftNormalizedViewport=null;
-			//this._leftViewMatrix=null;
-			//this._leftProjectionMatrix=null;
-			//this._leftProjectionViewMatrix=null;
-			//this._rightAspectRatio=NaN;
-			//this._rightViewport=null;
-			//this._rightNormalizedViewport=null;
-			//this._rightViewMatrix=null;
-			//this._rightProjectionMatrix=null;
-			//this._rightProjectionViewMatrix=null;
-			//this._pupilDistande=0;
-			//this._leftBoundFrustumUpdate=false;
-			//this._rightBoundFrustumUpdate=false;
-			//this._leftBoundFrustum=null;
-			//this._rightBoundFrustum=null;
-			(pupilDistande===void 0)&& (pupilDistande=0.1);
-			(leftAspectRatio===void 0)&& (leftAspectRatio=0);
-			(rightAspectRatio===void 0)&& (rightAspectRatio=0);
-			(nearPlane===void 0)&& (nearPlane=0.3);
-			(farPlane===void 0)&& (farPlane=1000);
-			this._tempMatrix=new Matrix4x4();
-			this._leftViewMatrix=new Matrix4x4();
-			this._leftProjectionMatrix=new Matrix4x4();
-			this._leftProjectionViewMatrix=new Matrix4x4();
-			this._leftViewport=new Viewport(0,0,0,0);
-			this._leftNormalizedViewport=new Viewport(0,0,0.5,1);
-			this._leftAspectRatio=leftAspectRatio;
-			this._rightViewMatrix=new Matrix4x4();
-			this._rightProjectionMatrix=new Matrix4x4();
-			this._rightProjectionViewMatrix=new Matrix4x4();
-			this._rightViewport=new Viewport(0,0,0,0);
-			this._rightNormalizedViewport=new Viewport(0.5,0,0.5,1);
-			this._rightAspectRatio=rightAspectRatio;
-			this._pupilDistande=pupilDistande;
-			this._leftBoundFrustumUpdate=true;
-			this._leftBoundFrustum=new BoundFrustum(Matrix4x4.DEFAULT);
-			this._rightBoundFrustumUpdate=true;
-			this._rightBoundFrustum=new BoundFrustum(Matrix4x4.DEFAULT);
-			VRCamera.__super.call(this,nearPlane,farPlane);
-			this.transform.on("worldmatrixneedchanged",this,this._onWorldMatrixChanged);
-		}
-
-		__class(VRCamera,'laya.d3.core.VRCamera',_super);
-		var __proto=VRCamera.prototype;
-		/**
-		*@private
-		*/
-		__proto._onWorldMatrixChanged=function(){
-			this._leftBoundFrustumUpdate=this._rightBoundFrustumUpdate=true;
-		}
-
-		/**
-		*@private
-		*计算瞳距。
-		*/
-		__proto._calculatePupilOffset=function(){
-			var offset=this._tempVector3;
-			Vector3.scale(this.right,this._pupilDistande / 2,offset);
-			return offset.elements;
-		}
-
-		/**
-		*@private
-		*计算左投影矩阵。
-		*/
-		__proto._calculateLeftProjectionMatrix=function(){
-			if (!this._useUserProjectionMatrix){
-				if (this._orthographic){
-					var leftHalfWidth=this.orthographicVerticalSize *this.leftAspectRatio *0.5;
-					var leftHalfHeight=this.orthographicVerticalSize *0.5;
-					Matrix4x4.createOrthoOffCenterRH(-leftHalfWidth,leftHalfWidth,-leftHalfHeight,leftHalfHeight,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
-					}else {
-					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.leftAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-				}
-			}
-			this._leftBoundFrustumUpdate=true;
-		}
-
-		/**
-		*@private
-		*计算右投影矩阵。
-		*/
-		__proto._calculateRightProjectionMatrix=function(){
-			if (!this._useUserProjectionMatrix){
-				if (this._orthographic){
-					var rightHalfWidth=this.orthographicVerticalSize *this.rightAspectRatio *0.5;
-					var rightHalfHeight=this.orthographicVerticalSize *0.5;
-					Matrix4x4.createOrthoOffCenterRH(-rightHalfWidth,rightHalfWidth,rightHalfHeight,rightHalfHeight,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-					}else {
-					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.rightAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-				}
-			}
-			this._rightBoundFrustumUpdate=true;
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__proto._calculateProjectionMatrix=function(){
-			if (!this._useUserProjectionMatrix){
-				if (this._orthographic){
-					var leftHalfWidth=this.orthographicVerticalSize *this.leftAspectRatio *0.5;
-					var leftHalfHeight=this.orthographicVerticalSize *0.5;
-					var rightHalfWidth=this.orthographicVerticalSize *this.rightAspectRatio *0.5;
-					var rightHalfHeight=this.orthographicVerticalSize *0.5;
-					Matrix4x4.createOrthoOffCenterRH(-leftHalfWidth,leftHalfWidth,-leftHalfHeight,leftHalfHeight,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
-					Matrix4x4.createOrthoOffCenterRH(-rightHalfWidth,rightHalfWidth,rightHalfHeight,rightHalfHeight,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-					}else {
-					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.leftAspectRatio,this.nearPlane,this.farPlane,this._leftProjectionMatrix);
-					Matrix4x4.createPerspective(3.1416 *this.fieldOfView / 180.0,this.rightAspectRatio,this.nearPlane,this.farPlane,this._rightProjectionMatrix);
-				}
-			}
-			this._leftBoundFrustumUpdate=this._rightBoundFrustumUpdate=true;
-		}
-
-		/**
-		*@inheritDoc
-		*/
-		__proto._renderCamera=function(gl,state,scene){
-			state.camera=this;
-			this._prepareCameraToRender();
-			scene._preRenderUpdateComponents(state);
-			var leftViewMat,leftProjectMatrix;
-			leftViewMat=state._viewMatrix=this.leftViewMatrix;
-			var renderTar=this._renderTarget;
-			if (renderTar){
-				renderTar.start();
-				Matrix4x4.multiply(BaseCamera._invertYScaleMatrix,this._leftProjectionMatrix,BaseCamera._invertYProjectionMatrix);
-				Matrix4x4.multiply(BaseCamera._invertYScaleMatrix,this.leftProjectionViewMatrix,BaseCamera._invertYProjectionViewMatrix);
-				leftProjectMatrix=state._projectionMatrix=BaseCamera._invertYProjectionMatrix;
-				state._projectionViewMatrix=BaseCamera._invertYProjectionViewMatrix;
-				}else {
-				leftProjectMatrix=state._projectionMatrix=this._leftProjectionMatrix;
-				state._projectionViewMatrix=this.leftProjectionViewMatrix;
-			}
-			this._prepareCameraViewProject(leftViewMat,leftProjectMatrix);
-			state._viewport=this.leftViewport;
-			scene._preRenderScene(gl,state,this.leftBoundFrustum);
-			scene._clear(gl,state);
-			scene._renderScene(gl,state);
-			var rightViewMat,rightProjectMatrix;
-			rightViewMat=state._viewMatrix=this.rightViewMatrix;
-			if (renderTar){
-				renderTar.start();
-				Matrix4x4.multiply(BaseCamera._invertYScaleMatrix,this._rightProjectionMatrix,BaseCamera._invertYProjectionMatrix);
-				Matrix4x4.multiply(BaseCamera._invertYScaleMatrix,this.rightProjectionViewMatrix,BaseCamera._invertYProjectionViewMatrix);
-				state._projectionMatrix=BaseCamera._invertYProjectionMatrix;
-				rightProjectMatrix=state._projectionViewMatrix=BaseCamera._invertYProjectionViewMatrix;
-				}else {
-				rightProjectMatrix=state._projectionMatrix=this._rightProjectionMatrix;
-				state._projectionViewMatrix=this.rightProjectionViewMatrix;
-			}
-			this._prepareCameraViewProject(rightViewMat,rightProjectMatrix);
-			state._viewport=this.rightViewport;
-			scene._preRenderScene(gl,state,this.rightBoundFrustum);
-			scene._clear(gl,state);
-			scene._renderScene(gl,state);
-			scene._postRenderUpdateComponents(state);
-			(renderTar)&& (renderTar.end());
-		}
-
-		/**
-		*获取摄像机右视锥。
-		*/
-		__getset(0,__proto,'rightBoundFrustum',function(){
-			if (this._rightBoundFrustumUpdate)
-				this._rightBoundFrustum.matrix=this.rightProjectionViewMatrix;
-			return this._rightBoundFrustum;
-		});
-
-		/**
-		*获取裁剪空间的左视口。
-		*@return 裁剪空间的左视口。
-		*/
-		__getset(0,__proto,'leftNormalizedViewport',function(){
-			if (!this._viewportExpressedInClipSpace){
-				var vp=this._leftViewport;
-				var size=this.renderTargetSize;
-				var sizeW=size.width;
-				var sizeH=size.height;
-				this._leftNormalizedViewport.x=vp.x / sizeW;
-				this._leftNormalizedViewport.y=vp.y / sizeH;
-				this._leftNormalizedViewport.width=vp.width / sizeW;
-				this._leftNormalizedViewport.height=vp.height / sizeH;
-			}
-			return this._leftNormalizedViewport;
-		});
-
-		/**
-		*获取屏幕空间的右视口。
-		*@return 屏幕空间的右视口。
-		*/
-		__getset(0,__proto,'rightViewport',function(){
-			if (this._viewportExpressedInClipSpace){
-				var nVp=this._rightNormalizedViewport;
-				var size=this.renderTargetSize;
-				var sizeW=size.width;
-				var sizeH=size.height;
-				this._rightViewport.x=nVp.x *sizeW;
-				this._rightViewport.y=nVp.y *sizeH;
-				this._rightViewport.width=nVp.width *sizeW;
-				this._rightViewport.height=nVp.height *sizeH;
-			}
-			return this._rightViewport;
-		});
-
-		/**
-		*设置屏幕空间的视口。
-		*@param 屏幕空间的视口。
-		*/
-		__getset(0,__proto,'viewport',null,function(value){
-			if (this.renderTarget !=null && (value.x < 0 || value.y < 0 || value.width==0 || value.height==0))
-				throw new Error("VRCamera: viewport size invalid.","value");
-			this._viewportExpressedInClipSpace=false;
-			this._leftViewport=new Viewport(0,0,value.width / 2,value.height);
-			this._rightViewport=new Viewport(value.width / 2,0,value.width / 2,value.height);
-			this._calculateProjectionMatrix();
-		});
-
-		/**
-		*获取左横纵比。
-		*@return 左横纵比。
-		*/
-		__getset(0,__proto,'leftAspectRatio',function(){
-			if (this._leftAspectRatio===0){
-				var lVp=this.leftViewport;
-				return lVp.width / lVp.height;
-			}
-			return this._leftAspectRatio;
-		});
-
-		/**
-		*获取右横纵比。
-		*@return 右横纵比。
-		*/
-		__getset(0,__proto,'rightAspectRatio',function(){
-			if (this._rightAspectRatio===0){
-				var rVp=this.rightViewport;
-				return rVp.width / rVp.height;
-			}
-			return this._rightAspectRatio;
-		});
-
-		/**
-		*设置横纵比。
-		*@param value 横纵比。
-		*/
-		__getset(0,__proto,'aspectRatio',null,function(value){
-			if (value < 0)
-				throw new Error("VRCamera: the aspect ratio has to be a positive real number.");
-			this._leftAspectRatio=value;
-			this._rightAspectRatio=value;
-			this._calculateRightProjectionMatrix();
-		});
-
-		/**
-		*获取裁剪空间的右视口。
-		*@return 裁剪空间的右视口。
-		*/
-		__getset(0,__proto,'rightNormalizedViewport',function(){
-			if (!this._viewportExpressedInClipSpace){
-				var vp=this._rightViewport;
-				var size=this.renderTargetSize;
-				var sizeW=size.width;
-				var sizeH=size.height;
-				this._rightNormalizedViewport.x=vp.x / sizeW;
-				this._rightNormalizedViewport.y=vp.y / sizeH;
-				this._rightNormalizedViewport.width=vp.width / sizeW;
-				this._rightNormalizedViewport.height=vp.height / sizeH;
-			}
-			return this._rightNormalizedViewport;
-		});
-
-		/**
-		*设置裁剪空间的视口。
-		*@return 裁剪空间的视口。
-		*/
-		__getset(0,__proto,'normalizedViewport',null,function(value){
-			if (value.x < 0 || value.y < 0 || (value.x+value.width)> 1 || (value.x+value.height)> 1)
-				throw new Error("VRCamera: viewport size invalid.","value");
-			this._viewportExpressedInClipSpace=true;
-			this._leftNormalizedViewport=new Viewport(0,0,value.width / 2,value.height);
-			this._rightNormalizedViewport=new Viewport(value.width / 2,0,value.width / 2,value.height);
-			this._calculateProjectionMatrix();
-		});
-
-		/**
-		*获取屏幕空间的左视口。
-		*@return 屏幕空间的左视口。
-		*/
-		__getset(0,__proto,'leftViewport',function(){
-			if (this._viewportExpressedInClipSpace){
-				var nVp=this._leftNormalizedViewport;
-				var size=this.renderTargetSize;
-				var sizeW=size.width;
-				var sizeH=size.height;
-				this._leftViewport.x=nVp.x *sizeW;
-				this._leftViewport.y=nVp.y *sizeH;
-				this._leftViewport.width=nVp.width *sizeW;
-				this._leftViewport.height=nVp.height *sizeH;
-			}
-			return this._leftViewport;
-		});
-
-		__getset(0,__proto,'needLeftViewport',function(){
-			var nVp=this.leftNormalizedViewport;
-			return nVp.x===0 && nVp.y===0 && nVp.width===1 && nVp.height===1;
-		});
-
-		__getset(0,__proto,'needRightViewport',function(){
-			var nVp=this.rightNormalizedViewport;
-			return nVp.x===0 && nVp.y===0 && nVp.width===1 && nVp.height===1;
-		});
-
-		/**
-		*获取左视图矩阵。
-		*@return 左视图矩阵。
-		*/
-		__getset(0,__proto,'leftViewMatrix',function(){
-			var offsetE=this._calculatePupilOffset();
-			var tempWorldMat=this._tempMatrix;
-			this.transform.worldMatrix.cloneTo(tempWorldMat);
-			var worldMatE=tempWorldMat.elements;
-			worldMatE[12]-=offsetE[0];
-			worldMatE[13]-=offsetE[1];
-			worldMatE[14]-=offsetE[2];
-			tempWorldMat.invert(this._leftViewMatrix);
-			return this._leftViewMatrix;
-		});
-
-		/**
-		*获取右视图矩阵。
-		*@return 右视图矩阵。
-		*/
-		__getset(0,__proto,'rightViewMatrix',function(){
-			var offsetE=this._calculatePupilOffset();
-			var tempWorldMat=this._tempMatrix;
-			this.transform.worldMatrix.cloneTo(tempWorldMat);
-			var worldMatE=tempWorldMat.elements;
-			worldMatE[12]+=offsetE[0];
-			worldMatE[13]+=offsetE[1];
-			worldMatE[14]+=offsetE[2];
-			tempWorldMat.invert(this._rightViewMatrix);
-			return this._rightViewMatrix;
-		});
-
-		/**
-		*获取左投影矩阵。
-		*@return 左投影矩阵。
-		*/
-		__getset(0,__proto,'leftProjectionMatrix',function(){
-			return this._leftProjectionMatrix;
-		});
-
-		/**
-		*获取左投影视图矩阵。
-		*@return 左投影视图矩阵。
-		*/
-		__getset(0,__proto,'leftProjectionViewMatrix',function(){
-			Matrix4x4.multiply(this.leftProjectionMatrix,this.leftViewMatrix,this._leftProjectionViewMatrix);
-			return this._leftProjectionViewMatrix;
-		});
-
-		/**
-		*获取右投影矩阵。
-		*@return 右投影矩阵。
-		*/
-		__getset(0,__proto,'rightProjectionMatrix',function(){
-			return this._rightProjectionMatrix;
-		});
-
-		/**
-		*获取右投影视图矩阵。
-		*@return 右投影视图矩阵。
-		*/
-		__getset(0,__proto,'rightProjectionViewMatrix',function(){
-			Matrix4x4.multiply(this.rightProjectionMatrix,this.rightViewMatrix,this._rightProjectionViewMatrix);
-			return this._rightProjectionViewMatrix;
-		});
-
-		/**
-		*获取摄像机左视锥。
-		*/
-		__getset(0,__proto,'leftBoundFrustum',function(){
-			if (this._leftBoundFrustumUpdate)
-				this._leftBoundFrustum.matrix=this.leftProjectionViewMatrix;
-			return this._leftBoundFrustum;
-		});
-
-		return VRCamera;
-	})(BaseCamera)
-
-
-	/**
 	*<code>MeshSprite3D</code> 类用于创建网格。
 	*/
 	//class laya.d3.core.SkinnedMeshSprite3D extends laya.d3.core.RenderableSprite3D
@@ -70403,6 +70658,6 @@ var Laya=window.Laya=(function(window,document){
 
 
 	Laya.__init([EventDispatcher,LoaderManager,DrawText,Browser,ShaderCompile3D,Render,WebGLContext2D,GraphicAnimation,Timer,LocalStorage,TimeLine,View,AtlasGrid,ShaderCompile]);
-	new vrModule.VRScene2();
+	new shaderModule.ShaderPrecompile();
 
 })(window,document,Laya);

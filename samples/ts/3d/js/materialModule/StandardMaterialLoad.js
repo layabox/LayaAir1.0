@@ -1,4 +1,4 @@
-var StandardMaterialLoad = (function () {
+var StandardMaterialLoad = /** @class */ (function () {
     function StandardMaterialLoad() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

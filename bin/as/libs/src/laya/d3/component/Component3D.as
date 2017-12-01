@@ -100,7 +100,7 @@ package laya.d3.component {
 		 */
 		public function _initialize(owner:ComponentNode):void {
 			_owner = owner;
-			enable = true;
+			_enable = true;
 			started = false;
 			_load(owner);
 		}
@@ -168,11 +168,6 @@ package laya.d3.component {
 		public function _unload(owner:ComponentNode):void {
 			this.offAll();
 		}
-		
-		////日后添加，物理相关函数
-		//public  function onCollisionEnter():void{}
-		//public  function onCollisionExit():void {}
-		//public  function onCollisionStay():void{}	
 		
 		/**
 		 * @private

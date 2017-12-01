@@ -1,4 +1,4 @@
-var GlitterDemo = (function () {
+var GlitterDemo = /** @class */ (function () {
     function GlitterDemo() {
         this.scaleDelta = 0;
         this.scaleValue = 0;

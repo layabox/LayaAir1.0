@@ -34,7 +34,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		public function get _originalBoundingBoxCorners():Array {
+		public function get _originalBoundingBoxCorners():Vector.<Vector3> {
 			throw new Error("BaseRender: must override it.");
 		}
 		

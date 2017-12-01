@@ -9,52 +9,66 @@ var camera = scene.addChild(new Laya.Camera(0, 0.1, 100));
 camera.transform.translate(new Laya.Vector3(0, 1, 3));
 camera.clearColor = null;
 
-//添加精灵到场景
-var sprite3d1 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/NvWu/NvWu-shenminvwu.lm")));
-var sprite3d2 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/CunMinNan/CunMinNan-cunminnan.lm")));
-var sprite3d3 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/XiaoFeiLong/XiaoFeiLong-xiaofeilong.lm")));
-var sprite3d4 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/PangZi/PangZi-doubipangzi.lm")));
+Laya.loader.create(["../../res/threeDimen/skinModel/NvWu/NvWu-shenminvwu.lm", "../../res/threeDimen/skinModel/CunMinNan/CunMinNan-cunminnan.lm", "../../res/threeDimen/skinModel/XiaoFeiLong/XiaoFeiLong-xiaofeilong.lm", "../../res/threeDimen/skinModel/PangZi/PangZi-doubipangzi.lm"], Laya.Handler.create(this, onComplete));
 
-sprite3d1.transform.position = new Laya.Vector3(-0.6, 0, -0.2);
-sprite3d2.transform.position = new Laya.Vector3(0.1, 0, 0);
-sprite3d3.transform.position = new Laya.Vector3(-2.3, 0, 0);
-sprite3d4.transform.position = new Laya.Vector3(1.8, 0, 0);
-
-sprite3d1.name = "女巫 : 爱上一只村民 , 可惜家里没有 … … (MeshCollider)";
-sprite3d2.name = "村民 : 谁说癞蛤蟆吃不到天鹅肉，哼 ~  (MeshCollider)";
-sprite3d3.name = "小飞龙 : 别摸我，烦着呢 ！ (SphereCollider)";
-sprite3d4.name = "死胖子 : 不吃饱哪有力气减肥？ (BoxCollider)";
+var sprite3d1;
+var sprite3d2;
+var sprite3d3;
+var sprite3d4;
+var sphereMesh;
 var str5 = "旁白 : 秀恩爱，死得快！ (MeshCollider)";
 
-//指定精灵的层
-sprite3d1.layer = Laya.Layer.getLayerByNumber(10);
-sprite3d2.layer = Laya.Layer.getLayerByNumber(10);
-sprite3d3.layer = Laya.Layer.getLayerByNumber(13);
-sprite3d4.layer = Laya.Layer.getLayerByNumber(13);
+function onComplete(){
+    //添加精灵到场景
+    sprite3d1 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/NvWu/NvWu-shenminvwu.lm")));
+    sprite3d2 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/CunMinNan/CunMinNan-cunminnan.lm")));
+    sprite3d3 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/XiaoFeiLong/XiaoFeiLong-xiaofeilong.lm")));
+    sprite3d4 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/PangZi/PangZi-doubipangzi.lm")));
 
-/**
- * 给精灵添加碰撞器组件
- * BoxCollider    : 盒型碰撞器
- * SphereCollider : 球型碰撞器
- * MeshCollider   : 网格碰撞器
- */
-sprite3d1.addComponent(Laya.MeshCollider);
-sprite3d2.addComponent(Laya.MeshCollider);
-sprite3d3.addComponent(Laya.SphereCollider);
-sprite3d4.addComponent(Laya.BoxCollider);
+    sprite3d1.transform.position = new Laya.Vector3(-0.6, 0, -0.2);
+    sprite3d2.transform.position = new Laya.Vector3(0.1, 0, 0);
+    sprite3d3.transform.position = new Laya.Vector3(-2.3, 0, 0);
+    sprite3d4.transform.position = new Laya.Vector3(1.8, 0, 0);
 
-//用球模拟精灵的球体碰撞器
-var sphereMesh = new Laya.SphereMesh(1, 32, 32);
-sphereSprite3d = scene.addChild(new Laya.MeshSprite3D(sphereMesh));
-sprite3d3.meshFilter.sharedMesh.once(Laya.Event.LOADED, this, function () {
+    sprite3d1.name = "女巫 : 爱上一只村民 , 可惜家里没有 … … (MeshCollider)";
+    sprite3d2.name = "村民 : 谁说癞蛤蟆吃不到天鹅肉，哼 ~  (MeshCollider)";
+    sprite3d3.name = "小飞龙 : 别摸我，烦着呢 ！ (SphereCollider)";
+    sprite3d4.name = "死胖子 : 不吃饱哪有力气减肥？ (BoxCollider)";
+
+    //指定精灵的层
+    sprite3d1.layer = Laya.Layer.getLayerByNumber(10);
+    sprite3d2.layer = Laya.Layer.getLayerByNumber(10);
+    sprite3d3.layer = Laya.Layer.getLayerByNumber(13);
+    sprite3d4.layer = Laya.Layer.getLayerByNumber(13);
+
+    /**
+     * 给精灵添加碰撞器组件
+     * BoxCollider    : 盒型碰撞器
+     * SphereCollider : 球型碰撞器
+     * MeshCollider   : 网格碰撞器
+     */
+    var sprite3d1MeshCollider = sprite3d1.addComponent(Laya.MeshCollider);
+    sprite3d1MeshCollider.mesh = sprite3d1.meshFilter.sharedMesh;
+    var sprite3d2MeshCollider = sprite3d2.addComponent(Laya.MeshCollider);
+    sprite3d2MeshCollider.mesh = sprite3d2.meshFilter.sharedMesh;
+
+    var sphereCollider = sprite3d3.addComponent(Laya.SphereCollider);
+    sphereCollider.center = sprite3d3.meshFilter.sharedMesh.boundingSphere.center.clone();
+    sphereCollider.radius = sprite3d3.meshFilter.sharedMesh.boundingSphere.radius;
+
+    var boxCollider = sprite3d4.addComponent(Laya.BoxCollider);
+    boxCollider.setFromBoundBox(sprite3d4.meshFilter.sharedMesh.boundingBox);
+
+    //用球模拟精灵的球体碰撞器
+    sphereMesh = new Laya.SphereMesh(1, 32, 32);
+    sphereSprite3d = scene.addChild(new Laya.MeshSprite3D(sphereMesh));
     var mat = new Laya.StandardMaterial();
     mat.albedo = new Laya.Vector4(1, 1, 1, 0.5);
     mat.renderMode = 5;
     sphereSprite3d.meshRender.material = mat;
-});
+    Laya.timer.frameLoop(1, this, checkHit);
+}
 
-
-Laya.timer.frameLoop(1, this, checkHit);
 
 var ray = new Laya.Ray(new Laya.Vector3(0, 0, 0), new Laya.Vector3(0, 0, 0));
 var point = new Laya.Vector2();

@@ -34,7 +34,7 @@ package laya.d3.math {
 		 * @param	count 顶点子队列的顶点数。
 		 * @param	result 生成的包围球。
 		 */
-		public static function createFromSubPoints(points:Array, start:int, count:int, out:BoundSphere):void {
+		public static function createFromSubPoints(points:Vector.<Vector3>, start:int, count:int, out:BoundSphere):void {
 			if (points == null) {
 				throw new Error("points");
 			}
@@ -84,7 +84,7 @@ package laya.d3.math {
 		 * @param	points 顶点的队列。
 		 * @param	result 生成的包围球。
 		 */
-		public static function createfromPoints(points:Array, out:BoundSphere):void {
+		public static function createfromPoints(points:Vector.<Vector3>, out:BoundSphere):void {
 			if (points == null) {
 				throw new Error("points");
 			}

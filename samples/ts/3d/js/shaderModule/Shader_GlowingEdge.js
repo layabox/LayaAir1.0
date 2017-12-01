@@ -1,4 +1,4 @@
-var Shader_GlowingEdge = (function () {
+var Shader_GlowingEdge = /** @class */ (function () {
     function Shader_GlowingEdge() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

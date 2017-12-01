@@ -17,7 +17,7 @@ package laya.d3.core.scene {
 	import laya.d3.math.Vector3;
 	import laya.utils.Stat;
 	
-	public class OctreeNode implements ITreeNode{
+	public class OctreeNode implements ITreeNode {
 		/**是否开启四/八叉树调试模式。 */
 		public static var debugMode:Boolean = false;
 		
@@ -33,24 +33,24 @@ package laya.d3.core.scene {
 		private var _relaxBox:BoundBox = null;
 		
 		private var _boundingSphere:BoundSphere = new BoundSphere(new Vector3(), 0);
-		private var _corners:Array = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		private var _corners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		private var _boundingBoxCenter:Vector3 = new Vector3();
 		private var _scene:Scene = null;
 		private var _parent:OctreeNode = null;
 		public var _children:Vector.<OctreeNode> = new Vector.<OctreeNode>(CHILDNUM);
 		private var _objects:Vector.<BaseRender> = new Vector.<BaseRender>();
 		private var _currentDepth:int = 0;
-		private var _tempBoundBoxCorners:Vector.<Vector3> = new Vector.<Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		private var _tempBoundBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
 		public function init(center:Vector3, treeSize:Vector3):void {
 			var min:Vector3 = new Vector3();
 			var max:Vector3 = new Vector3();
 			Vector3.scale(treeSize, -0.5, min);
 			Vector3.scale(treeSize, 0.5, max);
-			Vector3.add( min, center, min );
-			Vector3.add( max, center, max );
+			Vector3.add(min, center, min);
+			Vector3.add(max, center, max);
 			exactBox = new BoundBox(min, max);
-			relaxBox = new BoundBox(min, max);	
+			relaxBox = new BoundBox(min, max);
 		}
 		
 		public function addTreeNode(render:BaseRender):void {
@@ -185,7 +185,7 @@ package laya.d3.core.scene {
 			for (i = 0, n = _objects.length; i < n; i++) {
 				var render:BaseRender = _objects[i];
 				//if ((pObject->m_nFlag & nFlags) == 0) continue;//TODO:阴影等
-				if (Layer.isVisible(render._owner.layer.mask)  && render.enable) {
+				if (Layer.isVisible(render._owner.layer.mask) && render.enable) {
 					if (testVisible) {
 						Stat.treeSpriteCollision += 1;
 						if (boundFrustum.containsBoundSphere(render.boundingSphere) === ContainmentType.Disjoint)
@@ -237,13 +237,13 @@ package laya.d3.core.scene {
 			var dynamicBatchManager:DynamicBatchManager = _scene._dynamicBatchManager;
 			for (i = 0, n = _objects.length; i < n; i++) {
 				var baseRender:BaseRender = _objects[i];
-				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask)&& baseRender.enable) {
+				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
 					if (testVisible && lightBoundFrustum[0].containsBoundSphere(baseRender.boundingSphere) === ContainmentType.Disjoint)
 						continue;
 					
 					//TODO:计算距离排序
 					for (var k:int = 1, kNum:int = lightBoundFrustum.length; k < kNum; k++) {
-						var shadowQueue:RenderQueue = splitShadowQueues[k-1];
+						var shadowQueue:RenderQueue = splitShadowQueues[k - 1];
 						if (lightBoundFrustum[k].containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint) {
 							var renderElements:Vector.<RenderElement> = baseRender._renderElements;
 							for (j = 0, m = renderElements.length; j < m; j++)
@@ -267,7 +267,6 @@ package laya.d3.core.scene {
 			}
 		}
 		
-		
 		/**
 		 * @private
 		 */
@@ -278,7 +277,7 @@ package laya.d3.core.scene {
 			//var cameraPosition:Vector3 = camera.transform.position;
 			for (i = 0, n = _objects.length; i < n; i++) {
 				var baseRender:BaseRender = _objects[i];
-				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask)&& baseRender.enable) {
+				if (baseRender.castShadow && Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable) {
 					if (testVisible && lightBoundFrustum.containsBoundSphere(baseRender.boundingSphere) === ContainmentType.Disjoint)
 						continue;
 					baseRender._renderUpdate(lightViewProjectMatrix);
@@ -299,7 +298,7 @@ package laya.d3.core.scene {
 						continue;
 					testVisibleChild = (type === ContainmentType.Intersects);
 				}
-				child.cullingShadowObjectsOnePSSM(lightBoundFrustum, splitShadowQueues,lightViewProjectMatrix, testVisibleChild, flags, scene);
+				child.cullingShadowObjectsOnePSSM(lightBoundFrustum, splitShadowQueues, lightViewProjectMatrix, testVisibleChild, flags, scene);
 			}
 		}
 		

@@ -4,7 +4,7 @@ package laya.d3.math {
 	/**
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
-	public class Vector3  implements IClone{
+	public class Vector3 implements IClone {
 		/**@private	*/
 		public static const _tempVector4:Vector4 = new Vector4();
 		
@@ -29,6 +29,9 @@ package laya.d3.math {
 		
 		/** @private */
 		private static var TEMPVec4:Vector4 = new Vector4();
+		
+		/**无效矩阵,禁止修改*/
+		public static const NAN:Vector3 = new Vector3(NaN, NaN, NaN);
 		
 		/**
 		 * 两个三维向量距离的平方。
@@ -386,9 +389,7 @@ package laya.d3.math {
 		public static function equals(a:Vector3, b:Vector3):Boolean {
 			var ae:Float32Array = a.elements;
 			var be:Float32Array = b.elements;
-			return  MathUtils3D.nearEqual(Math.abs(ae[0]), Math.abs(be[0])) 
-				 && MathUtils3D.nearEqual(Math.abs(ae[1]), Math.abs(be[1])) 
-				 && MathUtils3D.nearEqual(Math.abs(ae[2]), Math.abs(be[2]));
+			return MathUtils3D.nearEqual(Math.abs(ae[0]), Math.abs(be[0])) && MathUtils3D.nearEqual(Math.abs(ae[1]), Math.abs(be[1])) && MathUtils3D.nearEqual(Math.abs(ae[2]), Math.abs(be[2]));
 		}
 		
 		/**三维向量元素数组*/
@@ -456,6 +457,17 @@ package laya.d3.math {
 		}
 		
 		/**
+		 * 从Array数组拷贝值。
+		 * @param  array 数组。
+		 * @param  offset 数组偏移。
+		 */
+		public function fromArray(array:Array, offset:int = 0):void {
+			elements[0] = array[offset + 0];
+			elements[1] = array[offset + 1];
+			elements[2] = array[offset + 2];
+		}
+		
+		/**
 		 * 克隆。
 		 * @param	destObject 克隆源。
 		 */
@@ -466,7 +478,7 @@ package laya.d3.math {
 			destE[0] = s[0];
 			destE[1] = s[1];
 			destE[2] = s[2];
-			
+		
 		}
 		
 		/**

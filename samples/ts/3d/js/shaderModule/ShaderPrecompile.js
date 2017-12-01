@@ -1,4 +1,4 @@
-var ShaderPrecompile = (function () {
+var ShaderPrecompile = /** @class */ (function () {
     function ShaderPrecompile() {
         Laya3D.init(0, 0, true);
         //开启Shader编译调试模式，可在输出宏定义编译值。

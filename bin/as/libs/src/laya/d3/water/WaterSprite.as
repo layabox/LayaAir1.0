@@ -8,6 +8,7 @@ package laya.d3.water
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.RenderTexture;
@@ -52,7 +53,7 @@ package laya.d3.water
 		private var _refractQueue:RenderQueue ;
 		private var _refractObjStack:Vector.<RenderableSprite3D> = new Vector.<RenderableSprite3D>() ;//因为开始的时候可能还没有加载完成，不知道renderelements
 		private var _refractObjecs:Vector.<MeshSprite3D> = new Vector.<MeshSprite3D>();
-		private var _meshLoaded:Boolean = false;
+		private var _waterLoaded:Boolean = false;
 		private var _scrSizeInfo:Float32Array = new Float32Array(2);
 		private var _waterColor:Vector3 = new Vector3();
 		private var _waterFogStart:Number = 0;
@@ -182,7 +183,7 @@ package laya.d3.water
 			}else {
 				throw "error2";
 			}
-			_meshLoaded = true;
+			_waterLoaded = true;
 		}
 		
 		public function stop():void{
@@ -204,7 +205,7 @@ package laya.d3.water
 		 * @param	state
 		 */
 		public function onPreRender(state:RenderState):void {
-			if (!_meshLoaded)
+			if (!_waterLoaded)
 				return;
 			if (_refractObjStack.length) {
 				for (var i:int = 0; i < _refractObjStack.length; i++) {

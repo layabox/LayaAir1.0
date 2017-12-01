@@ -48,7 +48,7 @@ package laya.d3.terrain {
 				_boundingBox.toDefault();
 			} else {
 				var worldMat:Matrix4x4 = _terrainSprite3DOwner.transform.worldMatrix;
-				var corners:Array = terrainFilter._boundingBoxCorners;
+				var corners:Vector.<Vector3> = terrainFilter._boundingBoxCorners;
 				for (var i:int = 0; i < 8; i++)
 					Vector3.transformCoordinate(corners[i], worldMat, _tempBoundBoxCorners[i]);
 				BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);

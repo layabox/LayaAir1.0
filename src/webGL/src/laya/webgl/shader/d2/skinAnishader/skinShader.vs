@@ -12,5 +12,6 @@ void main() {
   vec4 pos=mmat*u_mmat2*vec4(offsetX+position.x,offsetY+position.y,0,1 );
   gl_Position = vec4((pos.x/size.x-0.5)*2.0,(0.5-pos.y/size.y)*2.0,pos.z,1.0);
   v_color = color;
+  v_color.rgb *= v_color.a;
   v_texcoord = texcoord;  
 }

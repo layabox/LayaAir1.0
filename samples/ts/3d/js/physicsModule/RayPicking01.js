@@ -1,4 +1,4 @@
-var RayPicking01 = (function () {
+var RayPicking01 = /** @class */ (function () {
     function RayPicking01() {
         this.ray = new Laya.Ray(new Laya.Vector3(0, 0, 0), new Laya.Vector3(0, 0, 0));
         this.point = new Laya.Vector2();
@@ -23,7 +23,8 @@ var RayPicking01 = (function () {
         planeMat.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/texture/layabox.png");
         planeMat.albedo = new Laya.Vector4(0.9, 0.9, 0.9, 1);
         plane.meshRender.material = planeMat;
-        plane.addComponent(Laya.BoxCollider);
+        var boxCollider = plane.addComponent(Laya.BoxCollider);
+        boxCollider.setFromBoundBox(plane.meshFilter.sharedMesh.boundingBox);
         plane.name = "平面";
         //正方体
         var box = scene.addChild(new Laya.MeshSprite3D(new Laya.BoxMesh(0.5, 0.5, 0.5)));
@@ -32,7 +33,8 @@ var RayPicking01 = (function () {
         box.meshRender.material = boxMat;
         box.transform.position = new Laya.Vector3(1.5, 0.25, 0.5);
         box.transform.rotate(new Laya.Vector3(0, 30, 0), false, false);
-        box.addComponent(Laya.BoxCollider);
+        var boxCollider1 = box.addComponent(Laya.BoxCollider);
+        boxCollider1.setFromBoundBox(box.meshFilter.sharedMesh.boundingBox);
         box.name = "正方体";
         //球体
         var sphere = scene.addChild(new Laya.MeshSprite3D(new Laya.SphereMesh(0.25)));
@@ -41,7 +43,9 @@ var RayPicking01 = (function () {
         sphere.meshRender.material = sphereMat;
         sphere.transform.position = new Laya.Vector3(0.5, 0.25, 0.5);
         sphere.transform.rotate(new Laya.Vector3(0, 90, 0), false, false);
-        sphere.addComponent(Laya.SphereCollider);
+        var sphereCollider = sphere.addComponent(Laya.SphereCollider);
+        sphereCollider.center = sphere.meshFilter.sharedMesh.boundingSphere.center.clone();
+        sphereCollider.radius = sphere.meshFilter.sharedMesh.boundingSphere.radius;
         sphere.name = "球体";
         //圆柱体
         var cylinder = scene.addChild(new Laya.MeshSprite3D(new Laya.CylinderMesh(0.25, 1)));
@@ -50,7 +54,8 @@ var RayPicking01 = (function () {
         cylinder.meshRender.material = cylinderMat;
         cylinder.transform.position = new Laya.Vector3(-0.5, 0.5, 0.5);
         cylinder.transform.rotate(new Laya.Vector3(0, -45, 0), false, false);
-        cylinder.addComponent(Laya.MeshCollider);
+        var cylinderMeshCollider = cylinder.addComponent(Laya.MeshCollider);
+        cylinderMeshCollider.mesh = cylinder.meshFilter.sharedMesh;
         cylinder.name = "圆柱体";
         //胶囊体
         var capsule = scene.addChild(new Laya.MeshSprite3D(new Laya.CapsuleMesh(0.25, 1)));
@@ -59,7 +64,8 @@ var RayPicking01 = (function () {
         capsule.meshRender.material = capsuleMat;
         capsule.transform.position = new Laya.Vector3(-1.5, 0.5, 0.5);
         capsule.transform.rotate(new Laya.Vector3(0, -45, 0), false, false);
-        capsule.addComponent(Laya.MeshCollider);
+        var capsuleMeshCollider = capsule.addComponent(Laya.MeshCollider);
+        capsuleMeshCollider.mesh = capsule.meshFilter.sharedMesh;
         capsule.name = "胶囊体";
         Laya.timer.frameLoop(1, this, this.checkHit);
         this.loadUI();

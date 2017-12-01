@@ -1,4 +1,4 @@
-var Sprite3DLoad = (function () {
+var Sprite3DLoad = /** @class */ (function () {
     function Sprite3DLoad() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

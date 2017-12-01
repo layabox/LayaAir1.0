@@ -1,4 +1,4 @@
-var MeshLoad = (function () {
+var MeshLoad = /** @class */ (function () {
     function MeshLoad() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

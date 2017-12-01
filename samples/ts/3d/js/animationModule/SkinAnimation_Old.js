@@ -1,4 +1,4 @@
-var SkinAnimation_Old = (function () {
+var SkinAnimation_Old = /** @class */ (function () {
     function SkinAnimation_Old() {
         this.curStateIndex = 0;
         this.skinAniUrl = [

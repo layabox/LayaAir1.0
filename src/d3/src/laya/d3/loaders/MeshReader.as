@@ -26,6 +26,7 @@ package laya.d3.loaders {
 				LoadModelV02.parse(readData, version, mesh, materials, subMeshes, materialMap);
 				break;
 			case "LAYAMODEL:03": 
+			case "LAYAMODEL:0301":
 				LoadModelV03.parse(readData, version, mesh, subMeshes, materialMap);
 				break;
 			default: 

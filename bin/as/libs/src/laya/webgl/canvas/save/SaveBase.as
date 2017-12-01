@@ -4,6 +4,7 @@ package laya.webgl.canvas.save {
 	
 	public class SaveBase implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		/*[FILEINDEX:1]*/
 		
 		/*[DISBALEOUTCONST-BEGIN]*/
 		public static const TYPE_ALPHA:int = 0x1;

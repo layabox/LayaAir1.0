@@ -75,7 +75,8 @@ package physicsModule {
             planeMat.diffuseTexture = Texture2D.load("../../../../res/threeDimen/texture/layabox.png");
             planeMat.albedo = new Vector4(0.9, 0.9, 0.9, 1);
             plane.meshRender.material = planeMat;
-            plane.addComponent(MeshCollider);
+            var meshCollider:MeshCollider = plane.addComponent(MeshCollider) as MeshCollider;
+			meshCollider.mesh = plane.meshFilter.sharedMesh;
             
             box = scene.addChild(new MeshSprite3D(new BoxMesh(0.5, 0.5, 0.5))) as MeshSprite3D;
             var mat:StandardMaterial = new StandardMaterial();

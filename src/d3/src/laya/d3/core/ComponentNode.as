@@ -1,10 +1,12 @@
 package laya.d3.core {
 	import laya.d3.component.Component3D;
+	import laya.d3.component.Script;
 	import laya.d3.core.render.RenderState;
 	import laya.display.Node;
 	import laya.utils.ClassUtils;
 	
 	/**
+	 * @private
 	 * <code>ComponentNode</code> 类用于实现组件精灵,该类为抽象类。
 	 */
 	public class ComponentNode extends Node {
@@ -15,6 +17,9 @@ package laya.d3.core {
 		/** @private */
 		protected var _components:Vector.<Component3D>;
 		
+		/** @private */
+		public var _scripts:Vector.<Script>;
+		
 		/**
 		 * 创建一个 <code>ComponentNode</code> 实例。
 		 */
@@ -22,6 +27,7 @@ package laya.d3.core {
 			_componentsMap = [];
 			_typeComponentsIndices = new Vector.<Vector.<int>>();
 			_components = new Vector.<Component3D>();
+			_scripts = new Vector.<Script>();
 		}
 		
 		/**
@@ -43,6 +49,8 @@ package laya.d3.core {
 			var component:Component3D = ClassUtils.getInstance(type);
 			typeComponentIndex.push(_components.length);
 			_components.push(component);
+			if (component is Script)
+				_scripts.push(component);
 			component._initialize(this);
 			return component;
 		}
@@ -56,6 +64,9 @@ package laya.d3.core {
 			var component:Component3D = _components[componentIndex];
 			
 			_components.splice(componentIndex, 1);
+			if (component is Script)
+				_scripts.splice(_scripts.indexOf(component as Script),1);
+			
 			componentIndices.splice(index, 1);
 			(componentIndices.length === 0) && (_typeComponentsIndices.splice(mapIndex, 1), _componentsMap.splice(mapIndex, 1));
 			

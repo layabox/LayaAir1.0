@@ -1,4 +1,4 @@
-var Particle_EternalLight = (function () {
+var Particle_EternalLight = /** @class */ (function () {
     function Particle_EternalLight() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

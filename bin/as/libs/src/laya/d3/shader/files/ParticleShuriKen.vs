@@ -9,7 +9,9 @@
 #endif
 #ifdef RENDERMODE_MESH
 	attribute vec3 a_MeshPosition;
+	attribute vec4 a_MeshColor;
 	attribute vec2 a_MeshTextureCoordinate;
+	varying vec4 v_MeshColor;
 #endif
 
 attribute vec4 a_ShapePositionStartLifeTime;
@@ -695,7 +697,10 @@ void main()
 					#ifdef SHAPE
 						center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),angle),worldRotation));
 					#else
-						center+=rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle)*u_SizeScale,worldRotation);//已验证
+						if(u_SimulationSpace==0)
+							center+=rotationByAxis(u_SizeScale*a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle);//已验证
+						else if(u_SimulationSpace==1)
+							center+=rotationByQuaternions(u_SizeScale*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle),worldRotation);//已验证
 					#endif
 				}
 					
@@ -726,6 +731,7 @@ void main()
 				}
 			}
 		#endif
+		v_MeshColor=a_MeshColor;
    #endif
    
     gl_Position=u_Projection*u_View*vec4(center,1.0);

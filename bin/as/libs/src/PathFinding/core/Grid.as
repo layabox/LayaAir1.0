@@ -47,39 +47,39 @@ package PathFinding.core
 			this.nodes = this._buildNodes(width, height, matrix);
 		}
 		
-		///**
-		 //* 从图片生成AStar图。
-		 //* @param texture AStar图资源。
-		 //*/
-		//public static function createGridFromAStarMap(texture:Texture2D):Grid{
-			//var textureWidth:Number = texture.width;
-			//var textureHeight:Number = texture.height;
-			//
-			//var pixelsInfo:Uint8Array = texture.getPixels();
-			//var aStarArr:Array = new Array();
-			//var index:int = 0;
-			//
-			//for (var w:int = 0; w < textureWidth; w++ ){
-				//
-				//var colaStarArr:Array = aStarArr[w] = [];
-				//for (var h:int = 0; h < textureHeight; h++ ){
-					//
-					//var r:Number = pixelsInfo[index++];
-					//var g:Number = pixelsInfo[index++];
-					//var b:Number = pixelsInfo[index++];
-					//var a:Number = pixelsInfo[index++];
-					//
-					//if (r == 255 && g == 255 && b == 255 && a == 255)
-						//colaStarArr[h] = 1;
-					//else {
-						//colaStarArr[h] = 0;
-					//}
-				//}
-			//}
-			//
-			//var gird:Grid = new Grid(textureWidth, textureHeight, aStarArr);
-			//return gird;
-		//}
+		/**
+		 * 从图片生成AStar图。
+		 * @param texture AStar图资源。
+		 */
+		public static function createGridFromAStarMap(texture:*):Grid{
+			var textureWidth:Number = texture.width;
+			var textureHeight:Number = texture.height;
+			
+			var pixelsInfo:Uint8Array = texture.getPixels();
+			var aStarArr:Array = new Array();
+			var index:int = 0;
+			
+			for (var w:int = 0; w < textureWidth; w++ ){
+				
+				var colaStarArr:Array = aStarArr[w] = [];
+				for (var h:int = 0; h < textureHeight; h++ ){
+					
+					var r:Number = pixelsInfo[index++];
+					var g:Number = pixelsInfo[index++];
+					var b:Number = pixelsInfo[index++];
+					var a:Number = pixelsInfo[index++];
+					
+					if (r == 255 && g == 255 && b == 255 && a == 255)
+						colaStarArr[h] = 1;
+					else {
+						colaStarArr[h] = 0;
+					}
+				}
+			}
+			
+			var gird:Grid = new Grid(textureWidth, textureHeight, aStarArr);
+			return gird;
+		}
 		
 		/**
 		 * Build and return the nodes.

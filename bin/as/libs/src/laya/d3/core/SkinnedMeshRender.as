@@ -1,9 +1,15 @@
 package laya.d3.core {
 	import laya.ani.AnimationState;
 	import laya.d3.animation.AnimationNode;
+	import laya.d3.animation.AnimationTransform3D;
 	import laya.d3.component.Animator;
 	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.core.scene.ITreeNode;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
+	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
@@ -12,6 +18,12 @@ package laya.d3.core {
 	 * <code>SkinMeshRender</code> 类用于蒙皮渲染器。
 	 */
 	public class SkinnedMeshRender extends MeshRender {
+		/**@private */
+		private static var _tempVector30:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
+		
+		
 		/**@private */
 		private var _cacheAvatar:Avatar;
 		/**@private */
@@ -22,18 +34,72 @@ package laya.d3.core {
 		private var _skinnedDatas:Float32Array;
 		/** @private */
 		private var _publicSubSkinnedDatas:Vector.<Vector.<Float32Array>>;
-		
+		/** @private */
+		private var _localBoundingBoxCorners:Vector.<Vector3>;
+		/**@private */
+		private var _localBoundBox:BoundBox;
 		/**@private */
 		public var _cacheAnimator:Animator;
+		/**@private */
+		public var _rootBone:String;
+		
+		/**用于裁剪的包围球。 */
+		public var localBoundSphere:BoundSphere;
 		
 		/**
-		 * 创建一个新的 <code>SkinMeshRender</code> 实例。
+		 * 获取包围球。
+		 * @return 包围球。
+		 */
+		public function get localBoundBox():BoundBox {
+			return _localBoundBox;
+		}
+		
+		/**
+		 * 设置包围球。
+		 * @param value
+		 */
+		public function set localBoundBox(value:BoundBox):void {
+			_localBoundBox = value;
+			value.getCorners(_localBoundingBoxCorners);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get boundingSphere():BoundSphere {
+			_calculateBoundingSphere();
+			return _boundingSphere;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get boundingBox():BoundBox {
+			_calculateBoundingBox();
+			return _boundingBox;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function get boundingBoxCenter():Vector3 {
+			var boundBox:BoundBox = boundingBox;
+			Vector3.add(boundBox.min, boundBox.max, _boundingBoxCenter);
+			Vector3.scale(_boundingBoxCenter, 0.5, _boundingBoxCenter);
+			return _boundingBoxCenter;
+		}
+		
+		/**
+		 * 创建一个新的 <code>SkinnedMeshRender</code> 实例。
 		 */
 		public function SkinnedMeshRender(owner:RenderableSprite3D) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super(owner);
+			_owner.transform.off(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);//移除super内构造函数无用事件注册
 			
 			_cacheAnimationNode = new Vector.<AnimationNode>();
 			(_owner as SkinnedMeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
+			_localBoundingBoxCorners = new Vector.<Vector3>(8);
 		}
 		
 		/**
@@ -95,6 +161,7 @@ package laya.d3.core {
 		 */
 		private function _onMeshChanged(meshFilter:MeshFilter, lastMesh:Mesh, mesh:Mesh):void {
 			_cacheMesh = mesh;
+			
 			var subMeshCount:int = mesh.subMeshCount;
 			_skinnedDatas = new Float32Array(mesh.InverseAbsoluteBindPoses.length * 16);
 			_publicSubSkinnedDatas = new Vector.<Vector.<Float32Array>>();
@@ -115,6 +182,13 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
+		public function _setRootBone(name:String):void {
+			_rootBone = name;
+		}
+		
+		/**
+		 * @private
+		 */
 		public function _setCacheAvatar(value:Avatar):void {
 			if (_cacheAvatar !== value) {
 				if (_cacheMesh) {
@@ -127,6 +201,69 @@ package laya.d3.core {
 				} else {
 					_cacheAvatar = value;
 				}
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _calculateBoundingBox():void {
+			if (_hasIndependentBound) {
+				var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
+				if (rootBone == null || _localBoundBox == null) {
+					_boundingBox.toDefault();
+				} else {
+					var mat:Matrix4x4 = _tempMatrix0;
+					Matrix4x4.multiply((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, rootBone._transform._getWorldMatrix(), mat);
+					for (var i:int = 0; i < 8; i++)
+						Vector3.transformCoordinate(_localBoundingBoxCorners[i], mat, _tempBoundBoxCorners[i]);
+					BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);
+				}
+			} else {//兼容代码
+				super._calculateBoundingBox();
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _calculateBoundingSphere():void {
+			if (_hasIndependentBound) {
+				var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
+				if (rootBone == null || localBoundSphere == null) {
+					_boundingSphere.toDefault();
+				} else {
+					var boneTransfrom:AnimationTransform3D = rootBone._transform;
+					var mat:Matrix4x4 = _tempMatrix0;
+					var ownerTransform:Transform3D = (_cacheAnimator.owner as Sprite3D).transform;
+					Matrix4x4.multiply(ownerTransform.worldMatrix, boneTransfrom._getWorldMatrix(), mat);
+					var maxScale:Number;
+					var scale:Vector3 = _tempVector30;
+					Vector3.multiply(ownerTransform.scale, boneTransfrom.getScale(), scale);
+					var scaleE:Float32Array = scale.elements;
+					var scaleX:Number = Math.abs(scaleE[0]);
+					var scaleY:Number = Math.abs(scaleE[1]);
+					var scaleZ:Number = Math.abs(scaleE[2]);
+					
+					if (scaleX >= scaleY && scaleX >= scaleZ)
+						maxScale = scaleX;
+					else
+						maxScale = scaleY >= scaleZ ? scaleY : scaleZ;
+					Vector3.transformCoordinate(localBoundSphere.center, mat, _boundingSphere.center);
+					_boundingSphere.radius = localBoundSphere.radius * maxScale;
+				}
+			} else {//兼容代码
+				super._calculateBoundingSphere();
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _updateOctreeNode():void {
+			var treeNode:ITreeNode = _treeNode;
+			if (treeNode) {
+				treeNode.updateObject(this);
 			}
 		}
 		
@@ -151,6 +288,8 @@ package laya.d3.core {
 						if (subSkinnedDatas) {
 							for (i = 0; i < subMeshCount; i++)
 								(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas[i];//TODO:日后确认是否合理
+							if (Laya3D.debugMode)
+								_renderRenderableBoundBox();
 							return;
 						}
 						
@@ -194,6 +333,13 @@ package laya.d3.core {
 				projViewWorld = _owner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 			}
+			
+			if (Laya3D.debugMode)
+				_renderRenderableBoundBox();
 		}
+		
+		//.......................................兼容代码........................................
+		public var _hasIndependentBound:Boolean = true;//false为兼容模式
+		//.......................................兼容代码........................................
 	}
 }

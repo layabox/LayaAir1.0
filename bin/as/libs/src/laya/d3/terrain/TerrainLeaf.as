@@ -37,7 +37,7 @@ package laya.d3.terrain {
 		private var _lastDistanceToEye:Number;
 		private var _originalBoundingSphere:BoundSphere;
 		private var _originalBoundingBox:BoundBox;
-		private var _originalBoundingBoxCorners:Array;
+		private var _originalBoundingBoxCorners:Vector.<Vector3>;
 		private var _bUseStrip:Boolean = false;
 		private var _gridSize:Number;
 		private var _beginGridX:int;//针对整个大地形的偏移
@@ -449,8 +449,7 @@ package laya.d3.terrain {
 			var center:Vector3 = new Vector3();
 			Vector3.add(min, size, center);
 			_originalBoundingSphere = new BoundSphere(center, Vector3.scalarLength(size));
-			_originalBoundingBoxCorners =[];
-			_originalBoundingBoxCorners.length = 8;
+			_originalBoundingBoxCorners = new Vector.<Vector3>(8);
 			_originalBoundingBox.getCorners(_originalBoundingBoxCorners);
 			_boundingBox = new BoundBox(new Vector3(-0.5, -0.5, -0.5), new Vector3(0.5, 0.5, 0.5));
 			_boundingSphere = new BoundSphere(new Vector3(0, 0, 0), 1);

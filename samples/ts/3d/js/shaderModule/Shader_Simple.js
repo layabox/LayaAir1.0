@@ -1,4 +1,4 @@
-var Shader_Simple = (function () {
+var Shader_Simple = /** @class */ (function () {
     function Shader_Simple() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

@@ -8,19 +8,20 @@ package laya.d3.graphics {
 	 */
 	public class VertexShurikenParticleMesh implements IVertex {
 		/**@private */
-		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(156, [
+		private static const _vertexDeclaration:VertexDeclaration = new VertexDeclaration(172, [
 		new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.POSITION0),
-		new VertexElement(12, VertexElementFormat.Vector2, VertexElementUsage.TEXTURECOORDINATE0),
-		new VertexElement(20, VertexElementFormat.Vector4, VertexElementUsage.SHAPEPOSITIONSTARTLIFETIME), 
-		new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.DIRECTIONTIME), 
-		new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.STARTCOLOR0), 
-		new VertexElement(68, VertexElementFormat.Vector3, VertexElementUsage.STARTSIZE), 
-		new VertexElement(80, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION), 
-		new VertexElement(92, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), 
-		new VertexElement(96, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), 
-		new VertexElement(112, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), 
-		new VertexElement(128, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION),//TODO:local模式下可省去内存
-		new VertexElement(140,VertexElementFormat.Vector4, VertexElementUsage.SIMULATIONWORLDROTATION)]);
+		new VertexElement(12, VertexElementFormat.Vector4, VertexElementUsage.COLOR0),
+		new VertexElement(28, VertexElementFormat.Vector2, VertexElementUsage.TEXTURECOORDINATE0),
+		new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.SHAPEPOSITIONSTARTLIFETIME), 
+		new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.DIRECTIONTIME), 
+		new VertexElement(68, VertexElementFormat.Vector4, VertexElementUsage.STARTCOLOR0), 
+		new VertexElement(84, VertexElementFormat.Vector3, VertexElementUsage.STARTSIZE), 
+		new VertexElement(96, VertexElementFormat.Vector3, VertexElementUsage.STARTROTATION), 
+		new VertexElement(108, VertexElementFormat.Single, VertexElementUsage.STARTSPEED), 
+		new VertexElement(112, VertexElementFormat.Vector4, VertexElementUsage.RANDOM0), 
+		new VertexElement(128, VertexElementFormat.Vector4, VertexElementUsage.RANDOM1), 
+		new VertexElement(144, VertexElementFormat.Vector3, VertexElementUsage.SIMULATIONWORLDPOSTION),//TODO:local模式下可省去内存
+		new VertexElement(156,VertexElementFormat.Vector4, VertexElementUsage.SIMULATIONWORLDROTATION)]);
 		
 		public static function get vertexDeclaration():VertexDeclaration {
 			return _vertexDeclaration;

@@ -8,24 +8,35 @@ package laya.d3.loaders {
 	import laya.d3.graphics.VertexPositionNTBTexture0Texture1Skin;
 	import laya.d3.graphics.VertexPositionNormal;
 	import laya.d3.graphics.VertexPositionNormalColor;
+	import laya.d3.graphics.VertexPositionNormalColorSTangent;
 	import laya.d3.graphics.VertexPositionNormalColorSkin;
+	import laya.d3.graphics.VertexPositionNormalColorSkinSTangent;
 	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTexture;
 	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1;
+	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1STangent;
 	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1Skin;
+	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1SkinSTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1SkinTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1Tangent;
+	import laya.d3.graphics.VertexPositionNormalColorTextureSTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureSkin;
+	import laya.d3.graphics.VertexPositionNormalColorTextureSkinSTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalColorTextureTangent;
+	import laya.d3.graphics.VertexPositionNormalSTangent;
 	import laya.d3.graphics.VertexPositionNormalTangent;
 	import laya.d3.graphics.VertexPositionNormalTexture;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1;
+	import laya.d3.graphics.VertexPositionNormalTexture0Texture1STangent;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Skin;
+	import laya.d3.graphics.VertexPositionNormalTexture0Texture1SkinSTangent;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1SkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Tangent;
+	import laya.d3.graphics.VertexPositionNormalTextureSTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureSkin;
+	import laya.d3.graphics.VertexPositionNormalTextureSkinSTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
 	import laya.d3.graphics.VertexPositionNormalTextureTangent;
 	import laya.d3.graphics.VertexPositionTexture0;
@@ -42,7 +53,7 @@ package laya.d3.loaders {
 	 */
 	public class LoadModelV03 {
 		/**@private */
-		public static var _vertexDeclarationMap:Object = {
+		public static var _vertexDeclarationMap_Discard:Object = {//兼容代码
 			"POSITION,NORMAL,COLOR,UV,UV1,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration, 
 			"POSITION,NORMAL,COLOR,UV,UV1,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorTexture0Texture1Skin.vertexDeclaration, 
 			"POSITION,NORMAL,TANGENT,BINORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES,": VertexPositionNTBTexture0Texture1Skin.vertexDeclaration, 
@@ -69,6 +80,36 @@ package laya.d3.loaders {
 			"POSITION,NORMAL": VertexPositionNormal.vertexDeclaration, 
 			"POSITION,UV": VertexPositionTexture0.vertexDeclaration, 
 			"POSITION": VertexPosition.vertexDeclaration};
+			
+		/**@private */
+		public static var _vertexDeclarationMap:Object = {
+			"POSITION,NORMAL,COLOR,UV,UV1,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorTexture0Texture1SkinSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,UV1,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorTexture0Texture1Skin.vertexDeclaration, 
+			"POSITION,NORMAL,TANGENT,BINORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES,": VertexPositionNTBTexture0Texture1Skin.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalTexture0Texture1SkinSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalTexture0Texture1Skin.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorTextureSkinSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorTextureSkin.vertexDeclaration, 
+			"POSITION,NORMAL,UV,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalTextureSkinSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalTextureSkin.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,BLENDWEIGHT,BLENDINDICES,TANGENT": VertexPositionNormalColorSkinSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,BLENDWEIGHT,BLENDINDICES": VertexPositionNormalColorSkin.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,UV1,TANGENT": VertexPositionNormalColorTexture0Texture1STangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,UV1": VertexPositionNormalColorTexture0Texture1.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1,TANGENT": VertexPositionNormalTexture0Texture1STangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,UV1": VertexPositionNormalTexture0Texture1.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV,TANGENT": VertexPositionNormalColorTextureSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV,TANGENT,BINORMAL": VertexPositionNTBTexture.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,UV": VertexPositionNormalColorTexture.vertexDeclaration, 
+			"POSITION,NORMAL,UV,TANGENT": VertexPositionNormalTextureSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,UV": VertexPositionNormalTexture.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR,TANGENT": VertexPositionNormalColorSTangent.vertexDeclaration, 
+			"POSITION,NORMAL,COLOR": VertexPositionNormalColor.vertexDeclaration, 
+			"POSITION,NORMAL,TANGENT": VertexPositionNormalSTangent.vertexDeclaration, 
+			"POSITION,NORMAL": VertexPositionNormal.vertexDeclaration, 
+			"POSITION,UV": VertexPositionTexture0.vertexDeclaration, 
+			"POSITION": VertexPosition.vertexDeclaration};
+			
 		/**@private */
 		private static var _BLOCK:Object = {count: 0};
 		/**@private */
@@ -177,7 +218,18 @@ package laya.d3.loaders {
 				var vbLength:uint = _readData.getUint32();
 				var vbDatas:Float32Array = new Float32Array(arrayBuffer.slice(vbStart, vbStart + vbLength));
 				var bufferAttribute:String = _readString();
-				var vertexDeclaration:VertexDeclaration = _vertexDeclarationMap[bufferAttribute];
+				var vertexDeclaration:VertexDeclaration;
+				switch(_version){
+					case "LAYAMODEL:03":
+						vertexDeclaration= _vertexDeclarationMap_Discard[bufferAttribute];
+						break;
+					case "LAYAMODEL:0301":
+						vertexDeclaration= _vertexDeclarationMap[bufferAttribute];
+						break;
+					default:
+						throw new Error("LoadModelV03: unknown version.");
+				}
+					
 				if (!vertexDeclaration)
 					throw new Error("LoadModelV03: unknown vertexDeclaration.");
 				

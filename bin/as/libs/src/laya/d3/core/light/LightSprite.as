@@ -1,4 +1,5 @@
 package laya.d3.core.light {
+	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Vector3;
@@ -8,13 +9,11 @@ package laya.d3.core.light {
 	 * <code>LightSprite</code> 类用于创建灯光的父类。
 	 */
 	public class LightSprite extends Sprite3D {
-		/** 定义平行光类型的标记。*/
-		public static const TYPE_DIRECTIONLIGHT:int = 1;
-		/** 定义点光类型的标记。*/
-		public static const TYPE_POINTLIGHT:int = 2;
-		/** 定义聚光类型的标记。*/
-		public static const TYPE_SPOTLIGHT:int = 3;
+		/** @private */
+		protected var _intensityColor:Vector3;
 		
+		/** @private */
+		protected var _intensity:Number;
 		/** @private */
 		protected var _shadow:Boolean;
 		/** @private */
@@ -32,21 +31,19 @@ package laya.d3.core.light {
 		public var color:Vector3;
 		
 		/**
-		 * 获取灯光的漫反射颜色。
-		 * @return 灯光的漫反射颜色。
+		 * 获取灯光强度。
+		 * @return 灯光强度
 		 */
-		public function get diffuseColor():Vector3 {
-			trace("LightSprite: discard property,please use color property instead.");
-			return color;
+		public function get intensity():Number {
+			return _intensity;
 		}
 		
 		/**
-		 * 设置灯光的漫反射颜色。
-		 * @param value 灯光的漫反射颜色。
+		 * 设置灯光强度。
+		 * @param value 灯光强度
 		 */
-		public function set diffuseColor(value:Vector3):void {
-			trace("LightSprite: discard property,please use color property instead.");
-			color = value;
+		public function set intensity(value:Number):void {
+			_intensity = value;
 		}
 		
 		/**
@@ -135,25 +132,29 @@ package laya.d3.core.light {
 		}
 		
 		/**
-		 * 获取灯光的类型。
-		 * @return 灯光的类型。
-		 */
-		public function get lightType():int {
-			return -1;
-		}
-		
-		/**
 		 * 创建一个 <code>LightSprite</code> 实例。
 		 */
 		public function LightSprite() {
 			super();
-			
+			_intensity = 1.0;
+			_intensityColor = new Vector3();
 			color = new Vector3(1.0, 1.0, 1.0);
 			_shadow = false;
 			_shadowFarPlane = 8;
 			_shadowMapSize = 512;
 			_shadowMapCount = 1;
 			_shadowMapPCFType = 0;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, nodeData:Object):void {
+			var colorData:Array = customProps.color;
+			var colorE:Float32Array = color.elements;
+			colorE[0] = colorData[0];
+			colorE[1] = colorData[1];
+			colorE[2] = colorData[2];
 		}
 		
 		/**
@@ -174,8 +175,26 @@ package laya.d3.core.light {
 		 * 更新灯光相关渲染状态参数。
 		 * @param state 渲染状态参数。
 		 */
-		public function updateToWorldState(state:RenderState):Boolean {
+		public function _prepareToScene(state:RenderState):Boolean {
 			return false;
+		}
+		
+		/**
+		 * 获取灯光的漫反射颜色。
+		 * @return 灯光的漫反射颜色。
+		 */
+		public function get diffuseColor():Vector3 {
+			trace("LightSprite: discard property,please use color property instead.");
+			return color;
+		}
+		
+		/**
+		 * 设置灯光的漫反射颜色。
+		 * @param value 灯光的漫反射颜色。
+		 */
+		public function set diffuseColor(value:Vector3):void {
+			trace("LightSprite: discard property,please use color property instead.");
+			color = value;
 		}
 	}
 }

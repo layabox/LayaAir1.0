@@ -24,6 +24,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
+	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.graphics.VertexShurikenParticleBillboard;
 	import laya.d3.graphics.VertexShurikenParticleMesh;
@@ -100,11 +101,11 @@ package laya.d3.core.particleShuriKen {
 		private var _tempRotationMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		protected var _boundingSphere:BoundSphere;
+		public var _boundingSphere:BoundSphere;
 		/** @private */
-		protected var _boundingBox:BoundBox;
+		public var _boundingBox:BoundBox;
 		/** @private */
-		public var _boundingBoxCorners:Array;
+		public var _boundingBoxCorners:Vector.<Vector3>;
 		
 		/** @private */
 		private var _owner:ShuriKenParticle3D;
@@ -997,7 +998,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @inheritDoc
 		 */
-		override public function get _originalBoundingBoxCorners():Array {
+		override public function get _originalBoundingBoxCorners():Vector.<Vector3> {
 			return _boundingBoxCorners;
 		}
 		
@@ -1010,10 +1011,9 @@ package laya.d3.core.particleShuriKen {
 			
 			_owner = owner;
 			_ownerRender = owner.particleRender;
-			_boundingBoxCorners = new Array(8);
-			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			_boundingBox = new BoundBox(new Vector3(), new Vector3());
-			
+			_boundingBoxCorners = new Vector.<Vector3>(8);
+			_boundingSphere = new BoundSphere(new Vector3(), Number.MAX_VALUE);//TODO:
+			_boundingBox = new BoundBox(new Vector3(-Number.MAX_VALUE,-Number.MAX_VALUE,-Number.MAX_VALUE), new Vector3(Number.MAX_VALUE,Number.MAX_VALUE,Number.MAX_VALUE));//TODO:
 			_currentTime = 0;
 			
 			_isEmitting = false;
@@ -1612,8 +1612,8 @@ package laya.d3.core.particleShuriKen {
 					} else {
 						vertexDeclaration = VertexShurikenParticleMesh.vertexDeclaration;
 						_floatCountPerVertex = vertexDeclaration.vertexStride/4;
-						_startLifeTimeIndex = 8;
-						_timeIndex = 12;
+						_startLifeTimeIndex = 12;
+						_timeIndex = 16;
 						_vertexStride = mesh._vertexBuffers[0].vertexCount;
 						var totalVertexCount:int = _bufferMaxParticles * _vertexStride;
 						var vbCount:int = Math.floor(totalVertexCount / 65535) + 1;
@@ -1863,13 +1863,15 @@ package laya.d3.core.particleShuriKen {
 			var positionE:Float32Array = position.elements;
 			var directionE:Float32Array = direction.elements;
 			
-			var meshVertices:Float32Array, meshVertexStride:int, meshUVOffset:int, meshPosOffset:int, meshVertexIndex:int;
+			var meshVertices:Float32Array, meshVertexStride:int, meshPosOffset:int,meshCorOffset:int, meshUVOffset:int, meshVertexIndex:int;
 			var render:ShurikenParticleRender = _ownerRender;
 			if (render.renderMode === 4) {
 				var meshVB:VertexBuffer3D = render.mesh._vertexBuffers[0];
 				meshVertices = meshVB.getData();
 				var meshVertexDeclaration:VertexDeclaration = meshVB.vertexDeclaration;
 				meshPosOffset = meshVertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / 4;
+				var colorElement:VertexElement = meshVertexDeclaration.getVertexElementByUsage(VertexElementUsage.COLOR0);
+				meshCorOffset =colorElement?colorElement.offset / 4:-1;
 				meshUVOffset = meshVertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / 4;
 				meshVertexStride = meshVertexDeclaration.vertexStride / 4;
 				meshVertexIndex = 0;
@@ -1892,14 +1894,27 @@ package laya.d3.core.particleShuriKen {
 				if (render.renderMode === 4) {
 					offset = i;
 					var vertexOffset:int = meshVertexStride * (meshVertexIndex++);
-					var oriMeshOffset:int = vertexOffset + meshPosOffset;
-					_vertices[offset++] = meshVertices[oriMeshOffset + 0];
-					_vertices[offset++] = meshVertices[oriMeshOffset + 1];
-					_vertices[offset++] = meshVertices[oriMeshOffset + 2];
+					var meshOffset:int = vertexOffset + meshPosOffset;
+					_vertices[offset++] = meshVertices[meshOffset++];
+					_vertices[offset++] = meshVertices[meshOffset++];
+					_vertices[offset++] = meshVertices[meshOffset];
+					if (meshCorOffset ===-1){
+						_vertices[offset++] = 1.0;
+						_vertices[offset++] = 1.0;
+						_vertices[offset++] = 1.0;
+						_vertices[offset++] = 1.0;
+					}
+					else{
+						meshOffset = vertexOffset + meshCorOffset;
+						_vertices[offset++] = meshVertices[meshOffset++];
+						_vertices[offset++] = meshVertices[meshOffset++];
+						_vertices[offset++] = meshVertices[meshOffset++];
+						_vertices[offset++] = meshVertices[meshOffset];
+					}
 					
-					var meshVertexOffset:int = vertexOffset + meshUVOffset;
-					_vertices[offset++] = startU + meshVertices[meshVertexOffset] * subU;
-					_vertices[offset++] = startV + meshVertices[++meshVertexOffset] * subV;
+					meshOffset = vertexOffset + meshUVOffset;
+					_vertices[offset++] = startU + meshVertices[meshOffset++] * subU;
+					_vertices[offset++] = startV + meshVertices[meshOffset] * subV;
 				} else {
 					offset = i + 4;
 				}

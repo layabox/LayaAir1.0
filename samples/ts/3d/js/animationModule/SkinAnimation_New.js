@@ -1,4 +1,4 @@
-var SkinAnimation_New = (function () {
+var SkinAnimation_New = /** @class */ (function () {
     function SkinAnimation_New() {
         this.curStateIndex = 0;
         this.clipName = ["walk", "attack", "left_fall", "right_fall", "back_fall"];

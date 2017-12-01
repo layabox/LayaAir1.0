@@ -173,7 +173,7 @@ package laya.d3.resource.models {
 				
 				_shaderValue.setValue(INTENSITY, _colorIntensity);
 				_shaderValue.setValue(ALPHABLENDING, _alphaBlending);
-				_shaderValue.setValue(DIFFUSETEXTURE, texture.source);
+				_shaderValue.setValue(DIFFUSETEXTURE, texture);
 				
 				_shader.uploadAttributes(_vertexDeclaration.shaderValues.data, null);
 				_shader.uploadMaterialUniforms(_shaderValue.data);

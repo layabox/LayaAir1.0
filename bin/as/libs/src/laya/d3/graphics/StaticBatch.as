@@ -90,11 +90,27 @@ package laya.d3.graphics {
 			throw new Error("StaticBatch:must override this function.");
 		}
 		
+		
 		/**
 		 * @private
 		 */
 		protected function _getVertexDecLightMap(vertexDeclaration:VertexDeclaration):VertexDeclaration {
-			if (vertexDeclaration === VertexPositionNormalTextureSkinTangent.vertexDeclaration) {
+			if (vertexDeclaration === VertexPositionNormalTextureSkinSTangent.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1SkinSTangent.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalTextureSkin.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1Skin.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalColorTextureSTangent.vertexDeclaration) {
+				return VertexPositionNormalColorTexture0Texture1STangent.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNTBTexture.vertexDeclaration) {
+				return null;//TODO:老郭补
+			} else if (vertexDeclaration === VertexPositionNormalColorTexture.vertexDeclaration) {
+				return VertexPositionNormalColorTexture0Texture1.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalTextureSTangent.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1STangent.vertexDeclaration;
+			} else if (vertexDeclaration === VertexPositionNormalTexture.vertexDeclaration) {
+				return VertexPositionNormalTexture0Texture1.vertexDeclaration;
+			}
+			if (vertexDeclaration === VertexPositionNormalTextureSkinTangent.vertexDeclaration) {//TODO:兼容性
 				return VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
 			} else if (vertexDeclaration === VertexPositionNormalTextureSkin.vertexDeclaration) {
 				return VertexPositionNormalTexture0Texture1Skin.vertexDeclaration;

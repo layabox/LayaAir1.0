@@ -1,4 +1,4 @@
-var PBRMaterialDemo = (function () {
+var PBRMaterialDemo = /** @class */ (function () {
     function PBRMaterialDemo() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

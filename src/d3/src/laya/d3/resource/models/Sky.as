@@ -162,7 +162,7 @@ package laya.d3.resource.models {
 		 */
 		private function _setEnvironmentDiffuse():void {
 			if (_environmentDiffuse.loaded) {
-				__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTDIFFUSE, _environmentDiffuse.source);
+				__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTDIFFUSE, _environmentDiffuse);
 			} else {
 				_environmentDiffuse.on(Event.LOADED, this, _environmentDiffuseLoaded);
 			}
@@ -176,7 +176,7 @@ package laya.d3.resource.models {
 				var si:* = _environmentSpecular['simLodInfo'];
 				if (si && si is Float32Array)
 					__ownerCamera._shaderValues.setValue(BaseCamera.SIMLODINFO, si);
-				__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTSPECULAR, _environmentSpecular.source);
+				__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTSPECULAR, _environmentSpecular);
 			} else {
 				_environmentSpecular.on(Event.LOADED, this, _environmentSpecularLoaded);
 			}
@@ -186,7 +186,7 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		private function _environmentDiffuseLoaded():void {
-			__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTDIFFUSE, _environmentDiffuse.source);
+			__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTDIFFUSE, _environmentDiffuse);
 		}
 		
 		/**
@@ -196,7 +196,7 @@ package laya.d3.resource.models {
 			var si:* = _environmentSpecular['simLodInfo'];
 			if (si && si is Float32Array)
 				__ownerCamera._shaderValues.setValue(BaseCamera.SIMLODINFO, si);
-			__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTSPECULAR, _environmentSpecular.source);
+			__ownerCamera._shaderValues.setValue(BaseCamera.ENVIRONMENTSPECULAR, _environmentSpecular);
 		}
 		
 		/**

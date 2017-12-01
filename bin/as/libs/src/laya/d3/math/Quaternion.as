@@ -22,6 +22,8 @@ package laya.d3.math {
 		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Quaternion =/*[STATIC SAFE]*/ new Quaternion();
+		/**无效矩阵,禁止修改*/
+		public static const NAN:Quaternion = new Quaternion(NaN, NaN, NaN,NaN);
 		
 		/**
 		 *  从欧拉角基元四元数（顺序为Yaw、Pitch、Roll）
@@ -545,6 +547,18 @@ package laya.d3.math {
 			e[1] = 0;
 			e[2] = 0;
 			e[3] = 1;
+		}
+		
+		/**
+		 * 从Array数组拷贝值。
+		 * @param  array 数组。
+		 * @param  offset 数组偏移。
+		 */
+		public function fromArray(array:Array, offset:int = 0):void {
+			elements[0] = array[offset + 0];
+			elements[1] = array[offset + 1];
+			elements[2] = array[offset + 2];
+			elements[3] = array[offset + 3];
 		}
 		
 

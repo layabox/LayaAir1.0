@@ -41,13 +41,17 @@ package laya.d3.resource.models {
 			return _indexBuffer;
 		}
 		
+		public function PrimitiveMesh() {
+			super();
+		}
+		
 		/**
 		 * 获取网格顶点
 		 * @return 网格顶点。
 		 */
-		override public function get positions():Array//WEBGL1.0不能从Buffer显存中获取内存数据
+		override public function _getPositions():Array//WEBGL1.0不能从Buffer显存中获取内存数据
 		{
-			var vertices:Array =[];
+			var vertices:Array = [];
 			
 			var positionElement:VertexElement;
 			var vertexElements:Array = _vertexBuffer.vertexDeclaration.getVertexElements();
@@ -70,10 +74,6 @@ package laya.d3.resource.models {
 			return vertices;
 		}
 		
-		public function PrimitiveMesh() {
-			super();
-		}
-		
 		override public function getRenderElement(index:int):IRenderable {
 			return this;
 		}
@@ -91,7 +91,7 @@ package laya.d3.resource.models {
 		public function _beforeRender(state:RenderState):Boolean {
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
-			return  true;
+			return true;
 		}
 		
 		public function _render(state:RenderState):void {
@@ -101,8 +101,8 @@ package laya.d3.resource.models {
 		}
 		
 		/**NATIVE*/
-		public function _renderRuntime(conchGraphics3D:*,renderElement:RenderElement,state:RenderState):void {
-			conchGraphics3D.drawSubmesh(renderElement._conchSubmesh,0,WebGLContext.TRIANGLES, 0,_numberIndices);
+		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
+			conchGraphics3D.drawSubmesh(renderElement._conchSubmesh, 0, WebGLContext.TRIANGLES, 0, _numberIndices);
 		}
 	
 	}

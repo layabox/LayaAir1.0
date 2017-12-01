@@ -1,4 +1,4 @@
-var StandardMaterial_NormalMap = (function () {
+var StandardMaterial_NormalMap = /** @class */ (function () {
     function StandardMaterial_NormalMap() {
         this.normalMapUrl = ["../../res/threeDimen/staticModel/lizardCal/rock_norm.png", "../../res/threeDimen/staticModel/lizardCal/lizard_norm.png", "../../res/threeDimen/staticModel/lizardCal/lizard_norm.png"];
         Laya3D.init(0, 0, true);

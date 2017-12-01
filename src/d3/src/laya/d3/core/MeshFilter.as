@@ -1,6 +1,7 @@
 package laya.d3.core {
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
+	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.events.Event;
 	
@@ -65,10 +66,11 @@ package laya.d3.core {
 			return _sharedMesh.boundingBox;
 		}
 		
+		
 		/**
 		 * @inheritDoc
 		 */
-		override public function get _originalBoundingBoxCorners():Array {
+		override public function get _originalBoundingBoxCorners():Vector.<Vector3> {
 			return _sharedMesh.boundingBoxCorners;
 		}
 		

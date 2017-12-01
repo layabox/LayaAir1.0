@@ -1,4 +1,4 @@
-var Tool = (function () {
+var Tool = /** @class */ (function () {
     function Tool() {
     }
     Tool.linearModel = function (sprite3D, phasorSpriter3D, color, vertex1, vertex2, vertex3) {

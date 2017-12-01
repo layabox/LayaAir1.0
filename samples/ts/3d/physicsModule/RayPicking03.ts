@@ -28,7 +28,6 @@ class RayPicking03 {
         this._vector3 = new Laya.Vector3();
         this._offsetVector3 = new Laya.Vector3(0, 0.25, 0)
 
-
         //初始化照相机
         this.camera = scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
         this.camera.transform.translate(new Laya.Vector3(0, 2, 5));
@@ -45,7 +44,8 @@ class RayPicking03 {
         planeMat.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/texture/layabox.png");
         planeMat.albedo = new Laya.Vector4(0.9, 0.9, 0.9, 1);
         plane.meshRender.material = planeMat;
-        plane.addComponent(Laya.MeshCollider);
+        var meshCollider = plane.addComponent(Laya.MeshCollider) as Laya.MeshCollider;
+        meshCollider.mesh = plane.meshFilter.sharedMesh;
 
         this.box = scene.addChild(new Laya.MeshSprite3D(new Laya.BoxMesh(0.5, 0.5, 0.5))) as Laya.MeshSprite3D;
         var mat: Laya.StandardMaterial = new Laya.StandardMaterial();

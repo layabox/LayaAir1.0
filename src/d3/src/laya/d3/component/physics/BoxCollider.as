@@ -1,8 +1,11 @@
 package laya.d3.component.physics {
+	import laya.d3.component.Component3D;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.math.BoundBox;
+	import laya.d3.math.Collision;
+	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.OrientedBoundBox;
 	import laya.d3.math.Ray;
@@ -46,7 +49,7 @@ package laya.d3.component.physics {
 		}
 		
 		/**
-		 * 获取包围盒子。
+		 * 获取包围盒子,只读,不允许修改。
 		 * @return 包围球。
 		 */
 		public function get boundBox():OrientedBoundBox {
@@ -82,30 +85,12 @@ package laya.d3.component.physics {
 		/**
 		 * @private
 		 */
-		private function _onGeometryFilterLoaded():void {
-			(destroyed) || (_initBoundBox());
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _onWorldMatrixChanged():void {
 			_needUpdate = true;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _initBoundBox():void {
-			var originalBoundingBox:BoundBox = (owner as RenderableSprite3D)._geometryFilter._originalBoundingBox;
-			OrientedBoundBox.createByBoundBox(originalBoundingBox, _transformOrientedBoundBox);
-			var extents:Vector3 = _transformOrientedBoundBox.extents;
-			_size = new Vector3(extents.x * 2, extents.y * 2, extents.z * 2);
-			center = new Vector3();
-			Vector3.add(originalBoundingBox.min, originalBoundingBox.max, center);
-			Vector3.scale(center, 0.5, center);
-			(owner  as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
-			_needUpdate = true;
+			for (var k:String in _runtimeCollisonMap) {
+				_runtimeCollisonTestMap[k] = true;
+				_runtimeCollisonMap[k]._runtimeCollisonTestMap[id] = true;
+			}
 		}
 		
 		/**
@@ -113,30 +98,66 @@ package laya.d3.component.physics {
 		 */
 		override public function _initialize(owner:ComponentNode):void {
 			super._initialize(owner);
-			if (_owner is RenderableSprite3D) {
-				var renderableOwner:RenderableSprite3D = owner as RenderableSprite3D;
-				_transformOrientedBoundBox = new OrientedBoundBox(new Vector3(), new Matrix4x4());
-				if (renderableOwner._geometryFilter._isAsyncLoaded) {
-					_initBoundBox();
+			_transformOrientedBoundBox = new OrientedBoundBox(new Vector3(), new Matrix4x4());
+			_size = new Vector3();
+			center = new Vector3();
+			(owner as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+			_needUpdate = true;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _getType():int {
+			return 1;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _collisonTo(other:Collider):Boolean {
+			switch (other._getType()) {
+			case 0://SphereCollider
+				return boundBox.containsSphere((other as SphereCollider).boundSphere) !== ContainmentType.Disjoint;
+				break;
+			case 1: //BoxCollider
+				return boundBox.containsOrientedBoundBox((other as BoxCollider).boundBox) !== ContainmentType.Disjoint;
+				break;
+			case 2: //MeshCollider
+				var meshCollider:MeshCollider = other as MeshCollider;
+				if (boundBox.containsBoundBox(meshCollider._boundBox) !== ContainmentType.Disjoint) {
+					var positions:Vector.<Vector3> = (other as MeshCollider).mesh._positions;
+					for (var i:int = 0, n:int = positions.length; i < n; i++) {
+						if (boundBox.containsPoint(positions[i]) === ContainmentType.Contains)
+							return true
+					}
+					return false;
+					
 				} else {
-					renderableOwner._geometryFilter.once(Event.LOADED, this, _onGeometryFilterLoaded);
+					return false;
 				}
-			} else {
-				_transformOrientedBoundBox = new OrientedBoundBox(new Vector3(), new Matrix4x4());
-				_size = new Vector3();
-				center = new Vector3();
-				(owner  as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
-				_needUpdate = true;
+				
+				break;
+			default: 
+				throw new Error("BoxCollider:unknown collider type.");
 			}
 		}
 		
 		/**
-		 * 在场景中投下可与盒体碰撞器碰撞的一条光线,获取发生碰撞的盒体碰撞器信息。
-		 * @param  ray        射线
-		 * @param  outHitInfo 与该射线发生碰撞盒体碰撞器的碰撞信息
-		 * @param  distance   射线长度,默认为最大值 
+		 * @inheritDoc
 		 */
-		override public function raycast(ray:Ray, hitInfo:RaycastHit, maxDistance:Number = Number.MAX_VALUE):Boolean {
+		override public function _cloneTo(dest:Component3D):void {
+			var destBoxCollider:BoxCollider = dest as BoxCollider;
+			var destSize:Vector3 = destBoxCollider.size;
+			size.cloneTo(destSize);
+			destBoxCollider.size = destSize;
+			center.cloneTo(destBoxCollider.center);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function raycast(ray:Ray, hitInfo:RaycastHit, maxDistance:Number = 1.79e+308/*Number.MAX_VALUE*/):Boolean {
 			_updateCollider();
 			var distance:Number = _transformOrientedBoundBox.intersectsRay(ray, hitInfo.position);
 			if (distance !== -1 && distance <= maxDistance) {
@@ -149,6 +170,20 @@ package laya.d3.component.physics {
 				hitInfo.sprite3D = null;
 				return false;
 			}
+		}
+		
+		/**
+		 * 从AABB碰撞盒设置center和Size。
+		 * @param	boundBox 碰撞盒。
+		 */
+		public function setFromBoundBox(boundBox:BoundBox):void {
+			OrientedBoundBox.createByBoundBox(boundBox, _transformOrientedBoundBox);
+			var extents:Vector3 = _transformOrientedBoundBox.extents;
+			_size = new Vector3(extents.x * 2, extents.y * 2, extents.z * 2);
+			center = new Vector3();
+			Vector3.add(boundBox.min, boundBox.max, center);
+			Vector3.scale(center, 0.5, center);
+			_needUpdate = true;
 		}
 	}
 }

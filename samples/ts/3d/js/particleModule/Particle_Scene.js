@@ -1,4 +1,4 @@
-var Particle_Scene = (function () {
+var Particle_Scene = /** @class */ (function () {
     function Particle_Scene() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

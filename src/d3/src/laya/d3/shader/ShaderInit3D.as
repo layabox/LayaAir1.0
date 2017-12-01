@@ -5,6 +5,7 @@ package laya.d3.shader {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.glitter.Glitter;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.BlinnPhongMaterial;
 	import laya.d3.core.material.ExtendTerrainMaterial;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.material.PBRMaterial;
@@ -32,7 +33,8 @@ package laya.d3.shader {
 		 * @private
 		 */
 		public static function __init__():void {
-			Shader3D.addInclude("LightHelper.glsl", __INCLUDESTR__("files/LightHelper.glsl"));
+			Shader3D.addInclude("LightHelper.glsl", __INCLUDESTR__("files/LightHelper.glsl"));//兼容性
+			Shader3D.addInclude("Lighting.glsl", __INCLUDESTR__("files/Lighting.glsl"));
 			Shader3D.addInclude("ShadowHelper.glsl", __INCLUDESTR__("files/ShadowHelper.glsl"));
 			Shader3D.addInclude("WaveFunction.glsl", __INCLUDESTR__("files/WaveFunction.glsl"));
 			
@@ -43,11 +45,70 @@ package laya.d3.shader {
 				'a_Normal': VertexElementUsage.NORMAL0, 
 				'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 
 				'a_Texcoord1': VertexElementUsage.TEXTURECOORDINATE1, 
-				'a_TexcoordNext0': VertexElementUsage.NEXTTEXTURECOORDINATE0, 
 				'a_BoneWeights': VertexElementUsage.BLENDWEIGHT0, 
 				'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
 				'a_Tangent0': VertexElementUsage.TANGENT0};
 			var uniformMap:Object = {
+				'u_Bones': [SkinnedMeshSprite3D.BONES, Shader3D.PERIOD_RENDERELEMENT], 
+				'u_DiffuseTexture': [BlinnPhongMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_SpecularTexture': [BlinnPhongMaterial.SPECULARTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_NormalTexture': [BlinnPhongMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_ReflectTexture': [BlinnPhongMaterial.REFLECTTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_AlphaTestValue': [BaseMaterial.ALPHATESTVALUE, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseColor': [BlinnPhongMaterial.DIFFUSECOLOR, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialSpecular': [BlinnPhongMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 
+				'u_Shininess': [BlinnPhongMaterial.SHININESS, Shader3D.PERIOD_MATERIAL], 
+				'u_MaterialReflect': [BlinnPhongMaterial.MATERIALREFLECT, Shader3D.PERIOD_MATERIAL], 
+				'u_TilingOffset': [BlinnPhongMaterial.TILINGOFFSET, Shader3D.PERIOD_MATERIAL],
+				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_LightmapScaleOffset': [RenderableSprite3D.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_SPRITE], 
+				'u_LightMap': [RenderableSprite3D.LIGHTMAP, Shader3D.PERIOD_SPRITE],
+				'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
+				'u_FogStart': [Scene.FOGSTART, Shader3D.PERIOD_SCENE], 
+				'u_FogRange': [Scene.FOGRANGE, Shader3D.PERIOD_SCENE], 
+				'u_FogColor': [Scene.FOGCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Color': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE],
+				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE],  
+				'u_PointLight.Position': [Scene.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Range': [Scene.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
+				'u_PointLight.Color': [Scene.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Position': [Scene.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Direction': [Scene.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Range': [Scene.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Spot': [Scene.SPOTLIGHTSPOT, Shader3D.PERIOD_SCENE], 
+				'u_SpotLight.Color': [Scene.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
+				'u_AmbientColor': [Scene.AMBIENTCOLOR, Shader3D.PERIOD_SCENE],
+				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
+				'u_shadowPSSMDistance': [Scene.SHADOWDISTANCE, Shader3D.PERIOD_SCENE], 
+				'u_lightShadowVP': [Scene.SHADOWLIGHTVIEWPROJECT, Shader3D.PERIOD_SCENE], 
+				'u_shadowPCFoffset': [Scene.SHADOWMAPPCFOFFSET, Shader3D.PERIOD_SCENE]};
+			
+			var BLINNPHONG:int = Shader3D.nameKey.add("BLINNPHONG");
+			vs = __INCLUDESTR__("files/Mesh-BlinnPhong.vs");
+			ps = __INCLUDESTR__("files/Mesh-BlinnPhong.ps");
+			var shaderCompile:ShaderCompile3D = ShaderCompile3D.add(BLINNPHONG, vs, ps, attributeMap, uniformMap);
+			BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP = shaderCompile.registerMaterialDefine("DIFFUSEMAP");
+			BlinnPhongMaterial.SHADERDEFINE_NORMALMAP = shaderCompile.registerMaterialDefine("NORMALMAP");
+			BlinnPhongMaterial.SHADERDEFINE_SPECULARMAP = shaderCompile.registerMaterialDefine("SPECULARMAP");
+			BlinnPhongMaterial.SHADERDEFINE_REFLECTMAP = shaderCompile.registerMaterialDefine("REFLECTMAP");
+			BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET = shaderCompile.registerMaterialDefine("TILINGOFFSET");
+			BlinnPhongMaterial.SHADERDEFINE_ADDTIVEFOG = shaderCompile.registerMaterialDefine("ADDTIVEFOG");
+			
+			
+			attributeMap = {
+				'a_Position': VertexElementUsage.POSITION0, 
+				'a_Color': VertexElementUsage.COLOR0, 
+				'a_Normal': VertexElementUsage.NORMAL0, 
+				'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0, 
+				'a_Texcoord1': VertexElementUsage.TEXTURECOORDINATE1, 
+				'a_TexcoordNext0': VertexElementUsage.NEXTTEXTURECOORDINATE0, 
+				'a_BoneWeights': VertexElementUsage.BLENDWEIGHT0, 
+				'a_BoneIndices': VertexElementUsage.BLENDINDICES0, 
+				'a_Tangent0': VertexElementUsage.TANGENT0};
+			uniformMap = {
 				'u_Bones': [SkinnedMeshSprite3D.BONES, Shader3D.PERIOD_RENDERELEMENT], 
 				'u_DiffuseTexture': [StandardMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
 				'u_SpecularTexture': [StandardMaterial.SPECULARTEXTURE, Shader3D.PERIOD_MATERIAL], 
@@ -95,7 +156,7 @@ package laya.d3.shader {
 			var SIMPLE:int = Shader3D.nameKey.add("SIMPLE");
 			vs = __INCLUDESTR__("files/PixelSimpleTextureSkinnedMesh.vs");
 			ps = __INCLUDESTR__("files/PixelSimpleTextureSkinnedMesh.ps");
-			var shaderCompile:ShaderCompile3D = ShaderCompile3D.add(SIMPLE, vs, ps, attributeMap, uniformMap);
+			shaderCompile = ShaderCompile3D.add(SIMPLE, vs, ps, attributeMap, uniformMap);
 			StandardMaterial.SHADERDEFINE_DIFFUSEMAP = shaderCompile.registerMaterialDefine("DIFFUSEMAP");
 			StandardMaterial.SHADERDEFINE_NORMALMAP = shaderCompile.registerMaterialDefine("NORMALMAP");
 			StandardMaterial.SHADERDEFINE_SPECULARMAP = shaderCompile.registerMaterialDefine("SPECULARMAP");
@@ -104,6 +165,7 @@ package laya.d3.shader {
 			StandardMaterial.SHADERDEFINE_REFLECTMAP = shaderCompile.registerMaterialDefine("REFLECTMAP");
 			StandardMaterial.SHADERDEFINE_UVTRANSFORM = shaderCompile.registerMaterialDefine("UVTRANSFORM");
 			StandardMaterial.SHADERDEFINE_TILINGOFFSET = shaderCompile.registerMaterialDefine("TILINGOFFSET");
+			StandardMaterial.SHADERDEFINE_ADDTIVEFOG = shaderCompile.registerMaterialDefine("ADDTIVEFOG");
 			
 			attributeMap = {
 				'a_Position': VertexElementUsage.POSITION0, 
@@ -247,6 +309,7 @@ package laya.d3.shader {
 			attributeMap = {
 				'a_CornerTextureCoordinate': VertexElementUsage.CORNERTEXTURECOORDINATE0, 
 				'a_MeshPosition': VertexElementUsage.POSITION0,
+				'a_MeshColor': VertexElementUsage.COLOR0, 
 				'a_MeshTextureCoordinate': VertexElementUsage.TEXTURECOORDINATE0,
 				'a_ShapePositionStartLifeTime': VertexElementUsage.SHAPEPOSITIONSTARTLIFETIME, 
 				'a_DirectionTime': VertexElementUsage.DIRECTIONTIME, 

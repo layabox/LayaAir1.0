@@ -21,7 +21,8 @@ var planeMat = new Laya.StandardMaterial();
 planeMat.diffuseTexture = Laya.Texture2D.load("../../res/threeDimen/texture/layabox.png");
 planeMat.albedo = new Laya.Vector4(0.9, 0.9, 0.9, 1);
 plane.meshRender.material = planeMat;
-plane.addComponent(Laya.MeshCollider);
+var meshCollider = plane.addComponent(Laya.MeshCollider);
+meshCollider.mesh = plane.meshFilter.sharedMesh;
 
 Laya.timer.frameLoop(1, this, checkHit);
 

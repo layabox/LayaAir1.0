@@ -1,34 +1,64 @@
 package laya.d3.utils {
+	import laya.d3.component.Animator;
 	import laya.d3.core.Camera;
 	import laya.d3.core.ComponentNode;
+	import laya.d3.core.MeshRender;
 	import laya.d3.core.MeshSprite3D;
+	import laya.d3.core.SkinnedMeshRender;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.light.DirectionLight;
+	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
+	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
+	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
+	import laya.d3.core.particleShuriKen.module.Burst;
+	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
+	import laya.d3.core.particleShuriKen.module.Emission;
+	import laya.d3.core.particleShuriKen.module.FrameOverTime;
+	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
+	import laya.d3.core.particleShuriKen.module.GradientColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataColor;
+	import laya.d3.core.particleShuriKen.module.GradientDataInt;
+	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
+	import laya.d3.core.particleShuriKen.module.GradientSize;
+	import laya.d3.core.particleShuriKen.module.GradientVelocity;
+	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
+	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
+	import laya.d3.core.particleShuriKen.module.StartFrame;
+	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
+	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
+	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
+	import laya.d3.core.particleShuriKen.module.shape.BoxShape;
+	import laya.d3.core.particleShuriKen.module.shape.CircleShape;
+	import laya.d3.core.particleShuriKen.module.shape.ConeShape;
+	import laya.d3.core.particleShuriKen.module.shape.HemisphereShape;
+	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.graphics.VertexElementUsage;
-	import laya.d3.graphics.VertexPositionNormalColorSkinTangent;
-	import laya.d3.graphics.VertexPositionNormalColorTangent;
-	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1SkinTangent;
-	import laya.d3.graphics.VertexPositionNormalColorTexture0Texture1Tangent;
-	import laya.d3.graphics.VertexPositionNormalColorTextureSkinTangent;
-	import laya.d3.graphics.VertexPositionNormalColorTextureTangent;
-	import laya.d3.graphics.VertexPositionNormalTexture0Texture1SkinTangent;
-	import laya.d3.graphics.VertexPositionNormalTexture0Texture1Tangent;
-	import laya.d3.graphics.VertexPositionNormalTextureSkinTangent;
-	import laya.d3.graphics.VertexPositionNormalTextureTangent;
 	import laya.d3.graphics.VertexPositionTexture0;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
+	import laya.d3.math.Viewport;
+	import laya.d3.resource.Texture2D;
+	import laya.d3.resource.models.Mesh;
 	import laya.d3.terrain.Terrain;
+	import laya.display.Node;
+	import laya.events.Event;
+	import laya.net.Loader;
+	import laya.net.URL;
+	import laya.utils.Handler;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -173,6 +203,9 @@ package laya.d3.utils {
 				case "Camera": 
 					node = new Camera();
 					break;
+				case "DirectionLight": 
+					node = new DirectionLight();
+					break;
 				default: 
 					throw new Error("Utils3D:unidentified class type in (.lh) file.");
 				}
@@ -185,7 +218,7 @@ package laya.d3.utils {
 			var customProps:Object = nodeData.customProps;
 			if (customProps) {
 				if (node is Sprite3D) {
-					node._parseCustomRTS(customProps);
+					node._parseBaseCustomProps(customProps);
 					node._parseCustomProps(rootNode, innerResouMap, customProps, nodeData);//json为兼容参数，日后移除
 					node._parseCustomComponent(rootNode, innerResouMap, nodeData.components);
 				} else {
@@ -277,171 +310,6 @@ package laya.d3.utils {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			for (var i:int = 0, offset:int = 0, matOffset:int = 0, boneLength:int = bones.length; i < boneLength; offset += bones[i].keyframeWidth, matOffset += 16, i++)
 				Utils3D.createAffineTransformationArray(curData[offset + 0], curData[offset + 1], curData[offset + 2], curData[offset + 3], curData[offset + 4], curData[offset + 5], curData[offset + 6], curData[offset + 7], curData[offset + 8], curData[offset + 9], animationDatas, matOffset);
-		}
-		
-		/**
-		 * @private
-		 */
-		public function testTangent(renderElement:RenderElement, vertexBuffer:VertexBuffer3D, indeBuffer:IndexBuffer3D, bufferUsage:Object):VertexBuffer3D {
-			var vertexDeclaration:VertexDeclaration = vertexBuffer.vertexDeclaration;
-			var material:StandardMaterial = renderElement._material as StandardMaterial;//TODO待调整
-			if (material.normalTexture && !vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TANGENT0)) {
-				var vertexDatas:Float32Array = vertexBuffer.getData();
-				var newVertexDatas:Float32Array = Utils3D.generateTangent(vertexDatas, vertexDeclaration.vertexStride / 4, vertexDeclaration.getVertexElementByUsage(VertexElementUsage.POSITION0).offset / 4, vertexDeclaration.getVertexElementByUsage(VertexElementUsage.TEXTURECOORDINATE0).offset / 4, indeBuffer.getData());
-				vertexDeclaration = Utils3D.getVertexTangentDeclaration(vertexDeclaration.getVertexElements());
-				
-				var newVB:VertexBuffer3D = VertexBuffer3D.create(vertexDeclaration, WebGLContext.STATIC_DRAW);
-				newVB.setData(newVertexDatas);
-				vertexBuffer.dispose();
-				
-				bufferUsage[VertexElementUsage.TANGENT0] = newVB;
-				return newVB;
-			}
-			return vertexBuffer;
-		}
-		
-		/** @private */
-		public static function generateTangent(vertexDatas:Float32Array, vertexStride:int, positionOffset:int, uvOffset:int, indices:Uint16Array):Float32Array {//indices:还有UNIT8类型
-			const tangentElementCount:int = 3;
-			var newVertexStride:int = vertexStride + tangentElementCount;
-			var tangentVertexDatas:Float32Array = new Float32Array(newVertexStride * (vertexDatas.length / vertexStride));
-			
-			for (var i:int = 0; i < indices.length; i += 3) {
-				var index1:uint = indices[i + 0];
-				var index2:uint = indices[i + 1];
-				var index3:uint = indices[i + 2];
-				
-				var position1Offset:int = vertexStride * index1 + positionOffset;
-				var position1:Vector3 = _tempVector3_0;
-				position1.x = vertexDatas[position1Offset + 0];
-				position1.y = vertexDatas[position1Offset + 1];
-				position1.z = vertexDatas[position1Offset + 2];
-				
-				var position2Offset:int = vertexStride * index2 + positionOffset;
-				var position2:Vector3 = _tempVector3_1;
-				position2.x = vertexDatas[position2Offset + 0];
-				position2.y = vertexDatas[position2Offset + 1];
-				position2.z = vertexDatas[position2Offset + 2];
-				
-				var position3Offset:int = vertexStride * index3 + positionOffset;
-				var position3:Vector3 = _tempVector3_2;
-				position3.x = vertexDatas[position3Offset + 0];
-				position3.y = vertexDatas[position3Offset + 1];
-				position3.z = vertexDatas[position3Offset + 2];
-				
-				var uv1Offset:int = vertexStride * index1 + uvOffset;
-				var UV1X:Number = vertexDatas[uv1Offset + 0];
-				var UV1Y:Number = vertexDatas[uv1Offset + 1];
-				
-				var uv2Offset:int = vertexStride * index2 + uvOffset;
-				var UV2X:Number = vertexDatas[uv2Offset + 0];
-				var UV2Y:Number = vertexDatas[uv2Offset + 1];
-				
-				var uv3Offset:int = vertexStride * index3 + uvOffset;
-				var UV3X:Number = vertexDatas[uv3Offset + 0];
-				var UV3Y:Number = vertexDatas[uv3Offset + 1];
-				
-				var lengthP2ToP1:Vector3 = _tempVector3_3;
-				Vector3.subtract(position2, position1, lengthP2ToP1);
-				var lengthP3ToP1:Vector3 = _tempVector3_4;
-				Vector3.subtract(position3, position1, lengthP3ToP1);
-				
-				Vector3.scale(lengthP2ToP1, UV3Y - UV1Y, lengthP2ToP1);
-				Vector3.scale(lengthP3ToP1, UV2Y - UV1Y, lengthP3ToP1);
-				
-				var tangent:Vector3 = _tempVector3_5;
-				Vector3.subtract(lengthP2ToP1, lengthP3ToP1, tangent);
-				
-				Vector3.scale(tangent, 1.0 / ((UV2X - UV1X) * (UV3Y - UV1Y) - (UV2Y - UV1Y) * (UV3X - UV1X)), tangent);
-				
-				var j:int;
-				for (j = 0; j < vertexStride; j++)
-					tangentVertexDatas[newVertexStride * index1 + j] = vertexDatas[vertexStride * index1 + j];
-				for (j = 0; j < tangentElementCount; j++)
-					tangentVertexDatas[newVertexStride * index1 + vertexStride + j] = +tangent.elements[j];
-				
-				for (j = 0; j < vertexStride; j++)
-					tangentVertexDatas[newVertexStride * index2 + j] = vertexDatas[vertexStride * index2 + j];
-				for (j = 0; j < tangentElementCount; j++)
-					tangentVertexDatas[newVertexStride * index2 + vertexStride + j] = +tangent.elements[j];
-				
-				for (j = 0; j < vertexStride; j++)
-					tangentVertexDatas[newVertexStride * index3 + j] = vertexDatas[vertexStride * index3 + j];
-				for (j = 0; j < tangentElementCount; j++)
-					tangentVertexDatas[newVertexStride * index3 + vertexStride + j] = +tangent.elements[j];
-				
-					//tangent = ((UV3.Y - UV1.Y) * (position2 - position1) - (UV2.Y - UV1.Y) * (position3 - position1))/ ((UV2.X - UV1.X) * (UV3.Y - UV1.Y) - (UV2.Y - UV1.Y) * (UV3.X - UV1.X));
-			}
-			
-			for (i = 0; i < tangentVertexDatas.length; i += newVertexStride) {
-				var tangentStartIndex:int = newVertexStride * i + vertexStride;
-				var t:Vector3 = _tempVector3_6;
-				t.x = tangentVertexDatas[tangentStartIndex + 0];
-				t.y = tangentVertexDatas[tangentStartIndex + 1];
-				t.z = tangentVertexDatas[tangentStartIndex + 2];
-				
-				Vector3.normalize(t, t);
-				tangentVertexDatas[tangentStartIndex + 0] = t.x;
-				tangentVertexDatas[tangentStartIndex + 1] = t.y;
-				tangentVertexDatas[tangentStartIndex + 2] = t.z;
-			}
-			
-			return tangentVertexDatas;
-		}
-		
-		public static function getVertexTangentDeclaration(vertexElements:Array):VertexDeclaration {
-			var position:Boolean, normal:Boolean, color:Boolean, texcoord0:Boolean, texcoord1:Boolean, blendWeight:Boolean, blendIndex:Boolean;
-			for (var i:int = 0; i < vertexElements.length; i++) {
-				switch ((vertexElements[i] as VertexElement).elementUsage) {
-				case "POSITION": 
-					position = true;
-					break;
-				case "NORMAL": 
-					normal = true;
-					break;
-				case "COLOR": 
-					color = true;
-					break;
-				case "UV": 
-					texcoord0 = true;
-					break;
-				case "UV1": 
-					texcoord1 = true;
-					break;
-				case "BLENDWEIGHT": 
-					blendWeight = true;
-					break;
-				case "BLENDINDICES": 
-					blendIndex = true;
-					break;
-				}
-			}
-			var vertexDeclaration:VertexDeclaration;
-			
-			if (position && normal && color && texcoord0 && texcoord1 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalColorTexture0Texture1SkinTangent.vertexDeclaration;
-			if (position && normal && color && texcoord0 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalColorTextureSkinTangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && texcoord1 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalTexture0Texture1SkinTangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalTextureSkinTangent.vertexDeclaration;
-			else if (position && normal && color && blendWeight && blendIndex)
-				vertexDeclaration = VertexPositionNormalColorSkinTangent.vertexDeclaration;
-			else if (position && normal && color && texcoord0 && texcoord1)
-				vertexDeclaration = VertexPositionNormalColorTexture0Texture1Tangent.vertexDeclaration;
-			else if (position && normal && color && texcoord0)
-				vertexDeclaration = VertexPositionNormalColorTextureTangent.vertexDeclaration;
-			else if (position && normal && texcoord0 && texcoord1)
-				vertexDeclaration = VertexPositionNormalTexture0Texture1Tangent.vertexDeclaration;
-			else if (position && normal && texcoord0)
-				vertexDeclaration = VertexPositionNormalTextureTangent.vertexDeclaration;
-			else if (position && normal && color)
-				vertexDeclaration = VertexPositionNormalColorTangent.vertexDeclaration;
-			else if (position && texcoord0)
-				vertexDeclaration = VertexPositionTexture0.vertexDeclaration;
-			
-			return vertexDeclaration;
 		}
 		
 		/**
@@ -636,19 +504,6 @@ package laya.d3.utils {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
 			result[resultOffset + 1] = 1.0 + source[sourceOffset + 1] * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];
-		}
-		
-		/**
-		 * 转换3D投影坐标系统到2D屏幕坐标系统，以像素为单位,通常用于正交投影下的3D坐标（（0，0）在屏幕中心）到2D屏幕坐标（（0，0）在屏幕左上角）的转换。
-		 * @param	source 源坐标。
-		 * @param	out 输出坐标。
-		 */
-		public static function convert3DCoordTo2DScreenCoord(source:Vector3, out:Vector3):void {
-			var se:Array = source.elements;
-			var oe:Array = out.elements;
-			oe[0] = -RenderState.clientWidth / 2 + se[0];
-			oe[1] = RenderState.clientHeight / 2 - se[1];
-			oe[2] = se[2];
 		}
 		
 		/**

@@ -104,7 +104,7 @@ package laya.ui {
 		 * @param closeOther 是否关闭其它对话框，若值为ture，则关闭其它的对话框。
 		 * @param showEffect 是否显示弹出效果
 		 */
-		public function open(dialog:Dialog, closeOther:Boolean = false, showEffect:Boolean):void {
+		public function open(dialog:Dialog, closeOther:Boolean = false, showEffect:Boolean=true):void {
 			if (closeOther) _closeAll();
 			if (dialog.popupCenter) _centerDialog(dialog);
 			addChild(dialog);
@@ -139,7 +139,7 @@ package laya.ui {
 		 * @param type	关闭的类型，默认为空
 		 * @param showEffect 是否显示弹出效果
 		 */
-		public function close(dialog:Dialog, type:String = null, showEffect:Boolean):void {
+		public function close(dialog:Dialog, type:String = null, showEffect:Boolean=true):void {
 			if (showEffect && dialog.closeEffect != null) dialog.closeEffect.runWith([dialog, type]);
 			else doClose(dialog, type);
 			event(Event.CLOSE);

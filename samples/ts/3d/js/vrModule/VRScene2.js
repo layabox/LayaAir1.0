@@ -1,4 +1,4 @@
-var VRScene2 = (function () {
+var VRScene2 = /** @class */ (function () {
     function VRScene2() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

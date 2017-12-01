@@ -117,8 +117,22 @@ package laya.d3.core {
 		 * @return 裁剪空间的视口。
 		 */
 		public function set normalizedViewport(value:Viewport):void {
-			if (value.x < 0 || value.y < 0 || (value.x + value.width) > 1 || (value.y + value.height) > 1)
-				throw new Error("Camera: viewport size invalid.", "value");
+			if (value.x < 0) {
+				value.x = 0;
+				console.warn("Camera: viewport.x must large than 0.0.");
+			}
+			if (value.y < 0) {
+				value.y = 0;
+				console.warn("Camera: viewport.y must large than 0.0.");
+			}
+			if (value.x + value.width > 1.0) {
+				value.width = 1.0 - value.x;
+				console.warn("Camera: viewport.width + viewport.x must less than 1.0.");
+			}
+			if ((value.y + value.height) > 1.0) {
+				value.height = 1.0 - value.y;
+				console.warn("Camera: viewport.height + viewport.y must less than 1.0.");
+			}
 			_viewportExpressedInClipSpace = true;
 			_normalizedViewport = value;
 			
@@ -332,21 +346,22 @@ package laya.d3.core {
 		 * @param   out 输出坐标。
 		 * @return 是否转换成功。
 		 */
-		public function convertScreenCoordToOrthographicCoord(source:Vector3, out:Vector3):Boolean {
+		public function convertScreenCoordToOrthographicCoord(source:Vector3, out:Vector3):Boolean {//TODO:是否应该使用viewport宽高
 			if (_orthographic) {
-				var ratioX:Number = orthographicVerticalSize * aspectRatio / RenderState.clientWidth;
-				var ratioY:Number = orthographicVerticalSize / RenderState.clientHeight;
-				var se:Array = source.elements;
-				var oe:Array = out.elements;
-				oe[0] = (-RenderState.clientWidth / 2 + se[0]) * ratioX;
-				oe[1] = (RenderState.clientHeight / 2 - se[1]) * ratioY;
-				oe[2] = (nearPlane - farPlane) * (source.z + 1) / 2 - nearPlane;
-				Vector3.transformV3ToV3(out, transform.worldMatrix, out);
+				var clientWidth:int = RenderState.clientWidth;
+				var clientHeight:int = RenderState.clientHeight;
+				var ratioX:Number = orthographicVerticalSize * aspectRatio / clientWidth;
+				var ratioY:Number = orthographicVerticalSize / clientHeight;
+				var sE:Array = source.elements;
+				var oE:Array = out.elements;
+				oE[0] = (-clientWidth / 2 + sE[0]) * ratioX;
+				oE[1] = (clientHeight / 2 - sE[1]) * ratioY;
+				oE[2] = (nearPlane - farPlane) * (sE[2] + 1) / 2 - nearPlane;
+				Vector3.transformCoordinate(out, transform.worldMatrix, out);
 				return true;
 			} else {
 				return false;
 			}
 		}
-	
 	}
 }

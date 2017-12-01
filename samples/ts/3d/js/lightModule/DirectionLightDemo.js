@@ -1,4 +1,4 @@
-var DirectionLightDemo = (function () {
+var DirectionLightDemo = /** @class */ (function () {
     function DirectionLightDemo() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

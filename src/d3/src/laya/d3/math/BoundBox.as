@@ -24,7 +24,7 @@ package laya.d3.math {
 		 * 获取包围盒的8个角顶点。
 		 * @param	corners 返回顶点的输出队列。
 		 */
-		public function getCorners(corners:Array):void {
+		public function getCorners(corners:Vector.<Vector3>):void {
 			corners.length = 8;
 			var mine:Float32Array = min.elements;
 			var maxe:Float32Array = max.elements;
@@ -54,7 +54,7 @@ package laya.d3.math {
 		 * @param	points 所需顶点队列。
 		 * @param	out 生成的包围盒。
 		 */
-		public static function createfromPoints(points:Array, out:BoundBox):void {
+		public static function createfromPoints(points:Vector.<Vector3>, out:BoundBox):void {
 			if (points == null)
 				throw new Error("points");
 			

@@ -5,6 +5,7 @@ package laya.d3.shader {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.graphics.VertexBuffer3D;
+	import laya.d3.resource.BaseTexture;
 	import laya.d3.resource.SolidColorTextureCube;
 	import laya.renders.Render;
 	import laya.utils.Stat;
@@ -222,7 +223,7 @@ package laya.d3.shader {
 					_renderElementUniformParamsMap.push(one.name);
 					_renderElementUniformParamsMap.push(one);
 				} else {
-					trace("Shader:can't find uinform name:" + one.codename + "in shader file.");
+					trace("Shader:can't find uinform name:" + one.codename + " in shader file.");
 				}
 				
 				one._this = this;
@@ -453,7 +454,8 @@ package laya.d3.shader {
 			return 1;
 		}
 		
-		private function _uniform_sampler2D(one:*, value:*):int {//TODO:TEXTURTE ARRAY
+		private function _uniform_sampler2D(one:*, texture:*):int {//TODO:TEXTURTE ARRAY
+			var value:* = texture.source || texture.defaulteTexture.source;
 			var gl:WebGLContext = WebGL.mainContext;
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] == null) {
@@ -476,7 +478,8 @@ package laya.d3.shader {
 			}
 		}
 		
-		private function _uniform_samplerCube(one:*, value:*):int {//TODO:TEXTURTECUBE ARRAY
+		private function _uniform_samplerCube(one:*, texture:*):int {//TODO:TEXTURTECUBE ARRAY
+			var value:* = texture.source || texture.defaulteTexture.source;
 			var gl:WebGLContext = WebGL.mainContext;
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] == null) {
@@ -506,13 +509,6 @@ package laya.d3.shader {
 		private function _noSetValue(one:*):void {
 			trace("no....:" + one.name);
 			//throw new Error("upload shader err,must set value:"+one.name);
-		}
-		
-		public function uploadTexture2D(value:*):void {
-			Stat.shaderCall++;
-			var gl:WebGLContext = WebGL.mainContext;
-			gl.activeTexture(WebGLContext.TEXTURE0);
-			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 		}
 		
 		public function bind():Boolean {

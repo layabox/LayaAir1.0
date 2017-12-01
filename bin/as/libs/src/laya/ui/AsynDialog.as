@@ -18,7 +18,7 @@ package laya.ui {
 			_uiView = uiView;
 		}
 		
-		override protected function _open(modal:Boolean, closeOther:Boolean):void {
+		override protected function _open(modal:Boolean, closeOther:Boolean, showEffect:Boolean):void {
 			isModal = modal;
 			isCloseOther = closeOther;
 			manager.lock(true);
@@ -49,7 +49,7 @@ package laya.ui {
 			manager.lock(false);
 		}
 		
-		override public function close(type:String = null):void {
+		override public function close(type:String = null, showEffect:Boolean = true):void {
 			manager.close(this);
 			onClose();
 		}

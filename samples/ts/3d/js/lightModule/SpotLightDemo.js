@@ -1,4 +1,4 @@
-var SpotLightDemo = (function () {
+var SpotLightDemo = /** @class */ (function () {
     function SpotLightDemo() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

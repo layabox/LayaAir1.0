@@ -1,4 +1,5 @@
 package laya.d3.terrain.unit {
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 

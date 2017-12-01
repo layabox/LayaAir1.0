@@ -1,4 +1,4 @@
-var StandardMaterial_SpecularMap = (function () {
+var StandardMaterial_SpecularMap = /** @class */ (function () {
     function StandardMaterial_SpecularMap() {
         this.rotation = new Laya.Vector3(0, 0.01, 0);
         this.specularMapUrl = ["../../res/threeDimen/skinModel/dude/Assets/dude/headS.png", "../../res/threeDimen/skinModel/dude/Assets/dude/jacketS.png", "../../res/threeDimen/skinModel/dude/Assets/dude/pantsS.png", "../../res/threeDimen/skinModel/dude/Assets/dude/upBodyS.png"];

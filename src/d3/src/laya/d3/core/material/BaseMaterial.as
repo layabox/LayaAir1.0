@@ -54,14 +54,6 @@ package laya.d3.core.material {
 		public static const BLENDPARAM_DST_ALPHA:int = 0x0304;
 		/**混合参数枚举_一减目标阿尔法,例：RGB(1-Ad, 1-Ad, 1-Ad),Alpha(Ad)。*/
 		public static const BLENDPARAM_ONE_MINUS_DST_ALPHA:int = 0x0305;
-		/**混合参数枚举_常量颜色,例:RGB(Rc, Gc, Bc),Alpha(Ac)。*/
-		public static const BLENDPARAM_CONSTANT_COLOR:int = 0x8001;
-		/**混合参数枚举_一减常量颜色,例：RGB(1-Rc, 1-Gc, 1-Bc),Alpha(1-Ac)。*/
-		public static const BLENDPARAM_ONE_MINUS_CONSTANT_COLOR:int = 0x8002;
-		/**混合参数枚举_常量阿尔法,例：RGB(Ac, Ac, Ac)，Alpha(Ac)。*/
-		public static const BLENDPARAM_CONSTANT_ALPHA:int = 0x8003;
-		/**混合参数枚举_一减常量阿尔法,例：RGB(1-Ac, 1-Ac, 1-Ac)，Alpha(1-Ac)。*/
-		public static const BLENDPARAM_ONE_MINUS_CONSTANT_ALPHA:int = 0x8004;
 		/**混合参数枚举_阿尔法饱和，例：RGB(min(As, 1 - Ad), min(As, 1 - Ad), min(As, 1 - Ad)),Alpha(1)。*/
 		public static const BLENDPARAM_SRC_ALPHA_SATURATE:int = 0x0308;
 		
@@ -72,22 +64,24 @@ package laya.d3.core.material {
 		/**混合方程枚举_反序减法，例：destination - source*/
 		public static const BLENDEQUATION_REVERSE_SUBTRACT:int = 2;
 		
+		/**深度测试函数枚举_关闭深度测试。*/
+		public static const DEPTHTEST_OFF:int = 0/*WebGLContext.NEVER*/;
 		/**深度测试函数枚举_从不通过。*/
-		public static const DEPTHFUNC_NEVER:int = 0x0200/*WebGLContext.NEVER*/;
+		public static const DEPTHTEST_NEVER:int = 0x0200/*WebGLContext.NEVER*/;
 		/**深度测试函数枚举_小于时通过。*/
-		public static const DEPTHFUNC_LESS:int = 0x0201/*WebGLContext.LESS*/;
+		public static const DEPTHTEST_LESS:int = 0x0201/*WebGLContext.LESS*/;
 		/**深度测试函数枚举_等于时通过。*/
-		public static const DEPTHFUNC_EQUAL:int = 0x0202/*WebGLContext.EQUAL*/;
+		public static const DEPTHTEST_EQUAL:int = 0x0202/*WebGLContext.EQUAL*/;
 		/**深度测试函数枚举_小于等于时通过。*/
-		public static const DEPTHFUNC_LEQUAL:int = 0x0203/*WebGLContext.LEQUAL*/;
+		public static const DEPTHTEST_LEQUAL:int = 0x0203/*WebGLContext.LEQUAL*/;
 		/**深度测试函数枚举_大于时通过。*/
-		public static const DEPTHFUNC_GREATER:int = 0x0204/*WebGLContext.GREATER*/;
+		public static const DEPTHTEST_GREATER:int = 0x0204/*WebGLContext.GREATER*/;
 		/**深度测试函数枚举_不等于时通过。*/
-		public static const DEPTHFUNC_NOTEQUAL:int = 0x0205/*WebGLContext.NOTEQUAL*/;
+		public static const DEPTHTEST_NOTEQUAL:int = 0x0205/*WebGLContext.NOTEQUAL*/;
 		/**深度测试函数枚举_大于等于时通过。*/
-		public static const DEPTHFUNC_GEQUAL:int = 0x0206/*WebGLContext.GEQUAL*/;
+		public static const DEPTHTEST_GEQUAL:int = 0x0206/*WebGLContext.GEQUAL*/;
 		/**深度测试函数枚举_总是通过。*/
-		public static const DEPTHFUNC_ALWAYS:int = 0x0207/*WebGLContext.ALWAYS*/;
+		public static const DEPTHTEST_ALWAYS:int = 0x0207/*WebGLContext.ALWAYS*/;
 		
 		/**@private 材质级着色器宏定义,透明测试。*/
 		public static const SHADERDEFINE_ALPHATEST:int = 0x1;
@@ -109,13 +103,11 @@ package laya.d3.core.material {
 		private var _shaderValues:ValusArray;
 		/** @private */
 		private var _values:Array;
-		/** @private */
-		private var _textureSharderIndices:Vector.<int>;
 		
 		/** @private */
 		public var _isInstance:Boolean;
 		
-		/**渲染剔除。*/
+		/**渲染剔除状态。*/
 		public var cull:int;
 		/**透明混合。*/
 		public var blend:int;
@@ -139,10 +131,8 @@ package laya.d3.core.material {
 		public var blendEquationRGB:int;
 		/**Alpha混合方程。*/
 		public var blendEquationAlpha:int;
-		/**是否深度测试。*/
-		public var depthTest:Boolean;
 		/**深度测试函数。*/
-		public var depthFunc:int;
+		public var depthTest:int;
 		/**是否深度写入。*/
 		public var depthWrite:Boolean;
 		/** 所属渲染队列. */
@@ -198,7 +188,6 @@ package laya.d3.core.material {
 			_disablePublicShaderDefine = 0;
 			_shaderValues = new ValusArray();
 			_values = [];
-			_textureSharderIndices = new Vector.<int>();
 			renderQueue = RenderQueue.OPAQUE;
 			_alphaTest = false;
 			cull = CULL_BACK;
@@ -213,32 +202,12 @@ package laya.d3.core.material {
 			blendEquation = BLENDEQUATION_ADD;
 			blendEquationRGB = BLENDEQUATION_ADD;
 			blendEquationAlpha = BLENDEQUATION_ADD;
-			depthTest = true;
-			depthFunc = DEPTHFUNC_LESS;
+			depthTest = DEPTHTEST_LESS;
 			depthWrite = true;
 			
 			if (Render.isConchNode) {//NATIVE
 				_conchMaterial = __JS__("new ConchMaterial()");
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _uploadTextures():void {//TODO:使用的时候检测
-			for (var i:int = 0, n:int = _textureSharderIndices.length; i < n; i++) {
-				var shaderIndex:int = _textureSharderIndices[i];
-				var texture:BaseTexture = _values[shaderIndex];
-				if (texture)
-					_uploadTexture(shaderIndex, texture.source || texture.defaulteTexture.source);
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _uploadTexture(shaderIndex:int, textureSource:*):void {
-			_shaderValues.data[shaderIndex] = textureSource;
 		}
 		
 		/**
@@ -445,18 +414,11 @@ package laya.d3.core.material {
 		 * @param	texture 纹理。
 		 */
 		protected function _setTexture(shaderIndex:int, texture:BaseTexture):void {
-			var shaderValue:ValusArray = _shaderValues;
-			var value:* = _values[shaderIndex];
-			if (!value && texture)
-				_textureSharderIndices.push(shaderIndex);
-			else if (value && !texture)
-				_textureSharderIndices.splice(_textureSharderIndices.indexOf(shaderIndex), 1);
-			
 			_values[shaderIndex] = texture;
-			
-			if (_conchMaterial) {//NATIVE//TODO: texture index
-				_conchMaterial.setTexture(texture._conchTexture, _textureSharderIndices.indexOf(shaderIndex), shaderIndex);
-			}
+			_shaderValues.setValue(shaderIndex, texture);
+			//if (_conchMaterial) {//NATIVE//TODO: texture index
+			//_conchMaterial.setTexture(texture._conchTexture, _textureSharderIndices.indexOf(shaderIndex), shaderIndex);
+			//}
 		}
 		
 		/**
@@ -476,7 +438,6 @@ package laya.d3.core.material {
 		 * @return  是否成功。
 		 */
 		public function _upload():void {
-			_uploadTextures();
 			_shader.uploadMaterialUniforms(_shaderValues.data);
 		}
 		
@@ -494,9 +455,15 @@ package laya.d3.core.material {
 		 */
 		public function _setRenderStateBlendDepth():void {
 			var gl:WebGLContext = WebGL.mainContext;
-			WebGLContext.setDepthTest(gl, depthTest);
+			
 			WebGLContext.setDepthMask(gl, depthWrite);
-			WebGLContext.setDepthFunc(gl, depthFunc);
+			if (depthTest === DEPTHTEST_OFF)
+				WebGLContext.setDepthTest(gl, false);
+			else {
+				WebGLContext.setDepthTest(gl, true);
+				WebGLContext.setDepthFunc(gl, depthTest);
+			}
+			
 			switch (blend) {
 			case BLEND_DISABLE: 
 				WebGLContext.setBlend(gl, false);
@@ -647,7 +614,6 @@ package laya.d3.core.material {
 			destBaseMaterial.blendEquationRGB = blendEquationRGB;
 			destBaseMaterial.blendEquationAlpha = blendEquationAlpha;
 			destBaseMaterial.depthTest = depthTest;
-			destBaseMaterial.depthFunc = depthFunc;
 			destBaseMaterial.depthWrite = depthWrite;
 			
 			destBaseMaterial.renderQueue = renderQueue;
@@ -692,10 +658,10 @@ package laya.d3.core.material {
 						destShaderValues.data[i] = mat.elements;
 					} else if (value is BaseTexture) {
 						destValues[i] = value;
+						destShaderValues.data[i] = value;
 					}
 				}
 			}
-			destBaseMaterial._textureSharderIndices = _textureSharderIndices.slice();
 		}
 		
 		/**

@@ -1,4 +1,4 @@
-var StandardMaterial_DiffuseMap = (function () {
+var StandardMaterial_DiffuseMap = /** @class */ (function () {
     function StandardMaterial_DiffuseMap() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

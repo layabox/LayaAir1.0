@@ -1,5 +1,6 @@
 package laya.d3.utils
 {
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.math.Vector3;
 	

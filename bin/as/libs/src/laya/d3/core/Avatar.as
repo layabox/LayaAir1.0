@@ -92,11 +92,11 @@ package laya.d3.core {
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			_rootNode = new AnimationNode();
-			if (data.version){
+			if (data.version) {
 				_version = data.version;
-				_parseNode(data.rootNode, _rootNode);
-			}
-			else{//兼容代码
+				var rootNode:Object = data.rootNode;
+				(rootNode) && (_parseNode(rootNode, _rootNode));
+			} else {//兼容代码
 				_parseNode(data, _rootNode);
 			}
 			_endLoaded();

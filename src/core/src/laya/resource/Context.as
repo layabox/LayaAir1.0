@@ -25,7 +25,8 @@ package laya.resource {
 		public static function __init__(to:*=null):void {			
 			/*[IF-FLASH]*/ return;
 			var from:* = Context.prototype;
-			to = to || __JS__("CanvasRenderingContext2D.prototype");
+			//forxiaochengxu
+			to = to || Laya.EnvConfig.CanvasRenderingContext2D_prototype||__JS__("CanvasRenderingContext2D.prototype");
 			
 			to.__fillText = to.fillText;
 			to.__fillRect = to.fillRect;

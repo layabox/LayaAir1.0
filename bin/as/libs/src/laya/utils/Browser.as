@@ -117,8 +117,9 @@ package laya.utils {
 			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");
 			AudioSound._initMusicAudio();
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");
-			__JS__("window.focus()");
-			__JS__("SoundManager._soundClass=Sound;");			
+			//forxiaochengxu
+			__JS__("if(!Laya.EnvConfig.windowNoFocus) window.focus()");
+			__JS__("SoundManager._soundClass=Sound;");
 			
 			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D');
 			if (canvas) return;
@@ -224,9 +225,17 @@ package laya.utils {
 		/*[IF-FLASH-END]*/
 		/*[IF-SCRIPT-BEGIN]
 		   if (!_container) {
-		   _container = createElement("div");
-		   _container.id = "layaContainer";
-		   document.body.appendChild(_container);
+			if(Laya.EnvConfig.container)
+			{
+				//forxiaochengxu
+				_container = Laya.EnvConfig.container;
+			}
+			else
+			{
+				_container = createElement("div");
+				_container.id = "layaContainer";
+				document.body.appendChild(_container);
+			}
 		   }
 		   return _container;
 		   [IF-SCRIPT-END]*/

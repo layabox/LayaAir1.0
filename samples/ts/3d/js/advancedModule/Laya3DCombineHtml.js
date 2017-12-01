@@ -1,4 +1,4 @@
-var Laya3DCombineHtml = (function () {
+var Laya3DCombineHtml = /** @class */ (function () {
     function Laya3DCombineHtml() {
         var div = Laya.Browser.window.document.createElement("div");
         div.innerHTML = "<h1 style='color: red;'>此内容来源于HTML网页, 可直接在html代码中书写 - h1标签</h1>";

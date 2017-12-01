@@ -16,6 +16,7 @@ package laya.d3.core {
 		 * 创建一个新的 <code>MeshRender</code> 实例。
 		 */
 		public function MeshRender(owner:RenderableSprite3D) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super(owner);
 			(owner as MeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
@@ -74,7 +75,7 @@ package laya.d3.core {
 				_boundingBox.toDefault();
 			} else {
 				var worldMat:Matrix4x4 = (_owner as MeshSprite3D).transform.worldMatrix;
-				var corners:Array = sharedMesh.boundingBoxCorners;
+				var corners:Vector.<Vector3> = sharedMesh.boundingBoxCorners;
 				for (var i:int = 0; i < 8; i++)
 					Vector3.transformCoordinate(corners[i], worldMat, _tempBoundBoxCorners[i]);
 				BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);
@@ -95,8 +96,8 @@ package laya.d3.core {
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
 			}
 			
-			//if (Laya3D.debugMode)
-				//_renderRenderableBoundBox();
+			if (Laya3D.debugMode)
+				_renderRenderableBoundBox();
 		}
 	}
 

@@ -1,4 +1,4 @@
-var D3SpaceToD2Space = (function () {
+var D3SpaceToD2Space = /** @class */ (function () {
     function D3SpaceToD2Space() {
         this.scaleDelta = 0;
         Laya3D.init(0, 0, true);

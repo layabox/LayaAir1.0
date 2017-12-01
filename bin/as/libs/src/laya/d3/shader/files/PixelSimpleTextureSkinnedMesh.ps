@@ -52,9 +52,12 @@ uniform vec3 u_MaterialAmbient;
 #endif
 
 #if defined(FOG)||defined(DEPTHFOG)
-uniform float u_FogStart;
-uniform float u_FogRange;
-uniform vec3 u_FogColor;
+	uniform float u_FogStart;
+	uniform float u_FogRange;
+	#if ADDTIVEFOG
+	#else
+		uniform vec3 u_FogColor;
+	#endif
 #endif
 
 
@@ -247,7 +250,11 @@ gl_FragColor=gl_FragColor*u_Albedo;
   
 #ifdef FOG
 	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
-	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+	#if ADDTIVEFOG
+		gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(0.0,0.0,0.0),lerpFact);
+	#else
+		gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+	#endif
 #endif
 #ifdef DEPTHFOG
 	float lerpFact = (-v_PositionWorld.y-u_FogStart)/u_FogRange;

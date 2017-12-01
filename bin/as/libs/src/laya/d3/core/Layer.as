@@ -1,47 +1,25 @@
 package laya.d3.core {
 	import laya.d3.component.physics.Collider;
+	import laya.d3.utils.Physics;
 	
 	/**
-	 * <code>Layer</code> 类用于实现遮罩层。
+	 * <code>Layer</code> 类用于实现层。
 	 */
 	public class Layer {
-		/**唯一标识ID计数器。*/
-		protected static var _uniqueIDCounter:int = 1/*int.MIN_VALUE*/;
-		/**Layer数量。*/
-		protected static const _layerCount:int = 31;//JavaScript中为动态位数，32或64还有符号位，所有暂时使用31
-		/**Layer列表。*/
-		protected static var _layerList:Array = [];
-		/**Layer激活层。*/
-		protected static var _activeLayers:int;
-		/**Layer显示层。*/
-		protected static var _visibleLayers:int;
+		/** @private */
+		private static var _layerList:Array = [];
+		/** @private */
+		private static var _visibleLayers:int = 2147483647/*int.MAX_VALUE*/;
 		
-		/**当前相机遮罩。*/
-		public static var _currentCameraCullingMask:int;
+		/** @private 只读,不允许修改。*/
+		public static var _collsionTestList:Vector.<int> = new Vector.<int>();
+		/** @private */
+		public static var _currentCameraCullingMask:int = 2147483647/*int.MAX_VALUE*/;
 		
+		/** @private */
+		public static const maxCount:int = 31;//JS中为动态位数，32或64还有符号位，所有暂时使用31
 		/**当前创建精灵所属遮罩层。*/
 		public static var currentCreationLayer:Layer;
-		
-		/**
-		 *获取Layer激活层。
-		 * @return 激活层。
-		 */
-		public static function get activeLayers():int {
-			return _activeLayers;
-		}
-		
-		/**
-		 * 设置Layer激活层。
-		 * @param value 激活层。
-		 */
-		public static function set activeLayers(value:int):void {
-			//29和30为预留蒙版层,不能禁用
-			_activeLayers = value | getLayerByNumber(29).mask | getLayerByNumber(30).mask;
-			for (var i:int = 0, n:int = _layerList.length; i < n; i++) {
-				var layer:Layer = _layerList[i];
-				layer._active = (layer._mask & _activeLayers) !== 0;
-			}
-		}
 		
 		/**
 		 *获取Layer显示层。
@@ -56,8 +34,7 @@ package laya.d3.core {
 		 * @param value 显示层。
 		 */
 		public static function set visibleLayers(value:int):void {
-			//29和30为预留蒙版层,不能禁用
-			_visibleLayers = value | getLayerByNumber(29).mask | getLayerByNumber(30).mask;
+			_visibleLayers = value;
 			for (var i:int = 0, n:int = _layerList.length; i < n; i++) {
 				var layer:Layer = _layerList[i];
 				layer._visible = (layer._mask & _visibleLayers) !== 0;
@@ -68,24 +45,20 @@ package laya.d3.core {
 		 * @private
 		 */
 		public static function __init__():void {
-			_layerList.length = _layerCount;
-			for (var i:int = 0; i < _layerCount; i++) {
+			_layerList.length = maxCount;
+			for (var i:int = 0; i < maxCount; i++) {
 				var layer:Layer = new Layer();
 				_layerList[i] = layer;
-				if (i === 0)
+				if (i === 0) {
 					layer.name = "Default Layer";
-				else if (i === 29)
-					layer.name = "Reserved Layer0";
-				else if (i === 30)
-					layer.name = "Reserved Layer1";
-				else
+					layer.visible = true;
+				} else {
 					layer.name = "Layer-" + i;
+					layer.visible = false;
+				}
 				layer._number = i;
-				layer._mask = Math.pow(2, i);//Number转int
+				layer._mask = Math.pow(2, i);
 			}
-			_activeLayers = 2147483647/*int.MAX_VALUE*/;
-			_visibleLayers = 2147483647/*int.MAX_VALUE*/;
-			_currentCameraCullingMask = 2147483647/*int.MAX_VALUE*/;
 			currentCreationLayer = _layerList[0];
 		}
 		
@@ -102,38 +75,15 @@ package laya.d3.core {
 		
 		/**
 		 *通过蒙版值获取蒙版。
-		 * @param mask 编号。
-		 * @return 蒙版。
-		 */
-		public static function getLayerByMask(mask:int):Layer {
-			//var index=Math.log(mask)/Math.log(2)//Best  Fast,但是存在浮点精度问题，无法良好切科学的解决
-			for (var i:int = 0; i < _layerCount; i++) {
-				if (_layerList[i].mask === mask)
-					return _layerList[i];
-			}
-			throw new Error("无法返回指定Layer,该mask不存在");
-		}
-		
-		/**
-		 *通过蒙版值获取蒙版。
 		 * @param name 名字。
 		 * @return 蒙版。
 		 */
 		public static function getLayerByName(name:String):Layer {
-			for (var i:int = 0; i < _layerCount; i++) {
+			for (var i:int = 0; i < maxCount; i++) {
 				if (_layerList[i].name === name)
 					return _layerList[i];
 			}
 			throw new Error("无法返回指定Layer,该name不存在");
-		}
-		
-		/**
-		 *通过蒙版值获取蒙版是否激活。
-		 * @param mask 蒙版值。
-		 * @return 是否激活。
-		 */
-		public static function isActive(mask:int):Boolean {
-			return (mask & _activeLayers) != 0;
 		}
 		
 		/**
@@ -145,17 +95,16 @@ package laya.d3.core {
 			return (mask & _currentCameraCullingMask & _visibleLayers) != 0;
 		}
 		
-		/**唯一标识ID。*/
-		private var _id:int;
-		/**编号。*/
+		/** @private 编号。*/
 		private var _number:int;
-		/**蒙版值。*/
+		/** @private 蒙版值。*/
 		private var _mask:int;
-		/**是否激活。*/
-		private var _active:Boolean = true;
-		/**是否显示。*/
-		private var _visible:Boolean = true;
-		/** @private */
+		/** @private 是否显示。*/
+		private var _visible:Boolean;
+		
+		/** @private 只读,不允许修改。*/
+		public var _nonRigidbodyOffset:int;
+		/** @private 只读,不允许修改。*/
 		public var _colliders:Vector.<Collider>;
 		
 		/**名字。*/
@@ -178,30 +127,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 *获取是否激活。
-		 * @return 是否激活。
-		 */
-		public function get active():Boolean {
-			return _active;
-		}
-		
-		/**
-		 *设置是否激活。
-		 * @param value 是否激活。
-		 */
-		public function set active(value:Boolean):void {
-			//29和30为预留蒙版层,不能禁用
-			if (_number === 29 || _number == 30)
-				return;
-			_active = value;
-			
-			if (value)
-				_activeLayers = _activeLayers | mask;
-			else
-				_activeLayers = _activeLayers & ~mask;
-		}
-		
-		/**
 		 *获取是否显示。
 		 * @return 是否显示。
 		 */
@@ -214,9 +139,6 @@ package laya.d3.core {
 		 * @param value 是否显示。
 		 */
 		public function set visible(value:Boolean):void {
-			//29和30为预留蒙版层,不能禁用
-			if (_number === 29 || _number == 30)
-				return;
 			_visible = value;
 			
 			if (value)
@@ -229,12 +151,54 @@ package laya.d3.core {
 		 * 创建一个 <code>Layer</code> 实例。
 		 */
 		public function Layer() {
-			if (_uniqueIDCounter > _layerCount)
-				throw new Error("不允许创建Layer，请参考函数getLayerByNumber、getLayerByMask、getLayerByName！");
-			_id = _uniqueIDCounter;
-			_uniqueIDCounter++;
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			_visible = true;
+			_nonRigidbodyOffset = 0;
 			_colliders = new Vector.<Collider>();
 		}
-	
+		
+		/**
+		 * @private
+		 */
+		private function _binarySearchIndex():int {
+			var start:int = 0;
+			var end:int = _collsionTestList.length - 1;
+			var mid:int;
+			while (start <= end) {
+				mid = __JS__("parseInt((start + end) / 2)");
+				var midValue:int = _collsionTestList[mid];
+				if (midValue == _number)
+					return mid;
+				else if (midValue > _number)
+					end = mid - 1;
+				else
+					start = mid + 1;
+			}
+			return start;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _addCollider(collider:Collider):void {
+			(_colliders.length === 0) && (_collsionTestList.splice(_binarySearchIndex(), 0, _number));
+			if (collider._isRigidbody) {
+				_colliders.unshift(collider);
+				_nonRigidbodyOffset++;
+			} else {
+				_colliders.push(collider);
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _removeCollider(collider:Collider):void {
+			var index:int = _colliders.indexOf(collider);
+			if (index < _nonRigidbodyOffset)
+				_nonRigidbodyOffset--;
+			_colliders.splice(index, 1);
+			(_colliders.length === 0) && (_collsionTestList.splice(_collsionTestList.indexOf(_number), 1));
+		}
 	}
 }

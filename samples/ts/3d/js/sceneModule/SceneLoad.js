@@ -1,4 +1,4 @@
-var SceneLoad = (function () {
+var SceneLoad = /** @class */ (function () {
     function SceneLoad() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;

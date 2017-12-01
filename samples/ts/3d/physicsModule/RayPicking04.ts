@@ -31,13 +31,14 @@ class RayPicking04 {
     private _color: Laya.Vector4;
     private _linePos: Laya.Vector3;
     private label: Laya.Label;
+    private scene: Laya.Scene;
     constructor() {
         Laya3D.init(0, 0, true);
         Laya.stage.scaleMode = Laya.Stage.SCALE_FULL;
         Laya.stage.screenMode = Laya.Stage.SCREEN_NONE;
         Laya.Stat.show();
 
-        var scene: Laya.Scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
+        this.scene = Laya.stage.addChild(new Laya.Scene()) as Laya.Scene;
 
         this.ray = new Laya.Ray(new Laya.Vector3(0, 0, 0), new Laya.Vector3(0, 0, 0));
         this.point = new Laya.Vector2();
@@ -51,15 +52,26 @@ class RayPicking04 {
         this._linePos = new Laya.Vector3(0, -1, 1);
 
         //初始化照相机
-        this.camera = scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
+        this.camera = this.scene.addChild(new Laya.Camera(0, 0.1, 100)) as Laya.Camera;
         this.camera.transform.translate(new Laya.Vector3(0, 1, 3));
         this.camera.clearColor = null;
 
+        Laya.loader.create([
+            "../../res/threeDimen/skinModel/NvWu/NvWu-shenminvwu.lm", 
+            "../../res/threeDimen/skinModel/CunMinNan/CunMinNan-cunminnan.lm", 
+            "../../res/threeDimen/skinModel/XiaoFeiLong/XiaoFeiLong-xiaofeilong.lm", 
+            "../../res/threeDimen/skinModel/PangZi/PangZi-doubipangzi.lm"
+        ], Laya.Handler.create(this, this.onComplete));
+        
+    }
+
+    private onComplete():void{
+
         //添加精灵到场景
-        this.sprite3d1 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/NvWu/NvWu-shenminvwu.lm"))) as Laya.MeshSprite3D;
-        this.sprite3d2 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/CunMinNan/CunMinNan-cunminnan.lm"))) as Laya.MeshSprite3D;
-        this.sprite3d3 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/XiaoFeiLong/XiaoFeiLong-xiaofeilong.lm"))) as Laya.MeshSprite3D;
-        this.sprite3d4 = scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/PangZi/PangZi-doubipangzi.lm"))) as Laya.MeshSprite3D;
+        this.sprite3d1 = this.scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/NvWu/NvWu-shenminvwu.lm"))) as Laya.MeshSprite3D;
+        this.sprite3d2 = this.scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/CunMinNan/CunMinNan-cunminnan.lm"))) as Laya.MeshSprite3D;
+        this.sprite3d3 = this.scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/XiaoFeiLong/XiaoFeiLong-xiaofeilong.lm"))) as Laya.MeshSprite3D;
+        this.sprite3d4 = this.scene.addChild(new Laya.MeshSprite3D(Laya.Mesh.load("../../res/threeDimen/skinModel/PangZi/PangZi-doubipangzi.lm"))) as Laya.MeshSprite3D;
 
         this.sprite3d1.transform.position = new Laya.Vector3(-0.6, 0, -0.2);
         this.sprite3d2.transform.position = new Laya.Vector3(0.1, 0, 0);
@@ -83,20 +95,26 @@ class RayPicking04 {
          * SphereCollider : 球型碰撞器
          * MeshCollider   : 网格碰撞器
          */
-        this.sprite3d1.addComponent(Laya.MeshCollider);
-        this.sprite3d2.addComponent(Laya.MeshCollider);
-        this.sprite3d3.addComponent(Laya.SphereCollider);
-        this.sprite3d4.addComponent(Laya.BoxCollider);
+        var sprite3d1MeshCollider:MeshCollider = this.sprite3d1.addComponent(Laya.MeshCollider) as Laya.MeshCollider;
+        sprite3d1MeshCollider.mesh = this.sprite3d1.meshFilter.sharedMesh;
+
+        var sprite3d2MeshCollider:MeshCollider = this.sprite3d2.addComponent(Laya.MeshCollider) as Laya.MeshCollider;
+        sprite3d2MeshCollider.mesh = this.sprite3d2.meshFilter.sharedMesh;
+
+        var sphereCollider:SphereCollider = this.sprite3d3.addComponent(Laya.SphereCollider) as Laya.SphereCollider;
+        sphereCollider.center = this.sprite3d3.meshFilter.sharedMesh.boundingSphere.center.clone();
+        sphereCollider.radius = this.sprite3d3.meshFilter.sharedMesh.boundingSphere.radius;
+
+        var boxCollider:BoxCollider = this.sprite3d4.addComponent(Laya.BoxCollider) as Laya.BoxCollider;
+        boxCollider.setFromBoundBox(this.sprite3d4.meshFilter.sharedMesh.boundingBox);
 
         //用球模拟精灵的球体碰撞器
         this.sphereMesh = new Laya.SphereMesh(1, 32, 32);
-        this.sphereSprite3d = scene.addChild(new Laya.MeshSprite3D(this.sphereMesh)) as Laya.MeshSprite3D;
-        this.sprite3d3.meshFilter.sharedMesh.once(Laya.Event.LOADED, this, function (): void {
-            var mat: Laya.StandardMaterial = new Laya.StandardMaterial();
-            mat.albedo = new Laya.Vector4(1, 1, 1, 0.5);
-            mat.renderMode = 5;
-            this.sphereSprite3d.meshRender.material = mat;
-        });
+        this.sphereSprite3d = this.scene.addChild(new Laya.MeshSprite3D(this.sphereMesh)) as Laya.MeshSprite3D;
+        var mat: Laya.StandardMaterial = new Laya.StandardMaterial();
+        mat.albedo = new Laya.Vector4(1, 1, 1, 0.5);
+        mat.renderMode = 5;
+        this.sphereSprite3d.meshRender.material = mat;
 
         this._corners[0] = new Laya.Vector3();
         this._corners[1] = new Laya.Vector3();
@@ -111,6 +129,7 @@ class RayPicking04 {
 
         this.loadUI();
     }
+
     private checkHit(): void {
         //从屏幕空间生成射线
         this.point.elements[0] = Laya.stage.mouseX;

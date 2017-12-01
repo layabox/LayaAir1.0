@@ -23,7 +23,7 @@ package laya.d3.core.render {
 	 */
 	public class BaseRender extends EventDispatcher implements IDestroy {
 		/**@private */
-		public static var _tempBoundBoxCorners:Array = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+		public static var _tempBoundBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
 		/**@private */
 		private static var _uniqueIDCounter:int = 0;
@@ -240,7 +240,7 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取包围球,不允许修改其值。
+		 * 获取包围球,只读,不允许修改其值。
 		 * @return 包围球。
 		 */
 		public function get boundingSphere():BoundSphere {
@@ -252,7 +252,7 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取包围盒,不允许修改其值。
+		 * 获取包围盒,只读,不允许修改其值。
 		 * @return 包围盒。
 		 */
 		public function get boundingBox():BoundBox {
@@ -309,6 +309,7 @@ package laya.d3.core.render {
 		 * 创建一个新的 <code>BaseRender</code> 实例。
 		 */
 		public function BaseRender(owner:RenderableSprite3D) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_id = ++_uniqueIDCounter;
 			_indexInSceneFrustumCullingObjects = -1;
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
@@ -341,7 +342,7 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		private function _onWorldMatNeedChange():void {
+		protected function _onWorldMatNeedChange():void {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
@@ -354,7 +355,7 @@ package laya.d3.core.render {
 		protected function _renderRenderableBoundBox():void {
 			var linePhasor:PhasorSpriter3D = Laya3D._debugPhasorSprite;
 			var boundBox:BoundBox = boundingBox;
-			var corners:Array = _tempBoundBoxCorners;
+			var corners:Vector.<Vector3> = _tempBoundBoxCorners;
 			boundBox.getCorners(corners);
 			linePhasor.line(corners[0], _greenColor, corners[1], _greenColor);
 			linePhasor.line(corners[2], _greenColor, corners[3], _greenColor);
@@ -390,7 +391,7 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		public function _setShaderValueTexture(shaderName:int, texture:BaseTexture):void {
-			_owner._shaderValues.setValue(shaderName, texture ? texture.source : null);
+			_owner._shaderValues.setValue(shaderName, texture);
 		}
 		
 		/**

@@ -1,5 +1,5 @@
 版本号:
-	    string version="LAYAMODEL:03";
+	    string version="LAYAMODEL:0301";
 
 数据信息区: 
         uint32 offset;

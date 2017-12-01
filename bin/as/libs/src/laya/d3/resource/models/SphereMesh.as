@@ -88,6 +88,7 @@ package laya.d3.resource.models {
 			_stacks = stacks;
 			_slices = slices;
 			activeResource();
+			_positions = _getPositions();
 			_generateBoundingObject();
 		}
 		

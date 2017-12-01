@@ -11,6 +11,8 @@ package laya.d3.component {
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector3;
 	import laya.events.Event;
 	import laya.resource.IDestroy;
 	import laya.utils.Stat;
@@ -449,6 +451,7 @@ package laya.d3.component {
 			_publicAvatarAnimationDatas.length = avatarNodesCount;
 			for (i = 0; i < avatarNodesCount; i++)
 				_publicAvatarAnimationDatas[i] = new Matrix4x4();
+			;
 			
 			for (i = 0, n = _avatarNodes.length; i < n; i++)//TODO:换成字典查询
 				_checkAnimationNode(_avatarNodes[i], _owner as Sprite3D);
@@ -587,13 +590,13 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _setAnimationClipPropertyToAnimationNode(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
-			var nodeToCachePropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
-			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-				var owner:AnimationNode = nodeOwners[i];
+		private function _setAnimationClipPropertyToAnimationNode(nodeOwners:Vector.<AnimationNode>, propertyMap:Int32Array, clipDatas:Vector.<Float32Array>):void {
+			for (var i:int = 0, n:int = propertyMap.length; i < n; i++) {
+				var nodexIndex:int = propertyMap[i];
+				var owner:AnimationNode = nodeOwners[nodexIndex];
 				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
-					var datas:Float32Array = (ketframeNode._cacheProperty) ? _curClipAnimationDatas[nodeToCachePropertyMap[i]] : publicClipAnimatioDatas[i];
+					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[nodexIndex];
+					var datas:Float32Array = clipDatas[nodexIndex];
 					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
 				}
 			}
@@ -602,60 +605,13 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _setAnimationClipPropertyToAnimationNodeRealTime(nodeOwners:Vector.<AnimationNode>):void {
-			var nodeToCachePropertyMap:Int32Array = _currentPlayClip._nodeToCachePropertyMap;
-			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-				var owner:AnimationNode = nodeOwners[i];
-				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
-					var datas:Float32Array = _curClipAnimationDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setAnimationClipPropertyToSprite3D(nodeOwners:Vector.<Sprite3D>):void {
+		private function _setAnimationClipPropertyToSprite3D(nodeOwners:Vector.<Sprite3D>, curClipAnimationDatas:Vector.<Float32Array>):void {
 			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
 				var owner:Sprite3D = nodeOwners[i];
 				if (owner) {
 					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
-					var datas:Float32Array = _curClipAnimationDatas[i];
+					var datas:Float32Array = curClipAnimationDatas[i];
 					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](null, owner, datas));
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setAnimationClipPropertyToAnimationNodeCache(nodeOwners:Vector.<AnimationNode>):void {
-			var cachePropertyToNodeMap:Int32Array = _currentPlayClip._cachePropertyToNodeMap;
-			for (var i:int = 0, n:int = cachePropertyToNodeMap.length; i < n; i++) {
-				var nodexIndex:int = cachePropertyToNodeMap[i];
-				var owner:AnimationNode = nodeOwners[nodexIndex];
-				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[nodexIndex];
-					var datas:Float32Array = _curClipAnimationDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setAnimationClipPropertyUnCache(nodeOwners:Vector.<AnimationNode>, publicClipAnimatioDatas:Vector.<Float32Array>):void {
-			var unCachePropertyToNodeMap:Int32Array = _currentPlayClip._unCachePropertyToNodeMap;
-			for (var i:int = 0, n:int = unCachePropertyToNodeMap.length; i < n; i++) {
-				var nodeIndex:int = unCachePropertyToNodeMap[i];
-				var owner:AnimationNode = nodeOwners[nodeIndex];
-				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[nodeIndex];
-					var datas:Float32Array = publicClipAnimatioDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
 				}
 			}
 		}
@@ -693,34 +649,61 @@ package laya.d3.component {
 		/**
 		 *@private
 		 */
-		public function _updateAvatarNodes(avatarAnimationDatas:Vector.<Matrix4x4>):void {
+		public function _updateAvatarNodesCacheMode(avatarOwners:Vector.<AnimationNode>, clip:AnimationClip, avatarNodeDatas:Vector.<Matrix4x4>):void {
+			var avatarNeedUpdate:Boolean = true;
 			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
-				var node:AnimationNode = _avatarNodes[_cacheSpriteToNodesMap[i]];
-				var spriteTransform:Transform3D = node._transform._entity;
+				var nodeIndex:int = _cacheSpriteToNodesMap[i];
+				var nodeMatrix:Matrix4x4 = avatarNodeDatas[nodeIndex];
+				if (!nodeMatrix) {
+					if (avatarNeedUpdate) {
+						var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
+						var unCacheMap:Int32Array = clip._unCachePropertyToNodeMap;
+						clip._evaluateAnimationlDatasCacheMode(avatarOwners, _cacheFullFrames[_currentPlayClipIndex], this, publicDatas, unCacheMap);
+						_setAnimationClipPropertyToAnimationNode(avatarOwners, unCacheMap, publicDatas);
+						_updateTransformPropertyLoopCount = Stat.loopCount;
+						avatarNeedUpdate = false;
+					}
+				}
+				var spriteTransform:Transform3D, spriteWorldMatrix:Matrix4x4;
+				var node:AnimationNode = _avatarNodes[nodeIndex];
 				var nodeTransform:AnimationTransform3D = node._transform;
-				if (nodeTransform._worldUpdate) {
-					var avatarWorldMatrix:Matrix4x4 = new Matrix4x4();
-					avatarAnimationDatas[i] = avatarWorldMatrix;
-					nodeTransform._setWorldMatrixAndUpdate(avatarWorldMatrix);
-					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
-					Matrix4x4.multiply((_owner as Sprite3D)._transform.worldMatrix, avatarWorldMatrix, spriteWorldMatrix);
-					spriteTransform.worldMatrix = spriteWorldMatrix;
+				if (nodeMatrix) {
+					if (nodeMatrix !== Matrix4x4.NAN) {
+						spriteTransform = node._transform._entity;
+						spriteWorldMatrix = spriteTransform.worldMatrix;
+						Matrix4x4.multiply((_owner as Sprite3D)._transform.worldMatrix, nodeMatrix, spriteWorldMatrix);
+						spriteTransform.worldMatrix = spriteWorldMatrix;
+					}
+				} else {
+					if (nodeTransform._worldUpdate) {//Avatar跟节点始终为false,不会更新
+						nodeMatrix = new Matrix4x4();
+						avatarNodeDatas[nodeIndex] = nodeMatrix;
+						nodeTransform._setWorldMatrixAndUpdate(nodeMatrix);
+						spriteTransform = node._transform._entity;
+						spriteWorldMatrix = spriteTransform.worldMatrix;
+						Matrix4x4.multiply((_owner as Sprite3D)._transform.worldMatrix, nodeMatrix, spriteWorldMatrix);
+						spriteTransform.worldMatrix = spriteWorldMatrix;
+					} else {
+						avatarNodeDatas[nodeIndex] = Matrix4x4.NAN;
+					}
 				}
 			}
+		
 		}
 		
 		/**
 		 *@private
 		 */
-		public function _updateAvatarNodesCache(avatarAnimationDatas:Vector.<Matrix4x4>):void {//TODO:if (avatarWorldMatrix)判断浪费
+		public function _updateAvatarNodesRealTime(avatarAnimationDatas:Vector.<Matrix4x4>):void {
 			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
 				var node:AnimationNode = _avatarNodes[_cacheSpriteToNodesMap[i]];
 				var spriteTransform:Transform3D = node._transform._entity;
-				
-				var avatarWorldMatrix:Matrix4x4 = avatarAnimationDatas[i];
-				if (avatarWorldMatrix) {
+				var nodeTransform:AnimationTransform3D = node._transform;
+				if (nodeTransform._worldUpdate) {//Avatar跟节点始终为false,不会更新
+					var nodeMatrix:Matrix4x4 = avatarAnimationDatas[i]
+					nodeTransform._setWorldMatrixAndUpdate(nodeMatrix);
 					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
-					Matrix4x4.multiply((_owner as Sprite3D)._transform.worldMatrix, avatarWorldMatrix, spriteWorldMatrix);
+					Matrix4x4.multiply((_owner as Sprite3D)._transform.worldMatrix, nodeMatrix, spriteWorldMatrix);
 					spriteTransform.worldMatrix = spriteWorldMatrix;
 				}
 			}
@@ -787,13 +770,15 @@ package laya.d3.component {
 		 * @private
 		 */
 		public function _updateTansformProperty():void {
-			if (_updateTransformPropertyLoopCount === Stat.loopCount)
+			if (!_canCache || _updateTransformPropertyLoopCount === Stat.loopCount)
 				return;
-			
 			if (_avatar) {
+				var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[_currentPlayClipIndex];
+				var unCacheMap:Int32Array = _clips[_currentPlayClipIndex]._unCachePropertyToNodeMap;
 				var publicDatas:Vector.<Float32Array> = _publicClipAnimationDatas[_currentPlayClipIndex];
-				currentPlayClip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicDatas, null, _cacheNodesAvatarOwners[_currentPlayClipIndex]);
-				_setAnimationClipPropertyUnCache(_cacheNodesAvatarOwners[_currentPlayClipIndex], publicDatas);
+				currentPlayClip._evaluateAnimationlDatasCacheMode(avatarOwners, _cacheFullFrames[_currentPlayClipIndex], this, publicDatas, unCacheMap);
+				_setAnimationClipPropertyToAnimationNode(avatarOwners, unCacheMap, publicDatas);
+				_updateTransformPropertyLoopCount = Stat.loopCount;
 			}
 		}
 		
@@ -817,63 +802,48 @@ package laya.d3.component {
 				if (_lastFrameIndex === frameIndex)
 					return;
 				
-				var avatarOwners:Vector.<AnimationNode>, publicClipAnimationDatas:Vector.<Float32Array>;
-				var spriteOwners:Vector.<Sprite3D>;
-				
-				if (_avatar) {
-					var cachedAvatarAniDatas:Vector.<Matrix4x4> = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, frameIndex);
-					if (cachedAvatarAniDatas) {//如果cachedAvatarAniDatas存在,cachedClipAniDatas一定存在
-						_curClipAnimationDatas = clip._getAnimationDataWithCache(cacheRate, frameIndex);
-						_setAnimationClipPropertyToAnimationNodeCache(_cacheNodesAvatarOwners[_currentPlayClipIndex]);
-						_updateAvatarNodesCache(cachedAvatarAniDatas);
-						_lastFrameIndex = frameIndex;
-						return;
-					}
-					avatarOwners = _cacheNodesAvatarOwners[_currentPlayClipIndex];
-					publicClipAnimationDatas = _publicClipAnimationDatas[_currentPlayClipIndex];
-				} else {
-					spriteOwners = _cacheNodesSpriteOwners[_currentPlayClipIndex];
-				}
-				
 				_curClipAnimationDatas = clip._getAnimationDataWithCache(cacheRate, frameIndex);
-				if (_curClipAnimationDatas) {
-					if (_avatar) {
-						clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicClipAnimationDatas, null, avatarOwners);
-						_setAnimationClipPropertyToAnimationNode(avatarOwners, publicClipAnimationDatas);
-					} else {
-						_setAnimationClipPropertyToSprite3D(spriteOwners);
-					}
-				} else {
-					_curClipAnimationDatas = new Vector.<Float32Array>();
-					_curClipAnimationDatas.length = clip._cachePropertyToNodeMap.length;
-					
-					if (_avatar) {
-						clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, publicClipAnimationDatas, _curClipAnimationDatas, avatarOwners);
-						_setAnimationClipPropertyToAnimationNode(avatarOwners, publicClipAnimationDatas);
-					} else {
-						clip._evaluateAnimationlDatasCacheFrame(_cacheFullFrames[_currentPlayClipIndex], this, null, _curClipAnimationDatas, null);
-						_setAnimationClipPropertyToSprite3D(spriteOwners);
-					}
-					clip._cacheAnimationData(cacheRate, frameIndex, _curClipAnimationDatas);
-				}
-				
 				if (_avatar) {
-					_curAvatarAnimationDatas = new Vector.<Matrix4x4>();
-					_curAvatarAnimationDatas.length = _cacheSpriteToNodesMap.length;
-					_updateAvatarNodes(_curAvatarAnimationDatas);
-					clip._cacheAvatarData(_avatar, cacheRate, frameIndex, _curAvatarAnimationDatas);
+					var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[_currentPlayClipIndex];
+					var cacheMap:Int32Array = clip._cachePropertyToNodeMap;
+					var cacheMapCount:int = cacheMap.length;
+					
+					if (cacheMapCount > 0) {//cacheMapCount>0时才进行相关计算，避免浪费,如骨骼动画
+						if (!_curClipAnimationDatas) {
+							_curClipAnimationDatas = new Vector.<Float32Array>();
+							_curClipAnimationDatas.length = cacheMapCount;
+							clip._cacheAnimationData(cacheRate, frameIndex, _curClipAnimationDatas);
+							clip._evaluateAnimationlDatasCacheMode(avatarOwners, _cacheFullFrames[_currentPlayClipIndex], this, _curClipAnimationDatas, cacheMap);
+						}
+						_setAnimationClipPropertyToAnimationNode(avatarOwners, cacheMap, _curClipAnimationDatas);
+					}
+					
+					var cacheSpriteCount:int = _cacheSpriteToNodesMap.length;
+					_curAvatarAnimationDatas = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, frameIndex);
+					if (!_curAvatarAnimationDatas) {
+						_curAvatarAnimationDatas = new Vector.<Matrix4x4>();
+						_curAvatarAnimationDatas.length = _avatarNodes.length;
+						clip._cacheAvatarData(_avatar, _cachePlayRate, frameIndex, _curAvatarAnimationDatas);
+					}
+					_updateAvatarNodesCacheMode(avatarOwners, clip, _curAvatarAnimationDatas);
+				} else {
+					var spriteOwners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[_currentPlayClipIndex];
+					if (!_curClipAnimationDatas) {
+						_curClipAnimationDatas = new Vector.<Float32Array>();
+						_curClipAnimationDatas.length = _currentPlayClip._nodes.length;
+						clip._evaluateAnimationlDatasCacheMode(spriteOwners, _cacheFullFrames[_currentPlayClipIndex], this, _curClipAnimationDatas, null);//properyMap=null则数据全都存入_curClipAnimationDatas
+						clip._cacheAnimationData(cacheRate, frameIndex, _curClipAnimationDatas);
+					}
+					_setAnimationClipPropertyToSprite3D(spriteOwners, _curClipAnimationDatas);
 				}
-				_updateTransformPropertyLoopCount = Stat.loopCount;
-			} else {//TODO:非缓存模式BUG
+			} else {
 				_curClipAnimationDatas = _publicClipAnimationDatas[_currentPlayClipIndex];
 				if (_avatar) {
-					clip._evaluateAnimationlDatasRealTime(currentPlayTime, _curClipAnimationDatas);
-					_setAnimationClipPropertyToAnimationNodeRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex]);
+					clip._evaluateAnimationlDatasRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex], currentPlayTime, _curClipAnimationDatas);
 					_curAvatarAnimationDatas = _publicAvatarAnimationDatas;
-					_updateAvatarNodes(_curAvatarAnimationDatas);
+					_updateAvatarNodesRealTime(_curAvatarAnimationDatas);
 				} else {
-					clip._evaluateAnimationlDatasRealTime(currentPlayTime, _curClipAnimationDatas);
-					_setAnimationClipPropertyToSprite3D(_cacheNodesSpriteOwners[_currentPlayClipIndex]);
+					clip._evaluateAnimationlDatasRealTime(_cacheNodesSpriteOwners[_currentPlayClipIndex], currentPlayTime, _curClipAnimationDatas);
 				}
 			}
 			
@@ -937,8 +907,10 @@ package laya.d3.component {
 			var clipCount:int = _clips.length;
 			for (var i:int = 0, n:int = _clips.length; i < n; i++)
 				animator.addClip(_clips[i]);
-			animator.clip = clip;
-			animator.play();//TODO:
+			if (clip) {
+				animator.clip = clip;
+				animator.play();//TODO:
+			}
 		}
 		
 		/**

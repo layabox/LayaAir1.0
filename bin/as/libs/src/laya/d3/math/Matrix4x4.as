@@ -16,8 +16,20 @@ package laya.d3.math {
 		private static var _tempVector2:Vector3 = new Vector3();
 		/**@private */
 		private static var _tempQuaternion:Quaternion = new Quaternion();
+		/**无效矩阵,禁止修改*/
+		public static const NAN:Matrix4x4 = new Matrix4x4(
+		NaN, NaN, NaN, NaN,
+		NaN, NaN, NaN, NaN,
+		NaN, NaN, NaN, NaN,
+		NaN,NaN,NaN,NaN);
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix4x4 = new Matrix4x4();
+		/**默认矩阵,禁止修改*/
+		public static const ZERO:Matrix4x4 = new Matrix4x4(
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0, 0);
 		
 		/**
 		 * 绕X轴旋转

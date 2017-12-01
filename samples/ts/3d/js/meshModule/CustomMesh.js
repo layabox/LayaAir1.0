@@ -1,4 +1,4 @@
-var CustomMesh = (function () {
+var CustomMesh = /** @class */ (function () {
     function CustomMesh() {
         this.curStateIndex = 0;
         Laya3D.init(0, 0, true);
