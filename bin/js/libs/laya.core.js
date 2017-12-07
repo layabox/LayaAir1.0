@@ -14922,7 +14922,6 @@ var Laya=window.Laya=(function(window,document){
 		*移除texure proxy的相关事件
 		*/
 		__proto.offTextureEvent=function(texture){
-			console.log("off texture event:",texture);
 			texture.off("update",this,this.onTextureProxyUpdate);
 			texture.off("disposed",this,this.onTextureProxyDisposed);
 			texture.off("loaded",this,this.onTextureProxyLoaded);
@@ -14932,7 +14931,6 @@ var Laya=window.Laya=(function(window,document){
 		*为texture proxy增加相关事件
 		*/
 		__proto.addTextureEvent=function(texture){
-			console.log("add texture event:",texture);
 			texture.on("update",this,this.onTextureProxyUpdate);
 			texture.on("disposed",this,this.onTextureProxyDisposed);
 			texture.on("loaded",this,this.onTextureProxyLoaded);
