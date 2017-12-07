@@ -14,10 +14,8 @@ package laya.display {
 	import laya.renders.RenderSprite;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.ITextureProxy;
-	import laya.resource.Texture;
 	import laya.utils.Dragging;
 	import laya.utils.HTMLChar;
-	import laya.utils.Handler;
 	import laya.utils.Pool;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
@@ -1576,7 +1574,6 @@ package laya.display {
 		 * 移除texure proxy的相关事件
 		 */
 		private function offTextureEvent(texture : ITextureProxy) : void {
-			console.log("off texture event:", texture);
 			texture.off("update",   this, onTextureProxyUpdate);
 			texture.off("disposed", this, onTextureProxyDisposed);
 			texture.off("loaded",   this, onTextureProxyLoaded);
@@ -1586,7 +1583,6 @@ package laya.display {
 		 * 为texture proxy增加相关事件
 		 */
 		private function addTextureEvent(texture : ITextureProxy) : void {
-			console.log("add texture event:", texture);
 			texture.on("update",   this, onTextureProxyUpdate);
 			texture.on("disposed", this, onTextureProxyDisposed);
 			texture.on("loaded",   this, onTextureProxyLoaded);
