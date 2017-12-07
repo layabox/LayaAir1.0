@@ -311,11 +311,11 @@ package laya.display {
 		*/
 		public function drawTriangles(texture : Texture, x : Number, y : Number, points : Array) : void {
 			if (!texture || !points || points.length % 4 != 0 || points.length < 4) {
-				return null;
+				return;
 			}
 			_saveToCmd(Render._context._fillTrangles, [texture, 0, 0, points, null]);
 		}
-
+		
 		/**
 		 * @private 清理贴图并替换为最新的
 		 * @param tex

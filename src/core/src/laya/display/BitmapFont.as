@@ -22,19 +22,19 @@ package laya.display {
 		public var autoScaleSize:Boolean = false;
 		/**字符间距（以像素为单位）。*/
 		public var letterSpacing:Number = 0;
-		
-		/**
-		 * 通过指定位图字体文件路径，加载位图字体文件，加载完成后会自动解析。
-		 * @param	path		位图字体文件的路径。
-		 * @param	complete	加载并解析完成的回调。
-		 */
-		public function loadFont(path:String, complete:Handler):void {
-			_path = path;
-			_complete = complete;
-			
-			Laya.loader.load([{url: _path, type: Loader.XML}, {url: _path.replace(".fnt", ".png"), type: Loader.IMAGE}], Handler.create(this, onLoaded));
-		}
-		
+
+//      禁用loadFont API，只允许parseFont接口。
+//		/**
+//		 * 通过指定位图字体文件路径，加载位图字体文件，加载完成后会自动解析。
+//		 * @param	path		位图字体文件的路径。
+//		 * @param	complete	加载并解析完成的回调。
+//		 */
+//		public function loadFont(path:String, complete:Handler):void {
+//			_path = path;
+//			_complete = complete;
+//			Laya.loader.load([{url: _path, type: Loader.XML}, {url: _path.replace(".fnt", ".png"), type: Loader.IMAGE}], Handler.create(this, onLoaded));
+//		}
+//		
 		/**
 		 * @private
 		 */

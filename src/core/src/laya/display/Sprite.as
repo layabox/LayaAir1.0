@@ -13,6 +13,7 @@ package laya.display {
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.resource.HTMLCanvas;
+	import laya.resource.ITextureProxy;
 	import laya.resource.Texture;
 	import laya.utils.Dragging;
 	import laya.utils.HTMLChar;
@@ -231,7 +232,7 @@ package laya.display {
 		/**@private */
 		private var _optimizeScrollRect:Boolean = false;
 		/**@private */
-		private var _texture:Texture = null;
+		private var _texture:ITextureProxy = null;
 		
 		//优化child渲染复杂度，暂时这样
 		//public var _childRenderMax:Boolean = false;
@@ -294,6 +295,11 @@ package laya.display {
 			this._style && this._style.destroy();
 			this._transform && this._transform.destroy();
 			this._transform = null;
+			if (this._texture) {
+				this.offTextureEvent(_texture);
+				this._texture.releaseRef();
+				this._texture = null;
+			}
 			this._style = null;
 			this._graphics = null;
 		}
@@ -1293,38 +1299,38 @@ package laya.display {
 			}
 		}
 		
-		/**
-		 * <p>加载并显示一个图片。功能等同于graphics.loadImage方法。支持异步加载。</p>
-		 * <p>注意：多次调用loadImage绘制不同的图片，会同时显示。</p>
-		 * @param url		图片地址。
-		 * @param x			（可选）显示图片的x位置。
-		 * @param y			（可选）显示图片的y位置。
-		 * @param width		（可选）显示图片的宽度，设置为0表示使用图片默认宽度。
-		 * @param height	（可选）显示图片的高度，设置为0表示使用图片默认高度。
-		 * @param complete	（可选）加载完成回调。
-		 * @return	返回精灵对象本身。
-		 */
-		public function loadImage(url:String, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, complete:Handler = null):Sprite {
-			function loaded(tex:Texture):void {
-				if (!destroyed) {
-					size(x + (width || tex.width), y + (height || tex.height));
-					//if (_width == 0 && _height == 0) setBounds(getSelfBounds());
-					repaint();
-					complete && complete.runWith(tex);
-				}
-			}
-			graphics.loadImage(url, x, y, width, height, loaded);
-			return this;
-		}
-		
-		/**
-		 * 根据图片地址创建一个新的 <code>Sprite</code> 对象用于加载并显示此图片。
-		 * @param	url 图片地址。
-		 * @return	返回新的 <code>Sprite</code> 对象。
-		 */
-		public static function fromImage(url:String):Sprite {
-			return new Sprite().loadImage(url);
-		}
+//		/**
+//		 * <p>加载并显示一个图片。功能等同于graphics.loadImage方法。支持异步加载。</p>
+//		 * <p>注意：多次调用loadImage绘制不同的图片，会同时显示。</p>
+//		 * @param url		图片地址。
+//		 * @param x			（可选）显示图片的x位置。
+//		 * @param y			（可选）显示图片的y位置。
+//		 * @param width		（可选）显示图片的宽度，设置为0表示使用图片默认宽度。
+//		 * @param height	（可选）显示图片的高度，设置为0表示使用图片默认高度。
+//		 * @param complete	（可选）加载完成回调。
+//		 * @return	返回精灵对象本身。
+//		 */
+//		public function loadImage(url:String, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, complete:Handler = null):Sprite {
+//			function loaded(tex:Texture):void {
+//				if (!destroyed) {
+//					size(x + (width || tex.width), y + (height || tex.height));
+//					//if (_width == 0 && _height == 0) setBounds(getSelfBounds());
+//					repaint();
+//					complete && complete.runWith(tex);
+//				}
+//			}
+//			graphics.loadImage(url, x, y, width, height, loaded);
+//			return this;
+//		}
+//		
+//		/**
+//		 * 根据图片地址创建一个新的 <code>Sprite</code> 对象用于加载并显示此图片。
+//		 * @param	url 图片地址。
+//		 * @return	返回新的 <code>Sprite</code> 对象。
+//		 */
+//		public static function fromImage(url:String):Sprite {
+//			return new Sprite().loadImage(url);
+//		}
 		
 		/**cacheAs后，设置自己和父对象缓存失效。*/
 		public function repaint():void {
@@ -1542,14 +1548,72 @@ package laya.display {
 		}
 		
 		/**设置一个Texture实例，并显示此图片（如果之前有其他绘制，则会被清除掉）。等同于graphics.clear();graphics.drawTexture()*/
-		public function get texture():Texture {
+		public function get texture():ITextureProxy {
 			return _texture;
 		}
 		
-		public function set texture(value:Texture):void {
-			if (_texture != value) {
-				_texture = value;
-				graphics.cleanByTexture(value, 0, 0);
+		public function set texture(value:ITextureProxy):void {
+			if (_texture == value) {
+				return;
+			}
+			// 回收引用计数
+			if (_texture) {
+				offTextureEvent(_texture);
+				_texture.releaseRef();
+			}
+			// 标记引用计数
+			if (value) {
+				addTextureEvent(value);
+				value.addRef();
+			}
+			_texture = value;
+			if (_texture) {
+				graphics.cleanByTexture(value.texture, 0, 0);
+			}
+		}
+		
+		/**
+		 * 移除texure proxy的相关事件
+		 */
+		private function offTextureEvent(texture : ITextureProxy) : void {
+			console.log("off texture event:", texture);
+			texture.off("update",   this, onTextureProxyUpdate);
+			texture.off("disposed", this, onTextureProxyDisposed);
+			texture.off("loaded",   this, onTextureProxyLoaded);
+		}
+		
+		/**
+		 * 为texture proxy增加相关事件
+		 */
+		private function addTextureEvent(texture : ITextureProxy) : void {
+			console.log("add texture event:", texture);
+			texture.on("update",   this, onTextureProxyUpdate);
+			texture.on("disposed", this, onTextureProxyDisposed);
+			texture.on("loaded",   this, onTextureProxyLoaded);
+		}
+		
+		/**
+		 * texture proxy 下载完毕
+		 */
+		private function onTextureProxyLoaded() : void {
+			if (_texture) {
+				graphics.cleanByTexture(_texture.texture, 0, 0);
+			}
+		}
+		
+		/**
+		 * texture proxy被销毁
+		 */
+		private function onTextureProxyDisposed() : void {
+			graphics.cleanByTexture(null, 0, 0);
+		}
+		
+		/**
+		 * texture proxy更新内容
+		 */
+		private function onTextureProxyUpdate() : void {
+			if (_texture) {
+				graphics.cleanByTexture(_texture.texture, 0, 0);
 			}
 		}
 		
