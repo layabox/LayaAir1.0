@@ -7485,6 +7485,7 @@ declare module laya.d3.core {
     import ValusArray = laya.d3.shader.ValusArray;
     import Node = laya.display.Node;
     import ICreateResource = laya.resource.ICreateResource;
+    import ITextureProxy = laya.resource.ITextureProxy;
     /**
      * <code>Sprite3D</code> 类用于实现3D精灵。
      */
@@ -13787,7 +13788,8 @@ declare module laya.display {
          * @param	path		位图字体文件的路径。
          * @param	complete	加载并解析完成的回调。
          */
-        loadFont(path: string, complete: Handler): void;
+        // 屏蔽load url接口
+        // loadFont(path: string, complete: Handler): void;
         /**
          * 解析字体文件。
          * @param	xml			字体文件XML。
@@ -15000,6 +15002,7 @@ declare module laya.display {
     import HTMLCanvas = laya.resource.HTMLCanvas;
     import Texture = laya.resource.Texture;
     import Handler = laya.utils.Handler;
+    import ITextureProxy = laya.resource.ITextureProxy;
     /**
      * <p> <code>Sprite</code> 是基本的显示图形的显示列表节点。 <code>Sprite</code> 默认没有宽高，默认不接受鼠标事件。通过 <code>graphics</code> 可以绘制图片或者矢量图，支持旋转，缩放，位移等操作。<code>Sprite</code>同时也是容器类，可用来添加多个子节点。</p>
      * <p>注意： <code>Sprite</code> 默认没有宽高，可以通过<code>getBounds</code>函数获取；也可手动设置宽高；还可以设置<code>autoSize=true</code>，然后再获取宽高。<code>Sprite</code>的宽高一般用于进行碰撞检测和排版，并不影响显示图像大小，如果需要更改显示图像大小，请使用 <code>scaleX</code> ， <code>scaleY</code> ， <code>scale</code>。</p>
@@ -15470,13 +15473,15 @@ declare module laya.display {
          * @param complete	（可选）加载完成回调。
          * @return	返回精灵对象本身。
          */
-        loadImage(url: string, x?: number, y?: number, width?: number, height?: number, complete?: Handler): Sprite;
+        // 屏蔽loadImage接口
+        // loadImage(url: string, x?: number, y?: number, width?: number, height?: number, complete?: Handler): Sprite;
         /**
          * 根据图片地址创建一个新的 <code>Sprite</code> 对象用于加载并显示此图片。
          * @param	url 图片地址。
          * @return	返回新的 <code>Sprite</code> 对象。
          */
-        static fromImage(url: string): Sprite;
+       // 屏蔽formimage接口
+       // static fromImage(url: string): Sprite;
         /**cacheAs后，设置自己和父对象缓存失效。*/
         repaint(): void;
         /**
@@ -15547,7 +15552,7 @@ declare module laya.display {
         /**z排序，更改此值，则会按照值的大小对同一容器的所有对象重新排序。值越大，越靠上。默认为0，则根据添加顺序排序。*/
         zOrder: number;
         /**设置一个Texture实例，并显示此图片（如果之前有其他绘制，则会被清除掉）。等同于graphics.clear();graphics.drawTexture()*/
-        texture: Texture;
+        texture: ITextureProxy;
         _getWords(): Array<any>;
         _addChildsToLayout(out: Array<any>): boolean;
         _addToLayout(out: Array<any>): void;
@@ -20351,6 +20356,7 @@ declare module laya.resource {
         addSize(add: number): void;
     }
 }
+
 declare module laya.resource {
     import EventDispatcher = laya.events.EventDispatcher;
     /**
@@ -20476,6 +20482,45 @@ declare module laya.resource {
         onAsynLoaded(url: string, bitmap: Bitmap): void;
     }
 }
+
+declare module laya.resource {
+    /**
+     * @private
+     */
+    interface ITextureProxy {
+        /**
+         * 获取Texture
+         */
+        readonly texture : Texture;
+        /**
+         * 增加引用计数
+         */
+        addRef() : void;
+        /**
+         * 释放引用计数
+         */
+        releaseRef() : void;
+        /**
+         * 销毁贴图
+         */
+        dispose() : void;
+        /**
+         * 监听事件
+         * @param type     事件类型
+         * @param caller   事件接受者
+         * @param listener 监听函数
+         */
+        on(type : String, caller : any, listener : Function) : void;
+        /**
+         * 移除事件
+         * @param type     事件类型
+         * @param caller   事件接受者
+         * @param listener 监听函数
+         */
+        off(type : String, caller : any, listener : Function) : void;
+    }
+}
+
 declare module laya.runtime {
     import Graphics = laya.display.Graphics;
     import Context = laya.resource.Context;
