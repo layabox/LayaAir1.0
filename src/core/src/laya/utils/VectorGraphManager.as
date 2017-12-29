@@ -1,6 +1,6 @@
 package laya.utils {
 	import laya.renders.Render;
-	import laya.utils.CacheManger;
+	import laya.utils.CacheManager;
 	import laya.utils.Utils;
 	
 	/**
@@ -20,7 +20,7 @@ package laya.utils {
 		
 		public function VectorGraphManager() {
 			if (Render.isWebGL) {
-				CacheManger.regCacheByFunction(Utils.bind(this.startDispose, this), Utils.bind(this.getCacheList, this));
+				CacheManager.regCacheByFunction(Utils.bind(this.startDispose, this), Utils.bind(this.getCacheList, this));
 			}
 		}
 		

@@ -344,7 +344,16 @@ package laya.resource {
 		 * @return  返回像素点集合
 		 */
 		public function getPixels(x:Number, y:Number, width:Number, height:Number):Array {
-			if (Render.isWebGL) {
+			if (Render.isConchApp) {
+				var temp:* = this.bitmap;
+				if (temp.source && temp.source.getImageData ) {
+					var arraybuffer:ArrayBuffer = temp.source.getImageData(x, y, width, height);
+					var tUint8Array:Uint8Array = new Uint8Array(arraybuffer);
+					return __JS__("Array.from(tUint8Array)");
+				}
+				return null;
+			}
+			else if (Render.isWebGL) {
 				return RunDriver.getTexturePixels(this, x, y, width, height);
 			} else {
 				Browser.canvas.size(width, height);

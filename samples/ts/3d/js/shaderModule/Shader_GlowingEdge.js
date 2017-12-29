@@ -109,7 +109,7 @@ var Shader_GlowingEdge = /** @class */ (function () {
             "#else\n" +
             "precision mediump float;\n" +
             "#endif\n" +
-            "#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT 'LightHelper.glsl';\n" +
+            "#include 'LightHelper.glsl';\n" +
             "varying vec2 v_Texcoord;\n" +
             "uniform sampler2D u_texture;\n" +
             "uniform vec3 u_marginalColor;\n" +

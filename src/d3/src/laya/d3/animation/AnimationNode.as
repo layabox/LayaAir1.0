@@ -9,9 +9,7 @@ package laya.d3.animation {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
-	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
@@ -41,8 +39,11 @@ package laya.d3.animation {
 			registerAnimationNodeProperty("localRotationEuler", _getLocalRotationEuler, _setLocalRotationEuler);
 			registerAnimationNodeProperty("particleRender.sharedMaterial.tintColor", _getParticleRenderSharedMaterialTintColor, _setParticleRenderSharedMaterialTintColor);
 			registerAnimationNodeProperty("meshRender.sharedMaterial.tilingOffset", _getMeshRenderSharedMaterialTilingOffset, _setMeshRenderSharedMaterialTilingOffset);
-			registerAnimationNodeProperty("meshRender.sharedMaterial.albedo", _getMeshRenderSharedMaterialAlbedo, _setMeshRenderSharedMaterialAlbedo);
+			registerAnimationNodeProperty("meshRender.sharedMaterial.albedoColor", _getMeshRenderSharedMaterialAlbedo, _setMeshRenderSharedMaterialAlbedo);
 			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.tilingOffset", _getSkinnedMeshRenderSharedMaterialTilingOffset, _setSkinnedMeshRenderSharedMaterialTilingOffset);
+			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.albedoColor", _getSkinnedMeshRenderSharedMaterialAlbedo, _setSkinnedMeshRenderSharedMaterialAlbedo);
+			
+			registerAnimationNodeProperty("meshRender.sharedMaterial.albedo", _getMeshRenderSharedMaterialAlbedo, _setMeshRenderSharedMaterialAlbedo);
 			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.albedo", _getSkinnedMeshRenderSharedMaterialAlbedo, _setSkinnedMeshRenderSharedMaterialAlbedo);
 		}
 		
@@ -195,16 +196,16 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _getMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
-			var material:StandardMaterial;
+			var material:*;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;//以下类似处理均为防止AnimationNode无关联实体节点
 				if (entity) {
-					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial;
 					return material.tilingOffset.elements;
 				} else
 					return null;
 			} else {
-				material = (sprite3D as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
+				material = (sprite3D as MeshSprite3D).meshRender.sharedMaterial;
 				return material.tilingOffset.elements;
 			}
 		}
@@ -213,17 +214,17 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var material:StandardMaterial, tilingOffset:Vector4;
+			var material:*, tilingOffset:Vector4;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
+					material = (entity.owner as MeshSprite3D).meshRender.material;
 					tilingOffset = material.tilingOffset;
 					tilingOffset.elements = value;
 					material.tilingOffset = tilingOffset;
 				}
 			} else {
-				material = (sprite3D as MeshSprite3D).meshRender.material as StandardMaterial;
+				material = (sprite3D as MeshSprite3D).meshRender.material;
 				tilingOffset = material.tilingOffset;
 				tilingOffset.elements = value;
 				material.tilingOffset = tilingOffset;
@@ -234,17 +235,17 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _getMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
-			var material:StandardMaterial;
+			var material:*;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
-					return material.albedo.elements;
+					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial;
+					return material.albedoColor.elements;
 				} else
 					return null;
 			} else {
-				material = (sprite3D as MeshSprite3D).meshRender.sharedMaterial as StandardMaterial;
-				return material.albedo.elements;
+				material = (sprite3D as MeshSprite3D).meshRender.sharedMaterial;
+				return material.albedoColor.elements;
 			}
 		}
 		
@@ -252,20 +253,20 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var material:StandardMaterial, albedo:Vector4;
+			var material:*, albedo:Vector4;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as MeshSprite3D).meshRender.material as StandardMaterial;
-					albedo = material.albedo;
+					material = (entity.owner as MeshSprite3D).meshRender.material;
+					albedo = material.albedoColor;
 					albedo.elements = value;
-					material.albedo = albedo;
+					material.albedoColor = albedo;
 				}
 			} else {
-				material = (sprite3D as MeshSprite3D).meshRender.material as StandardMaterial;
-				albedo = material.albedo;
+				material = (sprite3D as MeshSprite3D).meshRender.material;
+				albedo = material.albedoColor;
 				albedo.elements = value;
-				material.albedo = albedo;
+				material.albedoColor = albedo;
 			}
 		}
 		
@@ -273,16 +274,16 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _getSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
-			var material:StandardMaterial;
+			var material:*;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial;
 					return material.tilingOffset.elements;
 				} else
 					return null;
 			} else {
-				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial;
 				return material.tilingOffset.elements;
 			}
 		}
@@ -291,17 +292,17 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var material:StandardMaterial, tilingOffset:Vector4;
+			var material:*, tilingOffset:Vector4;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material;
 					tilingOffset = material.tilingOffset;
 					tilingOffset.elements = value;
 					material.tilingOffset = tilingOffset;
 				}
 			} else {
-				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.material;
 				tilingOffset = material.tilingOffset;
 				tilingOffset.elements = value;
 				material.tilingOffset = tilingOffset;
@@ -312,18 +313,18 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _getSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
-			var material:StandardMaterial;
+			var material:*;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
-					return material.albedo.elements;
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial;
+					return material.albedoColor.elements;
 				} else {
 					return null;
 				}
 			} else {
-				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial as StandardMaterial;
-				return material.albedo.elements;
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial;
+				return material.albedoColor.elements;
 			}
 		}
 		
@@ -331,20 +332,20 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var material:StandardMaterial, albedo:Vector4;
+			var material:*, albedo:Vector4;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
-					albedo = material.albedo;
+					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material;
+					albedo = material.albedoColor;
 					albedo.elements = value;
-					material.albedo = albedo;
+					material.albedoColor = albedo;
 				}
 			} else {
-				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.material as StandardMaterial;
-				albedo = material.albedo;
+				material = (sprite3D as SkinnedMeshSprite3D).skinnedMeshRender.material;
+				albedo = material.albedoColor;
 				albedo.elements = value;
-				material.albedo = albedo;
+				material.albedoColor = albedo;
 			}
 		}
 		
@@ -352,16 +353,16 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _getParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
-			var material:ShurikenParticleMaterial;
+			var material:*;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial;
+					material = (entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial;
 					return material.tintColor.elements;
 				} else
 					return null;
 			} else {
-				material = (sprite3D as ShuriKenParticle3D).particleRender.sharedMaterial as ShurikenParticleMaterial;
+				material = (sprite3D as ShuriKenParticle3D).particleRender.sharedMaterial;
 				return material.tintColor.elements;
 			}
 		}
@@ -370,17 +371,17 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var material:ShurikenParticleMaterial, tintColor:Vector4;
+			var material:*, tintColor:Vector4;
 			if (animationNode) {
 				var entity:Transform3D = animationNode._transform._entity;
 				if (entity) {
-					material = (entity.owner as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial;
+					material = (entity.owner as ShuriKenParticle3D).particleRender.material;
 					tintColor = material.tintColor;
 					tintColor.elements = value;
 					material.tintColor = tintColor;
 				}
 			} else {
-				material = (sprite3D as ShuriKenParticle3D).particleRender.material as ShurikenParticleMaterial;
+				material = (sprite3D as ShuriKenParticle3D).particleRender.material;
 				tintColor = material.tintColor;
 				tintColor.elements = value;
 				material.tintColor = tintColor;

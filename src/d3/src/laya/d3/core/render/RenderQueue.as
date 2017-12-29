@@ -145,7 +145,7 @@ package laya.d3.core.render {
 			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
 				var renderElement:RenderElement = _finalElements[i];
 				var renderObj:IRenderable, material:BaseMaterial, owner:Sprite3D;
-				if (renderElement._onPreRenderFunction != null) {
+				if (renderElement._onPreRenderFunction != null) {//TODO:
 					renderElement._onPreRenderFunction.call(renderElement._sprite3D, state);
 				}
 				
@@ -161,7 +161,6 @@ package laya.d3.core.render {
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
 						
 						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
-							//WebGL.mainContext.disableVertexAttribArray(0);
 							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
 							shader._uploadVertexBuffer = vertexBuffer;
 						}

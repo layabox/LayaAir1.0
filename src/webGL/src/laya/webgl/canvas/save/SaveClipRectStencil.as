@@ -37,13 +37,14 @@ package laya.webgl.canvas.save {
 			context._curSubmit = Submit.RENDERBASE;
 		}
 		
-		public static function save(context:WebGLContext2D, submitStencil:SubmitStencil, x:Number, y:Number, width:Number, height:Number):void {
+		public static function save(context:WebGLContext2D, submitStencil:SubmitStencil, x:Number, y:Number, width:Number, height:Number, clipX:Number, clipY:Number, clipWidth:Number, clipHeight:Number):void {
 			if ((context._saveMark._saveuse & SaveBase.TYPE_CLIPRECT_STENCIL) == SaveBase.TYPE_CLIPRECT_STENCIL) return;
 			context._saveMark._saveuse |= SaveBase.TYPE_CLIPRECT_STENCIL;
 			var cache:* = _cache;
 			var o:SaveClipRectStencil = cache._length > 0 ? cache[--cache._length] : (new SaveClipRectStencil());
 			o._clipSaveRect = context._clipRect;
-			context._clipRect = o._clipRect.copyFrom(context._clipRect);
+			o._clipRect.setTo(clipX, clipY, clipWidth, clipHeight);
+			context._clipRect = o._clipRect;
 			
 			o._rect.x = x;
 			o._rect.y = y;

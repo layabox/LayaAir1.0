@@ -77,7 +77,7 @@ package laya.webgl.utils {
 					scope.addValue("bounds", tRect);
 					submitCMD = SubmitCMD.create([scope, context], RenderSprite3D.tmpTarget);
 					context.addRenderObject(submitCMD);
-					mask.render(context, -tRect.x - tf.translateX, -tRect.y - tf.translateY);
+					mask.render(context, -tRect.x, -tRect.y);
 					submitCMD = SubmitCMD.create([scope], RenderSprite3D.endTmpTarget);
 					context.addRenderObject(submitCMD);
 					//裁剪
@@ -117,7 +117,7 @@ package laya.webgl.utils {
 						uv[1] += 1;uv[3] += 1;uv[5] += 1;uv[7] += 1;
 					}
 					
-					(context.ctx as WebGLContext2D).drawTarget(scope, x + tRect.x, y + tRect.y, w, h, Matrix.TEMP, "tmpTarget", shaderValue, uv, 6);
+					(context.ctx as WebGLContext2D).drawTarget(scope, x + tRect.x - tf.translateX, y + tRect.y - tf.translateY, w, h, Matrix.TEMP, "tmpTarget", shaderValue, uv, 6);
 					submitCMD = SubmitCMD.create([scope], RenderSprite3D.recycleTarget);
 					context.addRenderObject(submitCMD);
 					submitStencil = SubmitStencil.create(6);

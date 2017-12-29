@@ -30,12 +30,12 @@ package laya.d3.core.material {
 		public static var SHADERDEFINE_TILINGOFFSET:int;
 		public static var SHADERDEFINE_ADDTIVEFOG:int;
 		
-		public static const DIFFUSETEXTURE:int = 1;
+		public static const ALBEDOTEXTURE:int = 1;
 		public static const NORMALTEXTURE:int = 2;
 		public static const SPECULARTEXTURE:int = 3;
 		public static const EMISSIVETEXTURE:int = 4;
 		public static const REFLECTTEXTURE:int = 5;
-		public static const DIFFUSECOLOR:int = 6;
+		public static const ALBEDOCOLOR:int = 6;
 		public static const MATERIALSPECULAR:int = 8;
 		public static const SHININESS:int = 9;
 		public static const MATERIALREFLECT:int = 10;
@@ -51,6 +51,11 @@ package laya.d3.core.material {
 		public static function load(url:String):BlinnPhongMaterial {
 			return Laya.loader.create(url, null, null, BlinnPhongMaterial);
 		}
+		
+		/**@private */
+		private var _albedoColor:Vector4;
+		/**@private */
+		private var _albedoIntensity:Number;
 		
 		/**
 		 * 设置渲染模式。
@@ -134,16 +139,38 @@ package laya.d3.core.material {
 		 * 获取漫反射颜色。
 		 * @return 漫反射颜色。
 		 */
-		public function get diffuseColor():Vector4 {
-			return _getColor(DIFFUSECOLOR);
+		public function get albedoColor():Vector4 {
+			return _albedoColor;
 		}
 		
 		/**
 		 * 设置漫反射颜色。
 		 * @param value 漫反射颜色。
 		 */
-		public function set diffuseColor(value:Vector4):void {
-			_setColor(DIFFUSECOLOR, value);
+		public function set albedoColor(value:Vector4):void {
+			var finalAlbedo:Vector4 = _getColor(ALBEDOCOLOR);
+			Vector4.scale(value, _albedoIntensity, finalAlbedo);
+			_albedoColor = value;
+		}
+		
+		/**
+		 * 获取漫反射颜色。
+		 * @return 漫反射颜色。
+		 */
+		public function get albedoIntensity():Number {
+			return _albedoIntensity;
+		}
+		
+		/**
+		 * 设置漫反射颜色。
+		 * @param value 漫反射颜色。
+		 */
+		public function set albedoIntensity(value:Number):void {
+			if (_albedoIntensity !== value) {
+				var finalAlbedo:Vector4 = _getColor(ALBEDOCOLOR);
+				Vector4.scale(_albedoColor, value, finalAlbedo);
+				_albedoIntensity = value;
+			}
 		}
 		
 		/**
@@ -199,20 +226,20 @@ package laya.d3.core.material {
 		 * 获取漫反射贴图。
 		 * @return 漫反射贴图。
 		 */
-		public function get diffuseTexture():BaseTexture {
-			return _getTexture(DIFFUSETEXTURE);
+		public function get albedoTexture():BaseTexture {
+			return _getTexture(ALBEDOTEXTURE);
 		}
 		
 		/**
 		 * 设置漫反射贴图。
 		 * @param value 漫反射贴图。
 		 */
-		public function set diffuseTexture(value:BaseTexture):void {
+		public function set albedoTexture(value:BaseTexture):void {
 			if (value)
 				_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP);
 			else
 				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP);
-			_setTexture(DIFFUSETEXTURE, value);
+			_setTexture(ALBEDOTEXTURE, value);
 		}
 		
 		/**
@@ -279,11 +306,14 @@ package laya.d3.core.material {
 		public function BlinnPhongMaterial() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
+			
 			setShaderName("BLINNPHONG");
+			_albedoIntensity = 1.0;
+			_albedoColor = new Vector4(1.0, 1.0, 1.0, 1.0);
+			_setColor(ALBEDOCOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
 			_setColor(MATERIALSPECULAR, new Vector3(1.0, 1.0, 1.0));
 			_setNumber(SHININESS, 0.078125);
 			_setColor(MATERIALREFLECT, new Vector3(1.0, 1.0, 1.0));
-			_setColor(DIFFUSECOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
 			_setNumber(ALPHATESTVALUE, 0.5);
 			_setColor(TILINGOFFSET, new Vector4(1.0, 1.0, 0.0, 0.0));
 			renderMode = RENDERMODE_OPAQUE;

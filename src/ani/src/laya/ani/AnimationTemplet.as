@@ -236,6 +236,8 @@ package laya.ani {
 				//frameIndex = maxIndex;
 				//key = node.keyFrame[indices[frameIndex]];
 				key = node.keyFrame[nodesFrameIndices[i][frameIndex]];
+				//if (!key)
+					//throw new Error("AnimationTemplet: "+"URL: "+url+"NodeName: "+node.name+"node.keyFrame.length: "+node.keyFrame.length+"nodesFrameIndices[i]: "+nodesFrameIndices[i]+"nodesFrameIndices[i][frameIndex]: "+nodesFrameIndices[i][frameIndex]+"i: "+i+"frameIndex: "+frameIndex);
 				
 				node.dataOffset = outOfs;
 				

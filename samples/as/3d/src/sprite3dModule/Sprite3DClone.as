@@ -32,6 +32,7 @@ package sprite3dModule {
 			Stat.show();
 			
 			scene = Laya.stage.addChild(new Scene()) as Scene;
+			scene.ambientColor = new Vector3(1, 1, 1);
 			
 			var camera:Camera = scene.addChild(new Camera(0, 0.1, 100)) as Camera;
 			camera.transform.translate(new Vector3(0, 0.5, 1));

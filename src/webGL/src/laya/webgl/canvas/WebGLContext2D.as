@@ -996,13 +996,8 @@ private function _releaseMem():void
 				var maxx:Number = Math.max(Math.max(Math.max(vbdata[nPos + 0], vbdata[nPos + 4]), vbdata[nPos + 8]), vbdata[nPos + 12]);
 				var miny:Number = Math.min(Math.min(Math.min(vbdata[nPos + 1], vbdata[nPos + 5]), vbdata[nPos + 9]), vbdata[nPos + 13]);
 				var maxy:Number = Math.max(Math.max(Math.max(vbdata[nPos + 1], vbdata[nPos + 5]), vbdata[nPos + 9]), vbdata[nPos + 13]);
-				
-				_clipRect.x = minx;
-				_clipRect.y = miny;
-				_clipRect.width = maxx - minx;
-				_clipRect.height = maxy - miny;
 
-				SaveClipRectStencil.save(this, submitStencil1, x, y, width, height);
+				SaveClipRectStencil.save(this, submitStencil1, x, y, width, height, minx, miny, maxx - minx, maxy - miny);
 				
 				_curSubmit = Submit.RENDERBASE;
 				//5、在restore中进行恢复

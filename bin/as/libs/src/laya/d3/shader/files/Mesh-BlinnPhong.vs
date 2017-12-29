@@ -6,7 +6,7 @@ uniform mat4 u_MvpMatrix;
 	varying vec2 v_Texcoord0;
 #endif
 
-#ifdef defined(LIGHTMAP)&&defined(UV1)
+#if defined(LIGHTMAP)&&defined(UV1)
 	attribute vec2 a_Texcoord1;
 #endif
 
@@ -124,15 +124,16 @@ void main_normal()
 	#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(SPECULARMAP)||defined(NORMALMAP)))
 		v_Texcoord0=a_Texcoord0;
 		#ifdef TILINGOFFSET
-			v_Texcoord0=(v_Texcoord0*u_TilingOffset.xy)+u_TilingOffset.zw;
+			v_Texcoord0=(vec2(v_Texcoord0.x,v_Texcoord0.y-1.0)*u_TilingOffset.xy)+u_TilingOffset.zw;
 		#endif
+		v_Texcoord0=vec2(v_Texcoord0.x,1.0+v_Texcoord0.y);
 	#endif
 
 	#ifdef LIGHTMAP
 		#ifdef UV1
 			v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
 		#else
-			v_LightMapUV=vec2(a_Texcoord0.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,a_Texcoord0.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+			v_LightMapUV=vec2(a_Texcoord0.x,a_Texcoord0.y-1.0)*u_LightmapScaleOffset.xy+u_LightmapScaleOffset.zw;
 		#endif 
 	#endif
 

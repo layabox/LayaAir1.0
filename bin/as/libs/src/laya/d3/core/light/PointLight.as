@@ -43,7 +43,6 @@ package laya.d3.core.light {
 		override protected function _clearSelfRenderObjects():void {
 			var scene:Scene = this.scene;
 			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(Scene.POINTLIGHTINTENSITY, null);
 			shaderValue.setValue(Scene.POINTLIGHTCOLOR, null);
 			shaderValue.setValue(Scene.POINTLIGHTPOS, null);
 			shaderValue.setValue(Scene.POINTLIGHTRANGE, null);
@@ -60,7 +59,6 @@ package laya.d3.core.light {
 			if (scene.enableLight && _activeInHierarchy) {
 				var shaderValue:ValusArray = scene._shaderValues;
 				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
-				shaderValue.setValue(Scene.POINTLIGHTINTENSITY, _intensity);
 				Vector3.scale(color, _intensity, _intensityColor);
 				shaderValue.setValue(Scene.POINTLIGHTCOLOR, _intensityColor.elements);
 				shaderValue.setValue(Scene.POINTLIGHTPOS, transform.position.elements);

@@ -48,7 +48,7 @@ package laya.utils {
 			cache = new PoolCache();
 			cache.sign = sign;
 			cache.maxCount = maxCount;
-			CacheManger.regCacheByFunction(Utils.bind(cache.tryDispose, cache), Utils.bind(cache.getCacheList, cache));
+			CacheManager.regCacheByFunction(Utils.bind(cache.tryDispose, cache), Utils.bind(cache.getCacheList, cache));
 		}
 	}
 }

@@ -271,8 +271,8 @@ package laya.d3.core {
 			if (_positionUpdate) {
 				if (_parent != null) {
 					var parentPosition:Vector3 = _parent.position;//放到下面会影响_tempVector30计算，造成混乱
-					Vector3.transformQuat(_localPosition, _parent.rotation, _tempVector30);
-					Vector3.multiply(_tempVector30, _parent.scale, _tempVector30);
+					Vector3.multiply(_localPosition, _parent.scale, _tempVector30);
+					Vector3.transformQuat(_tempVector30, _parent.rotation, _tempVector30);
 					Vector3.add(parentPosition, _tempVector30, _position);
 				} else {
 					_localPosition.cloneTo(_position);

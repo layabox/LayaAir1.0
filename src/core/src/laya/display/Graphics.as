@@ -9,6 +9,7 @@ package laya.display {
 	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
 	import laya.resource.Texture;
+	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
 	import laya.utils.VectorGraphManager;
@@ -20,7 +21,6 @@ package laya.display {
 	 */
 	public class Graphics {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		
 		/**@private */
 		public var _sp:Sprite;
 		/**@private */
@@ -39,7 +39,7 @@ package laya.display {
 		public static function __init__():void {
 			if (Render.isConchNode) {
 				var from:* = Graphics.prototype;
-				var to:* = __JS__("ConchGraphics.prototype");
+				var to:* =Browser.window.ConchGraphics.prototype;
 				var list:Array = ["clear", "destroy", "alpha", "rotate", "transform", "scale", "translate", "save", "restore", "clipRect", "blendMode", "fillText", "fillBorderText", "_fands", "drawRect", "drawCircle", "drawPie", "drawPoly", "drawPath", "drawImageM", "drawLine", "drawLines", "_drawPs", "drawCurves", "replaceText", "replaceTextColor", "_fillImage", "fillTexture", "setSkinMesh", "drawParticle", "drawImageS"];
 				for (var i:int = 0, len:int = list.length; i <= len; i++) {
 					var temp:String = list[i];
@@ -72,6 +72,7 @@ package laya.display {
 					}
 					if (!width) width = tex.sourceWidth;
 					if (!height) height = tex.sourceHeight;
+					alpha = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
 					
 					width = width - tex.sourceWidth + tex.width;
 					height = height - tex.sourceHeight + tex.height;
@@ -113,8 +114,9 @@ package laya.display {
 		 */
 		public function Graphics() {
 			if (Render.isConchNode) {
-				__JS__("this._nativeObj=new _conchGraphics();");
-				__JS__("this.id=this._nativeObj.conchID;");
+				//[IF-JS] var _this_:any=this;
+				//[IF-JS] _this_._nativeObj=new (window as Object)._conchGraphics();
+				//[IF-JS] _this_.id=_this_._nativeObj.conchID;
 			}
 		}
 		
@@ -135,10 +137,11 @@ package laya.display {
 		 * @param recoverCmds 是否回收绘图指令
 		 */	
 		public function clear(recoverCmds:Boolean = false):void {
+			var i:int, len:int;
 			if (recoverCmds) {
 				var tCmd:* = _one;
 				if (_cmds) {
-					var i:int, len:int = _cmds.length;
+					len = _cmds.length;
 					for (i = 0; i < len; i++) {
 						tCmd = _cmds[i];
 						if (tCmd && (tCmd.callee === Render._context._drawTexture || tCmd.callee === Render._context._drawTextureWithTransform)) {
@@ -258,27 +261,23 @@ package laya.display {
 			if (!tex || alpha < 0.01) return null;
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
+			alpha = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
 			
 			var wRate:Number = width / tex.sourceWidth;
 			var hRate:Number = height / tex.sourceHeight;
 			width = tex.width * wRate;
 			height = tex.height * hRate;
-			//width = width - tex.sourceWidth + tex.width;
-			//height = height - tex.sourceHeight + tex.height;
+
 			if (tex.loaded && (width <= 0 || height <= 0)) return null;
-			
-			//处理透明区域裁剪
-			//x += tex.offsetX;
-			//y += tex.offsetY;
 			
 			x += tex.offsetX * wRate;
 			y += tex.offsetY * hRate;
 			
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
-			//var args:* = [tex, x, y, width, height, m, alpha];
+			var args:Array;
 			if (_cache.length) {
-				var args:Array = _cache.pop();
+				args = _cache.pop();
 				args[0] = tex;
 				args[1] = x;
 				args[2] = y;
@@ -340,7 +339,7 @@ package laya.display {
 		/**
 		 * 批量绘制同样纹理。
 		 * @param tex 纹理。
-		 * @param pos 绘制次数和坐标。
+		 * @param pos 绘制坐标。
 		 */
 		public function drawTextures(tex:Texture, pos:Array):void {
 			if (!tex) return;
@@ -356,7 +355,6 @@ package laya.display {
 		 * @param height	（可选）高度。
 		 * @param type		（可选）填充类型 repeat|repeat-x|repeat-y|no-repeat
 		 * @param offset	（可选）贴图纹理偏移
-		 *
 		 */
 		public function fillTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
 			if (!tex) return;
@@ -451,6 +449,7 @@ package laya.display {
 		 * @param value 透明度。
 		 */
 		public function alpha(value:Number):void {
+			value = value < 0 ? 0 : (value > 1 ? 1 : value);
 			_saveToCmd(Render._context._alpha, [value]);
 		}
 		
@@ -459,6 +458,7 @@ package laya.display {
 		 * @param	value 透明度。
 		 */
 		public function setAlpha(value:Number):void {
+			value = value < 0 ? 0 : (value > 1 ? 1 : value);
 			_saveToCmd(Render._context._setAlpha, [value]);
 		}
 		
@@ -761,11 +761,11 @@ package laya.display {
 		 */
 		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
 			var tId:uint = 0;
+			var tIsConvexPolygon:Boolean;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
-				var tIsConvexPolygon:Boolean = false;
 				//这里加入多加形是否是凸边形
 				if (points.length > 6) {
 					tIsConvexPolygon = false;

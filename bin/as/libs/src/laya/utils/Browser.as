@@ -50,10 +50,12 @@ package laya.utils {
 		public static var onEdge:Boolean;
 		/** 表示是否在IE浏览器内*/
 		public static var onIE:Boolean;
-		/** 微信内*/
+		/** 表示是否在微信内*/
 		public static var onWeiXin:Boolean;
+		/** 表示是否在微信小游戏内 */
+		public static var onMiniGame:Boolean;
 		/** 表示是否在 PC 端。*/
-		public static var onPC:Boolean;
+		public static var onPC:Boolean;		
 		/** 表示是否是 HTTP 协议。*/
 		public static var httpProtocol:Boolean;
 		/** @private */
@@ -87,10 +89,10 @@ package laya.utils {
 			//强制修改body样式
 			__JS__("var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';");
 			//强制修改meta标签
-			__JS__("var metas=window.document.getElementsByTagName('meta');");
-			__JS__("var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';");
-			__JS__("while(i<metas.length){var meta = metas[i];if(meta.name == 'viewport'){meta.content = content;flag = true;break;}i++;}");
-			__JS__("if(!flag){meta = document.createElement('meta');meta.name='viewport',meta.content = content;document.getElementsByTagName('head')[0].appendChild(meta);}");
+			//__JS__("var metas=window.document.getElementsByTagName('meta');");
+			//__JS__("var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';");
+			//__JS__("while(i<metas.length){var meta = metas[i];if(meta.name == 'viewport'){meta.content = content;flag = true;break;}i++;}");
+			//__JS__("if(!flag){meta = document.createElement('meta');meta.name='viewport',meta.content = content;document.getElementsByTagName('head')[0].appendChild(meta);}");
 			
 			userAgent = /*[STATIC SAFE]*/ window.navigator.userAgent;
 			u = /*[STATIC SAFE]*/ userAgent;
@@ -108,6 +110,7 @@ package laya.utils {
 			onSafari = /*[STATIC SAFE]*/ !!u.match(/Version\/\d+\.\d\x20Mobile\/\S+\x20Safari/);
 			onFirefox = /*[STATIC SAFE]*/ u.indexOf('Firefox') > -1;
 			onEdge = /*[STATIC SAFE]*/ u.indexOf('Edge') > -1;
+			onMiniGame = /*[STATIC SAFE]*/ u.indexOf('MiniGame') > -1;
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			
 			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
@@ -117,8 +120,7 @@ package laya.utils {
 			__JS__("if (Browser.webAudioEnabled) WebAudioSound.initWebAudio();");
 			AudioSound._initMusicAudio();
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");
-			//forxiaochengxu
-			__JS__("if(!Laya.EnvConfig.windowNoFocus) window.focus()");
+			__JS__("window.focus()");
 			__JS__("SoundManager._soundClass=Sound;");
 			
 			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D');
@@ -225,17 +227,9 @@ package laya.utils {
 		/*[IF-FLASH-END]*/
 		/*[IF-SCRIPT-BEGIN]
 		   if (!_container) {
-			if(Laya.EnvConfig.container)
-			{
-				//forxiaochengxu
-				_container = Laya.EnvConfig.container;
-			}
-			else
-			{
-				_container = createElement("div");
-				_container.id = "layaContainer";
-				document.body.appendChild(_container);
-			}
+			_container = createElement("div");
+			_container.id = "layaContainer";
+			document.body.appendChild(_container);
 		   }
 		   return _container;
 		   [IF-SCRIPT-END]*/

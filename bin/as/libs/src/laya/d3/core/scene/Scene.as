@@ -136,7 +136,6 @@ package laya.d3.core.scene {
 		public var _shaderValues:ValusArray;
 		/** @private */
 		public var _shaderDefineValue:int;
-		
 		/** @private */
 		public var _cullingRendersLength:int;
 		/** @private */
@@ -343,9 +342,8 @@ package laya.d3.core.scene {
 			fogColor = new Vector3(0.7, 0.7, 0.7);
 			ambientColor = new Vector3(0.212, 0.227, 0.259);
 			(WebGL.shaderHighPrecision) && (addShaderDefine(ShaderCompile3D.SHADERDEFINE_HIGHPRECISION));
-			on(Event.DISPLAY, this, _onDisplay);
-			on(Event.UNDISPLAY, this, _onUnDisplay);
-			
+			on(Event.DISPLAY, this, _display);
+			on(Event.UNDISPLAY, this, _unDisplay);
 			//-------------------------------兼容代码--------------------------------
 			_componentsMap = [];
 			_typeComponentsIndices = new Vector.<Vector.<int>>();
@@ -356,14 +354,34 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
+		private function _display():void {
+			Laya.stage._scenes.push(this);
+			Laya.stage._scenes.sort(_sortScenes);
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var spr:Sprite3D = _childs[i];
+				(spr.active) && (spr._activeHierarchy());
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _unDisplay():void {
+			var scenes:Array = Laya.stage._scenes;
+			scenes.splice(scenes.indexOf(this), 1);
+			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+				var spr:Sprite3D = _childs[i];
+				(spr.active) && (spr._inActiveHierarchy());
+			}
+		}
+		
+		/**
+		 * @private
+		 */
 		private function _addChild3D(sprite3D:Sprite3D):void {
 			sprite3D.transform._onWorldTransform();
 			sprite3D._setBelongScene(this);
-			(sprite3D.active) && (sprite3D._activeHierarchy());
-			var colls:Vector.<Collider> = sprite3D._colliders;
-			var spLayer:Layer = sprite3D.layer;
-			for (var i:int = 0, n:int = colls.length; i < n; i++)
-				spLayer._addCollider(colls[i]);
+			(displayedInStage && sprite3D.active) && (sprite3D._activeHierarchy());
 		}
 		
 		/**
@@ -371,12 +389,8 @@ package laya.d3.core.scene {
 		 */
 		private function _removeChild3D(sprite3D:Sprite3D):void {
 			sprite3D.transform.parent = null;
-			(sprite3D.active) && (sprite3D._inActiveHierarchy());
+			(displayedInStage && sprite3D.active) && (sprite3D._inActiveHierarchy());
 			sprite3D._setUnBelongScene();
-			var colls:Vector.<Collider> = sprite3D._colliders;
-			var spLayer:Layer = sprite3D.layer;
-			for (var i:int = 0, n:int = colls.length; i < n; i++)
-				spLayer._removeCollider(colls[i]);
 		}
 		
 		/**
@@ -392,22 +406,6 @@ package laya.d3.core.scene {
 			treeLevel = level;
 			treeRoot = new OctreeNode(this, 0);
 			treeRoot.init(center, treeSize);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onDisplay():void {
-			Laya.stage._scenes.push(this);
-			Laya.stage._scenes.sort(_sortScenes);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onUnDisplay():void {
-			var scenes:Array = Laya.stage._scenes;
-			scenes.splice(scenes.indexOf(this), 1);
 		}
 		
 		/**
@@ -1005,7 +1003,7 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		override public function render(context:RenderContext, x:Number, y:Number):void {//TODO:外层应该设计为接口调用
-			(Render._context.ctx as WebGLContext2D)._renderKey = 0;//打断2D合并的renderKey
+			(Render._context.ctx as WebGLContext2D)._renderKey = 0;//打断2D合并的renderKey			
 			_childs.length > 0 && context.addRenderObject(this);
 		}
 		

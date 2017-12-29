@@ -45,10 +45,12 @@ package laya.d3.core.particleShuriKen {
 		
 		public static var SHADERDEFINE_DIFFUSEMAP:int;
 		public static var SHADERDEFINE_TINTCOLOR:int;
+		public static var SHADERDEFINE_TILINGOFFSET:int;
 		public static var SHADERDEFINE_ADDTIVEFOG:int;
 		
 		public static const DIFFUSETEXTURE:int = 1;
 		public static const TINTCOLOR:int = 2;
+		public static const TILINGOFFSET:int = 3;
 		
 		/** @private */
 		private static const _diffuseTextureIndex:int = 0;
@@ -248,6 +250,31 @@ package laya.d3.core.particleShuriKen {
 				_removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR);
 			
 			_setColor(TINTCOLOR, value);
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移。
+		 * @return 纹理平铺和偏移。
+		 */
+		public function get tilingOffset():Vector4 {
+			return _getColor(TILINGOFFSET);
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移。
+		 * @param value 纹理平铺和偏移。
+		 */
+		public function set tilingOffset(value:Vector4):void {
+			if (value) {
+				var valueE:Float32Array = value.elements;
+				if (valueE[0] != 1 || valueE[1] != 1 || valueE[2] != 0 || valueE[3] != 0)
+					_addShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TILINGOFFSET);
+				else
+					_removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TILINGOFFSET);
+			} else {
+				_removeShaderDefine(ShurikenParticleMaterial.SHADERDEFINE_TILINGOFFSET);
+			}
+			_setColor(TILINGOFFSET, value);
 		}
 		
 		/**

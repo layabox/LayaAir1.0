@@ -37,7 +37,7 @@ package laya.utils {
 		/**
 		 * @private
 		 */
-		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", -1], ["height", -1], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0], ["anchorX", 0], ["anchorY", 0]];
+		protected static const _drawTextureCmd:Array =/*[STATIC SAFE]*/ [["skin", null], ["x", 0], ["y", 0], ["width", -1], ["height", -1], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0], ["anchorX", 0], ["anchorY", 0]];
 		/**
 		 * @private
 		 */
@@ -109,7 +109,7 @@ package laya.utils {
 		 * @private
 		 */
 		protected function _createFrameGraphic(frame:int):* {
-			var g:Graphics = new Graphics();
+			var g:Graphics = RunDriver.createGraphics();
 			if (!_rootMatrix)
 				_rootMatrix = new Matrix();
 			_updateNodeGraphic(_rootNode, frame, _rootMatrix, g);

@@ -1,0 +1,71 @@
+{
+	"version":"LAYAMATERIAL:01",
+	"props":{
+		"name":"wizard_01 DEMO",
+		"cull":2,
+		"blend":0,
+		"srcBlend":1,
+		"dstBlend":0,
+		"alphaTest":true,
+		"alphaTestValue":1,
+		"depthWrite":true,
+		"depthTest":513,
+		"renderQueue":1,
+		"metallic":0.633,
+		"smoothness":0.303,
+		"smoothnessTextureScale":1,
+		"smoothnessSource":0,
+		"normalTextureScale":1,
+		"parallaxTextureScale":0.005,
+		"occlusionTextureStrength":1,
+		"enableEmission":false,
+		"textures":[
+			{
+				"name":"albedoTexture",
+				"path":"../Textures/wizard_01_albedo DEMO.png"
+			},
+			{
+				"name":"metallicGlossTexture",
+				"path":"../Textures/wizard_01_metalic DEMO.png"
+			},
+			{
+				"name":"normalTexture",
+				"path":"../Textures/wizard_01_nor DEMO.png"
+			},
+			{
+				"name":"occlusionTexture",
+				"path":"../Textures/wizard_01_ao DEMO.png"
+			}
+		],
+		"vectors":[
+			{
+				"name":"tilingOffset",
+				"value":[
+					1,
+					1,
+					0,
+					0
+				]
+			},
+			{
+				"name":"albedoColor",
+				"value":[
+					1,
+					1,
+					1,
+					1
+				]
+			},
+			{
+				"name":"emissionColor",
+				"value":[
+					0,
+					0,
+					0,
+					0
+				]
+			}
+		],
+		"defines":[]
+	}
+}

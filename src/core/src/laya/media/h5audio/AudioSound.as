@@ -47,14 +47,14 @@ package laya.media.h5audio {
 			if (_musicAudio) return;
 			if (!_musicAudio) _musicAudio = Browser.createElement("audio") as Audio;
 			if (!Render.isConchApp) {
-				Browser.document.addEventListener("touchstart", _makeMusicOK);
+				Browser.document.addEventListener("mousedown", _makeMusicOK);
 			}
 		}
 		
 		/**@private */
 		private static function _makeMusicOK():void
 		{
-			Browser.document.removeEventListener("touchstart", _makeMusicOK);
+			Browser.document.removeEventListener("mousedown", _makeMusicOK);
 			if (!_musicAudio.src)
 			{
 				_musicAudio.src = "";

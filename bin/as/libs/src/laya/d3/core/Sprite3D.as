@@ -147,8 +147,8 @@ package laya.d3.core {
 		public function set active(value:Boolean):void {
 			if (_active !== value) {
 				_active = value;
-				if (_scene) {
-					if (_parent === _scene || (_parent as Sprite3D)._activeInHierarchy) {//(父节点为场景||父节点为精灵)
+				if (_parent) {
+					if ((_parent === _scene && _parent.displayedInStage) || (_parent as Sprite3D)._activeInHierarchy) {//(父节点为场景||父节点为精灵)
 						if (value)
 							_activeHierarchy();
 						else
@@ -180,14 +180,15 @@ package laya.d3.core {
 		 */
 		public function set layer(value:Layer):void {
 			if (value) {
-				var i:int, n:int = _colliders.length;
-				if (_layer) {
+				if (displayedInStage) {
+					var i:int, n:int = _colliders.length;
+					if (_layer) {
+						for (i = 0; i < n; i++)
+							_layer._removeCollider(_colliders[i]);
+					}
 					for (i = 0; i < n; i++)
-						_layer._removeCollider(_colliders[i]);
+						value._addCollider(_colliders[i]);
 				}
-				for (i = 0; i < n; i++)
-					value._addCollider(_colliders[i]);
-				
 				_layer = value;
 				this.event(Event.LAYER_CHANGED, value);
 			} else {
@@ -259,16 +260,12 @@ package laya.d3.core {
 			sprite3D.transform.parent = transform;
 			if (_hierarchyAnimator) {
 				(/*_hierarchyAnimator &&*/!sprite3D._hierarchyAnimator) && (sprite3D._setHierarchyAnimator(_hierarchyAnimator, null));//执行条件为sprite3D._hierarchyAnimator==parentAnimator,只有一种情况sprite3D._hierarchyAnimator=null成立,且_belongAnimator不为空有意义
-				_getAnimatorToLinkSprite3D(sprite3D, true, new <String>[sprite3D.name]);
+				_getAnimatorToLinkSprite3D(sprite3D, true, new <String>[sprite3D.name]);//TODO:是否获取默认值函数移到active事件函数内，U3D修改active会重新获取默认值
 			}
 			if (_scene) {
 				sprite3D._setBelongScene(_scene);
 				(_activeInHierarchy && sprite3D._active) && (sprite3D._activeHierarchy());
 			}
-			var colls:Vector.<Collider> = sprite3D._colliders;
-			var spLayer:Layer = sprite3D.layer;
-			for (var i:int = 0, n:int = colls.length; i < n; i++)
-				spLayer._addCollider(colls[i]);
 		}
 		
 		/**
@@ -282,12 +279,8 @@ package laya.d3.core {
 			}
 			if (_hierarchyAnimator) {
 				(/*_hierarchyAnimator &&*/(sprite3D._hierarchyAnimator == _hierarchyAnimator)) && (sprite3D._clearHierarchyAnimator(_hierarchyAnimator, null));//_belongAnimator不为空有意义
-				_getAnimatorToLinkSprite3D(sprite3D, false, new <String>[sprite3D.name]);
+				_getAnimatorToLinkSprite3D(sprite3D, false, new <String>[sprite3D.name]);//TODO:是否获取默认值函数移到active事件函数内，U3D修改active会重新获取默认值
 			}
-			var colls:Vector.<Collider> = sprite3D._colliders;
-			var spLayer:Layer = sprite3D.layer;
-			for (var i:int = 0, n:int = colls.length; i < n; i++)
-				spLayer._removeCollider(colls[i]);
 		}
 		
 		/**
@@ -332,10 +325,8 @@ package laya.d3.core {
 					for (var i:int = 0; i < clipCount; i++)
 						animator.addClip(Loader.getRes(innerResouMap[clipPaths[i]]));
 					animator.clip = Loader.getRes(innerResouMap[clipPaths[0]]);//TODO:单处存储模型动画路径
-					
-					var entryPlayIndex:int = component.entryPlayIndex;
-					if (entryPlayIndex >= 0)
-						animator.play(Loader.getRes(innerResouMap[clipPaths[entryPlayIndex]]).name);
+					var playOnWake:* = component.playOnWake;
+					(playOnWake !== undefined) && (animator.playOnWake = playOnWake);
 					break;
 				case "Rigidbody": 
 					var rigidbody:Rigidbody = addComponent(Rigidbody) as Rigidbody;
@@ -492,11 +483,14 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _activeHierarchy():void {
+			var i:int, n:int;
 			_activeInHierarchy = true;
 			_addSelfRenderObjects();
+			for (i = 0, n = _colliders.length; i < n; i++)
+				_layer._addCollider(_colliders[i]);
 			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, true);
 			
-			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+			for (i = 0, n = _childs.length; i < n; i++) {
 				var child:Sprite3D = _childs[i] as Sprite3D;
 				(child._active) && (child._activeHierarchy());
 			}
@@ -506,11 +500,17 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _inActiveHierarchy():void {
+			var i:int, n:int;
 			_activeInHierarchy = false;
 			_clearSelfRenderObjects();
+			for (i = 0, n = _colliders.length; i < n; i++) {
+				var col:Collider = _colliders[i];
+				col._clearCollsionMap();
+				_layer._removeCollider(col);
+			}
 			this.event(Event.ACTIVE_IN_HIERARCHY_CHANGED, false);
 			
-			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
+			for (i = 0, n = _childs.length; i < n; i++) {
 				var child:Sprite3D = _childs[i] as Sprite3D;
 				(child._active) && (child._inActiveHierarchy());
 			}
@@ -538,7 +538,7 @@ package laya.d3.core {
 			if (component is Collider) {
 				var rigidbody:Rigidbody = getComponentByType(Rigidbody) as Rigidbody;
 				(rigidbody) && ((component as Collider)._isRigidbody = true);
-				_layer._addCollider(component as Collider);
+				(displayedInStage) && (_layer._addCollider(component as Collider));
 				_colliders.push(component);
 			} else if (component is Animator) {
 				var animator:Animator = component as Animator;
@@ -565,7 +565,7 @@ package laya.d3.core {
 			
 			if (component is Collider) {
 				var colliderComponent:Collider = component as Collider;
-				_layer._removeCollider(colliderComponent);
+				(displayedInStage) && (_layer._removeCollider(colliderComponent));
 				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
 			} else if (component is Animator) {
 				var animator:Animator = component as Animator;
@@ -948,9 +948,6 @@ package laya.d3.core {
 			_componentsMap = null;
 			_typeComponentsIndices = null;
 			_transform = null;
-			
-			for (i = 0, n = _colliders.length; i < n; i++)
-				_layer._removeCollider(_colliders[i]);
 			_colliders = null;
 			Loader.clearRes(url);
 		}

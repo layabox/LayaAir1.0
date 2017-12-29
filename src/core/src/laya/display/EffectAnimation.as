@@ -70,11 +70,16 @@ package laya.display {
 		
 		/**@private */
 		private function _onPlayAction():void {
+			play(0, false);
+		}
+		
+		override public function play(start:* = 0, loop:Boolean = true, name:String = "", showWarn:Boolean = true):void 
+		{
 			if (!_target)
 				return;
 			_target.event(EffectAnimationBegin, [this]);
 			_recordInitData();
-			play(0, false);
+			super.play(start, loop, name, showWarn);
 		}
 		
 		/**@private */

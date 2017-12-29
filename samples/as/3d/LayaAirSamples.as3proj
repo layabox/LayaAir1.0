@@ -16,18 +16,16 @@
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
     <class path="src" />
-    <class path="G:\LayaAir_Git\layaair\ani\src" />
-    <class path="G:\LayaAir_Git\layaair\core\jsc" />
-    <class path="G:\LayaAir_Git\layaair\core\src" />
-    <class path="G:\LayaAir_Git\layaair\d3Plugin\src" />
-    <class path="G:\LayaAir_Git\layaair\debug\src" />
-    <class path="G:\LayaAir_Git\layaair\filter\src" />
-    <class path="G:\LayaAir_Git\layaair\html\src" />
-    <class path="G:\LayaAir_Git\layaair\particle\src" />
-    <class path="G:\LayaAir_Git\layaair\ui\src" />
-    <class path="G:\LayaAir_Git\layaair\webGL\src" />
-    <class path="G:\LayaAir_Git\layaair\plugins\pathfinding\src" />
-    <class path="G:\LayaAir_Git\layaair\d3\src" />
+    <class path="..\..\..\..\..\core\src" />
+    <class path="..\..\..\..\..\ani\src" />
+    <class path="..\..\..\..\..\d3\src" />
+    <class path="..\..\..\..\..\ui\src" />
+    <class path="..\..\..\..\..\webGL\src" />
+    <class path="..\..\..\..\..\core\jsc" />
+    <class path="..\..\..\..\..\ani\src" />
+    <class path="..\..\..\..\..\d3Plugin\src" />
+    <class path="..\..\..\..\..\plugins\pathfinding\src" />
+    <class path="..\..\..\..\..\ani\src" />
   </classpaths>
   <!-- Build options -->
   <build>
@@ -84,7 +82,7 @@
   </library>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
-    <compile path="src\shaderModule\ShaderPrecompile.as" />
+    <compile path="src\vrModule\VRScene2.as" />
   </compileTargets>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

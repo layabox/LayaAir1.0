@@ -168,7 +168,10 @@ package laya.utils {
 		public static var skinAniSprite:Function = function():* {
 			return null;
 		}
-	
+		
+		/** @private */
+		public static var update3DLoop:Function = function():void {
+		}
 	}
 
 }

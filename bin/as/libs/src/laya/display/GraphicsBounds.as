@@ -105,8 +105,18 @@ package laya.display
 			var tempMatrix:Matrix = _tempMatrix;
 			var cmd:Object;
 			var tex:Texture;
+			
+			var wRate:Number;
+			var hRate:Number;
+			var oWidth:Number;
+			var oHeight:Number;
+			
+			var offX:Number;
+			var offY:Number;
+						
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
 				cmd = cmds[i];
+				if (!cmd.callee) continue;
 				switch (cmd.callee) {
 				case context._save: 
 				case 7: //save
@@ -176,13 +186,13 @@ package laya.display
 						//var hRate:Number =oheight / tex.sourceHeight;
 						//twidth = tex.width*wRate;
 						//theight = tex.height * hRate;
-						var wRate:Number = (cmd[3] || tex.sourceWidth) / tex.width;
-						var hRate:Number = (cmd[4] || tex.sourceHeight) / tex.height;
-						var oWidth:Number = wRate * tex.sourceWidth;
-						var oHeight:Number = hRate * tex.sourceHeight;
+						wRate = (cmd[3] || tex.sourceWidth) / tex.width;
+						hRate = (cmd[4] || tex.sourceHeight) / tex.height;
+						oWidth = wRate * tex.sourceWidth;
+						oHeight = hRate * tex.sourceHeight;
 						
-						var offX:Number = tex.offsetX > 0 ? tex.offsetX : 0;
-						var offY:Number = tex.offsetY > 0 ? tex.offsetY : 0;
+						offX = tex.offsetX > 0 ? tex.offsetX : 0;
+						offY = tex.offsetY > 0 ? tex.offsetY : 0;
 						
 						offX *= wRate;
 						offY *= hRate;
@@ -321,13 +331,14 @@ package laya.display
 			var rst:Array = _tempPoints;
 			_tempPoints.length = 0;
 			rst.push(x, y);
-			var dP:Number = Math.PI / 10;
+			var delta:Number =  (endAngle - startAngle) % ( 2 * Math.PI);
+			var segnum:int = 10;
+			var step:Number = delta / segnum;		
 			var i:Number;
-			for (i = startAngle; i < endAngle; i += dP) {
-				rst.push(x + radius * Math.cos(i), y + radius * Math.sin(i));
-			}
-			if (endAngle != i) {
-				rst.push(x + radius * Math.cos(endAngle), y + radius * Math.sin(endAngle));
+			var angle:Number = startAngle;
+			for (i = 0; i <= segnum; i++) {
+				rst.push(x + radius * Math.cos(angle), y + radius * Math.sin(angle));
+				angle += step;
 			}
 			return rst;
 		}

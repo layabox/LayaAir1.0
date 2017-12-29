@@ -189,11 +189,13 @@ package laya.ui {
 			if (slider.isVertical) slider.y = _showButtons ? upButton.height : 0;
 			else slider.x = _showButtons ? upButton.width : 0;
 			resetPositions();
+			repaint();
 		}
 		
 		/**@inheritDoc */
 		override protected function changeSize():void {
 			super.changeSize();
+			repaint();
 			resetPositions();
 			event(Event.CHANGE);
 			changeHandler && changeHandler.runWith(value);

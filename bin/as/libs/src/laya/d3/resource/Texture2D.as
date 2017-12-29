@@ -118,10 +118,8 @@ package laya.d3.resource {
 		 * 重新创建资源，如果异步创建中被强制释放再创建，则需等待释放完成后再重新加载创建。
 		 */
 		override protected function recreateResource():void {
-			if (loaded) {
-				_createWebGlTexture();
-				completeCreate();//处理创建完成后相关操作
-			}
+			_createWebGlTexture();
+			completeCreate();//处理创建完成后相关操作
 		}
 		
 		/**
@@ -130,11 +128,11 @@ package laya.d3.resource {
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			if (params) {
 				var canRead:* = params[0];
-				(canRead!==undefined) && (_canRead = canRead);
+				(canRead !== undefined) && (_canRead = canRead);
 				var repeat:* = params[1];
-				(repeat!==undefined) && (_repeat = repeat);
+				(repeat !== undefined) && (_repeat = repeat);
 				var format:* = params[2];
-				(format!==undefined) && (_format = format);
+				(format !== undefined) && (_format = format);
 				var mipmap:* = params[3];
 				(mipmap !== undefined) && (_mipmap = mipmap);
 			}

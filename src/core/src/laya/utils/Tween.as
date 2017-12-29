@@ -125,7 +125,7 @@ package laya.utils {
 			
 			if (runNow) {
 				if (delay <= 0) firstStart(target, props, isTo);
-				else Laya.timer2.once(delay, this, firstStart, [target, props, isTo]);
+				else Laya.scaleTimer.once(delay, this, firstStart, [target, props, isTo]);
 			} else {
 				_initProps(target, props, isTo);
 			}
@@ -154,7 +154,7 @@ package laya.utils {
 		}
 		
 		private function _beginLoop():void {
-			Laya.timer2.frameLoop(1, this, _doEase);
+			Laya.scaleTimer.frameLoop(1, this, _doEase);
 		}
 		
 		/**执行缓动**/
@@ -198,7 +198,7 @@ package laya.utils {
 			if (!this._target) return;
 			
 			//立即执行初始化
-			Laya.timer2.runTimer(this, firstStart);
+			Laya.scaleTimer.runTimer(this, firstStart);
 			
 			//缓存当前属性
 			var target:* = this._target;
@@ -220,8 +220,8 @@ package laya.utils {
 		 * 暂停缓动，可以通过resume或restart重新开始。
 		 */
 		public function pause():void {
-			Laya.timer2.clear(this, _beginLoop);
-			Laya.timer2.clear(this, _doEase);
+			Laya.scaleTimer.clear(this, _beginLoop);
+			Laya.scaleTimer.clear(this, _doEase);
 		}
 		
 		/**
@@ -279,7 +279,7 @@ package laya.utils {
 		 */
 		public function _clear():void {
 			pause();
-			Laya.timer2.clear(this, firstStart);
+			Laya.scaleTimer.clear(this, firstStart);
 			this._complete = null;
 			this._target = null;
 			this._ease = null;
@@ -323,7 +323,7 @@ package laya.utils {
 				var prop:Array = props[i];
 				this._target[prop[0]] = prop[1];
 			}
-			Laya.timer2.once(this._delay, this, _beginLoop);
+			Laya.scaleTimer.once(this._delay, this, _beginLoop);
 		}
 		
 		/**

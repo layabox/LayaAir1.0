@@ -24,32 +24,21 @@ package sceneModule {
             
             var scene:Scene = Laya.stage.addChild(Scene.load("../../../../res/threeDimen/scene/TerrainScene/XunLongShi.ls")) as Scene;
             
-            var camera:Camera = scene.addChild(new Camera(0, 0.1, 1000)) as Camera;
-            camera.transform.rotate(new Vector3(-38, 180, 0), false, false);
-            camera.transform.translate(new Vector3(-5, 20, -30), false);
-            camera.clearFlag = BaseCamera.CLEARFLAG_SKY;
-            camera.addComponent(CameraMoveScript);
-            
-            var skyBox:SkyBox = new SkyBox();
-            skyBox.textureCube = TextureCube.load("../../../../res/threeDimen/skyBox/skyBox3/skyCube.ltc");
-            camera.sky = skyBox;
-			
 			scene.once(Event.HIERARCHY_LOADED, this, function():void{
-				setMaterials(scene.getChildAt(1) as Sprite3D, new Vector4(1.3, 1.3, 1.3, 1), new Vector3(0.3, 0.3, 0.3));
+				
+				var camera:Camera = scene.getChildByName("Scenes").getChildByName("Main Camera") as Camera;
+				camera.addComponent(CameraMoveScript);
+				
+				var skyBox:SkyBox = new SkyBox();
+				skyBox.textureCube = TextureCube.load("../../../../res/threeDimen/skyBox/skyBox3/skyCube.ltc");
+				camera.sky = skyBox;
+				
+				var meshSprite3D:MeshSprite3D = scene.getChildByName('Scenes').getChildByName('HeightMap') as MeshSprite3D;
+				meshSprite3D.active = false;
+				
+				var meshSprite3D1:MeshSprite3D = scene.getChildByName('Scenes').getChildByName('Area') as MeshSprite3D;
+				meshSprite3D1.active = false;
 			});
-        }
-        
-        private function setMaterials(spirit3D:Sprite3D, albedo:Vector4, ambientColor:Vector3):void {
-            if (spirit3D is MeshSprite3D) {
-                var meshSprite:MeshSprite3D = spirit3D as MeshSprite3D;
-                for (var i:int = 0; i <  meshSprite.meshRender.sharedMaterials.length; i++) {
-                    var mat:StandardMaterial = meshSprite.meshRender.sharedMaterials[i] as StandardMaterial;
-                    mat.ambientColor = ambientColor;
-                    mat.albedo = albedo;
-                }
-            }
-            for (var j:int = 0; j < spirit3D._childs.length; j++)
-                setMaterials(spirit3D._childs[j], albedo, ambientColor);
         }
     }
 	

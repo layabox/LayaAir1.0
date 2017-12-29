@@ -219,7 +219,7 @@ package laya.ani {
 			_startUpdateLoopCount = Stat.loopCount;
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			_currentTime = value /*% playDuration*/;
-			_currentKeyframeIndex = Math.floor(currentPlayTime / cacheFrameInterval);
+			_currentKeyframeIndex = Math.max(Math.floor(currentPlayTime / cacheFrameInterval), 0);//TODO:矫正
 			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 		}
 		
@@ -362,7 +362,7 @@ package laya.ani {
 		 */
 		private function _setPlayParams(time:Number, cacheFrameInterval:Number):void {
 			_currentTime = time;
-			_currentKeyframeIndex = Math.floor((currentPlayTime) / cacheFrameInterval + 0.01);
+			_currentKeyframeIndex = Math.max(Math.floor((currentPlayTime) / cacheFrameInterval + 0.01), 0);//TODO:矫正
 			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 		}
 		
@@ -371,7 +371,7 @@ package laya.ani {
 		 */
 		private function _setPlayParamsWhenStop(currentAniClipPlayDuration:Number, cacheFrameInterval:Number):void {
 			_currentTime = currentAniClipPlayDuration;
-			_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01);
+			_currentKeyframeIndex = Math.max(Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01), 0);//TODO:矫正
 			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 			_currentAnimationClipIndex = -1;//动画结束	
 		}

@@ -43,6 +43,8 @@ package laya.d3.core.render {
 		/** @private */
 		private var _receiveShadow:Boolean;
 		/** @private */
+		private var _materialsInstance:Vector.<Boolean>;
+		/** @private */
 		protected var _boundingSphere:BoundSphere;
 		/** @private */
 		protected var _boundingBox:BoundBox;
@@ -147,11 +149,11 @@ package laya.d3.core.render {
 		 */
 		public function get material():BaseMaterial {
 			var material:BaseMaterial = _materials[0];
-			if (material && !material._isInstance) {
+			if (material && !_materialsInstance[0]) {
 				var instanceMaterial:BaseMaterial = __JS__("new material.constructor()");
 				material.cloneTo(instanceMaterial);//深拷贝
 				instanceMaterial.name = instanceMaterial.name + "(Instance)";
-				instanceMaterial._isInstance = true;
+				_materialsInstance[0] = true;
 				_materials[0] = instanceMaterial;
 				event(Event.MATERIAL_CHANGED, [this, 0, instanceMaterial]);
 			}
@@ -163,8 +165,11 @@ package laya.d3.core.render {
 		 * @param value 第一个实例材质。
 		 */
 		public function set material(value:BaseMaterial):void {
-			_materials[0] = value;
-			event(Event.MATERIAL_CHANGED, [this, 0, value]);
+			if (_materials[0] !== value) {
+				_materials[0] = value;
+				_materialsInstance[0] = false;
+				event(Event.MATERIAL_CHANGED, [this, 0, value]);
+			}
 		}
 		
 		/**
@@ -174,11 +179,11 @@ package laya.d3.core.render {
 		public function get materials():Vector.<BaseMaterial> {
 			for (var i:int = 0, n:int = _materials.length; i < n; i++) {
 				var material:BaseMaterial = _materials[i];
-				if (!material._isInstance) {
+				if (!_materialsInstance[i]) {
 					var instanceMaterial:BaseMaterial = __JS__("new material.constructor()");
 					material.cloneTo(instanceMaterial);//深拷贝
 					instanceMaterial.name = instanceMaterial.name + "(Instance)";
-					instanceMaterial._isInstance = true;
+					_materialsInstance[i] = true;
 					_materials[i] = instanceMaterial;
 					event(Event.MATERIAL_CHANGED, [this, i, instanceMaterial]);
 				}
@@ -193,10 +198,15 @@ package laya.d3.core.render {
 		public function set materials(value:Vector.<BaseMaterial>):void {
 			if (!value)
 				throw new Error("MeshRender: materials value can't be null.");
-			
+			var len:int = value.length;
+			_materialsInstance.length = len;
+			for (var i:int = 0; i < len; i++) {
+				if (_materials[i] !== value[i]) {
+					_materialsInstance[i] = false;
+					event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
+				}
+			}
 			_materials = value;
-			for (var i:int = 0, n:int = value.length; i < n; i++)
-				event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
 		}
 		
 		/**
@@ -212,8 +222,11 @@ package laya.d3.core.render {
 		 * @param value 第一个材质。
 		 */
 		public function set sharedMaterial(value:BaseMaterial):void {
-			_materials[0] = value;
-			event(Event.MATERIAL_CHANGED, [this, 0, value]);
+			if (_materials[0] !== value) {
+				_materials[0] = value;
+				_materialsInstance[0] = false;
+				event(Event.MATERIAL_CHANGED, [this, 0, value]);
+			}
 		}
 		
 		/**
@@ -232,11 +245,15 @@ package laya.d3.core.render {
 		public function set sharedMaterials(value:Vector.<BaseMaterial>):void {
 			if (!value)
 				throw new Error("MeshRender: shadredMaterials value can't be null.");
-			
+			var len:int = value.length;
+			_materialsInstance.length = len;
+			for (var i:int = 0; i < len; i++) {
+				if (_materials[i] !== value[i]) {
+					_materialsInstance[i] = false;
+					event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
+				}
+			}
 			_materials = value;
-			
-			for (var i:int = 0, n:int = value.length; i < n; i++)
-				event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
 		}
 		
 		/**
@@ -325,6 +342,7 @@ package laya.d3.core.render {
 			_destroyed = false;
 			_owner = owner;
 			_enable = true;
+			_materialsInstance = new Vector.<Boolean>();
 			lightmapIndex = -1;
 			castShadow = false;
 			receiveShadow = false;

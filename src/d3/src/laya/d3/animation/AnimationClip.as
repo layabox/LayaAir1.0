@@ -286,7 +286,7 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _evaluateAnimationlDatasRealTime(nodeOwners:*/*Vector.<AnimationNode>或Vector.<Sprite3D>*/, playCurTime:Number, outAnimationDatas:Vector.<Float32Array>):void {
+		public function _evaluateAnimationlDatasRealTime(nodeOwners:*/*Vector.<AnimationNode>或Vector.<Sprite3D>*/, playCurTime:Number, outAnimationDatas:Vector.<Float32Array>, hasAvatar:Boolean):void {
 			var i:int, n:int;
 			var nodes:Vector.<KeyframeNode> = _nodes;
 			if (!_realTimeCurrentFrameIndexes) {
@@ -338,9 +338,13 @@ package laya.d3.animation {
 						outDatas[j] = firstFrameDatas[j];
 				}
 				
-				var owner:AnimationNode = nodeOwners[i];
-				if (owner)
-					AnimationNode._propertySetFuncs[node.propertyNameID](owner, null, outDatas);
+				var owner:* = nodeOwners[i];
+				if (owner) {
+					if (hasAvatar)
+						AnimationNode._propertySetFuncs[node.propertyNameID](owner, null, outDatas);
+					else
+						AnimationNode._propertySetFuncs[node.propertyNameID](null, owner, outDatas);
+				}
 			}
 		}
 		

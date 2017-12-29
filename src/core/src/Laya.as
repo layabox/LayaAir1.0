@@ -18,7 +18,7 @@ package {
 	import laya.runtime.ICPlatformClass;
 	import laya.runtime.IMarket;
 	import laya.utils.Browser;
-	import laya.utils.CacheManger;
+	import laya.utils.CacheManager;
 	import laya.utils.Timer;
 	import laya.utils.WeakObject;
 	
@@ -32,12 +32,12 @@ package {
 		public static var stage:Stage = null;
 		/** 逻辑时间管理器的引用，不允许缩放。*/
 		public static var timer:Timer = null;
-		/**@private 表现时间管理器，可以用来控制渲染表现，可以通过scale缩放，来表现慢镜头*/
-		public static var timer2:Timer = null;
+		/** 表现时间管理器，可以用来控制渲染表现，可以通过scale缩放，来表现慢镜头*/
+		public static var scaleTimer:Timer = null;
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.12";
+		public static var version:String = "1.7.13";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -48,9 +48,6 @@ package {
 		public static var PlatformClass:ICPlatformClass = __JS__("window.PlatformClass");
 		/**@private */
 		private static var _isinit:Boolean = false;
-		//forxiaochengxu
-		/** 环境配置。*/
-		public static var EnvConfig:Object = { };
 		/**
 		 * 初始化引擎。使用引擎需要先初始化引擎，否则可能会报错。
 		 * @param	width 初始化的游戏窗口宽度，又称设计宽度。
@@ -66,7 +63,7 @@ package {
 			Context.__init__();
 			Graphics.__init__();
 			timer = new Timer();
-			timer2 = new Timer();
+			scaleTimer = new Timer();
 			loader = new LoaderManager();
 			/*[IF-FLASH]*/
 			width = Browser.clientWidth;
@@ -80,19 +77,12 @@ package {
 			Font.__init__();
 			Style.__init__();
 			ResourceManager.__init__();
-			CacheManger.beginCheck();
+			CacheManager.beginCheck();
 			_currentStage = stage = new Stage();
 			stage.conchModel && stage.conchModel.setRootNode();
 			
 			//forxiaochengxu
-			if ((!URL.rootPath || !URL.basePath) && !Laya.EnvConfig.disableSetRootPath)
-			{
-				var location:* = Browser.window.location;
-				var pathName:String = location.pathname;
-				// 索引为2的字符如果是':'就是windows file协议
-				pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
-				URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.protocol + "//" + location.host + location.pathname);
-			}
+			getUrlPath();
 			
 			/*[IF-FLASH]*/
 			render = new Render(50, 50);
@@ -105,6 +95,15 @@ package {
 			SoundManager.autoStopMusic = true;
 			LocalStorage.__init__();
 			return Render.canvas;
+		}
+		
+		public static function getUrlPath():void
+		{
+			var location:* = Browser.window.location;
+			var pathName:String = location.pathname;
+			// 索引为2的字符如果是':'就是windows file协议
+			pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
+			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.protocol + "//" + location.host + location.pathname);
 		}
 		
 		/**@private */

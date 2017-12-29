@@ -3,7 +3,6 @@ package laya.webgl.atlas {
 	import laya.webgl.resource.IMergeAtlasBitmap;
 	
 	public class AtlasResourceManager {
-		private static var _enabled:Boolean = false;
 		private static var _atlasLimitWidth:int;
 		private static var _atlasLimitHeight:int;
 		
@@ -44,7 +43,7 @@ package laya.webgl.atlas {
 		}
 		
 		public static function get enabled():Boolean {
-			return _enabled;
+			return Config.atlasEnable;
 		}
 		
 		public static function get atlasLimitWidth():int {
@@ -65,12 +64,10 @@ package laya.webgl.atlas {
 		}
 		
 		public static function _enable():void {
-			_enabled = true;
 			Config.atlasEnable = true;
 		}
 		
 		public static function _disable():void {
-			_enabled = false;
 			Config.atlasEnable = false;
 		}
 		

@@ -26,7 +26,7 @@ package laya.resource {
 			/*[IF-FLASH]*/ return;
 			var from:* = Context.prototype;
 			//forxiaochengxu
-			to = to || Laya.EnvConfig.CanvasRenderingContext2D_prototype||__JS__("CanvasRenderingContext2D.prototype");
+			to = to || __JS__("CanvasRenderingContext2D.prototype");
 			
 			to.__fillText = to.fillText;
 			to.__fillRect = to.fillRect;
@@ -35,22 +35,22 @@ package laya.resource {
 			funs.forEach(function(i:String):void {
 				to[i] = from[i];
 			});
-			return;
-			
-			var canvasO:*= __JS__("HTMLCanvasElement.prototype");
-			if (!replaceCanvasGetSet(canvasO, "width")) return;
-			if (!replaceCanvasGetSet(canvasO, "height")) return;
-			
-			var i:int, len:int;
-			len = replaceKeys.length;
-			for (i = 0; i < len; i++)
-			{
-				if(!replaceGetSet(to,replaceKeys[i])) return;
-			}
-				
-			to.__reset = from.replaceReset;
-			to.__restore = to.restore;
-			to.restore = from.replaceResotre;
+			//return;
+			//
+			//var canvasO:*= __JS__("HTMLCanvasElement.prototype");
+			//if (!replaceCanvasGetSet(canvasO, "width")) return;
+			//if (!replaceCanvasGetSet(canvasO, "height")) return;
+			//
+			//var i:int, len:int;
+			//len = replaceKeys.length;
+			//for (i = 0; i < len; i++)
+			//{
+				//if(!replaceGetSet(to,replaceKeys[i])) return;
+			//}
+				//
+			//to.__reset = from.replaceReset;
+			//to.__restore = to.restore;
+			//to.restore = from.replaceResotre;
 		}
 		
 		private static function replaceCanvasGetSet(tar:Object, key:String):Boolean

@@ -50,7 +50,7 @@ package laya.events {
 		private var _touchIDs:Object = {};
 		private var _curTouchID:Number = NaN;
 		private var _id:int = 1;
-		
+		private static var _isFirstTouch:Boolean = true;
 		/**
 		 * @private
 		 * 初始化。
@@ -96,14 +96,15 @@ package laya.events {
 			canvas.addEventListener("touchstart", function(e:*):void {
 				if (enabled) {
 					list.push(e);
-					if (!Input.isInputting) e.preventDefault();
+					if (!_isFirstTouch&&!Input.isInputting) e.preventDefault();
 					_this.mouseDownTime = Browser.now();
 						//runEvent();
 				}
 			});
 			canvas.addEventListener("touchend", function(e:*):void {
 				if (enabled) {
-					if (!Input.isInputting) e.preventDefault();
+					if (!_isFirstTouch&&!Input.isInputting) e.preventDefault();
+					_isFirstTouch = false;
 					list.push(e);
 					_this.mouseDownTime = -Browser.now();
 				}else {
@@ -270,7 +271,7 @@ package laya.events {
 			if (!len) return;
 			
 			var _this:MouseManager = this;
-			var i:int = 0;
+			var i:int = 0,j:int,n:int,touch:*;
 			while (i < len) {
 				var evt:* = _eventList[i];
 				
@@ -304,8 +305,8 @@ package laya.events {
 					_isTouchRespond = true;
 					_this._isLeftMouse = true;
 					var touches:Array = evt.changedTouches;
-					for (var j:int = 0, n:int = touches.length; j < n; j++) {
-						var touch:* = touches[j];
+					for (j = 0, n = touches.length; j < n; j++) {
+						touch = touches[j];
 						//是否禁用多点触控
 						if (multiTouchEnabled || isNaN(_curTouchID)) {
 							_curTouchID = touch.identifier;

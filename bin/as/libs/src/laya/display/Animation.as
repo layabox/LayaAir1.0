@@ -2,6 +2,7 @@ package laya.display {
 	import laya.net.Loader;
 	import laya.utils.GraphicAnimation;
 	import laya.utils.Handler;
+	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	
 	/**
@@ -268,14 +269,14 @@ package laya.display {
 		 */
 		public function loadAtlas(url:String, loaded:Handler = null, cacheName:String = ""):Animation {
 			this._url = "";
-			var _this:Animation = this;
-			if (!_this._setFramesFromCache(cacheName)) {
-				function onLoaded(loadUrl:String):void {
-					if (url === loadUrl) {
-						_this.frames = framesMap[cacheName] ? framesMap[cacheName] : createFrames(url, cacheName);
-						if (loaded) loaded.run();
-					}
+			var _this_:Animation = this;
+			function onLoaded(loadUrl:String):void {
+				if (url === loadUrl) {
+					_this_.frames = framesMap[cacheName] ? framesMap[cacheName] : createFrames(url, cacheName);
+					if (loaded) loaded.run();
 				}
+			}
+			if (!_this_._setFramesFromCache(cacheName)) {
 				if (Loader.getAtlas(url)) onLoaded(url);
 				else Laya.loader.load(url, Handler.create(null, onLoaded, [url]), null, Loader.ATLAS);
 			}
@@ -294,16 +295,16 @@ package laya.display {
 		 */
 		public function loadAnimation(url:String, loaded:Handler = null, atlas:String = null):Animation {
 			this._url = url;
-			var _this:Animation = this;
+			var _this_:Animation = this;
 			if (!_actionName) _actionName = "";
-			if (!_this._setFramesFromCache("")) {
+			if (!_this_._setFramesFromCache("")) {
 				if (!atlas || Loader.getAtlas(atlas)) {
 					_loadAnimationData(url, loaded, atlas);
 				} else {
 					Laya.loader.load(atlas, Handler.create(this, _loadAnimationData, [url, loaded, atlas]), null, Loader.ATLAS)
 				}
 			} else {
-				_this._setFramesFromCache(_actionName, true);
+				_this_._setFramesFromCache(_actionName, true);
 				if (loaded) loaded.run();
 			}
 			return this;
@@ -315,7 +316,7 @@ package laya.display {
 				console.warn("atlas load fail:" + atlas);
 				return;
 			}
-			var _this:Animation = this;
+			var _this_:Animation = this;
 			
 			function onLoaded(loadUrl:String):void {
 				if (!Loader.getRes(loadUrl)) return;
@@ -323,7 +324,7 @@ package laya.display {
 					var tAniO:Object;
 					if (!framesMap[url + "#"]) {
 						//此次解析仅返回动画数据，并不真正解析动画graphic数据
-						var aniData:Object = _this._parseGraphicAnimation(Loader.getRes(url));
+						var aniData:Object = _this_._parseGraphicAnimation(Loader.getRes(url));
 						if (!aniData) return;
 						//缓存动画数据
 						var aniList:Array = aniData.animationList;
@@ -338,12 +339,12 @@ package laya.display {
 						}
 						if (defaultO) {
 							framesMap[url + "#"] = defaultO;
-							_this._setFramesFromCache(_actionName, true);
+							_this_._setFramesFromCache(_actionName, true);
 							index = 0;
 						}
 						_checkResumePlaying();
 					} else {
-						_this._setFramesFromCache(_actionName, true);
+						_this_._setFramesFromCache(_actionName, true);
 						index = 0;
 						_checkResumePlaying();
 					}
@@ -374,13 +375,13 @@ package laya.display {
 		 * @return	动画模板。
 		 */
 		public static function createFrames(url:*, name:String):Array {
-			var arr:Array;
+			var arr:Array,i:int,n:int,g:Graphics;
 			if (url is String) {
 				var atlas:Array = Loader.getAtlas(url);
 				if (atlas && atlas.length) {
 					arr = [];
-					for (var i:int = 0, n:int = atlas.length; i < n; i++) {
-						var g:Graphics = new Graphics();
+					for (i = 0, n = atlas.length; i < n; i++) {
+						g = new RunDriver.createGraphics();
 						g.drawTexture(Loader.getRes(atlas[i]), 0, 0);
 						arr.push(g);
 					}
@@ -388,7 +389,7 @@ package laya.display {
 			} else if (url is Array) {
 				arr = [];
 				for (i = 0, n = url.length; i < n; i++) {
-					g = new Graphics();
+					g = new RunDriver.createGraphics();
 					g.loadImage(url[i], 0, 0);
 					arr.push(g);
 				}

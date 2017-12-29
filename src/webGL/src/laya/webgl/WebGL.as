@@ -1,5 +1,6 @@
 package laya.webgl {
 	import laya.display.Sprite;
+	import laya.display.Stage;
 	import laya.events.Event;
 	import laya.filters.Filter;
 	import laya.filters.IFilterAction;
@@ -31,23 +32,22 @@ package laya.webgl {
 	import laya.webgl.resource.WebGLCanvas;
 	import laya.webgl.resource.WebGLImage;
 	import laya.webgl.resource.WebGLSubImage;
+	import laya.webgl.shader.Shader;
+	import laya.webgl.shader.ShaderValue;
 	import laya.webgl.shader.d2.Shader2D;
+	import laya.webgl.shader.d2.Shader2X;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.skinAnishader.SkinMesh;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.shader.Shader;
-	import laya.webgl.shader.ShaderValue;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCMDScope;
 	import laya.webgl.text.DrawText;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.RenderSprite3D;
-	import laya.webgl.utils.RenderState2D;
-	
-	import laya.webgl.shader.d2.Shader2X;
 	import laya.webgl.utils.GlUtils;
 	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.RenderSprite3D;
+	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
 	/**
@@ -173,8 +173,7 @@ package laya.webgl {
 			
 			RunDriver.getWebGLContext = function getWebGLContext(canvas:*):WebGLContext {
 				var gl:WebGLContext;
-				//forxiaochengxu
-				var names:Array = Laya.EnvConfig.webglNames||["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+				var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 				for (var i:int = 0; i < names.length; i++) {
 					try {
 						gl = canvas.getContext(names[i], {stencil: Config.isStencil, alpha: Config.isAlpha, antialias: Config.isAntialias, premultipliedAlpha: Config.premultipliedAlpha, preserveDrawingBuffer: Config.preserveDrawingBuffer});//antialias为true,premultipliedAlpha为false,IOS和部分安卓QQ浏览器有黑屏或者白屏底色BUG
@@ -227,7 +226,7 @@ package laya.webgl {
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
 				var ctx:* = Render.context.ctx;
 				//兼容浏览器
-				var c:Array = (ctx._submits._length == 0 || Config.preserveDrawingBuffer) ? Color.create(color)._color : Laya.stage._wgColor;
+				var c:Array = (ctx._submits._length == 0 || Config.preserveDrawingBuffer) ? Color.create(color)._color : Stage._wgColor;
 				if (c) ctx.clearBG(c[0], c[1], c[2], c[3]);
 				RenderState2D.clear();
 			}
@@ -280,6 +279,8 @@ package laya.webgl {
 				var tempContext:* = Browser.context;
 				var imgData:* = tempContext.createImageData(canvasWidth, canvasHeight);
 				imgData.data.set(__JS__("new Uint8ClampedArray(pixels.buffer)"));
+				htmlCanvas._imgData = imgData;
+				//下面的事情最好是在getCanvas的时候再做。反正一般也不会调用。这里太啰嗦了
 				tempContext.putImageData(imgData, 0, 0);
 				
 				context.save();

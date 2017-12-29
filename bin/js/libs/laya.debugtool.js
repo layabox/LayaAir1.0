@@ -1116,7 +1116,7 @@ var AtlasTools=(function(){
 			}else {
 			var tAtlaser=resManager.getAtlaserByIndex(this.mIndex);
 			if (tAtlaser && tAtlaser.texture){
-				tTexture=Texture.create(tAtlaser.texture,0,0,2048,2048);
+				tTexture=new Texture(tAtlaser.texture,null);
 				this.mTextureDic[this.mIndex]=tTexture;
 			}
 		}
@@ -12017,25 +12017,6 @@ var DebugPage=(function(_super){
 *...
 *@author ww
 */
-//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
-var FindNodeSmall=(function(_super){
-	function FindNodeSmall(){
-		FindNodeSmall.__super.call(this);
-		Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
-		this.createView(FindNodeSmallUI.uiView);
-	}
-
-	__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
-	var __proto=FindNodeSmall.prototype;
-	__proto.createChildren=function(){}
-	return FindNodeSmall;
-})(FindNodeSmallUI)
-
-
-/**
-*...
-*@author ww
-*/
 //class laya.debug.view.nodeInfo.nodetree.FindNode extends laya.debug.ui.debugui.FindNodeUI
 var FindNode=(function(_super){
 	function FindNode(){
@@ -12052,6 +12033,25 @@ var FindNode=(function(_super){
 
 	return FindNode;
 })(FindNodeUI)
+
+
+/**
+*...
+*@author ww
+*/
+//class laya.debug.view.nodeInfo.nodetree.FindNodeSmall extends laya.debug.ui.debugui.FindNodeSmallUI
+var FindNodeSmall=(function(_super){
+	function FindNodeSmall(){
+		FindNodeSmall.__super.call(this);
+		Base64AtlasManager.replaceRes(FindNodeSmallUI.uiView);
+		this.createView(FindNodeSmallUI.uiView);
+	}
+
+	__class(FindNodeSmall,'laya.debug.view.nodeInfo.nodetree.FindNodeSmall',_super);
+	var __proto=FindNodeSmall.prototype;
+	__proto.createChildren=function(){}
+	return FindNodeSmall;
+})(FindNodeSmallUI)
 
 
 /**

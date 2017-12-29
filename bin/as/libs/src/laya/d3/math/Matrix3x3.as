@@ -4,7 +4,7 @@ package laya.d3.math {
 	/**
 	 * <code>Matrix3x3</code> 类用于创建3x3矩阵。
 	 */
-	public class Matrix3x3 implements IClone{
+	public class Matrix3x3 implements IClone {
 		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix3x3 =/*[STATIC SAFE]*/ new Matrix3x3();
@@ -354,17 +354,17 @@ package laya.d3.math {
 		 * 计算观察3x3矩阵
 		 * @param	eye    观察者位置
 		 * @param	target 目标位置
-		 * @param	up     上向量  
+		 * @param	up     上向量
 		 * @param	out    输出3x3矩阵
 		 */
-		public static function lookAt(eye:Vector3, target:Vector3, up:Vector3, out:Matrix3x3):void{
-			Vector3.subtract(eye,target, _tempV30);//WebGL为右手坐标系统
+		public static function lookAt(eye:Vector3, target:Vector3, up:Vector3, out:Matrix3x3):void {
+			Vector3.subtract(eye, target, _tempV30);//WebGL为右手坐标系统
 			Vector3.normalize(_tempV30, _tempV30);
 			
-			Vector3.cross(up,_tempV30, _tempV31);
+			Vector3.cross(up, _tempV30, _tempV31);
 			Vector3.normalize(_tempV31, _tempV31);
 			
-			Vector3.cross(_tempV30,_tempV31, _tempV32);
+			Vector3.cross(_tempV30, _tempV31, _tempV32);
 			
 			var v0e:Float32Array = _tempV30.elements;
 			var v1e:Float32Array = _tempV31.elements;
@@ -382,33 +382,6 @@ package laya.d3.math {
 			me[2] = v0e[0];
 			me[5] = v0e[1];
 			me[8] = v0e[2];
-			
-			
-			//var oE:Float32Array = out.elements;
-			//var xaxis:Vector3 = _tempV30; 
-			//var yaxis:Vector3= _tempV31;
-			//var zaxis:Vector3 = _tempV32;
-			//
-			//Vector3.subtract(target,eye, zaxis);
-			//Vector3.normalize(zaxis, zaxis);
-			//
-			//Vector3.cross(zaxis,up, xaxis);
-			//Vector3.normalize(xaxis, xaxis);
-			//
-			//Vector3.cross(xaxis,zaxis, yaxis);
-			//
-			//var me:Float32Array = out.elements;
-			//me[0] = xaxis.x;
-			//me[3] = xaxis.y;
-			//me[6] = xaxis.z;
-			//
-			//me[1] = yaxis.x;
-			//me[4] = yaxis.y;
-			//me[7] = yaxis.z;
-			//
-			//me[2] = zaxis.x;
-			//me[5] = zaxis.y;
-			//me[8] = zaxis.z;
 		}
 	}
 }

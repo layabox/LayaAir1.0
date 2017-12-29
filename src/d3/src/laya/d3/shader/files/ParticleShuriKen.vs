@@ -4,7 +4,7 @@
   precision mediump float;
 #endif
 
-#ifdef defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)
+#if defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)
 	attribute vec4 a_CornerTextureCoordinate;
 #endif
 #ifdef RENDERMODE_MESH
@@ -20,10 +20,10 @@ attribute vec4 a_StartColor;
 attribute vec3 a_StartSize;
 attribute vec3 a_StartRotation0;
 attribute float a_StartSpeed;
-#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)||defined(SIZEOVERLIFETIMERANDOMCURVES)||definedSIZEOVERLIFETIMERANDOMCURVESSEPERATE||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
+#if defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)||defined(SIZEOVERLIFETIMERANDOMCURVES)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
   attribute vec4 a_Random0;
 #endif
-#ifdef TEXTURESHEETANIMATIONRANDOMCURVE||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+#if defined(TEXTURESHEETANIMATIONRANDOMCURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
   attribute vec4 a_Random1;
 #endif
 attribute vec3 a_SimulationWorldPostion;
@@ -57,13 +57,13 @@ uniform  float u_StretchedBillboardLengthScale;
 uniform  float u_StretchedBillboardSpeedScale;
 uniform int u_SimulationSpace;
 
-#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+#if defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
   uniform  int  u_VOLSpaceType;
 #endif
-#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)
+#if defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)
   uniform  vec3 u_VOLVelocityConst;
 #endif
-#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+#if defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
   uniform  vec2 u_VOLVelocityGradientX[4];//x为key,y为速度
   uniform  vec2 u_VOLVelocityGradientY[4];//x为key,y为速度
   uniform  vec2 u_VOLVelocityGradientZ[4];//x为key,y为速度
@@ -89,13 +89,13 @@ uniform int u_SimulationSpace;
 #endif
 
 
-#ifdef defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMERANDOMCURVES)
+#if defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMERANDOMCURVES)
   uniform  vec2 u_SOLSizeGradient[4];//x为key,y为尺寸
 #endif
 #ifdef SIZEOVERLIFETIMERANDOMCURVES
   uniform  vec2 u_SOLSizeGradientMax[4];//x为key,y为尺寸
 #endif
-#ifdef defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)
+#if defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)
   uniform  vec2 u_SOLSizeGradientX[4];//x为key,y为尺寸
   uniform  vec2 u_SOLSizeGradientY[4];//x为key,y为尺寸
   uniform  vec2 u_SOLSizeGradientZ[4];//x为key,y为尺寸
@@ -108,13 +108,13 @@ uniform int u_SimulationSpace;
 
 
 #ifdef ROTATIONOVERLIFETIME
-  #ifdef defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)
+  #if defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)
     uniform  float u_ROLAngularVelocityConst;
   #endif
   #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS
     uniform  float u_ROLAngularVelocityConstMax;
   #endif
-  #ifdef defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
+  #if defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
     uniform  vec2 u_ROLAngularVelocityGradient[4];//x为key,y为旋转
   #endif
   #ifdef ROTATIONOVERLIFETIMERANDOMCURVES
@@ -122,13 +122,13 @@ uniform int u_SimulationSpace;
   #endif
 #endif
 #ifdef ROTATIONOVERLIFETIMESEPERATE
-  #ifdef defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)
+  #if defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)
     uniform  vec4 u_ROLAngularVelocityConstSeprarate;
   #endif
   #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS
     uniform  vec4 u_ROLAngularVelocityConstMaxSeprarate;
   #endif
-  #ifdef defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
+  #if defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
     uniform  vec2 u_ROLAngularVelocityGradientX[4];
     uniform  vec2 u_ROLAngularVelocityGradientY[4];
     uniform  vec2 u_ROLAngularVelocityGradientZ[4];
@@ -142,7 +142,7 @@ uniform int u_SimulationSpace;
   #endif
 #endif
 
-#ifdef defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)
+#if defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)
   uniform  float u_TSACycles;
   uniform  vec2 u_TSASubUVLength;
   uniform  vec2 u_TSAGradientUVs[4];//x为key,y为frame
@@ -151,8 +151,12 @@ uniform int u_SimulationSpace;
   uniform  vec2 u_TSAMaxGradientUVs[4];//x为key,y为frame
 #endif
 
-#if FOG
+#ifdef FOG
 	varying vec3 v_PositionWorld;
+#endif
+
+#ifdef TILINGOFFSET
+	uniform vec4 u_TilingOffset;
 #endif
 
 vec3 rotationByEuler(in vec3 vector,in vec3 rot)
@@ -236,7 +240,7 @@ vec3 rotationByQuaternions(in vec3 v,in vec4 q)
 }
 
  
-#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVES)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)
+#if defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(SIZEOVERLIFETIMECURVE)||defined(SIZEOVERLIFETIMECURVESEPERATE)||defined(SIZEOVERLIFETIMERANDOMCURVES)||defined(SIZEOVERLIFETIMERANDOMCURVESSEPERATE)
 float getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
 {
 	float curValue;
@@ -257,7 +261,7 @@ float getCurValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalize
 }
 #endif
 
-#ifdef defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
+#if defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)||defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
 float getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normalizedAge)
 {
 	float totalValue=0.0;
@@ -282,7 +286,7 @@ float getTotalValueFromGradientFloat(in vec2 gradientNumbers[4],in float normali
 }
 #endif
 
-#ifdef defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)
+#if defined(COLOROVERLIFETIME)||defined(RANDOMCOLOROVERLIFETIME)
 vec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in float normalizedAge)
 {
 	vec4 overTimeColor;
@@ -318,7 +322,7 @@ vec4 getColorFromGradient(in vec2 gradientAlphas[4],in vec4 gradientColors[4],in
 #endif
 
 
-#ifdef defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)
+#if defined(TEXTURESHEETANIMATIONCURVE)||defined(TEXTURESHEETANIMATIONRANDOMCURVE)
 float getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)
 {
 	float overTimeFrame;
@@ -339,7 +343,7 @@ float getFrameFromGradient(in vec2 gradientFrames[4],in float normalizedAge)
 }
 #endif
 
-#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+#if defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
 vec3 computeParticleLifeVelocity(in float normalizedAge)
 {
   vec3 outLifeVelocity;
@@ -366,7 +370,7 @@ vec3 computeParticlePosition(in vec3 startVelocity, in vec3 lifeVelocity,in floa
 {
    vec3 startPosition;
    vec3 lifePosition;
-   #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+   #if defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
 	#ifdef VELOCITYOVERLIFETIMECONSTANT
 		  startPosition=startVelocity*age;
 		  lifePosition=lifeVelocity*age;
@@ -508,7 +512,7 @@ float computeParticleRotationFloat(in float rotation,in float age,in float norma
 	return rotation;
 }
 
-#ifdef defined(RENDERMODE_MESH)&&(defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE))
+#if defined(RENDERMODE_MESH)&&(defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE))
 vec3 computeParticleRotationMesh(in vec3 rotation,in float age,in float normalizedAge)
 { 
 	#ifdef ROTATIONOVERLIFETIME
@@ -573,14 +577,14 @@ vec2 computeParticleUV(in vec2 uv,in float normalizedAge)
 
 void main()
 {
-   float age = u_CurrentTime - a_DirectionTime.w;
-   float normalizedAge = age/a_ShapePositionStartLifeTime.w;
-   vec3 lifeVelocity;
-   if(normalizedAge<1.0){ 
-	  vec3 startVelocity=a_DirectionTime.xyz*a_StartSpeed;
-   #ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
-	  lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度
-   #endif 
+	float age = u_CurrentTime - a_DirectionTime.w;
+	float normalizedAge = age/a_ShapePositionStartLifeTime.w;
+	vec3 lifeVelocity;
+	if(normalizedAge<1.0){ 
+	vec3 startVelocity=a_DirectionTime.xyz*a_StartSpeed;
+	#if defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+		lifeVelocity= computeParticleLifeVelocity(normalizedAge);//计算粒子生命周期速度
+	#endif 
 	vec3 gravityVelocity=u_Gravity*age;
 	
 	vec4 worldRotation;
@@ -589,7 +593,7 @@ void main()
 	else
 		worldRotation=u_WorldRotation;
 	
-   vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge,gravityVelocity,worldRotation);//计算粒子位置
+	vec3 center=computeParticlePosition(startVelocity, lifeVelocity, age, normalizedAge,gravityVelocity,worldRotation);//计算粒子位置
    
    
    #ifdef SPHERHBILLBOARD
@@ -598,7 +602,7 @@ void main()
         vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
         vec3 upVector = normalize(cross(sideVector,u_CameraDirection));
 	    corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
-		#ifdef defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
+		#if defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
 			if(u_ThreeDStartRotation){
 				vec3 rotation=vec3(a_StartRotation0.xy,computeParticleRotationFloat(a_StartRotation0.z,age,normalizedAge));
 				center += u_SizeScale.xzy*rotationByEuler(corner.x*sideVector+corner.y*upVector,rotation);
@@ -628,7 +632,7 @@ void main()
    #ifdef STRETCHEDBILLBOARD
 	vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效
 	vec3 velocity;
-	#ifdef defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
+	#if defined(VELOCITYOVERLIFETIMECONSTANT)||defined(VELOCITYOVERLIFETIMECURVE)||defined(VELOCITYOVERLIFETIMERANDOMCONSTANT)||defined(VELOCITYOVERLIFETIMERANDOMCURVE)
 	    if(u_VOLSpaceType==0)
 		  velocity=rotationByQuaternions(u_SizeScale*(startVelocity+lifeVelocity),worldRotation)+gravityVelocity;
 	    else
@@ -681,7 +685,7 @@ void main()
    
    #ifdef RENDERMODE_MESH
 	    vec3 size=computeParticleSizeMesh(a_StartSize,normalizedAge);
-		#ifdef defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
+		#if defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
 			if(u_ThreeDStartRotation){
 				vec3 rotation=vec3(a_StartRotation0.xy,-computeParticleRotationFloat(a_StartRotation0.z, age,normalizedAge));
 				center+= rotationByQuaternions(u_SizeScale*rotationByEuler(a_MeshPosition*size,rotation),worldRotation);
@@ -737,16 +741,21 @@ void main()
     gl_Position=u_Projection*u_View*vec4(center,1.0);
     v_Color = computeParticleColor(a_StartColor, normalizedAge);
 	#ifdef DIFFUSEMAP
-		#ifdef defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)
+		#if defined(SPHERHBILLBOARD)||defined(STRETCHEDBILLBOARD)||defined(HORIZONTALBILLBOARD)||defined(VERTICALBILLBOARD)
 			v_TextureCoordinate =computeParticleUV(a_CornerTextureCoordinate.zw, normalizedAge);
 		#endif
 		#ifdef RENDERMODE_MESH
 			v_TextureCoordinate =computeParticleUV(a_MeshTextureCoordinate, normalizedAge);
 		#endif
+		
+		#ifdef TILINGOFFSET
+			v_TextureCoordinate=vec2(v_TextureCoordinate.x,1.0-v_TextureCoordinate.y)*u_TilingOffset.xy+vec2(u_TilingOffset.z,-u_TilingOffset.w);//需要特殊处理
+			v_TextureCoordinate=vec2(v_TextureCoordinate.x,1.0-v_TextureCoordinate.y);//需要特殊处理
+		#endif
 	#endif
-      v_Discard=0.0;
+    v_Discard=0.0;
 	  
-	#if FOG
+	#ifdef FOG
 		v_PositionWorld=center;
 	#endif
    }

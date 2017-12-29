@@ -41,7 +41,7 @@ var EmitterBase=(function(){
 	*@param duration 发射持续的时间(秒)
 	*/
 	__proto.start=function(duration){
-		(duration===void 0)&& (duration=Number.MAX_VALUE);
+		(duration===void 0)&& (duration=2147483647);
 		if (this._emissionRate !=0)
 			this._emissionTime=duration;
 	}

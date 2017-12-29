@@ -59,22 +59,12 @@ package laya.d3.core {
 			super(name);
 			_subMeshOffset = new Vector.<int>();
 			
-			var _this:* = this;
-			_geometryFilter = new MeshFilter(_this);
-			_render = new SkinnedMeshRender(_this);
+			_geometryFilter = new MeshFilter(this);
+			_render = new SkinnedMeshRender(this);
 			
 			_geometryFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
-			
-			if (mesh) {
-				(_geometryFilter as MeshFilter).sharedMesh = mesh;
-				
-				if (mesh is Mesh)//TODO:待考虑。
-					if (mesh.loaded)
-						_render.sharedMaterials = (mesh as Mesh).materials;
-					else
-						mesh.once(Event.LOADED, this, _applyMeshMaterials);
-			}
+			(mesh) && ((_geometryFilter as MeshFilter).sharedMesh = mesh);
 		}
 		
 		/**
@@ -185,7 +175,7 @@ package laya.d3.core {
 				if (boundBox) {
 					var min:Array = boundBox.min;
 					var max:Array = boundBox.max;
-					var localBoundBox:BoundBox = new BoundBox(new Vector3(min[0], min[2], min[2]), new Vector3(max[0], max[2], max[2]));
+					var localBoundBox:BoundBox = new BoundBox(new Vector3(min[0], min[1], min[2]), new Vector3(max[0], max[1], max[2]));
 					render.localBoundBox = localBoundBox;
 				} else {
 					render._hasIndependentBound = false;
@@ -242,7 +232,6 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
 			var meshSprite3D:MeshSprite3D = destObject as MeshSprite3D;
 			(meshSprite3D._geometryFilter as MeshFilter).sharedMesh = (_geometryFilter as MeshFilter).sharedMesh;
 			var meshRender:SkinnedMeshRender = _render as SkinnedMeshRender;
@@ -260,6 +249,7 @@ package laya.d3.core {
 			var lbb:BoundBox = meshRender.localBoundBox;
 			(lbb) && (destMeshRender.localBoundBox = lbb.clone());
 			destMeshRender._hasIndependentBound = meshRender._hasIndependentBound;//兼容代码
+			super.cloneTo(destObject);//父类函数在最后,组件应该最后赋值，否则获取材质默认值等相关函数会有问题
 		}
 		
 		/**

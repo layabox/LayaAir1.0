@@ -106,37 +106,43 @@ package laya.d3.utils {
 						if (rowLayer !== colLayer) {
 							for (k = 0; k < rowRigOffset; k++) {
 								rowCol = rowColliders[k];
-								rowScripts = rowCol.owner._scripts;
-								for (x = 0, z = colRigOffset; x < z; x++) {
-									colCol = colColliders[x];
-									_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, true);//rigidbody is rowCol、colCol
-								}
-								for (x = colRigOffset, z = colColliders.length; x < z; x++) {
-									colCol = colColliders[x];
-									_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, false);//rigidbody is rowCol
+								if (rowCol.enable) {
+									rowScripts = rowCol.owner._scripts;
+									for (x = 0, z = colRigOffset; x < z; x++) {
+										colCol = colColliders[x];
+										(colCol.enable) && (_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, true));//rigidbody is rowCol、colCol
+									}
+									for (x = colRigOffset, z = colColliders.length; x < z; x++) {
+										colCol = colColliders[x];
+										(colCol.enable) && (_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, false));//rigidbody is rowCol
+									}
 								}
 							}
 							for (k = rowRigOffset, c = rowColliders.length; k < c; k++) {
 								rowCol = rowColliders[k];
-								rowScripts = rowCol.owner._scripts;
-								for (x = 0, z = colLayer._nonRigidbodyOffset; x < z; x++) {
-									colCol = colColliders[x];
-									_onTrigger(colCol, rowCol, rowScripts, colCol.owner._scripts, false);//rigidbody is colCol 
+								if (rowCol.enable) {
+									rowScripts = rowCol.owner._scripts;
+									for (x = 0, z = colLayer._nonRigidbodyOffset; x < z; x++) {
+										colCol = colColliders[x];
+										(colCol.enable) && (_onTrigger(colCol, rowCol, rowScripts, colCol.owner._scripts, false));//rigidbody is colCol 
+									}
 								}
 							}
 							
 						} else {
 							for (k = 0; k < rowRigOffset; k++) {
 								rowCol = rowColliders[k];
-								rowScripts = rowCol.owner._scripts;
-								for (x = k + 1, z = rowRigOffset; x < z; x++) {
-									colCol = colColliders[x];
-									_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, true);//rigidbody is rowCol、colCol
-									
-								}
-								for (x = rowRigOffset, z = rowColliders.length; x < z; x++) {
-									colCol = colColliders[x];
-									_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, false);//rigidbody is rowCol
+								if (rowCol.enable) {
+									rowScripts = rowCol.owner._scripts;
+									for (x = k + 1, z = rowRigOffset; x < z; x++) {
+										colCol = colColliders[x];
+										(colCol.enable) && (_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, true));//rigidbody is rowCol、colCol
+										
+									}
+									for (x = rowRigOffset, z = rowColliders.length; x < z; x++) {
+										colCol = colColliders[x];
+										(colCol.enable) && (_onTrigger(rowCol, colCol, rowScripts, colCol.owner._scripts, false));//rigidbody is rowCol
+									}
 								}
 							}
 						}

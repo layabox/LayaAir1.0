@@ -133,13 +133,7 @@ package laya.net {
 				}
 			}
 			if (!_http) {
-				//forxiaochengxu
-				if (Laya.EnvConfig.HttpRequest)
-				{
-					_http = new Laya.EnvConfig.HttpRequest();
-				}else {
-					_http = new HttpRequest();
-				}
+				_http = new HttpRequest();
 				_http.on(Event.PROGRESS, this, onProgress);
 				_http.on(Event.ERROR, this, onError);
 				_http.on(Event.COMPLETE, this, onLoaded);

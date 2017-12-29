@@ -14,6 +14,7 @@ package laya.d3.shader {
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.BaseShader;
 	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.ShaderCompile;
 	
 	public class Shader3D extends BaseShader {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -29,23 +30,20 @@ package laya.d3.shader {
 		public static const PERIOD_SCENE:int = 4;
 		
 		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6, WebGLContext.TEXTURE7];
-		public static var _includeFiles:* = {}; //shader里面inlcude的小文件
 		private static var _count:int = 0;
 		
 		protected static var shaderParamsMap:Object = {"float": WebGLContext.FLOAT, "int": WebGLContext.INT, "bool": WebGLContext.BOOL, "vec2": WebGLContext.FLOAT_VEC2, "vec3": WebGLContext.FLOAT_VEC3, "vec4": WebGLContext.FLOAT_VEC4, "ivec2": WebGLContext.INT_VEC2, "ivec3": WebGLContext.INT_VEC3, "ivec4": WebGLContext.INT_VEC4, "bvec2": WebGLContext.BOOL_VEC2, "bvec3": WebGLContext.BOOL_VEC3, "bvec4": WebGLContext.BOOL_VEC4, "mat2": WebGLContext.FLOAT_MAT2, "mat3": WebGLContext.FLOAT_MAT3, "mat4": WebGLContext.FLOAT_MAT4, "sampler2D": WebGLContext.SAMPLER_2D, "samplerCube": WebGLContext.SAMPLER_CUBE};
 		
 		public static var nameKey:StringKey = new StringKey();
 		
+		
+		
 		public static function create(vs:String, ps:String, attributeMap:Object, sceneUniformMap:Object, cameraUniformMap:Object, spriteUniformMap:Object, materialUniformMap:Object, renderElementUniformMap:Object):Shader3D {
 			return new Shader3D(vs, ps, attributeMap, sceneUniformMap, cameraUniformMap, spriteUniformMap, materialUniformMap, renderElementUniformMap);
 		}
 		
 		public static function addInclude(fileName:String, txt:String):void {
-			if (!txt || txt.length === 0)
-				throw new Error("add shader include file err:" + fileName);
-			if (_includeFiles[fileName])
-				throw new Error("add shader include file err, has add:" + fileName);
-			_includeFiles[fileName] = txt;
+			ShaderCompile.addInclude(fileName, txt);
 		}
 		
 		private var customCompile:Boolean = false;
@@ -142,8 +140,8 @@ package laya.d3.shader {
 			
 			var text:Array = [_vs, _ps];
 			var result:Object;
-			if (customCompile)
-				result = _preGetParams(_vs, _ps);
+			//if (customCompile)
+				//result = ShaderCompile._preGetParams(_vs, _ps);
 			var gl:WebGLContext = WebGL.mainContext;
 			_program = gl.createProgram();
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
@@ -272,6 +270,7 @@ package laya.d3.shader {
 		}
 		
 		private static function _createShader(gl:WebGLContext, str:String, type:*):* {
+			
 			var shader:* = gl.createShader(type);
 			gl.shaderSource(shader, str);
 			gl.compileShader(shader);
@@ -615,83 +614,6 @@ package laya.d3.shader {
 			}
 			Stat.shaderCall += shaderCall;
 		}
-		
-		protected function _preGetParams(vs:String, ps:String):Object {
-			var text:Array = [vs, ps];
-			var result:Object = {};
-			var attributes:Array = [];
-			var uniforms:Array = [];
-			var definesInfo:Object = {};
-			var definesName:Array = [];
-			result.attributes = attributes;
-			result.uniforms = uniforms;
-			result.defines = definesInfo;
-			var removeAnnotation:RegExp = new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)", "g");
-			var reg:RegExp = new RegExp("(\".*\")|('.*')|([#\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])", "g");
-			
-			var i:int, n:int, one:*;
-			for (var s:int = 0; s < 2; s++) {
-				text[s] = text[s].replace(removeAnnotation, "");
-				
-				var words:Array = text[s].match(reg);
-				var tempelse:String;
-				for (i = 0, n = words.length; i < n; i++) {
-					var word:String = words[i];
-					if (word != "attribute" && word != "uniform") {
-						//str += word;
-						if (word == "#define") {
-							word = words[++i];
-							definesName[word] = 1;
-							continue;
-						} else if (word == "#ifdef") {
-							tempelse = words[++i]
-							var def:Array = definesInfo[tempelse] = definesInfo[tempelse] || [];
-							for (i++; i < n; i++) {
-								word = words[i];
-								if (word != "attribute" && word != "uniform") {
-									if (word == "#else") {
-										for (i++; i < n; i++) {
-											word = words[i];
-											if (word != "attribute" && word != "uniform") {
-												if (word == "#endif") {
-													break;
-												}
-												continue;
-											}
-											i = parseOne(attributes, uniforms, words, i, word, !definesName[tempelse]);
-										}
-									}
-									continue;
-								}
-								i = parseOne(attributes, uniforms, words, i, word, definesName[tempelse]);
-							}
-						}
-						//if (word != ";") str += " ";
-						continue;
-					}
-					i = parseOne(attributes, uniforms, words, i, word, true);
-				}
-					//text[s] = str;
-			}
-			return result;
-		}
-		
-		private function parseOne(attributes:Array, uniforms:Array, words:Array, i:int, word:String, b:Boolean):int {
-			var one:* = {type: shaderParamsMap[words[i + 1]], name: words[i + 2], size: isNaN(parseInt(words[i + 3])) ? 1 : parseInt(words[i + 3])};
-			if (b) {
-				if (word == "attribute") {
-					attributes.push(one);
-				} else {
-					uniforms.push(one);
-				}
-			}
-			//str += one.vartype + " " + one.type + " " + one.name + " ";
-			if (words[i + 3] == ':') {
-				one.type = words[i + 4];
-				i += 2;
-			}
-			i += 2;
-			return i;
-		}
+	
 	}
 }

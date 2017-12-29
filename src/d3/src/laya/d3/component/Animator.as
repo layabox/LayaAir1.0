@@ -34,7 +34,7 @@ package laya.d3.component {
 		/**@private */
 		private var _currentPlayClipIndex:int;
 		/**@private */
-		private var _paused:Boolean;
+		private var _stoped:Boolean;
 		/**@private */
 		private var _currentTime:Number;
 		/**@private */
@@ -98,10 +98,12 @@ package laya.d3.component {
 		/** @private */
 		public var _lastFrameIndex:int;
 		
-		/**是否为缓存模式。*/
+		/**	是否为缓存模式*/
 		public var isCache:Boolean;
 		/** 播放速率*/
 		public var playbackRate:Number;
+		/**	激活时是否自动播放*/
+		public var playOnWake:Boolean;
 		
 		/**
 		 * 获取avatar。
@@ -229,31 +231,14 @@ package laya.d3.component {
 		}
 		
 		/**
-		 * 获取当前是否暂停
-		 * @return	是否暂停
-		 */
-		public function get paused():Boolean {
-			return _paused;
-		}
-		
-		/**
-		 * 设置是否暂停
-		 * @param	value 是否暂停
-		 */
-		public function set paused(value:Boolean):void {
-			_paused = value;
-			value && this.event(Event.PAUSED);
-		}
-		
-		/**
 		 * 获取当前播放状态
 		 * @return	当前播放状态
 		 */
 		public function get playState():int {
 			if (_currentPlayClip == null)
 				return AnimationState.stopped;
-			if (_paused)
-				return AnimationState.paused;
+			if (_stoped)
+				return AnimationState.stopped;
 			return AnimationState.playing;
 		}
 		
@@ -315,6 +300,7 @@ package laya.d3.component {
 			isCache = true;
 			cacheFrameRate = 60;
 			playbackRate = 1.0;
+			playOnWake = true;
 		}
 		
 		/**
@@ -387,7 +373,7 @@ package laya.d3.component {
 				
 				if (nodeOwner) {
 					owners[i] = nodeOwner;
-					var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](nodeOwner);
+					var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](null, nodeOwner);
 					if (datas) {//不存在对应的实体节点时可能为空
 						var cacheDatas:Float32Array = new Float32Array(node.keyFrameWidth);
 						defaultValues[i] = cacheDatas;
@@ -516,10 +502,13 @@ package laya.d3.component {
 		 */
 		private function _onOwnerActiveHierarchyChanged():void {
 			var owner:Sprite3D = _owner as Sprite3D;
-			if (owner.displayedInStage && owner.activeInHierarchy)
+			if (owner.activeInHierarchy) {
 				Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);//TODO:当前帧注册，下一帧执行
-			else
+				(playOnWake && clip) && (play());
+			} else {
+				(playState !== AnimationState.stopped) && (stop());
 				Laya.timer.clear(this, _updateAnimtionPlayer);
+			}
 		}
 		
 		/**
@@ -632,7 +621,7 @@ package laya.d3.component {
 					var index:int = nodes.indexOf(node);
 					if (isLink) {
 						owners[index] = sprite;
-						var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](sprite);
+						var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](null, sprite);
 						if (datas) {//不存在对应的实体节点时可能为空
 							var cacheDatas:Float32Array = defaultValues[index];
 							(cacheDatas) || (defaultValues[index] = cacheDatas = new Float32Array(node.keyFrameWidth));
@@ -713,7 +702,7 @@ package laya.d3.component {
 		 * @private
 		 */
 		public function _updatePlayer(elapsedTime:Number):void {
-			if (_currentPlayClip == null || _paused || !_currentPlayClip.loaded)//动画停止或暂停，不更新
+			if (_currentPlayClip == null || _stoped || !_currentPlayClip.loaded)//动画停止或暂停，不更新
 				return;
 			
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
@@ -839,11 +828,11 @@ package laya.d3.component {
 			} else {
 				_curClipAnimationDatas = _publicClipAnimationDatas[_currentPlayClipIndex];
 				if (_avatar) {
-					clip._evaluateAnimationlDatasRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex], currentPlayTime, _curClipAnimationDatas);
+					clip._evaluateAnimationlDatasRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex], currentPlayTime, _curClipAnimationDatas, true);
 					_curAvatarAnimationDatas = _publicAvatarAnimationDatas;
 					_updateAvatarNodesRealTime(_curAvatarAnimationDatas);
 				} else {
-					clip._evaluateAnimationlDatasRealTime(_cacheNodesSpriteOwners[_currentPlayClipIndex], currentPlayTime, _curClipAnimationDatas);
+					clip._evaluateAnimationlDatasRealTime(_cacheNodesSpriteOwners[_currentPlayClipIndex], currentPlayTime, _curClipAnimationDatas, false);
 				}
 			}
 			
@@ -865,9 +854,7 @@ package laya.d3.component {
 		 * @inheritDoc
 		 */
 		override public function _load(owner:ComponentNode):void {
-			//(_owner.activeInHierarchy) && (Laya.timer.frameLoop(1, this, _updateAnimtionPlayer));
-			_owner.on(Event.DISPLAY, this, _onOwnerActiveHierarchyChanged);
-			_owner.on(Event.UNDISPLAY, this, _onOwnerActiveHierarchyChanged);
+			((owner as Sprite3D).activeInHierarchy) && (Laya.timer.frameLoop(1, this, _updateAnimtionPlayer));
 			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);//TODO:Stop和暂停的时候也要移除
 		}
 		
@@ -876,6 +863,8 @@ package laya.d3.component {
 		 */
 		override public function _unload(owner:ComponentNode):void {
 			super._unload(owner);
+			((owner as Sprite3D).activeInHierarchy) && (Laya.timer.clear(this, _updateAnimtionPlayer));
+			_owner.off(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
 			_curClipAnimationDatas = null;
 			_publicClipAnimationDatas = null;
 			_curAvatarAnimationDatas = null;
@@ -909,7 +898,6 @@ package laya.d3.component {
 				animator.addClip(_clips[i]);
 			if (clip) {
 				animator.clip = clip;
-				animator.play();//TODO:
 			}
 		}
 		
@@ -920,7 +908,7 @@ package laya.d3.component {
 		 * @param   开始帧率。
 		 * @param   结束帧率。
 		 */
-		public function addClip(clip:AnimationClip, playName:String = null, startFrame:int = 0, endFrame:int = 4294967295/*int.MAX_VALUE*/):void {
+		public function addClip(clip:AnimationClip, playName:String = null, startFrame:int = 0, endFrame:uint = 4294967295/*int.MAX_VALUE*/):void {
 			playName = playName || clip.name;
 			var index:int = _clipNames.indexOf(playName);
 			if (index !== -1) {
@@ -1054,7 +1042,7 @@ package laya.d3.component {
 			_currentFrameTime = 0;
 			_elapsedPlaybackTime = 0;
 			this.playbackRate = playbackRate;
-			_paused = false;
+			_stoped = false;
 			
 			_currentFrameIndex = 0;
 			_startUpdateLoopCount = Stat.loopCount;
@@ -1077,9 +1065,7 @@ package laya.d3.component {
 		public function stop(immediate:Boolean = true):void {
 			if (playState !== AnimationState.stopped) {
 				if (immediate) {
-					_onAnimationStop();
-					_currentTime = _currentFrameTime = _currentFrameIndex = 0;
-					_currentPlayClip = null;
+					_stoped = true;
 					this.event(Event.STOPPED);
 				} else {
 					_stopWhenCircleFinish = true;
@@ -1126,6 +1112,25 @@ package laya.d3.component {
 				return false;
 			}
 		}
+		
+		//****************************兼容性接口********************************************************
+		/**
+		 * 获取当前是否暂停
+		 * @return	是否暂停
+		 */
+		public function get paused():Boolean {
+			return _stoped;
+		}
+		
+		/**
+		 * 设置是否暂停
+		 * @param	value 是否暂停
+		 */
+		public function set paused(value:Boolean):void {
+			_stoped = value;
+			value && this.event(Event.PAUSED);
+		}
+		//****************************兼容性接口********************************************************
 	}
 
 }

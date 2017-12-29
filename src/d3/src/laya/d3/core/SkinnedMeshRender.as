@@ -19,10 +19,7 @@ package laya.d3.core {
 	 */
 	public class SkinnedMeshRender extends MeshRender {
 		/**@private */
-		private static var _tempVector30:Vector3 = new Vector3();
-		/**@private */
 		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
-		
 		
 		/**@private */
 		private var _cacheAvatar:Avatar;
@@ -98,8 +95,8 @@ package laya.d3.core {
 			_owner.transform.off(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);//移除super内构造函数无用事件注册
 			
 			_cacheAnimationNode = new Vector.<AnimationNode>();
-			(_owner as SkinnedMeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 			_localBoundingBoxCorners = new Vector.<Vector3>(8);
+			(_owner as SkinnedMeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
 		}
 		
 		/**
@@ -162,6 +159,22 @@ package laya.d3.core {
 		private function _onMeshChanged(meshFilter:MeshFilter, lastMesh:Mesh, mesh:Mesh):void {
 			_cacheMesh = mesh;
 			
+			(lastMesh && !lastMesh.loaded) && (mesh.off(Event.LOADED, this, _onMeshLoaded));
+			if (mesh.loaded)
+				_onMeshLoaded(mesh);
+			else
+				mesh.on(Event.LOADED, this, _onMeshLoaded);
+			
+			if (_cacheAvatar) {
+				(lastMesh) && (_offComputeBoneIndexToMeshEvent(_cacheAvatar, lastMesh));
+				(mesh) && (_computeBoneIndexToMeshWithAsyncAvatar());
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _onMeshLoaded(mesh:Mesh):void {
 			var subMeshCount:int = mesh.subMeshCount;
 			_skinnedDatas = new Float32Array(mesh.InverseAbsoluteBindPoses.length * 16);
 			_publicSubSkinnedDatas = new Vector.<Vector.<Float32Array>>();
@@ -171,11 +184,6 @@ package laya.d3.core {
 				var boneIndicesList:Vector.<Uint8Array> = mesh.getSubMesh(i)._boneIndicesList;
 				for (var j:int = 0, m:int = boneIndicesList.length; j < m; j++)
 					subMeshDatas[j] = new Float32Array(boneIndicesList[j].length * 16);
-			}
-			
-			if (_cacheAvatar) {
-				(lastMesh) && (_offComputeBoneIndexToMeshEvent(_cacheAvatar, lastMesh));
-				(mesh) && (_computeBoneIndexToMeshWithAsyncAvatar());
 			}
 		}
 		
@@ -209,15 +217,12 @@ package laya.d3.core {
 		 */
 		override protected function _calculateBoundingBox():void {
 			if (_hasIndependentBound) {
-				var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
-				if (rootBone == null || _localBoundBox == null) {
-					_boundingBox.toDefault();
-				} else {
-					var mat:Matrix4x4 = _tempMatrix0;
-					Matrix4x4.multiply((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, rootBone._transform._getWorldMatrix(), mat);
-					for (var i:int = 0; i < 8; i++)
-						Vector3.transformCoordinate(_localBoundingBoxCorners[i], mat, _tempBoundBoxCorners[i]);
-					BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);
+				if (_cacheAnimator) {
+					var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
+					if (rootBone == null || _localBoundBox == null)
+						_boundingBox.toDefault();
+					else
+						_calculateBoundBoxByInitCorners(_localBoundingBoxCorners);
 				}
 			} else {//兼容代码
 				super._calculateBoundingBox();
@@ -229,28 +234,13 @@ package laya.d3.core {
 		 */
 		override protected function _calculateBoundingSphere():void {
 			if (_hasIndependentBound) {
-				var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
-				if (rootBone == null || localBoundSphere == null) {
-					_boundingSphere.toDefault();
-				} else {
-					var boneTransfrom:AnimationTransform3D = rootBone._transform;
-					var mat:Matrix4x4 = _tempMatrix0;
-					var ownerTransform:Transform3D = (_cacheAnimator.owner as Sprite3D).transform;
-					Matrix4x4.multiply(ownerTransform.worldMatrix, boneTransfrom._getWorldMatrix(), mat);
-					var maxScale:Number;
-					var scale:Vector3 = _tempVector30;
-					Vector3.multiply(ownerTransform.scale, boneTransfrom.getScale(), scale);
-					var scaleE:Float32Array = scale.elements;
-					var scaleX:Number = Math.abs(scaleE[0]);
-					var scaleY:Number = Math.abs(scaleE[1]);
-					var scaleZ:Number = Math.abs(scaleE[2]);
-					
-					if (scaleX >= scaleY && scaleX >= scaleZ)
-						maxScale = scaleX;
+				if (_cacheAnimator) {
+					var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
+					if (rootBone == null || localBoundSphere == null)
+						_boundingSphere.toDefault();
 					else
-						maxScale = scaleY >= scaleZ ? scaleY : scaleZ;
-					Vector3.transformCoordinate(localBoundSphere.center, mat, _boundingSphere.center);
-					_boundingSphere.radius = localBoundSphere.radius * maxScale;
+						_calculateBoundingSphereByInitSphere(localBoundSphere);
+					
 				}
 			} else {//兼容代码
 				super._calculateBoundingSphere();
@@ -274,7 +264,19 @@ package laya.d3.core {
 			var projViewWorld:Matrix4x4;
 			var animator:Animator = _cacheAnimator;
 			var subMeshCount:int = _cacheMesh.subMeshCount;
+			var ownerTrans:Transform3D = _owner.transform;
 			if (animator) {
+				if (_hasIndependentBound) {
+					var rootBone:AnimationNode = animator._avatarNodeMap[_rootBone];
+					var mat:Matrix4x4 = _tempMatrix0;
+					Matrix4x4.multiply((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, rootBone._transform._getWorldMatrix(), mat);
+					
+					var ownWorMat:Matrix4x4 = ownerTrans.worldMatrix;
+					mat.cloneTo(ownWorMat);//更新根骨骼矩阵到自身精灵
+					ownerTrans.worldMatrix = ownWorMat;//TODO:涉及到更新顺序，必须先更新父再更新子
+				}
+				//else{}//兼容性代码
+				
 				var animatorOwner:Sprite3D = animator.owner as Sprite3D;//根节点不缓存
 				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, animatorOwner._transform.worldMatrix);
 				projViewWorld = animatorOwner.getProjectionViewWorldMatrix(projectionView);
@@ -329,7 +331,7 @@ package laya.d3.core {
 					}
 				}
 			} else {
-				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, _owner.transform.worldMatrix);
+				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, ownerTrans.worldMatrix);
 				projViewWorld = _owner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 			}

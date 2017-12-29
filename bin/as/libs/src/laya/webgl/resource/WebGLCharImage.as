@@ -203,12 +203,8 @@ package laya.webgl.resource {
 			_w = w;
 			_h = h;
 			
-			if ((_w < AtlasResourceManager.atlasLimitWidth && _h < AtlasResourceManager.atlasLimitHeight)) {//文字强制加入大图合集
-				_allowMerageInAtlas = true
-			} else {
-				_allowMerageInAtlas = false;
-				throw new Error("文字尺寸超出大图合集限制！");
-			}
+			//文字强制加入大图合集
+			_allowMerageInAtlas = true;
 		}
 		
 		public function clearAtlasSource():void {//canvas为公用绘制载体,资源恢复时会使用,无需清空

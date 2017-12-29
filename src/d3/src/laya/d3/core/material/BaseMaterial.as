@@ -104,9 +104,6 @@ package laya.d3.core.material {
 		/** @private */
 		private var _values:Array;
 		
-		/** @private */
-		public var _isInstance:Boolean;
-		
 		/**渲染剔除状态。*/
 		public var cull:int;
 		/**透明混合。*/
@@ -183,7 +180,6 @@ package laya.d3.core.material {
 		public function BaseMaterial() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
-			_isInstance = false;
 			_shaderDefineValue = 0;
 			_disablePublicShaderDefine = 0;
 			_shaderValues = new ValusArray();
@@ -545,7 +541,7 @@ package laya.d3.core.material {
 			switch (jsonData.version) {
 			case "LAYAMATERIAL:01": 
 				var i:int, n:int;
-				var props:Object = jsonData.props;//TODO:ShaderName
+				var props:Object = jsonData.props;
 				for (var key:String in props) {
 					switch (key) {
 					case "vectors": 

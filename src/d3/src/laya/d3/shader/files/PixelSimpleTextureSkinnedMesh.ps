@@ -4,7 +4,7 @@ precision highp float;
 precision mediump float;
 #endif
 
-#include?DIRECTIONLIGHT||POINTLIGHT||SPOTLIGHT "LightHelper.glsl";
+#include "LightHelper.glsl";
 
 uniform vec4 u_Albedo;
 
@@ -25,7 +25,7 @@ uniform vec3 u_MaterialReflect;
 varying vec2 v_Texcoord0;
 #endif
 
-#ifdef defined(AMBIENTMAP)||defined(LIGHTMAP)
+#if defined(AMBIENTMAP)||defined(LIGHTMAP)
 varying vec2 v_LightMapUV;
 #endif
 #ifdef AMBIENTMAP
@@ -54,7 +54,7 @@ uniform vec3 u_MaterialAmbient;
 #if defined(FOG)||defined(DEPTHFOG)
 	uniform float u_FogStart;
 	uniform float u_FogRange;
-	#if ADDTIVEFOG
+	#ifdef ADDTIVEFOG
 	#else
 		uniform vec3 u_FogColor;
 	#endif
@@ -250,7 +250,7 @@ gl_FragColor=gl_FragColor*u_Albedo;
   
 #ifdef FOG
 	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
-	#if ADDTIVEFOG
+	#ifdef ADDTIVEFOG
 		gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(0.0,0.0,0.0),lerpFact);
 	#else
 		gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);

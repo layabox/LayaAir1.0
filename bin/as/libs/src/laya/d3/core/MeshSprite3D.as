@@ -246,7 +246,6 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
 			var meshSprite3D:MeshSprite3D = destObject as MeshSprite3D;
 			(meshSprite3D._geometryFilter as MeshFilter).sharedMesh = (_geometryFilter as MeshFilter).sharedMesh;
 			var meshRender:MeshRender = _render as MeshRender;
@@ -256,8 +255,10 @@ package laya.d3.core {
 			destMeshRender.castShadow = meshRender.castShadow;
 			var lightmapScaleOffset:Vector4 = meshRender.lightmapScaleOffset;
 			lightmapScaleOffset && (destMeshRender.lightmapScaleOffset = lightmapScaleOffset.clone());
+			destMeshRender.lightmapIndex = meshRender.lightmapIndex;
 			destMeshRender.receiveShadow = meshRender.receiveShadow;
 			destMeshRender.sortingFudge = meshRender.sortingFudge;
+			super.cloneTo(destObject);//父类函数在最后,组件应该最后赋值，否则获取材质默认值等相关函数会有问题
 		}
 		
 		/**

@@ -134,8 +134,6 @@ package laya.display {
 		/**@private */
 		private var _renderCount:int = 0;
 		/**@private */
-		private var _safariOffsetY:Number = 0;
-		/**@private */
 		private var _frameStartTime:Number;
 		/**@private */
 		private var _previousOrientation:int = Browser.window.orientation;
@@ -146,7 +144,7 @@ package laya.display {
 		/**@private 3D场景*/
 		public var _scenes:Array;
 		/**@private webgl Color*/
-		public var _wgColor:Array;
+		public static var _wgColor:Array;
 		
 		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
@@ -212,10 +210,6 @@ package laya.display {
 				
 				// 弹出输入法不应对画布进行resize。
 				if (_this._isInputting()) return;
-				
-				// Safari横屏工具栏偏移
-				if (Browser.onSafari)
-					_this._safariOffsetY = (Browser.window.__innerHeight || Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight) - Browser.window.innerHeight;
 				
 				_this._resetCanvas();
 			});
@@ -407,7 +401,6 @@ package laya.display {
 			offset.x = Math.round(offset.x);
 			offset.y = Math.round(offset.y);
 			mat.translate(offset.x, offset.y);
-			if (_safariOffsetY) mat.translate(0, _safariOffsetY);
 			
 			//处理横竖屏
 			canvasDegree = 0;
@@ -430,7 +423,6 @@ package laya.display {
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
 			//修正用户自行设置的偏移
-			if (_safariOffsetY) mat.translate(0, -_safariOffsetY);
 			mat.translate(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
 			visible = true;
 			_repaint = 1;
@@ -513,7 +505,7 @@ package laya.display {
 				if (value && value !== "black" && value !== "#000000") {
 					_wgColor = Color.create(value)._color;
 				} else {
-					_wgColor = null;
+					if (!Browser.onMiniGame) _wgColor = null;
 				}
 			}
 			
@@ -635,6 +627,7 @@ package laya.display {
 				MouseManager.instance.runEvent();
 				Laya.timer._update();
 				
+				RunDriver.update3DLoop();
 				var scene:*;
 				var i:int, n:int;
 				if (Render.isConchNode) {
@@ -657,16 +650,18 @@ package laya.display {
 					}
 					return;
 				}
-				//if (Render.isWebGL && renderingEnabled) {
+					//if (Render.isWebGL && renderingEnabled) {
 					//context.clear();
 					//super.render(context, x, y);
-				//}
+					//Stat._show && Stat._sp.render(context, x, y);
+					//}
 			}
 			if (Render.isConchNode) return;//NATIVE
 			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
 				if (Render.isWebGL) {
 					context.clear();
 					super.render(context, x, y);
+					Stat._show && Stat._sp.render(context, x, y);
 					
 					RunDriver.clear(_bgColor);
 					RunDriver.beginFlush();
@@ -676,6 +671,7 @@ package laya.display {
 				} else {
 					RunDriver.clear(_bgColor);
 					super.render(context, x, y);
+					Stat._show && Stat._sp.render(context, x, y);
 				}
 			}
 		}

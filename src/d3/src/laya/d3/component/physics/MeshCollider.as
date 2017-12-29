@@ -38,9 +38,6 @@ package laya.d3.component.physics {
 		/** @private */
 		private var _mesh:BaseMesh;
 		
-		///** @private */
-		//public var _transformBoundSphere:BoundSphere;//TODO:是否换成盒子
-		
 		/**
 		 * @private 只读,不允许修改。
 		 */
@@ -69,7 +66,6 @@ package laya.d3.component.physics {
 		 * 创建一个 <code>SphereCollider</code> 实例。
 		 */
 		public function MeshCollider() {
-			//_transformBoundSphere = new BoundSphere(new Vector3(0, 0, 0), 0);
 			_transformBoundingBox = new BoundBox(new Vector3(), new Vector3());
 			_needUpdate = false;
 		}
@@ -160,11 +156,6 @@ package laya.d3.component.physics {
 		 */
 		override public function _initialize(owner:ComponentNode):void {
 			super._initialize(owner);
-			//if (_owner is MeshSprite3D) {
-			//var meshSprite3D:MeshSprite3D = owner as MeshSprite3D;
-			//_mesh = meshSprite3D.meshFilter.sharedMesh;
-			//}
-			
 			(owner as Sprite3D).transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
 			_needUpdate = true;
 		}
@@ -237,19 +228,6 @@ package laya.d3.component.physics {
 		override public function raycast(ray:Ray, hitInfo:RaycastHit, maxDistance:Number = 1.79e+308/*Number.MAX_VALUE*/):Boolean {
 			if (_mesh == null || !_mesh.loaded)
 				return false;
-			
-			//var maxScale:Number;
-			//var transform:Transform3D = (_owner as Sprite3D).transform;
-			//var scale:Vector3 = transform.scale;
-			//if (scale.x >= scale.y && scale.x >= scale.z)
-			//maxScale = scale.x;
-			//else
-			//maxScale = scale.y >= scale.z ? scale.y : scale.z;
-			//
-			//var originalBoundSphere:BoundSphere = _mesh.boundingSphere;
-			//Vector3.transformCoordinate(originalBoundSphere.center, transform.worldMatrix, _transformBoundSphere.center);
-			//_transformBoundSphere.radius = originalBoundSphere.radius * maxScale;
-			//var distance:Number = _transformBoundSphere.intersectsRayPoint(ray, hitInfo.position);
 			var distance:Number = Collision.intersectsRayAndBoxRD(ray, _boundBox);
 			if (distance !== -1 && distance <= maxDistance && _raycastMesh(ray, _owner as Sprite3D, hitInfo, maxDistance)) {
 				return true;

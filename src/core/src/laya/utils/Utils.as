@@ -307,9 +307,6 @@ package laya.utils {
 				ty += canvasTop;
 			}
 			
-			// Safari兼容
-			ty += Laya.stage['_safariOffsetY'];
-			
 			// 组合画布缩放和舞台适配缩放以及显示对象缩放，得到DOM原因的缩放因子
 			var domScaleX:Number, domScaleY:Number;
 			if (perpendicular) {

@@ -137,6 +137,12 @@ package laya.events {
 		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
 		/**更换动作时触发。*/
 		public static const ANIMATION_CHANGED:String = "animationchanged";
+		/**进入触发器时触发。*/
+		public static const TRIGGER_ENTER:String = "triggerenter";
+		/**保持触发器时触发。*/
+		public static const TRIGGER_STAY:String = "triggerstay";
+		/**退出触发器时触发。*/
+		public static const TRIGGER_EXIT:String = "triggerexit";
 		
 		/** 事件类型。*/
 		public var type:String;

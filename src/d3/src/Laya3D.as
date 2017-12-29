@@ -41,7 +41,6 @@ package {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
-	import zTest.BoneAttachPoint;
 	
 	/**
 	 * <code>Laya3D</code> 类用于初始化3D设置。
@@ -231,18 +230,20 @@ package {
 				customProps = node.customProps;
 				var parMeshPath:String = customProps.meshPath;
 				(parMeshPath) && (_addHierarchyInnerUrls(firstLevelUrls, urlMap, urlVersion, hierarchyBasePath, parMeshPath, Mesh));
-				
 				var materialData:Object = customProps.material;
 				if (materialData) {
 					_addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, materialData.path, ShurikenParticleMaterial);
 				} else {//兼容代码
 					var materialPath:String = customProps.materialPath;
-					if (materialPath)//兼容代码
+					if (materialPath){//兼容代码
 						_addHierarchyInnerUrls(secondLevelUrls, urlMap, urlVersion, hierarchyBasePath, materialPath, ShurikenParticleMaterial);
-					else//兼容代码
-						_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, customProps.texturePath, Texture2D);
+					} else{//兼容代码
+						var texturePath:String = customProps.texturePath;
+						if(texturePath)
+							_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, texturePath, Texture2D);
+						//else 材质可能为空,非兼容代码
+					}
 				}
-				
 				break;
 			case "Terrain": 
 				_addHierarchyInnerUrls(fourthLelUrls, urlMap, urlVersion, hierarchyBasePath, node.customProps.dataPath, TerrainRes);
@@ -687,8 +688,6 @@ package {
 			(process < 1.0) && (loader.event(Event.PROGRESS, process));
 		}
 		
-		
-		
 		/**
 		 * 初始化Laya3D相关设置。
 		 * @param	width  3D画布宽度。
@@ -714,7 +713,6 @@ package {
 			Laya.init(width, height);
 			Layer.__init__();
 			Physics.__init__();
-			ShaderCompile3D.__init__();
 			ShaderInit3D.__init__();
 			MeshSprite3D.__init__();
 			AnimationNode.__init__();

@@ -2,7 +2,9 @@ package laya.ui {
 	import laya.display.Sprite;
 	import laya.filters.ColorFilter;
 	import laya.filters.IFilter;
+	import laya.utils.Browser;
 	import laya.utils.Utils;
+	import laya.utils.WeakObject;
 	
 	/**
 	 * <code>UIUtils</code> 是文本工具集。
@@ -10,9 +12,9 @@ package laya.ui {
 	public class UIUtils {
 		private static const grayFilter:ColorFilter = new ColorFilter([0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0.3086, 0.6094, 0.082, 0, 0, 0, 0, 0, 1, 0]);
 		/**
-		 * 需要替换的转义字符表 
-		 */		
-		public static const escapeSequence:Object = {"\\n": "\n", "\\t":"\t"};
+		 * 需要替换的转义字符表
+		 */
+		public static const escapeSequence:Object = {"\\n": "\n", "\\t": "\t"};
 		
 		/**
 		 * 用字符串填充数组，并返回数组副本。
@@ -82,27 +84,41 @@ package laya.ui {
 				target.filters = filters;
 			}
 		}
-				
+		
 		/**
-		 * 获取当前要替换的转移字符 
+		 * 获取当前要替换的转移字符
 		 * @param word
-		 * @return 
-		 * 
-		 */		
-		private static function _getReplaceStr(word:String):String
-		{
+		 * @return
+		 *
+		 */
+		private static function _getReplaceStr(word:String):String {
 			return escapeSequence[word];
 		}
 		
 		/**
-		 * 替换字符串中的转义字符 
+		 * 替换字符串中的转义字符
 		 * @param str
-		 * @return 
-		 * 
-		 */		
-		public static function adptString(str:String):String
-		{
+		 */
+		public static function adptString(str:String):String {
 			return str.replace(/\\(\w)/g, _getReplaceStr);
+		}
+		
+		/**@private */
+		private static var _funMap:WeakObject = new WeakObject();
+		
+		/**
+		 * @private 根据字符串，返回函数表达式
+		 */
+		public static function getBindFun(value:String):Function {
+			var fun:Function = _funMap.get(value);
+			if (fun == null) {
+				var temp:String = "\"" + value + "\"";
+				temp = temp.replace(/^"\${|}"$/g, "").replace(/\${/g, "\"+").replace(/}/g, "+\"");
+				var str:String = "(function(data){if(data==null)return;with(data){try{\nreturn " + temp + "\n}catch(e){}}})";
+				fun = Browser.window.eval(str);
+				_funMap.set(value, fun);
+			}
+			return fun;
 		}
 	}
 }

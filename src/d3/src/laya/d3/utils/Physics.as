@@ -104,12 +104,14 @@ package laya.d3.utils {
 			_outHitAllInfo.length = 0;
 			var colliders:Vector.<Collider> = Layer.getLayerByNumber(layer)._colliders;
 			for (var i:int = 0, n:int = colliders.length; i < n; i++) {
-				
-				colliders[i].raycast(ray, _outHitInfo, distance);
-				if (_outHitInfo.distance !== -1 && _outHitInfo.distance <= distance) {
-					var outHit:RaycastHit = new RaycastHit();
-					_outHitInfo.cloneTo(outHit);
-					_outHitAllInfo.push(outHit);
+				var collider:Collider = colliders[i];
+				if (collider.enable) {
+					collider.raycast(ray, _outHitInfo, distance);
+					if (_outHitInfo.distance !== -1 && _outHitInfo.distance <= distance) {
+						var outHit:RaycastHit = new RaycastHit();
+						_outHitInfo.cloneTo(outHit);
+						_outHitAllInfo.push(outHit);
+					}
 				}
 			}
 			
@@ -137,18 +139,20 @@ package laya.d3.utils {
 		 * @param  distance   射线长度,默认为最大值
 		 * @param  layer      选定制定层内的碰撞器,其他层内碰撞器忽略
 		 */
-		public static function rayCastAll(ray:Ray, outHitAllInfo:Vector.<RaycastHit>, distance:Number =1.79e+308/*Number.MAX_VALUE*/, layer:int = 0):void {
+		public static function rayCastAll(ray:Ray, outHitAllInfo:Vector.<RaycastHit>, distance:Number = 1.79e+308/*Number.MAX_VALUE*/, layer:int = 0):void {
 			outHitAllInfo.length = 0;
 			var colliders:Vector.<Collider> = Layer.getLayerByNumber(layer)._colliders;
 			for (var i:int = 0, n:int = colliders.length; i < n; i++) {
-				_outHitInfo.distance = -1;
-				_outHitInfo.sprite3D = null;
-				
-				colliders[i].raycast(ray, _outHitInfo, distance);
-				if (_outHitInfo.distance !== -1 && _outHitInfo.distance <= distance) {
-					var outHit:RaycastHit = new RaycastHit();
-					_outHitInfo.cloneTo(outHit);
-					outHitAllInfo.push(outHit);
+				var collider:Collider = colliders[i];
+				if (collider.enable) {
+					_outHitInfo.distance = -1;
+					_outHitInfo.sprite3D = null;
+					collider.raycast(ray, _outHitInfo, distance);
+					if (_outHitInfo.distance !== -1 && _outHitInfo.distance <= distance) {
+						var outHit:RaycastHit = new RaycastHit();
+						_outHitInfo.cloneTo(outHit);
+						outHitAllInfo.push(outHit);
+					}
 				}
 			}
 		}

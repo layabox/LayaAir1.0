@@ -138,27 +138,11 @@ package laya.d3.component.animation {
 		
 		/**
 		 * @private
-		 */
-		private function _onDisplayInStage():void {
-			((_owner as Sprite3D).activeInHierarchy) && (_addUpdatePlayerToTimer());
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onUnDisplayInStage():void {
-			((_owner as Sprite3D).activeInHierarchy) && (_removeUpdatePlayerToTimer());
-		}
-		
-		/**
-		 * @private
 		 * 载入组件时执行
 		 */
 		override public function _load(owner:ComponentNode):void {
-			(owner.displayedInStage && (owner as Sprite3D).activeInHierarchy) && (_addUpdatePlayerToTimer());
+			((owner as Sprite3D).activeInHierarchy) && (_addUpdatePlayerToTimer());
 			owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
-			owner.on(Event.DISPLAY, this, _onDisplayInStage);
-			owner.on(Event.UNDISPLAY, this, _onUnDisplayInStage);
 		}
 		
 		/**
@@ -167,10 +151,8 @@ package laya.d3.component.animation {
 		 */
 		override public function _unload(owner:ComponentNode):void {
 			super._unload(owner);
-			(owner.displayedInStage && (owner as Sprite3D).activeInHierarchy) && (_removeUpdatePlayerToTimer());
+			((owner as Sprite3D).activeInHierarchy) && (_removeUpdatePlayerToTimer());
 			owner.off(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
-			owner.off(Event.DISPLAY, this, _onDisplayInStage);
-			owner.off(Event.UNDISPLAY, this, _onUnDisplayInStage);
 			_player._destroy();
 			_player = null;
 			_templet = null;

@@ -1102,5 +1102,13 @@ package laya.ani.bone {
 		public function get player():AnimationPlayer {
 			return _player;
 		}
+		
+		/**
+		 * 得到动画模板的引用
+		 */
+		public function get templet():Templet
+		{
+			return _templet;
+		}
 	}
 }

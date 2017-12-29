@@ -161,21 +161,17 @@ package laya.ui {
 				var left:Number = sizeGrid[3];
 				var repeat:Boolean = sizeGrid[4];
 				var needClip:Boolean = false;
-				if (width == sw)
-				{
+				if (width == sw) {
 					left = right = 0;
 				}
-				if (height == sh)
-				{
+				if (height == sh) {
 					top = bottom = 0;
 				}
+				//处理进度条不好看的问题
 				if (left + right > width) {
 					var clipWidth:Number = width;
 					needClip = true;
 					width = left + right;
-				}
-				
-				if (needClip) {
 					save();
 					clipRect(0, 0, clipWidth, height);
 				}

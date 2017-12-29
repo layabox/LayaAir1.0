@@ -2825,7 +2825,7 @@ var AnimationPlayer=(function(_super){
 	*/
 	__proto._setPlayParams=function(time,cacheFrameInterval){
 		this._currentTime=time;
-		this._currentKeyframeIndex=Math.floor((this.currentPlayTime)/ cacheFrameInterval+0.01);
+		this._currentKeyframeIndex=Math.max(Math.floor((this.currentPlayTime)/ cacheFrameInterval+0.01),0);
 		this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
 	}
 
@@ -2834,7 +2834,7 @@ var AnimationPlayer=(function(_super){
 	*/
 	__proto._setPlayParamsWhenStop=function(currentAniClipPlayDuration,cacheFrameInterval){
 		this._currentTime=currentAniClipPlayDuration;
-		this._currentKeyframeIndex=Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01);
+		this._currentKeyframeIndex=Math.max(Math.floor(currentAniClipPlayDuration / cacheFrameInterval+0.01),0);
 		this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
 		this._currentAnimationClipIndex=-1;
 	}
@@ -3121,7 +3121,7 @@ var AnimationPlayer=(function(_super){
 		this._startUpdateLoopCount=Stat.loopCount;
 		var cacheFrameInterval=this._cacheFrameRateInterval *this._cachePlayRate;
 		this._currentTime=value;
-		this._currentKeyframeIndex=Math.floor(this.currentPlayTime / cacheFrameInterval);
+		this._currentKeyframeIndex=Math.max(Math.floor(this.currentPlayTime / cacheFrameInterval),0);
 		this._currentFrameTime=this._currentKeyframeIndex *cacheFrameInterval;
 	});
 
@@ -4788,6 +4788,13 @@ var Skeleton=(function(_super){
 			this._total=-1;
 		}
 		return this._total;
+	});
+
+	/**
+	*得到动画模板的引用
+	*/
+	__getset(0,__proto,'templet',function(){
+		return this._templet;
 	});
 
 	/**

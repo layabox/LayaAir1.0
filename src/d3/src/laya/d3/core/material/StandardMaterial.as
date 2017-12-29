@@ -323,7 +323,7 @@ package laya.d3.core.material {
 			_setColor(MATERIALREFLECT, value);
 		}
 		
-		public function get albedo():Vector4 {
+		public function get albedoColor():Vector4 {
 			return _getColor(ALBEDO);
 		}
 		
@@ -331,7 +331,19 @@ package laya.d3.core.material {
 		 * 设置反射率。
 		 * @param value 反射率。
 		 */
-		public function set albedo(value:Vector4):void {
+		public function set albedoColor(value:Vector4):void {
+			_setColor(ALBEDO, value);
+		}
+		
+		public function get albedo():Vector4 {//兼容
+			return _getColor(ALBEDO);
+		}
+		
+		/**
+		 * 设置反射率。
+		 * @param value 反射率。
+		 */
+		public function set albedo(value:Vector4):void {//兼容
 			_setColor(ALBEDO, value);
 		}
 		

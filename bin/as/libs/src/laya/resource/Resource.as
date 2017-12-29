@@ -185,7 +185,7 @@ package laya.resource {
 		 */
 		public function activeResource(force:Boolean = false):void {
 			_lastUseFrameCount = Stat.loopCount;
-			if (!_disposed && (_released || force))
+			if (!_disposed&&__loaded && (_released || force))
 				recreateResource();
 		}
 		

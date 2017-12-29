@@ -19,6 +19,7 @@ package laya.webgl.resource {
 		
 		/**HTML Canvas*/
 		public var _canvas:*;
+		public var _imgData:*;	//由于现在使用预乘。所以最希望使用原始数据（已经在shader中预乘了）
 		//public var _oriCanvas:*;
 		
 		///**
@@ -120,14 +121,17 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);//TODO canvas? 如果是canvas应该不用设置
-			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _canvas);
-			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			gl.pixelStorei(WebGLContext.UNPACK_FLIP_Y_WEBGL, 1);
+			//var imgdata:* = Browser.context.getImageData(0, 0, _w, _h);//_canvas's ctx
+			//gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);//TODO canvas? 如果是canvas应该不用设置
+			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _imgData);
+			//gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MAG_FILTER, WebGLContext.LINEAR);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
+			gl.pixelStorei(WebGLContext.UNPACK_FLIP_Y_WEBGL, 0);
 			memorySize = _w * _h * 4;
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			//_canvas = null;

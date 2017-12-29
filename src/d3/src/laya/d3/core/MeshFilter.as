@@ -19,7 +19,7 @@ package laya.d3.core {
 	 */
 	public class MeshFilter extends GeometryFilter {
 		/** @private */
-		private var _owner:MeshSprite3D;
+		private var _owner:RenderableSprite3D;
 		/** @private */
 		private var _sharedMesh:BaseMesh;
 		
@@ -78,7 +78,7 @@ package laya.d3.core {
 		 * 创建一个新的 <code>MeshFilter</code> 实例。
 		 * @param owner 所属网格精灵。
 		 */
-		public function MeshFilter(owner:MeshSprite3D) {
+		public function MeshFilter(owner:RenderableSprite3D) {
 			_owner = owner;
 		}
 		

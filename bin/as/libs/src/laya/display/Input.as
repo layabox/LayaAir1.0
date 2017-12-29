@@ -2,7 +2,6 @@ package laya.display {
 	import laya.events.Event;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
-	import laya.renders.RenderContext;
 	import laya.utils.Browser;
 	import laya.utils.Utils;
 	
@@ -124,7 +123,7 @@ package laya.display {
 			
 			// 移动端通过画布的touchend调用focus
 			if (Browser.onMobile)
-				Render.canvas.addEventListener(IOS_IFRAME ? "click" : "touchend", _popupInputMethod);
+				Render.canvas.addEventListener(IOS_IFRAME ?( Browser.onMiniGame ? "touchend" : "click") : "touchend", _popupInputMethod);
 		}
 		
 		// 移动平台在单击事件触发后弹出输入法
@@ -168,8 +167,8 @@ package laya.display {
 		   input.setFontFace = function(fontFace:String):void { input.style.fontFamily = fontFace; };
 		   if(!Render.isConchApp)
 		   {
-		   input.setColor = function(color:String):void { input.style.color = color; };
-		   input.setFontSize = function(fontSize:int):void { input.style.fontSize = fontSize + 'px'; };
+		   	input.setColor = function(color:String):void { input.style.color = color; };
+		   	input.setFontSize = function(fontSize:int):void { input.style.fontSize = fontSize + 'px'; };
 		   }
 		   [IF-SCRIPT-END]*/
 		}
@@ -235,11 +234,6 @@ package laya.display {
 		
 		private function _onMouseDown(e:Event):void {
 			focus = true;
-		}
-		
-		/**@inheritDoc*/
-		override public function render(context:RenderContext, x:Number, y:Number):void {
-			super.render(context, x, y);
 		}
 		
 		private static var stageMatrix:Matrix;
@@ -332,6 +326,7 @@ package laya.display {
 			
 			input.readOnly = !this._editable;
 			if (Render.isConchApp) {
+				input.setType(this._type);
 				input.setForbidEdit(!this._editable);
 			}
 			input.maxLength = this._maxChars;
@@ -351,8 +346,11 @@ package laya.display {
 			if (Browser.onPC) input.focus();
 			
 			// PC浏览器隐藏文字
-			var temp:String = _text;
-			this._text = null;
+			if(!Browser.onMiniGame)
+			{
+				var temp:String = _text;
+				this._text = null;
+			}
 			typeset();
 			
 			// PC同步输入框外观。
@@ -592,6 +590,9 @@ package laya.display {
 			else
 				_getCSSStyle().password = false;
 			_type = value;
+			if (Render.isConchApp) {
+				nativeInput.setType(value);
+			}
 		}
 		
 		/**

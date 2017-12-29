@@ -3,6 +3,7 @@ package laya.ui {
 	import laya.net.Loader;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
+	import laya.utils.Utils;
 	import laya.utils.WeakObject;
 	
 	/**
@@ -142,6 +143,8 @@ package laya.ui {
 		protected var _clipChanged:Boolean;
 		/**@private */
 		protected var _group:String;
+		/**@private */
+		protected var _toIndex:int = -1;
 		
 		/**
 		 * 创建一个新的 <code>Clip</code> 示例。
@@ -421,10 +424,13 @@ package laya.ui {
 		
 		/**
 		 * 播放动画。
+		 * @param	from	开始索引
+		 * @param	to		结束索引，-1为不限制
 		 */
-		public function play():void {
+		public function play(from:int = 0, to:int = -1):void {
 			_isPlaying = true;
-			this.index = 0;
+			this.index = from;
+			this._toIndex = to;
 			this._index++;
 			Laya.timer.loop(this.interval, this, _loop);
 			
@@ -437,8 +443,10 @@ package laya.ui {
 		 */
 		protected function _loop():void {
 			if (_style.visible && this._sources) {
-				this.index = _index, _index++;
-				this._index >= this._sources.length && (this._index = 0);
+				_index++;			
+				if (_toIndex > -1 && _index >= _toIndex) stop();
+				else if (this._index >= this._sources.length) this._index = 0;
+				this.index = _index;
 			}
 		}
 		
@@ -448,6 +456,7 @@ package laya.ui {
 		public function stop():void {
 			this._isPlaying = false;
 			Laya.timer.clear(this, _loop);
+			event(Event.COMPLETE);
 		}
 		
 		/**@inheritDoc */

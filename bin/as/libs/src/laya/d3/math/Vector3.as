@@ -10,29 +10,25 @@ package laya.d3.math {
 		public static const _tempVector4:Vector4 = new Vector4();
 		
 		/**零向量，禁止修改*/
-		public static const ZERO:Vector3 = new Vector3(0.0, 0.0, 0.0);
+		public static const ZERO:Vector3 =/*[STATIC SAFE]*/ new Vector3(0.0, 0.0, 0.0);
 		/**一向量，禁止修改*/
-		public static const ONE:Vector3 = new Vector3(1.0, 1.0, 1.0);
+		public static const ONE:Vector3 =/*[STATIC SAFE]*/ new Vector3(1.0, 1.0, 1.0);
 		/**X轴单位向量，禁止修改*/
-		public static const NegativeUnitX:Vector3 = new Vector3(-1, 0, 0);
+		public static const NegativeUnitX:Vector3 =/*[STATIC SAFE]*/ new Vector3(-1, 0, 0);
 		/**X轴单位向量，禁止修改*/
-		public static const UnitX:Vector3 = new Vector3(1, 0, 0);
+		public static const UnitX:Vector3 =/*[STATIC SAFE]*/ new Vector3(1, 0, 0);
 		/**Y轴单位向量，禁止修改*/
-		public static const UnitY:Vector3 = new Vector3(0, 1, 0);
+		public static const UnitY:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 1, 0);
 		/**Z轴单位向量，禁止修改*/
-		public static const UnitZ:Vector3 = new Vector3(0, 0, 1);
+		public static const UnitZ:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, 1);
 		/**右手坐标系统前向量，禁止修改*/
-		public static const ForwardRH:Vector3 = new Vector3(0, 0, -1);
+		public static const ForwardRH:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, -1);
 		/**左手坐标系统前向量,禁止修改*/
-		public static const ForwardLH:Vector3 = new Vector3(0, 0, 1);
+		public static const ForwardLH:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, 1);
 		/**上向量,禁止修改*/
-		public static const Up:Vector3 = new Vector3(0, 1, 0);
-		
-		/** @private */
-		private static var TEMPVec4:Vector4 = new Vector4();
-		
+		public static const Up:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 1, 0);
 		/**无效矩阵,禁止修改*/
-		public static const NAN:Vector3 = new Vector3(NaN, NaN, NaN);
+		public static const NAN:Vector3 =/*[STATIC SAFE]*/ new Vector3(NaN, NaN, NaN);
 		
 		/**
 		 * 两个三维向量距离的平方。
@@ -262,7 +258,7 @@ package laya.d3.math {
 		 * @param	result 输出三维向量。
 		 */
 		public static function transformCoordinate(coordinate:Vector3, transform:Matrix4x4, result:Vector3):void {
-			var vectorElem:Float32Array = TEMPVec4.elements;
+			var vectorElem:Float32Array = _tempVector4.elements;
 			
 			var coordinateElem:Float32Array = coordinate.elements;
 			var coordinateX:Number = coordinateElem[0];

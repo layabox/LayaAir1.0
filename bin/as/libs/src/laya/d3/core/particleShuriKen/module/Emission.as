@@ -14,10 +14,6 @@ package laya.d3.core.particleShuriKen.module {
 		/**@private 粒子发射速率,每秒发射的个数。*/
 		private var _emissionRate:int;
 		
-		/**@private 粒子数据模板,开发者禁止修改。*/
-		public var _particleSystem:ShurikenParticleSystem;
-		/**@private 粒子形状,开发者禁止修改。*/
-		public var _shape:BaseShape;
 		/**@private 粒子的爆裂,不允许修改。*/
 		public var _bursts:Vector.<Burst>;
 		
@@ -64,7 +60,6 @@ package laya.d3.core.particleShuriKen.module {
 		 */
 		public function _destroy():void {
 			_bursts = null;
-			_particleSystem = null;
 			_destroyed = true;
 		}
 		

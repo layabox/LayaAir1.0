@@ -9,15 +9,78 @@
 	var Handler=laya.utils.Handler,Loader=laya.net.Loader,Matrix=laya.maths.Matrix,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
 	var Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
 	var Resource=laya.resource.Resource,ResourceManager=laya.resource.ResourceManager,RunDriver=laya.utils.RunDriver;
-	var Sprite=laya.display.Sprite,Stat=laya.utils.Stat,StringKey=laya.utils.StringKey,Style=laya.display.css.Style;
-	var System=laya.system.System,Text=laya.display.Text,Texture=laya.resource.Texture,TransformInfo=laya.display.css.TransformInfo;
-	var URL=laya.net.URL,Utils=laya.utils.Utils,VectorGraphManager=laya.utils.VectorGraphManager,WordText=laya.utils.WordText;
+	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Stat=laya.utils.Stat,StringKey=laya.utils.StringKey;
+	var Style=laya.display.css.Style,System=laya.system.System,Text=laya.display.Text,Texture=laya.resource.Texture;
+	var TransformInfo=laya.display.css.TransformInfo,URL=laya.net.URL,Utils=laya.utils.Utils,VectorGraphManager=laya.utils.VectorGraphManager;
+	var WordText=laya.utils.WordText;
 Laya.interface('laya.webgl.shapes.IShape');
 Laya.interface('laya.webgl.submit.ISubmit');
 Laya.interface('laya.webgl.text.ICharSegment');
 Laya.interface('laya.webgl.canvas.save.ISaveData');
 Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
 Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
+//class laya.webgl.canvas.save.SaveBase
+var SaveBase=(function(){
+	function SaveBase(){
+		//this._valueName=null;
+		//this._value=null;
+		//this._dataObj=null;
+		//this._newSubmit=false;
+	}
+
+	__class(SaveBase,'laya.webgl.canvas.save.SaveBase');
+	var __proto=SaveBase.prototype;
+	Laya.imps(__proto,{"laya.webgl.canvas.save.ISaveData":true})
+	__proto.isSaveMark=function(){return false;}
+	__proto.restore=function(context){
+		this._dataObj[this._valueName]=this._value;
+		SaveBase._cache[SaveBase._cache._length++]=this;
+		this._newSubmit && (context._curSubmit=Submit.RENDERBASE,context._renderKey=0);
+	}
+
+	SaveBase._createArray=function(){
+		var value=[];
+		value._length=0;
+		return value;
+	}
+
+	SaveBase._init=function(){
+		var namemap=SaveBase._namemap={};
+		namemap[0x1]="ALPHA";
+		namemap[0x2]="fillStyle";
+		namemap[0x8]="font";
+		namemap[0x100]="lineWidth";
+		namemap[0x200]="strokeStyle";
+		namemap[0x2000]="_mergeID";
+		namemap[0x400]=namemap[0x800]=namemap[0x1000]=[];
+		namemap[0x4000]="textBaseline";
+		namemap[0x8000]="textAlign";
+		namemap[0x10000]="_nBlendType";
+		namemap[0x100000]="shader";
+		namemap[0x200000]="filters";
+		return namemap;
+	}
+
+	SaveBase.save=function(context,type,dataObj,newSubmit){
+		if ((context._saveMark._saveuse & type)!==type){
+			context._saveMark._saveuse |=type;
+			var cache=SaveBase._cache;
+			var o=cache._length > 0 ? cache[--cache._length] :(new SaveBase());
+			o._value=dataObj[o._valueName=SaveBase._namemap[type]];
+			o._dataObj=dataObj;
+			o._newSubmit=newSubmit;
+			var _save=context._save;
+			_save[_save._length++]=o;
+		}
+	}
+
+	__static(SaveBase,
+	['_cache',function(){return this._cache=laya.webgl.canvas.save.SaveBase._createArray();},'_namemap',function(){return this._namemap=SaveBase._init();}
+	]);
+	return SaveBase;
+})()
+
+
 //class laya.filters.webgl.FilterActionGL
 var FilterActionGL=(function(){
 	function FilterActionGL(){}
@@ -402,7 +465,7 @@ var AtlasResourceManager=(function(){
 	});
 
 	__getset(1,AtlasResourceManager,'enabled',function(){
-		return AtlasResourceManager._enabled;
+		return Config.atlasEnable;
 	});
 
 	__getset(1,AtlasResourceManager,'atlasLimitWidth',function(){
@@ -418,12 +481,10 @@ var AtlasResourceManager=(function(){
 	});
 
 	AtlasResourceManager._enable=function(){
-		AtlasResourceManager._enabled=true;
 		Config.atlasEnable=true;
 	}
 
 	AtlasResourceManager._disable=function(){
-		AtlasResourceManager._enabled=false;
 		Config.atlasEnable=false;
 	}
 
@@ -435,7 +496,6 @@ var AtlasResourceManager=(function(){
 		AtlasResourceManager.atlasLimitHeight=512;
 	}
 
-	AtlasResourceManager._enabled=false;
 	AtlasResourceManager._atlasLimitWidth=0;
 	AtlasResourceManager._atlasLimitHeight=0;
 	AtlasResourceManager.gridSize=16;
@@ -698,68 +758,6 @@ var Path=(function(){
 })()
 
 
-//class laya.webgl.canvas.save.SaveBase
-var SaveBase=(function(){
-	function SaveBase(){
-		//this._valueName=null;
-		//this._value=null;
-		//this._dataObj=null;
-		//this._newSubmit=false;
-	}
-
-	__class(SaveBase,'laya.webgl.canvas.save.SaveBase');
-	var __proto=SaveBase.prototype;
-	Laya.imps(__proto,{"laya.webgl.canvas.save.ISaveData":true})
-	__proto.isSaveMark=function(){return false;}
-	__proto.restore=function(context){
-		this._dataObj[this._valueName]=this._value;
-		SaveBase._cache[SaveBase._cache._length++]=this;
-		this._newSubmit && (context._curSubmit=Submit.RENDERBASE,context._renderKey=0);
-	}
-
-	SaveBase._createArray=function(){
-		var value=[];
-		value._length=0;
-		return value;
-	}
-
-	SaveBase._init=function(){
-		var namemap=SaveBase._namemap={};
-		namemap[0x1]="ALPHA";
-		namemap[0x2]="fillStyle";
-		namemap[0x8]="font";
-		namemap[0x100]="lineWidth";
-		namemap[0x200]="strokeStyle";
-		namemap[0x2000]="_mergeID";
-		namemap[0x400]=namemap[0x800]=namemap[0x1000]=[];
-		namemap[0x4000]="textBaseline";
-		namemap[0x8000]="textAlign";
-		namemap[0x10000]="_nBlendType";
-		namemap[0x100000]="shader";
-		namemap[0x200000]="filters";
-		return namemap;
-	}
-
-	SaveBase.save=function(context,type,dataObj,newSubmit){
-		if ((context._saveMark._saveuse & type)!==type){
-			context._saveMark._saveuse |=type;
-			var cache=SaveBase._cache;
-			var o=cache._length > 0 ? cache[--cache._length] :(new SaveBase());
-			o._value=dataObj[o._valueName=SaveBase._namemap[type]];
-			o._dataObj=dataObj;
-			o._newSubmit=newSubmit;
-			var _save=context._save;
-			_save[_save._length++]=o;
-		}
-	}
-
-	__static(SaveBase,
-	['_cache',function(){return this._cache=laya.webgl.canvas.save.SaveBase._createArray();},'_namemap',function(){return this._namemap=SaveBase._init();}
-	]);
-	return SaveBase;
-})()
-
-
 //class laya.webgl.canvas.save.SaveClipRect
 var SaveClipRect=(function(){
 	function SaveClipRect(){
@@ -826,13 +824,14 @@ var SaveClipRectStencil=(function(){
 		context._curSubmit=Submit.RENDERBASE;
 	}
 
-	SaveClipRectStencil.save=function(context,submitStencil,x,y,width,height){
+	SaveClipRectStencil.save=function(context,submitStencil,x,y,width,height,clipX,clipY,clipWidth,clipHeight){
 		if ((context._saveMark._saveuse & /*laya.webgl.canvas.save.SaveBase.TYPE_CLIPRECT_STENCIL*/0x40000)==/*laya.webgl.canvas.save.SaveBase.TYPE_CLIPRECT_STENCIL*/0x40000)return;
 		context._saveMark._saveuse |=/*laya.webgl.canvas.save.SaveBase.TYPE_CLIPRECT_STENCIL*/0x40000;
 		var cache=SaveClipRectStencil._cache;
 		var o=cache._length > 0 ? cache[--cache._length] :(new SaveClipRectStencil());
 		o._clipSaveRect=context._clipRect;
-		context._clipRect=o._clipRect.copyFrom(context._clipRect);
+		o._clipRect.setTo(clipX,clipY,clipWidth,clipHeight);
+		context._clipRect=o._clipRect;
 		o._rect.x=x;
 		o._rect.y=y;
 		o._rect.width=width;
@@ -3155,73 +3154,136 @@ var RenderState2D=(function(){
 })()
 
 
+/**
+*@private
+*<code>ShaderCompile</code> 类用于实现Shader编译。
+*/
 //class laya.webgl.utils.ShaderCompile
 var ShaderCompile=(function(){
-	var ShaderScriptBlock;
-	function ShaderCompile(name,vs,ps,nameMap,includeFiles){
+	var ShaderNode,InlcudeFile;
+	function ShaderCompile(name,vs,ps,nameMap){
+		//this._nameMap=null;
 		//this._VS=null;
 		//this._PS=null;
-		//this._VSTXT=null;
-		//this._PSTXT=null;
-		//this._nameMap=null;
-		this._VSTXT=vs;
-		this._PSTXT=ps;
-		function split (str){
-			var words=str.split(' ');
-			var out=[];
-			for (var i=0;i < words.length;i++)
-			words[i].length > 0 && out.push(words[i]);
-			return out;
-		}
-		function c (script){
-			var i=0,n=0,ofs=0,words,condition;
-			var top=new ShaderScriptBlock(0,null,null,null);
-			var parent=top;
-			var lines=script.split('\n');
-			for (i=0,n=lines.length;i < n;i++){
-				var line=lines[i];
-				if (line.indexOf("#ifdef")>=0){
-					words=split(line);
-					parent=new ShaderScriptBlock(1,words[1],"",parent);
-					continue ;
-				}
-				if (line.indexOf("#else")>=0){
-					condition=parent.condition;
-					parent=new ShaderScriptBlock(2,null,"",parent.parent);
-					parent.condition=condition;
-					continue ;
-				}
-				if (line.indexOf("#endif")>=0){
-					parent=parent.parent;
-					continue ;
-				}
-				if (line.indexOf("#include")>=0){
-					words=split(line);
-					var fname=words[1];
-					var chr=fname.charAt(0);
-					if (chr==='"' || chr==="'"){
-						fname=fname.substr(1,fname.length-2);
-						ofs=fname.lastIndexOf(chr);
-						if (ofs > 0)fname=fname.substr(0,ofs);
-					}
-					ofs=words[0].indexOf('?');
-					var str=ofs > 0 ? words[0].substr(ofs+1):words[0];
-					new ShaderScriptBlock(1,str,includeFiles[fname],parent);
-					continue ;
-				}
-				if (parent.childs.length > 0 && parent.childs[parent.childs.length-1].type===0){
-					parent.childs[parent.childs.length-1].text+="\n"+line;
-				}else new ShaderScriptBlock(0,null,line,parent);
-			}
+		var _$this=this;
+		function _compile (script){
+			var includefiles=[];
+			var top=new ShaderNode(includefiles);
+			_$this._compileToTree(top,script.split('\n'),0,includefiles);
 			return top;
-		}
-		this._VS=c(vs);
-		this._PS=c(ps);
+		};
+		var startTime=Browser.now();
+		this._VS=_compile(vs);
+		this._PS=_compile(ps);
 		this._nameMap=nameMap;
+		if ((Browser.now()-startTime)> 2)
+			console.log("ShaderCompile use time:"+(Browser.now()-startTime)+"  size:"+vs.length+"/"+ps.length);
 	}
 
 	__class(ShaderCompile,'laya.webgl.utils.ShaderCompile');
 	var __proto=ShaderCompile.prototype;
+	__proto._compileToTree=function(parent,lines,start,includefiles){
+		var node,preNode;
+		var text,name,fname;
+		var ofs=0,words,noUseNode;
+		for (var i=start;i < lines.length;i++){
+			text=lines[i];
+			if (text.length < 1)continue ;
+			ofs=text.indexOf("//");
+			if (ofs===0)continue ;
+			if (ofs >=0)text=text.substr(0,ofs);
+			node=noUseNode || new ShaderNode(includefiles);
+			noUseNode=null;
+			node.text=text;
+			node.noCompile=true;
+			if ((ofs=text.indexOf("#"))>=0){
+				name="#";
+				for (var j=ofs+1,n=text.length;j < n;j++){
+					var c=text.charAt(j);
+					if (c===' ' || c==='\t' || c==='?')break ;
+					name+=c;
+				}
+				node.name=name;
+				switch (name){
+					case "#ifdef":
+					case "#ifndef":
+						node.src=text;
+						node.noCompile=text.match(/[!&|()=<>]/)!=null;
+						if (!node.noCompile){
+							words=text.replace(/^\s*/,'').split(/\s+/);
+							node.setCondition(words[1],name==="#ifdef" ? 1 :2);
+							node.text="//"+node.text;
+							}else {
+							console.log("function():Boolean{return "+text.substr(ofs+node.name.length)+"}");
+						}
+						node.setParent(parent);
+						parent=node;
+						continue ;
+					case "#if":
+						node.src=text;
+						node.noCompile=true;
+						node.setParent(parent);
+						parent=node;
+						continue ;
+					case "#else":
+						node.src=text;
+						parent=parent.parent;
+						preNode=parent.childs[parent.childs.length-1];
+						node.noCompile=preNode.noCompile;
+						if (!node.noCompile){
+							node.condition=preNode.condition;
+							node.conditionType=preNode.conditionType==1 ? 2 :1;
+							node.text="//"+node.text+" "+preNode.text+" "+node.conditionType;
+						}
+						node.setParent(parent);
+						parent=node;
+						continue ;
+					case "#endif":
+						parent=parent.parent;
+						preNode=parent.childs[parent.childs.length-1];
+						node.noCompile=preNode.noCompile;
+						if (!node.noCompile){
+							node.text="//"+node.text;
+						}
+						node.setParent(parent);
+						continue ;
+					case "#include":
+						words=ShaderCompile.splitToWords(text,null);
+						var inlcudeFile=ShaderCompile.includes[words[1]];
+						if (!inlcudeFile){
+							throw "ShaderCompile error no this include file:"+words[1];
+							return;
+						}
+						if ((ofs=words[0].indexOf("?"))< 0){
+							node.setParent(parent);
+							text=inlcudeFile.getWith(words[2]=='with' ? words[3] :null);
+							this._compileToTree(node,text.split('\n'),0,includefiles);
+							node.text="";
+							continue ;
+						}
+						node.setCondition(words[0].substr(ofs+1),1);
+						node.text=inlcudeFile.getWith(words[2]=='with' ? words[3] :null);
+						break ;
+					case "#import":
+						words=ShaderCompile.splitToWords(text,null);
+						fname=words[1];
+						includefiles.push({node:node,file:ShaderCompile.includes[fname],ofs:node.text.length});
+						continue ;
+					}
+				}else {
+				preNode=parent.childs[parent.childs.length-1];
+				if (preNode && !preNode.name){
+					includefiles.length > 0 && ShaderCompile.splitToWords(text,preNode);
+					noUseNode=node;
+					preNode.text+="\n"+text;
+					continue ;
+				}
+				includefiles.length > 0 && ShaderCompile.splitToWords(text,node);
+			}
+			node.setParent(parent);
+		}
+	}
+
 	__proto.createShader=function(define,shaderName,createShader){
 		var defMap={};
 		var defineStr="";
@@ -3236,55 +3298,256 @@ var ShaderCompile=(function(){
 		return (createShader || Shader.create)(defineStr+vs.join('\n'),defineStr+ps.join('\n'),shaderName,this._nameMap);
 	}
 
+	ShaderCompile._parseOne=function(attributes,uniforms,words,i,word,b){
+		var one={type:ShaderCompile.shaderParamsMap[words[i+1]],name:words[i+2],size:isNaN(parseInt(words[i+3]))? 1 :parseInt(words[i+3])};
+		if (b){
+			if (word=="attribute"){
+				attributes.push(one);
+				}else {
+				uniforms.push(one);
+			}
+		}
+		if (words[i+3]==':'){
+			one.type=words[i+4];
+			i+=2;
+		}
+		i+=2;
+		return i;
+	}
+
+	ShaderCompile.addInclude=function(fileName,txt){
+		if (!txt || txt.length===0)
+			throw new Error("add shader include file err:"+fileName);
+		if (ShaderCompile.includes[fileName])
+			throw new Error("add shader include file err, has add:"+fileName);
+		ShaderCompile.includes[fileName]=new InlcudeFile(txt);
+	}
+
+	ShaderCompile.preGetParams=function(vs,ps){
+		var text=[vs,ps];
+		var result={};
+		var attributes=[];
+		var uniforms=[];
+		var definesInfo={};
+		var definesName=[];
+		result.attributes=attributes;
+		result.uniforms=uniforms;
+		result.defines=definesInfo;
+		var i=0,n=0,one;
+		for (var s=0;s < 2;s++){
+			text[s]=text[s].replace(ShaderCompile._removeAnnotation,"");
+			var words=text[s].match(ShaderCompile._reg);
+			var tempelse;
+			for (i=0,n=words.length;i < n;i++){
+				var word=words[i];
+				if (word !="attribute" && word !="uniform"){
+					if (word=="#define"){
+						word=words[++i];
+						definesName[word]=1;
+						continue ;
+						}else if (word=="#ifdef"){
+						tempelse=words[++i];
+						var def=definesInfo[tempelse]=definesInfo[tempelse] || [];
+						for (i++;i < n;i++){
+							word=words[i];
+							if (word !="attribute" && word !="uniform"){
+								if (word=="#else"){
+									for (i++;i < n;i++){
+										word=words[i];
+										if (word !="attribute" && word !="uniform"){
+											if (word=="#endif"){
+												break ;
+											}
+											continue ;
+										}
+										i=ShaderCompile._parseOne(attributes,uniforms,words,i,word,!definesName[tempelse]);
+									}
+								}
+								continue ;
+							}
+							i=ShaderCompile._parseOne(attributes,uniforms,words,i,word,definesName[tempelse]);
+						}
+					}
+					continue ;
+				}
+				i=ShaderCompile._parseOne(attributes,uniforms,words,i,word,true);
+			}
+		}
+		return result;
+	}
+
+	ShaderCompile.splitToWords=function(str,block){
+		var out=[];
+		var c;
+		var ofs=-1;
+		var word;
+		for (var i=0,n=str.length;i < n;i++){
+			c=str.charAt(i);
+			if (" \t=+-*/&%!<>()'\",;".indexOf(c)>=0){
+				if (ofs >=0 && (i-ofs)> 1){
+					word=str.substr(ofs,i-ofs);
+					out.push(word);
+				}
+				if (c=='"' || c=="'"){
+					var ofs2=str.indexOf(c,i+1);
+					if (ofs2 < 0){
+						throw "Sharder err:"+str;
+						return null;
+					}
+					out.push(str.substr(i+1,ofs2-i-1));
+					i=ofs2;
+					ofs=-1;
+					continue ;
+				}
+				if (c=='(' && block && out.length > 0){
+					word=out[out.length-1]+";";
+					if ("vec4;main;".indexOf(word)< 0)
+						block.useFuns+=word;
+				}
+				ofs=-1;
+				continue ;
+			}
+			if (ofs < 0)ofs=i;
+		}
+		if (ofs < n && (n-ofs)> 1){
+			word=str.substr(ofs,n-ofs);
+			out.push(word);
+		}
+		return out;
+	}
+
 	ShaderCompile.IFDEF_NO=0;
 	ShaderCompile.IFDEF_YES=1;
 	ShaderCompile.IFDEF_ELSE=2;
+	ShaderCompile.IFDEF_PARENT=3;
+	ShaderCompile.includes={};
+	__static(ShaderCompile,
+	['_removeAnnotation',function(){return this._removeAnnotation=new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)","g");},'_reg',function(){return this._reg=new RegExp("(\".*\")|('.*')|([#\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])","g");},'_splitToWordExps',function(){return this._splitToWordExps=new RegExp("[(\".*\")]+|[('.*')]+|([ \\t=\\+\\-*/&%!<>!%\(\),;])","g");},'shaderParamsMap',function(){return this.shaderParamsMap={"float":/*laya.webgl.WebGLContext.FLOAT*/0x1406,"int":/*laya.webgl.WebGLContext.INT*/0x1404,"bool":/*laya.webgl.WebGLContext.BOOL*/0x8B56,"vec2":/*laya.webgl.WebGLContext.FLOAT_VEC2*/0x8B50,"vec3":/*laya.webgl.WebGLContext.FLOAT_VEC3*/0x8B51,"vec4":/*laya.webgl.WebGLContext.FLOAT_VEC4*/0x8B52,"ivec2":/*laya.webgl.WebGLContext.INT_VEC2*/0x8B53,"ivec3":/*laya.webgl.WebGLContext.INT_VEC3*/0x8B54,"ivec4":/*laya.webgl.WebGLContext.INT_VEC4*/0x8B55,"bvec2":/*laya.webgl.WebGLContext.BOOL_VEC2*/0x8B57,"bvec3":/*laya.webgl.WebGLContext.BOOL_VEC3*/0x8B58,"bvec4":/*laya.webgl.WebGLContext.BOOL_VEC4*/0x8B59,"mat2":/*laya.webgl.WebGLContext.FLOAT_MAT2*/0x8B5A,"mat3":/*laya.webgl.WebGLContext.FLOAT_MAT3*/0x8B5B,"mat4":/*laya.webgl.WebGLContext.FLOAT_MAT4*/0x8B5C,"sampler2D":/*laya.webgl.WebGLContext.SAMPLER_2D*/0x8B5E,"samplerCube":/*laya.webgl.WebGLContext.SAMPLER_CUBE*/0x8B60};}
+	]);
 	ShaderCompile.__init$=function(){
-		//class ShaderScriptBlock
-		ShaderScriptBlock=(function(){
-			function ShaderScriptBlock(type,condition,text,parent){
-				//this.type=0;
-				//this.condition=null;
-				//this.text=null;
-				//this.parent=null;
-				this.childs=new Array;
-				this.type=type;
-				this.text=text;
-				this.parent=parent;
-				parent && parent.childs.push(this);
-				if (!condition)return;
-				var newcondition="";
-				var preIsParam=false,isParam=false;
-				for (var i=0,n=condition.length;i < n;i++){
-					var c=condition.charAt(i);
-					isParam="!&|() \t".indexOf(c)< 0;
-					if (preIsParam !=isParam){
-						isParam && (newcondition+="this.");
-						preIsParam=isParam;
-					}
-					newcondition+=c;
-				}
-				this.condition=RunDriver.createShaderCondition(newcondition);
+		//class ShaderNode
+		ShaderNode=(function(){
+			function ShaderNode(includefiles){
+				this.childs=[];
+				this.text="";
+				this.parent=null;
+				this.name=null;
+				this.noCompile=false;
+				this.includefiles=null;
+				this.condition=null;
+				this.conditionType=0;
+				this.useFuns="";
+				this.z=0;
+				this.src=null;
+				this.includefiles=includefiles;
 			}
-			__class(ShaderScriptBlock,'');
-			var __proto=ShaderScriptBlock.prototype;
+			__class(ShaderNode,'');
+			var __proto=ShaderNode.prototype;
+			__proto.setParent=function(parent){
+				parent.childs.push(this);
+				this.z=parent.z+1;
+				this.parent=parent;
+			}
+			__proto.setCondition=function(condition,type){
+				if (condition){
+					this.conditionType=type;
+					condition=condition.replace(/(\s*$)/g,"");
+					this.condition=function (){
+						return this[condition];
+					}
+					this.condition.__condition=condition;
+				}
+			}
 			__proto.toscript=function(def,out){
-				if (this.type===/*laya.webgl.utils.ShaderCompile.IFDEF_NO*/0){
-					this.text && out.push(this.text);
-				}
+				return this._toscript(def,out,++ShaderNode.__id);
+			}
+			__proto._toscript=function(def,out,id){
 				if (this.childs.length < 1 && !this.text)return out;
-				if (this.type!==/*laya.webgl.utils.ShaderCompile.IFDEF_NO*/0){
+				var outIndex=out.length;
+				if (this.condition){
 					var ifdef=!!this.condition.call(def);
-					this.type===/*laya.webgl.utils.ShaderCompile.IFDEF_ELSE*/2 && (ifdef=!ifdef);
+					this.conditionType===/*laya.webgl.utils.ShaderCompile.IFDEF_ELSE*/2 && (ifdef=!ifdef);
 					if (!ifdef)return out;
-					this.text && out.push(this.text);
 				}
+				this.text && out.push(this.text);
 				this.childs.length > 0 && this.childs.forEach(function(o,index,arr){
-					o.toscript(def,out)
+					o._toscript(def,out,id);
 				});
+				if (this.includefiles.length > 0 && this.useFuns.length > 0){
+					var funsCode;
+					for (var i=0,n=this.includefiles.length;i < n;i++){
+						if (this.includefiles[i].curUseID==id){
+							continue ;
+						}
+						funsCode=this.includefiles[i].file.getFunsScript(this.useFuns);
+						if (funsCode.length > 0){
+							this.includefiles[i].curUseID=id;
+							out[0]=funsCode+out[0];
+						}
+					}
+				}
 				return out;
 			}
-			return ShaderScriptBlock;
+			ShaderNode.__id=1;
+			return ShaderNode;
+		})()
+		//class InlcudeFile
+		InlcudeFile=(function(){
+			function InlcudeFile(txt){
+				this.script=null;
+				this.codes={};
+				this.funs={};
+				this.curUseID=-1;
+				this.funnames="";
+				this.script=txt;
+				var begin=0,ofs=0,end=0;
+				while (true){
+					begin=txt.indexOf("#begin",begin);
+					if (begin < 0)break ;
+					end=begin+5;
+					while (true){
+						end=txt.indexOf("#end",end);
+						if (end < 0)break ;
+						if (txt.charAt(end+4)==='i')
+							end+=5;
+						else break ;
+					}
+					if (end < 0){
+						throw "add include err,no #end:"+txt;
+						return;
+					}
+					ofs=txt.indexOf('\n',begin);
+					var words=ShaderCompile.splitToWords(txt.substr(begin,ofs-begin),null);
+					if (words[1]=='code'){
+						this.codes[words[2]]=txt.substr(ofs+1,end-ofs-1);
+						}else if (words[1]=='function'){
+						ofs=txt.indexOf("function",begin);
+						ofs+="function".length;
+						this.funs[words[3]]=txt.substr(ofs+1,end-ofs-1);
+						this.funnames+=words[3]+";";
+					}
+					begin=end+1;
+				}
+			}
+			__class(InlcudeFile,'');
+			var __proto=InlcudeFile.prototype;
+			__proto.getWith=function(name){
+				var r=name ? this.codes[name] :this.script;
+				if (!r){
+					throw "get with error:"+name;
+				}
+				return r;
+			}
+			__proto.getFunsScript=function(funsdef){
+				var r="";
+				for (var i in this.funs){
+					if (funsdef.indexOf(i+";")>=0){
+						r+=this.funs[i];
+					}
+				}
+				return r;
+			}
+			return InlcudeFile;
 		})()
 	}
 
@@ -3389,7 +3652,7 @@ var WebGL=(function(){
 		}
 		RunDriver.getWebGLContext=function getWebGLContext (canvas){
 			var gl;
-			var names=Laya.EnvConfig.webglNames||["webgl","experimental-webgl","webkit-3d","moz-webgl"];
+			var names=["webgl","experimental-webgl","webkit-3d","moz-webgl"];
 			for (var i=0;i < names.length;i++){
 				try {
 					gl=canvas.getContext(names[i],{stencil:Config.isStencil,alpha:Config.isAlpha,antialias:Config.isAntialias,premultipliedAlpha:Config.premultipliedAlpha,preserveDrawingBuffer:Config.preserveDrawingBuffer});
@@ -3431,7 +3694,7 @@ var WebGL=(function(){
 		RunDriver.clear=function (color){
 			RenderState2D.worldScissorTest && laya.webgl.WebGL.mainContext.disable(/*laya.webgl.WebGLContext.SCISSOR_TEST*/0x0C11);
 			var ctx=Render.context.ctx;
-			var c=(ctx._submits._length==0 || Config.preserveDrawingBuffer)? Color.create(color)._color :Laya.stage._wgColor;
+			var c=(ctx._submits._length==0 || Config.preserveDrawingBuffer)? Color.create(color)._color :Stage._wgColor;
 			if (c)ctx.clearBG(c[0],c[1],c[2],c[3]);
 			RenderState2D.clear();
 		}
@@ -3477,6 +3740,7 @@ var WebGL=(function(){
 			var tempContext=Browser.context;
 			var imgData=tempContext.createImageData(canvasWidth,canvasHeight);
 			imgData.data.set(/*__JS__ */new Uint8ClampedArray(pixels.buffer));
+			htmlCanvas._imgData=imgData;
 			tempContext.putImageData(imgData,0,0);
 			context.save();
 			context.translate(0,canvasHeight);
@@ -4888,11 +5152,7 @@ var WebGLContext2D=(function(_super){
 			var maxx=Math.max(Math.max(Math.max(vbdata[nPos+0],vbdata[nPos+4]),vbdata[nPos+8]),vbdata[nPos+12]);
 			var miny=Math.min(Math.min(Math.min(vbdata[nPos+1],vbdata[nPos+5]),vbdata[nPos+9]),vbdata[nPos+13]);
 			var maxy=Math.max(Math.max(Math.max(vbdata[nPos+1],vbdata[nPos+5]),vbdata[nPos+9]),vbdata[nPos+13]);
-			this._clipRect.x=minx;
-			this._clipRect.y=miny;
-			this._clipRect.width=maxx-minx;
-			this._clipRect.height=maxy-miny;
-			SaveClipRectStencil.save(this,submitStencil1,x,y,width,height);
+			SaveClipRectStencil.save(this,submitStencil1,x,y,width,height,minx,miny,maxx-minx,maxy-miny);
 			this._curSubmit=Submit.RENDERBASE;
 			}else {
 			width *=this._curMat.a;
@@ -5729,7 +5989,7 @@ var RenderSprite3D=(function(_super){
 				scope.addValue("bounds",tRect);
 				submitCMD=SubmitCMD.create([scope,context],laya.webgl.utils.RenderSprite3D.tmpTarget);
 				context.addRenderObject(submitCMD);
-				mask.render(context,-tRect.x-tf.translateX,-tRect.y-tf.translateY);
+				mask.render(context,-tRect.x,-tRect.y);
 				submitCMD=SubmitCMD.create([scope],laya.webgl.utils.RenderSprite3D.endTmpTarget);
 				context.addRenderObject(submitCMD);
 				context.ctx.save();
@@ -5761,7 +6021,7 @@ var RenderSprite3D=(function(_super){
 					uv[1] *=-1;uv[3] *=-1;uv[5] *=-1;uv[7] *=-1;
 					uv[1]+=1;uv[3]+=1;uv[5]+=1;uv[7]+=1;
 				}
-				(context.ctx).drawTarget(scope,x+tRect.x,y+tRect.y,w,h,Matrix.TEMP,"tmpTarget",shaderValue,uv,6);
+				(context.ctx).drawTarget(scope,x+tRect.x-tf.translateX,y+tRect.y-tf.translateY,w,h,Matrix.TEMP,"tmpTarget",shaderValue,uv,6);
 				submitCMD=SubmitCMD.create([scope],laya.webgl.utils.RenderSprite3D.recycleTarget);
 				context.addRenderObject(submitCMD);
 				submitStencil=SubmitStencil.create(6);
@@ -7003,6 +7263,7 @@ var WebGLCanvas=(function(_super){
 		//this._ctx=null;
 		/**HTML Canvas*/
 		//this._canvas=null;
+		//this._imgData=null;
 		//}
 		//this.iscpuSource=false;
 		WebGLCanvas.__super.call(this);
@@ -7076,13 +7337,13 @@ __proto.createWebGlTexture=function(){
 	var preTarget=WebGLContext.curBindTexTarget;
 	var preTexture=WebGLContext.curBindTexValue;
 	WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
-	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,true);
-	gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._canvas);
-	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,false);
+	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_FLIP_Y_WEBGL*/0x9240,1);
+	gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._imgData);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MAG_FILTER*/0x2800,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
+	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_FLIP_Y_WEBGL*/0x9240,0);
 	this.memorySize=this._w *this._h *4;
 	(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 }
@@ -7247,12 +7508,7 @@ var WebGLCharImage=(function(_super){
 	__proto.onresize=function(w,h){
 		this._w=w;
 		this._h=h;
-		if ((this._w < AtlasResourceManager.atlasLimitWidth && this._h < AtlasResourceManager.atlasLimitHeight)){
-			this._allowMerageInAtlas=true
-			}else {
-			this._allowMerageInAtlas=false;
-			throw new Error("文字尺寸超出大图合集限制！");
-		}
+		this._allowMerageInAtlas=true;
 	}
 
 	__proto.clearAtlasSource=function(){}
@@ -7620,7 +7876,7 @@ var Shader=(function(_super){
 		var text=[this._vs,this._ps];
 		var result;
 		if (this.customCompile)
-			result=this._preGetParams(this._vs,this._ps);
+			result=ShaderCompile.preGetParams(this._vs,this._ps);
 		var gl=WebGL.mainContext;
 		this._program=gl.createProgram();
 		this._vshader=Shader._createShader(gl,text[0],/*laya.webgl.WebGLContext.VERTEX_SHADER*/0x8B31);
@@ -7636,14 +7892,14 @@ var Shader=(function(_super){
 		for (i=0;i < attribNum;i++){
 			var attrib=this.customCompile ? result.attributes[i] :gl.getActiveAttrib(this._program,i);
 			location=gl.getAttribLocation(this._program,attrib.name);
-			one={vartype:"attribute",ivartype:0,attrib:attrib,location:location,name:attrib.name,type:attrib.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
+			one={vartype:"attribute",glfun:null,ivartype:0,attrib:attrib,location:location,name:attrib.name,type:attrib.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
 			this._params.push(one);
 		};
 		var nUniformNum=this.customCompile ? result.uniforms.length :gl.getProgramParameter(this._program,/*laya.webgl.WebGLContext.ACTIVE_UNIFORMS*/0x8B86);
 		for (i=0;i < nUniformNum;i++){
 			var uniform=this.customCompile ? result.uniforms[i] :gl.getActiveUniform(this._program,i);
 			location=gl.getUniformLocation(this._program,uniform.name);
-			one={vartype:"uniform",ivartype:1,attrib:attrib,location:location,name:uniform.name,type:uniform.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
+			one={vartype:"uniform",glfun:null,ivartype:1,attrib:attrib,location:location,name:uniform.name,type:uniform.type,isArray:false,isSame:false,preValue:null,indexOfParams:0};
 			if (one.name.indexOf('[0]')> 0){
 				one.name=one.name.substr(0,one.name.length-3);
 				one.isArray=true;
@@ -7688,6 +7944,7 @@ var Shader=(function(_super){
 					one.fun=this._uniform_samplerCube;
 					break ;
 				case /*laya.webgl.WebGLContext.FLOAT_MAT4*/0x8B5C:
+					one.glfun=gl.uniformMatrix4fv;
 					one.fun=this._uniformMatrix4fv;
 					break ;
 				case /*laya.webgl.WebGLContext.BOOL*/0x8B56:
@@ -7934,9 +8191,8 @@ var Shader=(function(_super){
 	*@param shaderValue
 	*/
 	__proto.upload=function(shaderValue,params){
-		BaseShader.activeShader=this;
-		BaseShader.bindShader=this;
-		this.activeResource();
+		BaseShader.activeShader=BaseShader.bindShader=this;
+		this._lastUseFrameCount===Stat.loopCount || this.activeResource();
 		WebGLContext.UseProgram(this._program);
 		if (this._reCompile){
 			params=this._params;
@@ -7944,10 +8200,12 @@ var Shader=(function(_super){
 			}else {
 			params=params || this._params;
 		};
+		var gl=WebGL.mainContext;
 		var one,value,n=params.length,shaderCall=0;
 		for (var i=0;i < n;i++){
 			one=params[i];
-			((value=shaderValue[one.name])!==null)&& (shaderCall+=one.fun.call(this,one,value));
+			if ((value=shaderValue[one.name])!==null)
+				shaderCall+=one.fun.call(this,one,value);
 		}
 		Stat.shaderCall+=shaderCall;
 	}
@@ -7984,78 +8242,6 @@ var Shader=(function(_super){
 		return this._params;
 	}
 
-	__proto._preGetParams=function(vs,ps){
-		var text=[vs,ps];
-		var result={};
-		var attributes=[];
-		var uniforms=[];
-		var definesInfo={};
-		var definesName=[];
-		result.attributes=attributes;
-		result.uniforms=uniforms;
-		result.defines=definesInfo;
-		var removeAnnotation=new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)","g");
-		var reg=new RegExp("(\".*\")|('.*')|([#\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])","g");
-		var i=0,n=0,one;
-		for (var s=0;s < 2;s++){
-			text[s]=text[s].replace(removeAnnotation,"");
-			var words=text[s].match(reg);
-			var tempelse;
-			for (i=0,n=words.length;i < n;i++){
-				var word=words[i];
-				if (word !="attribute" && word !="uniform"){
-					if (word=="#define"){
-						word=words[++i];
-						definesName[word]=1;
-						continue ;
-						}else if (word=="#ifdef"){
-						tempelse=words[++i];
-						var def=definesInfo[tempelse]=definesInfo[tempelse] || [];
-						for (i++;i < n;i++){
-							word=words[i];
-							if (word !="attribute" && word !="uniform"){
-								if (word=="#else"){
-									for (i++;i < n;i++){
-										word=words[i];
-										if (word !="attribute" && word !="uniform"){
-											if (word=="#endif"){
-												break ;
-											}
-											continue ;
-										}
-										i=this.parseOne(attributes,uniforms,words,i,word,!definesName[tempelse]);
-									}
-								}
-								continue ;
-							}
-							i=this.parseOne(attributes,uniforms,words,i,word,definesName[tempelse]);
-						}
-					}
-					continue ;
-				}
-				i=this.parseOne(attributes,uniforms,words,i,word,true);
-			}
-		}
-		return result;
-	}
-
-	__proto.parseOne=function(attributes,uniforms,words,i,word,b){
-		var one={type:Shader.shaderParamsMap[words[i+1]],name:words[i+2],size:isNaN(parseInt(words[i+3]))? 1 :parseInt(words[i+3])};
-		if (b){
-			if (word=="attribute"){
-				attributes.push(one);
-				}else {
-				uniforms.push(one);
-			}
-		}
-		if (words[i+3]==':'){
-			one.type=words[i+4];
-			i+=2;
-		}
-		i+=2;
-		return i;
-	}
-
 	Shader.getShader=function(name){
 		return Shader.sharders[name];
 	}
@@ -8083,21 +8269,17 @@ var Shader=(function(_super){
 	}
 
 	Shader.addInclude=function(fileName,txt){
-		if (!txt || txt.length===0)
-			throw new Error("add shader include file err:"+fileName);
-		if (Shader._includeFiles[fileName])
-			throw new Error("add shader include file err, has add:"+fileName);
-		Shader._includeFiles[fileName]=txt;
+		ShaderCompile.addInclude(fileName,txt);
 	}
 
 	Shader.preCompile=function(nameID,vs,ps,nameMap){
 		var id=0.0002 *nameID;
-		Shader._preCompileShader[id]=new ShaderCompile(id,vs,ps,nameMap,Shader._includeFiles);
+		Shader._preCompileShader[id]=new ShaderCompile(id,vs,ps,nameMap);
 	}
 
 	Shader.preCompile2D=function(nameID,mainID,vs,ps,nameMap){
 		var id=0.0002 *nameID+mainID;
-		Shader._preCompileShader[id]=new ShaderCompile(id,vs,ps,nameMap,Shader._includeFiles);
+		Shader._preCompileShader[id]=new ShaderCompile(id,vs,ps,nameMap);
 	}
 
 	Shader._createShader=function(gl,str,type){
@@ -8107,12 +8289,11 @@ var Shader=(function(_super){
 		return shader;
 	}
 
-	Shader._includeFiles={};
 	Shader._count=0;
 	Shader._preCompileShader={};
 	Shader.SHADERNAME2ID=0.0002;
 	__static(Shader,
-	['_TEXTURES',function(){return this._TEXTURES=[ /*laya.webgl.WebGLContext.TEXTURE0*/0x84C0,/*laya.webgl.WebGLContext.TEXTURE1*/0x84C1,/*laya.webgl.WebGLContext.TEXTURE2*/0x84C2,/*laya.webgl.WebGLContext.TEXTURE3*/0x84C3,/*laya.webgl.WebGLContext.TEXTURE4*/0x84C4,/*laya.webgl.WebGLContext.TEXTURE5*/0x84C5,/*laya.webgl.WebGLContext.TEXTURE6*/0x84C6,,/*laya.webgl.WebGLContext.TEXTURE7*/0x84C7,/*laya.webgl.WebGLContext.TEXTURE8*/0x84C8];},'shaderParamsMap',function(){return this.shaderParamsMap={"float":/*laya.webgl.WebGLContext.FLOAT*/0x1406,"int":/*laya.webgl.WebGLContext.INT*/0x1404,"bool":/*laya.webgl.WebGLContext.BOOL*/0x8B56,"vec2":/*laya.webgl.WebGLContext.FLOAT_VEC2*/0x8B50,"vec3":/*laya.webgl.WebGLContext.FLOAT_VEC3*/0x8B51,"vec4":/*laya.webgl.WebGLContext.FLOAT_VEC4*/0x8B52,"ivec2":/*laya.webgl.WebGLContext.INT_VEC2*/0x8B53,"ivec3":/*laya.webgl.WebGLContext.INT_VEC3*/0x8B54,"ivec4":/*laya.webgl.WebGLContext.INT_VEC4*/0x8B55,"bvec2":/*laya.webgl.WebGLContext.BOOL_VEC2*/0x8B57,"bvec3":/*laya.webgl.WebGLContext.BOOL_VEC3*/0x8B58,"bvec4":/*laya.webgl.WebGLContext.BOOL_VEC4*/0x8B59,"mat2":/*laya.webgl.WebGLContext.FLOAT_MAT2*/0x8B5A,"mat3":/*laya.webgl.WebGLContext.FLOAT_MAT3*/0x8B5B,"mat4":/*laya.webgl.WebGLContext.FLOAT_MAT4*/0x8B5C,"sampler2D":/*laya.webgl.WebGLContext.SAMPLER_2D*/0x8B5E,"samplerCube":/*laya.webgl.WebGLContext.SAMPLER_CUBE*/0x8B60};},'nameKey',function(){return this.nameKey=new StringKey();},'sharders',function(){return this.sharders=(Shader.sharders=[],Shader.sharders.length=0x20,Shader.sharders);}
+	['_TEXTURES',function(){return this._TEXTURES=[ /*laya.webgl.WebGLContext.TEXTURE0*/0x84C0,/*laya.webgl.WebGLContext.TEXTURE1*/0x84C1,/*laya.webgl.WebGLContext.TEXTURE2*/0x84C2,/*laya.webgl.WebGLContext.TEXTURE3*/0x84C3,/*laya.webgl.WebGLContext.TEXTURE4*/0x84C4,/*laya.webgl.WebGLContext.TEXTURE5*/0x84C5,/*laya.webgl.WebGLContext.TEXTURE6*/0x84C6,,/*laya.webgl.WebGLContext.TEXTURE7*/0x84C7,/*laya.webgl.WebGLContext.TEXTURE8*/0x84C8];},'nameKey',function(){return this.nameKey=new StringKey();},'sharders',function(){return this.sharders=(Shader.sharders=[],Shader.sharders.length=0x20,Shader.sharders);}
 	]);
 	return Shader;
 })(BaseShader)

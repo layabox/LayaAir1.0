@@ -55,7 +55,7 @@ package laya.display {
 		/**[只读]是否已经销毁。对象销毁后不能再使用。*/
 		public var destroyed:Boolean;
 		/**时间控制器，默认为Laya.timer。*/
-		public var timer:Timer = Laya.timer2;
+		public var timer:Timer = Laya.scaleTimer;
 		
 		/**
 		 * <code>Node</code> 类用于创建节点对象，节点是最基本的元素。

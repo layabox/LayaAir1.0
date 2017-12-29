@@ -73,7 +73,8 @@ package laya.debug.tools
 				var tAtlaser:* = resManager.getAtlaserByIndex(mIndex);
 				if (tAtlaser && tAtlaser.texture)
 				{
-					tTexture = Texture.create(tAtlaser.texture, 0, 0, 2048, 2048);
+					//tTexture = Texture.create(tAtlaser.texture, 0, 0, 2048, 2048);
+					tTexture = new Texture(tAtlaser.texture,null);
 					mTextureDic[mIndex] = tTexture;
 				}
 			}

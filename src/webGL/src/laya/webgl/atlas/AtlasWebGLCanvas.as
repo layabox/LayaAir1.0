@@ -1,5 +1,4 @@
 package laya.webgl.atlas {
-	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
 	import laya.renders.Render;
 	import laya.resource.Bitmap;
 	import laya.resource.HTMLImage;

@@ -500,9 +500,24 @@ package laya.ui {
 		}
 		
 		protected function createItem():Box {
-			/*[IF-FLASH]*/
-			return _itemRender.prototype != null ? new _itemRender() : View.createComp(_itemRender) as Box;
-			//[IF-JS]return _itemRender is Function ? new _itemRender() : View.createComp(_itemRender) as Box;
+			var arr:Array = [];
+			if (_itemRender is Function) {
+				var box:View = new _itemRender();
+			} else {
+				box = View.createComp(_itemRender, null, null, arr)
+			}
+			if (arr.length == 0 && box._watchMap) {
+				var watchMap:Object = box._watchMap;
+				for (var name:String in watchMap) {
+					var a:Array = watchMap[name];
+					for (var i:int = 0; i < a.length; i++) {
+						var watcher:* = a[i];
+						arr.push(watcher.comp, watcher.prop, watcher.value)
+					}
+				}
+			}
+			if (arr.length) box["_$bindData"] = arr;
+			return box;
 		}
 		
 		/**
@@ -552,8 +567,8 @@ package laya.ui {
 			_content.height = height;
 			if (_scrollBar || _offset.x != 0 || _offset.y != 0) {
 				_content.scrollRect || (_content.scrollRect = new Rectangle());
-				_content.scrollRect.setTo(-_offset.x, -_offset.y, width, height);
-				_content.conchModel && _content.conchModel.scrollRect(-_offset.x, -_offset.y, width, height);//通知微端		
+				_content.scrollRect.setTo( -_offset.x, -_offset.y, width, height);
+				_content.scrollRect = _content.scrollRect;
 			}
 			event(Event.RESIZE);
 		}
@@ -658,8 +673,7 @@ package laya.ui {
 				r.y = -_offset.y;
 				r.x = scrollValue - _offset.x;
 			}
-			_content.conchModel && _content.conchModel.scrollRect(r.x, r.y, r.width, r.height);
-			repaint();
+			_content.scrollRect = r;
 		}
 		
 		private function posCell(cell:Box, cellIndex:int):void {
@@ -748,10 +762,15 @@ package laya.ui {
 		 * @param cell 需要渲染的单元格对象。
 		 * @param index 单元格索引。
 		 */
-		protected function renderItem(cell:Box, index:int):void {
+		protected function renderItem(cell:*, index:int):void {
 			if (_array && index >= 0 && index < _array.length) {
 				cell.visible = true;
-				cell.dataSource = _array[index];
+				
+				if (cell._$bindData) {
+					cell._dataSource = _array[index];
+					_bindData(cell, _array[index]);
+				} else cell.dataSource = _array[index];
+				
 				if (!cacheContent) {
 					//TODO:
 					posCell(cell, index);
@@ -761,6 +780,17 @@ package laya.ui {
 			} else {
 				cell.visible = false;
 				cell.dataSource = null;
+			}
+		}
+		
+		private function _bindData(cell:*, data:Object):void {
+			var arr:Array = cell._$bindData;
+			for (var i:int = 0, n:int = arr.length; i < n; i++) {
+				var ele:* = arr[i++];
+				var prop:String = arr[i++];
+				var value:String = arr[i];
+				var fun:Function = UIUtils.getBindFun(value);
+				ele[prop] = fun.call(this, data);
 			}
 		}
 		
@@ -844,8 +874,8 @@ package laya.ui {
 		 * 刷新列表数据源。
 		 */
 		public function refresh():void {
-			//array = _array;
-			startIndex = _startIndex;
+			array = _array;
+			//startIndex = _startIndex;
 		}
 		
 		/**

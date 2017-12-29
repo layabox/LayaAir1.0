@@ -2,15 +2,15 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Animation=laya.display.Animation,ClassUtils=laya.utils.ClassUtils,ColorFilter=laya.filters.ColorFilter;
+	var Animation=laya.display.Animation,Browser=laya.utils.Browser,ClassUtils=laya.utils.ClassUtils,ColorFilter=laya.filters.ColorFilter;
 	var Ease=laya.utils.Ease,Event=laya.events.Event,Font=laya.display.css.Font,FrameAnimation=laya.display.FrameAnimation;
 	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader;
 	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
 	var Utils=laya.utils.Utils,WeakObject=laya.utils.WeakObject;
 Laya.interface('laya.ui.IItem');
-Laya.interface('laya.ui.IRender');
 Laya.interface('laya.ui.ISelect');
+Laya.interface('laya.ui.IRender');
 Laya.interface('laya.ui.IComponent');
 Laya.interface('laya.ui.IBox','IComponent');
 /**
@@ -115,8 +115,20 @@ var UIUtils=(function(){
 		return str.replace(/\\(\w)/g,UIUtils._getReplaceStr);
 	}
 
+	UIUtils.getBindFun=function(value){
+		var fun=UIUtils._funMap.get(value);
+		if (fun==null){
+			var temp="\""+value+"\"";
+			temp=temp.replace(/^"\${|}"$/g,"").replace(/\${/g,"\"+").replace(/}/g,"+\"");
+			var str="(function(data){if(data==null)return;with(data){try{\nreturn "+temp+"\n}catch(e){}}})";
+			fun=Browser.window.eval(str);
+			UIUtils._funMap.set(value,fun);
+		}
+		return fun;
+	}
+
 	__static(UIUtils,
-	['grayFilter',function(){return this.grayFilter=new ColorFilter([0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0,0,0,1,0]);},'escapeSequence',function(){return this.escapeSequence={"\\n":"\n","\\t":"\t"};}
+	['grayFilter',function(){return this.grayFilter=new ColorFilter([0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0.3086,0.6094,0.082,0,0,0,0,0,1,0]);},'escapeSequence',function(){return this.escapeSequence={"\\n":"\n","\\t":"\t"};},'_funMap',function(){return this._funMap=new WeakObject();}
 	]);
 	return UIUtils;
 })()
@@ -218,8 +230,6 @@ var AutoBitmap=(function(_super){
 				var clipWidth=width;
 				needClip=true;
 				width=left+right;
-			}
-			if (needClip){
 				this.save();
 				this.clipRect(0,0,clipWidth,height);
 			}
@@ -937,7 +947,7 @@ var DialogManager=(function(_super){
 	*/
 	__proto.open=function(dialog,closeOther,showEffect){
 		(closeOther===void 0)&& (closeOther=false);
-		(showEffect===void 0)&& (showEffect=true);
+		(showEffect===void 0)&& (showEffect=false);
 		if (closeOther)this._closeAll();
 		if (dialog.popupCenter)this._centerDialog(dialog);
 		this.addChild(dialog);
@@ -973,7 +983,7 @@ var DialogManager=(function(_super){
 	*@param showEffect 是否显示弹出效果
 	*/
 	__proto.close=function(dialog,type,showEffect){
-		(showEffect===void 0)&& (showEffect=true);
+		(showEffect===void 0)&& (showEffect=false);
 		if (showEffect && dialog.closeEffect !=null)dialog.closeEffect.runWith([dialog,type]);
 		else this.doClose(dialog,type);
 		this.event(/*laya.events.Event.CLOSE*/"close");
@@ -1811,6 +1821,8 @@ var Clip=(function(_super){
 		this._clipChanged=false;
 		/**@private */
 		this._group=null;
+		/**@private */
+		this._toIndex=-1;
 		Clip.__super.call(this);
 		(clipX===void 0)&& (clipX=1);
 		(clipY===void 0)&& (clipY=1);
@@ -1898,10 +1910,15 @@ var Clip=(function(_super){
 
 	/**
 	*播放动画。
+	*@param from 开始索引
+	*@param to 结束索引，-1为不限制
 	*/
-	__proto.play=function(){
+	__proto.play=function(from,to){
+		(from===void 0)&& (from=0);
+		(to===void 0)&& (to=-1);
 		this._isPlaying=true;
-		this.index=0;
+		this.index=from;
+		this._toIndex=to;
 		this._index++;
 		Laya.timer.loop(this.interval,this,this._loop);
 		this.on(/*laya.events.Event.DISPLAY*/"display",this,this._onDisplay);
@@ -1913,8 +1930,10 @@ var Clip=(function(_super){
 	*/
 	__proto._loop=function(){
 		if (this._style.visible && this._sources){
-			this.index=this._index,this._index++;
-			this._index >=this._sources.length && (this._index=0);
+			this._index++;
+			if (this._toIndex >-1 && this._index >=this._toIndex)this.stop();
+			else if (this._index >=this._sources.length)this._index=0;
+			this.index=this._index;
 		}
 	}
 
@@ -1924,6 +1943,7 @@ var Clip=(function(_super){
 	__proto.stop=function(){
 		this._isPlaying=false;
 		Laya.timer.clear(this,this._loop);
+		this.event(/*laya.events.Event.COMPLETE*/"complete");
 	}
 
 	/**@private */
@@ -3206,11 +3226,13 @@ var ScrollBar=(function(_super){
 		if (this.slider.isVertical)this.slider.y=this._showButtons ? this.upButton.height :0;
 		else this.slider.x=this._showButtons ? this.upButton.width :0;
 		this.resetPositions();
+		this.repaint();
 	}
 
 	/**@inheritDoc */
 	__proto.changeSize=function(){
 		_super.prototype.changeSize.call(this);
+		this.repaint();
 		this.resetPositions();
 		this.event(/*laya.events.Event.CHANGE*/"change");
 		this.changeHandler && this.changeHandler.runWith(this.value);
@@ -4921,11 +4943,14 @@ var TipManager=(function(_super){
 */
 //class laya.ui.View extends laya.ui.Box
 var View=(function(_super){
+	var DataWatcher;
 	function View(){
 		/**@private */
 		this._idMap=null;
 		/**@private */
 		this._aniList=null;
+		/**@private */
+		this._watchMap={};
 		View.__super.call(this);
 	}
 
@@ -4985,17 +5010,28 @@ var View=(function(_super){
 		if (this._aniList)this._aniList.length=0;
 		this._idMap=null;
 		this._aniList=null;
+		this._watchMap=null;
 		laya.ui.Component.prototype.destroy.call(this,destroyChild);
 	}
 
+	/**@private */
+	__proto.changeData=function(key){
+		var arr=this._watchMap[key];
+		if (!arr)return;
+		console.log("change",key);
+		for (var i=0,n=arr.length;i < n;i++){
+			var watcher=arr[i];
+			watcher.exe(this);
+		}
+	}
+
 	View._regs=function(){
-		var key;
-		for (key in View.uiClassMap){
+		for (var key in View.uiClassMap){
 			ClassUtils.regClass(key,View.uiClassMap[key]);
 		}
 	}
 
-	View.createComp=function(uiView,comp,view){
+	View.createComp=function(uiView,comp,view,dataMap){
 		comp=comp || View.getCompInstance(uiView);
 		if (!comp){
 			console.warn("can not create:"+uiView.type);
@@ -5003,6 +5039,7 @@ var View=(function(_super){
 		};
 		var child=uiView.child;
 		if (child){
+			var isList=(comp instanceof laya.ui.List );
 			for (var i=0,n=child.length;i < n;i++){
 				var node=child[i];
 				if (comp.hasOwnProperty("itemRender")&& (node.props.name=="render" || node.props.renderType==="render")){
@@ -5012,7 +5049,13 @@ var View=(function(_super){
 					}else if (ClassUtils.isDrawType(node.type)){
 					ClassUtils.addGraphicToSprite(node,comp,true);
 					}else {
-					var tChild=View.createComp(node,null,view);
+					if (isList){
+						var arr=[];
+						var tChild=View.createComp(node,null,view,arr);
+						if (arr.length)tChild["_$bindData"]=arr;
+						}else {
+						tChild=View.createComp(node,null,view,dataMap);
+					}
 					if (node.type=="Script"){
 						if ("owner" in tChild){
 							tChild["owner"]=comp;
@@ -5030,7 +5073,7 @@ var View=(function(_super){
 		var props=uiView.props;
 		for (var prop in props){
 			var value=props[prop];
-			View.setCompValue(comp,prop,value,view);
+			View.setCompValue(comp,prop,value,view,dataMap);
 		}
 		if (Laya.__typeof(comp,'laya.ui.IItem'))(comp).initItems();
 		if (uiView.compId && view && view._idMap){
@@ -5039,16 +5082,50 @@ var View=(function(_super){
 		return comp;
 	}
 
-	View.setCompValue=function(comp,prop,value,view){
+	View.setCompValue=function(comp,prop,value,view,dataMap){
+		if ((typeof value=='string')&& value.indexOf("${")>-1){
+			View._sheet || (View._sheet=ClassUtils.getClass("laya.data.Sheet"));
+			if (!View._sheet){
+				console.warn("Can not find class Sheet");
+				return;
+			}
+			if (dataMap){
+				dataMap.push(comp,prop,value);
+				}else if (view){
+				if (value.indexOf("].")==-1){
+					value=value.replace(".","[0].");
+				};
+				var watcher=new DataWatcher(comp,prop,value);
+				watcher.exe(view);
+				var one,temp;
+				var str=value.replace(/\[.*?\]\./g,".");
+				while ((one=View._parseWatchData.exec(str))!=null){
+					var key1=one[1];
+					while ((temp=View._parseKeyWord.exec(key1))!=null){
+						var key2=temp[0];
+						var arr=(view._watchMap[key2] || (view._watchMap[key2]=[]));
+						arr.push(watcher);
+						View._sheet.notifer.on(key2,view,view.changeData,[key2]);
+					}
+					arr=(view._watchMap[key1] || (view._watchMap[key1]=[]));
+					arr.push(watcher);
+					View._sheet.notifer.on(key1,view,view.changeData,[key1]);
+				}
+			}
+			return;
+		}
 		if (prop==="var" && view){
 			view[value]=comp;
+			}else if (prop=="onClick"){
+			var fun=Browser.window.eval("(function(){"+value+"})");
+			comp.on(/*laya.events.Event.CLICK*/"click",view,fun);
 			}else {
-			comp[prop]=(value==="true" ? true :(value==="false" ? false :value))
+			comp[prop]=(value==="true" ? true :(value==="false" ? false :value));
 		}
 	}
 
 	View.getCompInstance=function(json){
-		var runtime=json.props?json.props.runtime:null;
+		var runtime=json.props ? json.props.runtime :null;
 		var compClass;
 		compClass=runtime ? (View.viewClassMap[runtime] || View.uiClassMap[runtime]|| Laya["__classmap"][runtime]):View.uiClassMap[json.type];
 		if (json.props && json.props.hasOwnProperty("renderType")&& json.props["renderType"]=="instance")return compClass["instance"];
@@ -5066,11 +5143,30 @@ var View=(function(_super){
 
 	View.uiMap={};
 	View.viewClassMap={};
+	View._sheet=null;
 	__static(View,
-	['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text,"FontClip":FontClip};}
+	['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text,"FontClip":FontClip};},'_parseWatchData',function(){return this._parseWatchData=/\${(.*?)}/g;},'_parseKeyWord',function(){return this._parseKeyWord=/[a-zA-Z_][a-zA-Z0-9_]*(?:(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)/g;}
 	]);
 	View.__init$=function(){
 		View._regs()
+		//class DataWatcher
+		DataWatcher=(function(){
+			function DataWatcher(comp,prop,value){
+				this.comp=null;
+				this.prop=null;
+				this.value=null;
+				this.comp=comp;
+				this.prop=prop;
+				this.value=value;
+			}
+			__class(DataWatcher,'');
+			var __proto=DataWatcher.prototype;
+			__proto.exe=function(view){
+				var fun=UIUtils.getBindFun(this.value);
+				this.comp[this.prop]=fun.call(this,view);
+			}
+			return DataWatcher;
+		})()
 	}
 
 	return View;
@@ -5795,7 +5891,24 @@ var List=(function(_super){
 	}
 
 	__proto.createItem=function(){
-		return (typeof this._itemRender=='function')? new this._itemRender():View.createComp(this._itemRender);
+		var arr=[];
+		if ((typeof this._itemRender=='function')){
+			var box=new this._itemRender();
+			}else {
+			box=View.createComp(this._itemRender,null,null,arr)
+		}
+		if (arr.length==0 && box._watchMap){
+			var watchMap=box._watchMap;
+			for (var name in watchMap){
+				var a=watchMap[name];
+				for (var i=0;i < a.length;i++){
+					var watcher=a[i];
+					arr.push(watcher.comp,watcher.prop,watcher.value)
+				}
+			}
+		}
+		if (arr.length)box["_$bindData"]=arr;
+		return box;
 	}
 
 	/**
@@ -5846,7 +5959,7 @@ var List=(function(_super){
 		if (this._scrollBar || this._offset.x !=0 || this._offset.y !=0){
 			this._content.scrollRect || (this._content.scrollRect=new Rectangle());
 			this._content.scrollRect.setTo(-this._offset.x,-this._offset.y,width,height);
-			this._content.conchModel && this._content.conchModel.scrollRect(-this._offset.x,-this._offset.y,width,height);
+			this._content.scrollRect=this._content.scrollRect;
 		}
 		this.event(/*laya.events.Event.RESIZE*/"resize");
 	}
@@ -5948,8 +6061,7 @@ var List=(function(_super){
 			r.y=-this._offset.y;
 			r.x=scrollValue-this._offset.x;
 		}
-		this._content.conchModel && this._content.conchModel.scrollRect(r.x,r.y,r.width,r.height);
-		this.repaint();
+		this._content.scrollRect=r;
 	}
 
 	__proto.posCell=function(cell,cellIndex){
@@ -5991,7 +6103,10 @@ var List=(function(_super){
 	__proto.renderItem=function(cell,index){
 		if (this._array && index >=0 && index < this._array.length){
 			cell.visible=true;
-			cell.dataSource=this._array[index];
+			if (cell._$bindData){
+				cell._dataSource=this._array[index];
+				this._bindData(cell,this._array[index]);
+			}else cell.dataSource=this._array[index];
 			if (!this.cacheContent){
 				this.posCell(cell,index);
 			}
@@ -6003,11 +6118,22 @@ var List=(function(_super){
 		}
 	}
 
+	__proto._bindData=function(cell,data){
+		var arr=cell._$bindData;
+		for (var i=0,n=arr.length;i < n;i++){
+			var ele=arr[i++];
+			var prop=arr[i++];
+			var value=arr[i];
+			var fun=UIUtils.getBindFun(value);
+			ele[prop]=fun.call(this,data);
+		}
+	}
+
 	/**
 	*刷新列表数据源。
 	*/
 	__proto.refresh=function(){
-		this.startIndex=this._startIndex;
+		this.array=this._array;
 	}
 
 	/**
@@ -6401,7 +6527,6 @@ var Panel=(function(_super){
 		this._scrollChanged=false;
 		Panel.__super.call(this);
 		this.width=this.height=100;
-		this._content.optimizeScrollRect=true;
 	}
 
 	__class(Panel,'laya.ui.Panel',_super);
@@ -6537,7 +6662,7 @@ var Panel=(function(_super){
 		content.height=height;
 		content.scrollRect || (content.scrollRect=new Rectangle());
 		content.scrollRect.setTo(0,0,width,height);
-		content.conchModel&&content.conchModel.scrollRect(0,0,width,height);
+		content.scrollRect=content.scrollRect;
 	}
 
 	/**
@@ -6551,7 +6676,7 @@ var Panel=(function(_super){
 		if (rect){
 			var start=Math.round(scrollBar.value);
 			scrollBar.isVertical ? rect.y=start :rect.x=start;
-			this._content.conchModel&&this._content.conchModel.scrollRect(rect.x,rect.y,rect.width,rect.height);
+			this._content.scrollRect=rect;
 		}
 	}
 

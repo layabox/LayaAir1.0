@@ -99,6 +99,20 @@ package laya.html.dom
 			_renderArgs[4] = height || _tex.height;
 			context.ctx.drawTexture2(x, y, style.translateX, style.translateY, transform, style.alpha, style.blendMode, _renderArgs);
 		}
+		/**
+		 * @private
+		 */
+		override public function layaoutCallNative():void
+		{
+			var n:int = 0;
+			if (_childs &&(n= _childs.length) > 0)
+			{
+				for (var i:int = 0; i < n; i++ )
+				{
+					_childs[i].layaoutCallNative && _childs[i].layaoutCallNative();
+				}
+			}	
+		}
 	}
 
 }

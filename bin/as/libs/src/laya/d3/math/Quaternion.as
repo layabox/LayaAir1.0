@@ -26,7 +26,7 @@ package laya.d3.math {
 		public static const NAN:Quaternion = new Quaternion(NaN, NaN, NaN,NaN);
 		
 		/**
-		 *  从欧拉角基元四元数（顺序为Yaw、Pitch、Roll）
+		 *  从欧拉角生成四元数（顺序为Yaw、Pitch、Roll）
 		 * @param	yaw yaw值
 		 * @param	pitch pitch值
 		 * @param	roll roll值

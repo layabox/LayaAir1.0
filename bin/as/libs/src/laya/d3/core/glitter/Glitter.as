@@ -116,8 +116,6 @@ package laya.d3.core.glitter {
 		}
 		
 		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
-			
 			var destGlitter:Glitter = destObject as Glitter;
 			var destTemplet:GlitterTemplet = destGlitter.templet;
 			var templet:GlitterTemplet = _geometryFilter as GlitterTemplet;
@@ -130,6 +128,7 @@ package laya.d3.core.glitter {
 			var glitterRender:GlitterRender = _render as GlitterRender;
 			destGlitterRender.sharedMaterials = glitterRender.sharedMaterials;
 			destGlitterRender.enable = glitterRender.enable;
+			super.cloneTo(destObject);//父类函数在最后,组件应该最后赋值，否则获取材质默认值等相关函数会有问题
 		}
 		
 		/**

@@ -157,7 +157,7 @@ package laya.d3.core.particleShuriKen {
 			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
 			
 			_geometryFilter = new ShurikenParticleSystem(this);
-			_changeRenderObject(0);
+			_createRenderElement(0);
 			
 			(material) && (_render.sharedMaterial = material);
 		}
@@ -250,30 +250,27 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
-		private function _changeRenderObject(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _render._renderElements;
+		private function _createRenderElement(index:int):void {
+			var elements:Vector.<RenderElement> = _render._renderElements;
 			
-			var renderElement:RenderElement = renderObjects[index];
-			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._render = _render;
-			
+			var element:RenderElement = elements[index] = new RenderElement();
+			element._render = _render;
 			var material:BaseMaterial = _render.sharedMaterials[index];
-			
 			(material) || (material = ShurikenParticleMaterial.defaultMaterial);//确保有材质,由默认材质代替。
-			
-			var element:IRenderable = _geometryFilter as ShurikenParticleSystem;
-			renderElement._mainSortID = 0;
-			renderElement._sprite3D = this;
-			
-			renderElement.renderObj = element;
-			renderElement._material = material;
-			return renderElement;
+			var renderable:IRenderable = _geometryFilter as ShurikenParticleSystem;
+			element._mainSortID = 0;
+			element._sprite3D = this;
+			element.renderObj = renderable;
+			element._material = material;
 		}
 		
 		/** @private */
 		private function _onMaterialChanged(_particleRender:ShurikenParticleRender, index:int, material:BaseMaterial):void {
-			var renderElementCount:int = _particleRender._renderElements.length;
-			(index < renderElementCount) && _changeRenderObject(index);
+			var elements:Vector.<RenderElement> = _particleRender._renderElements;
+			if (index < elements.length) {
+				var element:RenderElement = elements[index];
+				element._material = material || ShurikenParticleMaterial.defaultMaterial;
+			}
 		}
 		
 		/** @private */
@@ -426,74 +423,79 @@ package laya.d3.core.particleShuriKen {
 			
 			//Emission
 			var emissionData:Object = customProps.emission;
-			var emission:Emission = new Emission();
-			emission.emissionRate = emissionData.emissionRate;
-			var burstsData:Array = emissionData.bursts;
-			if (burstsData)
-				for (i = 0, n = burstsData.length; i < n; i++) {
-					var brust:Object = burstsData[i];
-					emission.addBurst(new Burst(brust.time, brust.min, brust.max));
-				}
-			emission.enbale = emissionData.enable;
-			particleSystem.emission = emission;
+			if (emissionData) {
+				var emission:Emission = particleSystem.emission;
+				emission.emissionRate = emissionData.emissionRate;
+				var burstsData:Array = emissionData.bursts;
+				if (burstsData)
+					for (i = 0, n = burstsData.length; i < n; i++) {
+						var brust:Object = burstsData[i];
+						emission.addBurst(new Burst(brust.time, brust.min, brust.max));
+					}
+				emission.enbale = emissionData.enable;
+			} else {
+				emission.enbale = false;
+			}
 			
 			//Shape
 			var shapeData:Object = customProps.shape;
-			var shape:BaseShape;
-			switch (shapeData.shapeType) {
-			case 0: 
-				var sphereShape:SphereShape;
-				shape = sphereShape = new SphereShape();
-				sphereShape.radius = shapeData.sphereRadius;
-				sphereShape.emitFromShell = shapeData.sphereEmitFromShell;
-				sphereShape.randomDirection = shapeData.sphereRandomDirection;
-				break;
-			case 1: 
-				var hemiSphereShape:HemisphereShape;
-				shape = hemiSphereShape = new HemisphereShape();
-				hemiSphereShape.radius = shapeData.hemiSphereRadius;
-				hemiSphereShape.emitFromShell = shapeData.hemiSphereEmitFromShell;
-				hemiSphereShape.randomDirection = shapeData.hemiSphereRandomDirection;
-				break;
-			case 2: 
-				var coneShape:ConeShape;
-				shape = coneShape = new ConeShape();
-				coneShape.angle = shapeData.coneAngle * anglelToRad;
-				coneShape.radius = shapeData.coneRadius;
-				coneShape.length = shapeData.coneLength;
-				coneShape.emitType = shapeData.coneEmitType;
-				coneShape.randomDirection = shapeData.coneRandomDirection;
-				break;
-			case 3: 
-				var boxShape:BoxShape;
-				shape = boxShape = new BoxShape();
-				boxShape.x = shapeData.boxX;
-				boxShape.y = shapeData.boxY;
-				boxShape.z = shapeData.boxZ;
-				boxShape.randomDirection = shapeData.boxRandomDirection;
-				break;
-			case 7: 
-				var circleShape:CircleShape;
-				shape = circleShape = new CircleShape();
-				circleShape.radius = shapeData.circleRadius;
-				circleShape.arc = shapeData.circleArc * anglelToRad;
-				circleShape.emitFromEdge = shapeData.circleEmitFromEdge;
-				circleShape.randomDirection = shapeData.circleRandomDirection;
-				break;
-			/**
-			 * ------------------------临时调整，待日后完善-------------------------------------
-			 */
-			default: 
-				var tempShape:CircleShape;
-				shape = tempShape = new CircleShape();
-				tempShape.radius = shapeData.circleRadius;
-				tempShape.arc = shapeData.circleArc * anglelToRad;
-				tempShape.emitFromEdge = shapeData.circleEmitFromEdge;
-				tempShape.randomDirection = shapeData.circleRandomDirection;
-				break;
+			if (shapeData) {
+				var shape:BaseShape;
+				switch (shapeData.shapeType) {
+				case 0: 
+					var sphereShape:SphereShape;
+					shape = sphereShape = new SphereShape();
+					sphereShape.radius = shapeData.sphereRadius;
+					sphereShape.emitFromShell = shapeData.sphereEmitFromShell;
+					sphereShape.randomDirection = shapeData.sphereRandomDirection;
+					break;
+				case 1: 
+					var hemiSphereShape:HemisphereShape;
+					shape = hemiSphereShape = new HemisphereShape();
+					hemiSphereShape.radius = shapeData.hemiSphereRadius;
+					hemiSphereShape.emitFromShell = shapeData.hemiSphereEmitFromShell;
+					hemiSphereShape.randomDirection = shapeData.hemiSphereRandomDirection;
+					break;
+				case 2: 
+					var coneShape:ConeShape;
+					shape = coneShape = new ConeShape();
+					coneShape.angle = shapeData.coneAngle * anglelToRad;
+					coneShape.radius = shapeData.coneRadius;
+					coneShape.length = shapeData.coneLength;
+					coneShape.emitType = shapeData.coneEmitType;
+					coneShape.randomDirection = shapeData.coneRandomDirection;
+					break;
+				case 3: 
+					var boxShape:BoxShape;
+					shape = boxShape = new BoxShape();
+					boxShape.x = shapeData.boxX;
+					boxShape.y = shapeData.boxY;
+					boxShape.z = shapeData.boxZ;
+					boxShape.randomDirection = shapeData.boxRandomDirection;
+					break;
+				case 7: 
+					var circleShape:CircleShape;
+					shape = circleShape = new CircleShape();
+					circleShape.radius = shapeData.circleRadius;
+					circleShape.arc = shapeData.circleArc * anglelToRad;
+					circleShape.emitFromEdge = shapeData.circleEmitFromEdge;
+					circleShape.randomDirection = shapeData.circleRandomDirection;
+					break;
+				/**
+				 * ------------------------临时调整，待日后完善-------------------------------------
+				 */
+				default: 
+					var tempShape:CircleShape;
+					shape = tempShape = new CircleShape();
+					tempShape.radius = shapeData.circleRadius;
+					tempShape.arc = shapeData.circleArc * anglelToRad;
+					tempShape.emitFromEdge = shapeData.circleEmitFromEdge;
+					tempShape.randomDirection = shapeData.circleRandomDirection;
+					break;
+				}
+				shape.enable = shapeData.enable;
+				particleSystem.shape = shape;
 			}
-			shape.enable = shapeData.enable;
-			particleSystem.shape = shape;
 			
 			//VelocityOverLifetime
 			var velocityOverLifetimeData:Object = customProps.velocityOverLifetime;
@@ -663,19 +665,31 @@ package laya.d3.core.particleShuriKen {
 				textureSheetAnimation.cycles = textureSheetAnimationData.cycles;
 				particleSystem.textureSheetAnimation = textureSheetAnimation;
 			}
-			
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _activeHierarchy():void {
+			super._activeHierarchy();
 			(particleSystem.playOnAwake) && (particleSystem.play());
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _inActiveHierarchy():void {
+			super._inActiveHierarchy();
+			(particleSystem.isAlive) && (particleSystem.simulate(0, true));
 		}
 		
 		/**
 		 * @private
 		 */
 		override public function cloneTo(destObject:*):void {
-			super.cloneTo(destObject);
 			var destShuriKenParticle3D:ShuriKenParticle3D = destObject as ShuriKenParticle3D;
 			var destParticleSystem:ShurikenParticleSystem = destShuriKenParticle3D._geometryFilter as ShurikenParticleSystem;
 			(_geometryFilter as ShurikenParticleSystem).cloneTo(destParticleSystem);
-			
 			var destParticleRender:ShurikenParticleRender = destShuriKenParticle3D._render as ShurikenParticleRender;
 			var particleRender:ShurikenParticleRender = _render as ShurikenParticleRender;
 			destParticleRender.sharedMaterials = particleRender.sharedMaterials;
@@ -686,6 +700,7 @@ package laya.d3.core.particleShuriKen {
 			destParticleRender.stretchedBillboardSpeedScale = particleRender.stretchedBillboardSpeedScale;
 			destParticleRender.stretchedBillboardLengthScale = particleRender.stretchedBillboardLengthScale;
 			destParticleRender.sortingFudge = particleRender.sortingFudge;
+			super.cloneTo(destObject);//父类函数在最后,组件应该最后赋值，否则获取材质默认值等相关函数会有问题
 		}
 		
 		/**

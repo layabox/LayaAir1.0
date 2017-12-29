@@ -913,6 +913,18 @@ var HTMLImageElement=(function(_super){
 		context.ctx.drawTexture2(x,y,this.style.translateX,this.style.translateY,this.transform,this.style.alpha,this.style.blendMode,this._renderArgs);
 	}
 
+	/**
+	*@private
+	*/
+	__proto.layaoutCallNative=function(){
+		var n=0;
+		if (this._childs &&(n=this._childs.length)> 0){
+			for (var i=0;i < n;i++){
+				this._childs[i].layaoutCallNative && this._childs[i].layaoutCallNative();
+			}
+		}
+	}
+
 	__getset(0,__proto,'src',null,function(url){
 		var _$this=this;
 		url=this.formatURL(url);

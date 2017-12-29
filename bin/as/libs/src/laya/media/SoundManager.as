@@ -37,7 +37,7 @@ package laya.media {
 		 * 背景音乐使用Audio标签播放。
 		 * @default true
 		 */
-		public static var useAudioMusic:Boolean = true;
+		private static var _useAudioMusic:Boolean = true;
 		/**@private 是否静音，默认为false。*/
 		private static var _muted:Boolean = false;
 		/**@private 是否音效静音，默认为false。*/
@@ -64,6 +64,8 @@ package laya.media {
 		private static var _musicCompleteHandler:Handler = null;
 		/**@private */
 		public static var _soundClass:Class;
+		/**@private */
+		public static var _musicClass:Class;
 		/**
 		 * 音效播放后自动删除。
 		 * @default true
@@ -210,6 +212,17 @@ package laya.media {
 			return _musicMuted;
 		}
 		
+		static public function get useAudioMusic():Boolean 
+		{
+			return _useAudioMusic;
+		}
+		
+		static public function set useAudioMusic(value:Boolean):void 
+		{
+			_useAudioMusic = value;
+			if (value) _musicClass = AudioSound;
+		}
+		
 		/**
 		 * 播放音效。音效可以同时播放多个。
 		 * @param url			声音文件地址。
@@ -275,7 +288,7 @@ package laya.media {
 			url = URL.formatURL(url);
 			_tMusic = url;
 			if (_musicChannel) _musicChannel.stop();
-			return _musicChannel = playSound(url, loops, complete, useAudioMusic?AudioSound:null, startTime);
+			return _musicChannel = playSound(url, loops, complete, _musicClass, startTime);
 		}
 		
 		/**

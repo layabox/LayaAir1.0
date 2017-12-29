@@ -9,6 +9,13 @@ package laya.d3.core.light {
 	 * <code>LightSprite</code> 类用于创建灯光的父类。
 	 */
 	public class LightSprite extends Sprite3D {
+		/** 灯光烘培类型-实时。*/
+		public static var LIGHTMAPBAKEDTYPE_REALTIME:int = 0;
+		/** 灯光烘培类型-混合。*/
+		public static var LIGHTMAPBAKEDTYPE_MIXED:int = 1;
+		/** 灯光烘培类型-烘焙。*/
+		public static var LIGHTMAPBAKEDTYPE_BAKED:int = 2;
+		
 		/** @private */
 		protected var _intensityColor:Vector3;
 		
@@ -26,6 +33,8 @@ package laya.d3.core.light {
 		protected var _shadowMapPCFType:int;
 		/** @private */
 		protected var _parallelSplitShadowMap:ParallelSplitShadowMap;
+		/** @private */
+		public var _lightmapBakedType:int;
 		
 		/** 灯光颜色。 */
 		public var color:Vector3;
@@ -132,6 +141,28 @@ package laya.d3.core.light {
 		}
 		
 		/**
+		 * 获取灯光烘培类型。
+		 */
+		public function get lightmapBakedType():int {
+			return _lightmapBakedType;
+		}
+		
+		/**
+		 * 设置灯光烘培类型。
+		 */
+		public function set lightmapBakedType(value:int):void {
+			if (_lightmapBakedType !== value) {
+				_lightmapBakedType = value;
+				if (_activeInHierarchy) {
+					if (value !== LIGHTMAPBAKEDTYPE_BAKED)
+						_scene._addLight(this);
+					else
+						_scene._removeLight(this);
+				}
+			}
+		}
+		
+		/**
 		 * 创建一个 <code>LightSprite</code> 实例。
 		 */
 		public function LightSprite() {
@@ -144,6 +175,7 @@ package laya.d3.core.light {
 			_shadowMapSize = 512;
 			_shadowMapCount = 1;
 			_shadowMapPCFType = 0;
+			_lightmapBakedType = LIGHTMAPBAKEDTYPE_REALTIME;
 		}
 		
 		/**
@@ -161,14 +193,14 @@ package laya.d3.core.light {
 		 * @inheritDoc
 		 */
 		override protected function _addSelfRenderObjects():void {
-			scene._addLight(this);
+			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && (_scene._addLight(this));
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override protected function _clearSelfRenderObjects():void {
-			scene._removeLight(this);
+			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && (_scene._removeLight(this));
 		}
 		
 		/**

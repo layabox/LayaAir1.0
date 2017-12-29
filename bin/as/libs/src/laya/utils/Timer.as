@@ -167,7 +167,7 @@ package laya.utils {
 			handler.caller = caller;
 			handler.method = method;
 			handler.args = args;
-			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + Browser.now() - _lastTimer);
+			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + Browser.now() - _lastTimer) + 1;
 			
 			//索引handler
 			_indexHandler(handler);

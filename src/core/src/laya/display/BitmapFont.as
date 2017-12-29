@@ -55,6 +55,52 @@ package laya.display {
 			var tScale:Number = 1;
 			
 			var tInfo:* = xml.getElementsByTagName("info");
+			if (!tInfo[0].getAttributeNode)
+			{
+				return parseFont2(xml, texture);
+			}
+			fontSize = parseInt(tInfo[0].getAttributeNode("size").nodeValue);
+			
+			var tPadding:String = tInfo[0].getAttributeNode("padding").nodeValue;
+			var tPaddingArray:Array = tPadding.split(",");
+			_padding = [parseInt(tPaddingArray[0]), parseInt(tPaddingArray[1]), parseInt(tPaddingArray[2]), parseInt(tPaddingArray[3])];
+			
+			var chars:Array;
+			chars = xml.getElementsByTagName("char");
+			var i:int = 0;
+			for (i = 0; i < chars.length; i++) {
+				var tAttribute:* = chars[i];
+				var tId:int = parseInt(tAttribute.getAttributeNode("id").nodeValue);
+				
+				var xOffset:Number = parseInt(tAttribute.getAttributeNode("xoffset").nodeValue) / tScale;
+				var yOffset:Number = parseInt(tAttribute.getAttributeNode("yoffset").nodeValue) / tScale;
+				var xAdvance:Number = parseInt(tAttribute.getAttributeNode("xadvance").nodeValue) / tScale;
+				
+				var region:Rectangle = new Rectangle();
+				region.x = parseInt(tAttribute.getAttributeNode("x").nodeValue);
+				region.y = parseInt(tAttribute.getAttributeNode("y").nodeValue);
+				region.width = parseInt(tAttribute.getAttributeNode("width").nodeValue);
+				region.height = parseInt(tAttribute.getAttributeNode("height").nodeValue);
+				
+				var tTexture:Texture = Texture.create(texture, region.x, region.y, region.width, region.height, xOffset, yOffset);
+				_maxWidth = Math.max(_maxWidth, xAdvance + letterSpacing);
+				_fontCharDic[tId] = tTexture;
+				_fontWidthMap[tId] = xAdvance;
+			}
+		}
+		
+		/**
+		 * 解析字体文件。
+		 * @param	xml			字体文件XML。
+		 * @param	texture		字体的纹理。
+		 */
+		public function parseFont2(xml:XmlDom, texture:Texture):void {
+			if (xml == null || texture == null) return;
+			_texture = texture;
+			var tX:int = 0;
+			var tScale:Number = 1;
+			
+			var tInfo:* = xml.getElementsByTagName("info");
 			fontSize = parseInt(tInfo[0].attributes["size"].nodeValue);
 			
 			var tPadding:String = tInfo[0].attributes["padding"].nodeValue;
@@ -84,7 +130,6 @@ package laya.display {
 				_fontWidthMap[tId] = xAdvance;
 			}
 		}
-		
 		/**
 		 * 获取指定字符的字体纹理对象。
 		 * @param	char 字符。

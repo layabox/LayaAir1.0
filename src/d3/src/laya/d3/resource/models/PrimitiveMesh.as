@@ -49,9 +49,9 @@ package laya.d3.resource.models {
 		 * 获取网格顶点
 		 * @return 网格顶点。
 		 */
-		override public function _getPositions():Array//WEBGL1.0不能从Buffer显存中获取内存数据
+		override public function _getPositions():Vector.<Vector3>//WEBGL1.0不能从Buffer显存中获取内存数据
 		{
-			var vertices:Array = [];
+			var vertices:Vector.<Vector3> = new Vector.<Vector3>();
 			
 			var positionElement:VertexElement;
 			var vertexElements:Array = _vertexBuffer.vertexDeclaration.getVertexElements();

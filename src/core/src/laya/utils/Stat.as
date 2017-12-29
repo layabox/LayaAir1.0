@@ -1,7 +1,7 @@
 package laya.utils {
+	import laya.display.Sprite;
+	import laya.display.Text;
 	import laya.renders.Render;
-	import laya.resource.Context;
-	import laya.resource.HTMLCanvas;
 	import laya.resource.ResourceManager;
 	
 	/**
@@ -27,6 +27,8 @@ package laya.utils {
 		public static var trianglesFaces:int = 0;
 		/** 精灵<code>Sprite</code> 的数量。*/
 		public static var spriteCount:int = 0;
+		/** 精灵渲染使用缓存<code>Sprite</code> 的数量。*/
+		public static var spriteRenderUseCacheCount:int = 0;
 		/** 八叉树节点检测次数。*/
 		public static var treeNodeCollision:int = 0;
 		/** 八叉树精灵碰撞检测次数。*/
@@ -45,16 +47,18 @@ package laya.utils {
 		
 		private static var _fpsStr:String;
 		private static var _canvasStr:String;
-		private static var _canvas:HTMLCanvas;
-		private static var _ctx:Context;
+		private static var _spriteStr:String;
+		private static var _fpsData:Array = [];
 		private static var _timer:Number = 0;
 		private static var _count:int = 0;
-		private static var _width:int;
-		private static var _height:int = 100;
 		private static var _view:Array = [];
 		private static var _fontSize:int = 12;
-		private static var _first:Boolean;
-		private static var _vx:Number;
+		private static var _txt:Text;
+		static private var _leftText:Text;
+		/**@private */
+		public static var _sp:Sprite;
+		/**@private */
+		public static var _show:Boolean = false;
 		
 		/**
 		 * 显示性能统计信息。
@@ -63,22 +67,37 @@ package laya.utils {
 		 */
 		public static function show(x:Number = 0, y:Number = 0):void {
 			if (Render.isConchApp) {
-				__JS__("conch.showFPS&&conch.showFPS(x,y)");
+				Browser.window.conch.showFPS && Browser.window.conch.showFPS(x, y);
 				return;
 			}
+			var stat:Sprite = _sp;
 			var pixel:Number = Browser.pixelRatio;
-			_width = pixel * 130;
-			_vx = pixel * 75;
+			if (!stat) {
+				stat = new Sprite();
+				_leftText = new Text();
+				_leftText.pos(5, 5);
+				_leftText.color = "#ffffff";
+				stat.addChild(_leftText);
+				
+				_txt = new Text();
+				_txt.pos(80*pixel, 5);
+				_txt.color = "#ffffff";
+				stat.addChild(_txt);
+				_sp = stat;
+			}
+			stat.pos(x, y);
+			
+			_show = true;
+			_fpsData.length = 60;
 			
 			_view[0] = {title: "FPS(Canvas)", value: "_fpsStr", color: "yellow", units: "int"};
-			_view[1] = {title: "Sprite", value: "spriteCount", color: "white", units: "int"};
+			_view[1] = {title: "Sprite", value: "_spriteStr", color: "white", units: "int"};
 			_view[2] = {title: "DrawCall", value: "drawCall", color: "white", units: "int"};
 			_view[3] = {title: "CurMem", value: "currentMemorySize", color: "yellow", units: "M"};
 			if (Render.isWebGL) {
 				_view[4] = {title: "Shader", value: "shaderCall", color: "white", units: "int"};
 				if (!Render.is3DMode) {
 					_view[0].title = "FPS(WebGL)";
-					
 					_view[5] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
 				} else {
 					_view[0].title = "FPS(3D)";
@@ -90,27 +109,26 @@ package laya.utils {
 				_view[4] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
 			}
 			
-			_fontSize = 12 * pixel;
+			var text:String = "";
 			for (var i:int = 0; i < _view.length; i++) {
-				_view[i].x = 4;
-				_view[i].y = i * _fontSize + 2 * pixel;
+				var one:* = _view[i];
+				text += one.title+"\n";
 			}
+			_leftText.text = text;
 			
-			_height = pixel * (_view.length * 12 + 3 * pixel) + 4;
+			//调整为合适大小和字体			
+			var width:Number = pixel * 138;
+			var height:Number = pixel * (_view.length * 12 + 3 * pixel) + 4;
+			_txt.fontSize = _fontSize * pixel;
+			_leftText.fontSize = _fontSize * pixel;
 			
-			if (!_canvas) {
-				_canvas = new HTMLCanvas('2D');
-				_canvas.size(_width, _height);
-				_ctx = _canvas.getContext('2d');
-				_ctx.textBaseline = "top";
-				_ctx.font = _fontSize + "px Sans-serif";
-				
-				_canvas.source.style.cssText = "pointer-events:none;background:rgba(150,150,150,0.8);z-index:100000;position: absolute;direction:ltr;left:" + x + "px;top:" + y + "px;width:" + (_width / pixel) + "px;height:" + (_height / pixel) + "px;";
-			}
-			_first = true;
+			stat.size(width, height);
+			stat.graphics.clear();
+			stat.graphics.setAlpha(0.5);
+			stat.graphics.drawRect(0, 0, width, height, "#999999");
+			stat.graphics.setAlpha(1);
+			
 			loop();
-			_first = false;
-			Browser.container.appendChild(_canvas.source);
 			enable();
 		}
 		
@@ -123,10 +141,8 @@ package laya.utils {
 		 * 隐藏性能统计信息。
 		 */
 		public static function hide():void {
-			if (_canvas) {
-				Browser.removeElement(_canvas.source);
-				Laya.timer.clear(Stat, loop);
-			}
+			_show = false;
+			Laya.timer.clear(Stat, loop);
 		}
 		
 		/**
@@ -134,15 +150,14 @@ package laya.utils {
 		 * 清零性能统计计算相关的数据。
 		 */
 		public static function clear():void {
-			trianglesFaces = drawCall = shaderCall = spriteCount = treeNodeCollision = treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
+			trianglesFaces = drawCall = shaderCall = spriteCount = spriteRenderUseCacheCount = treeNodeCollision = treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
 		}
 		
 		/**
 		 * 点击性能统计显示区域的处理函数。
 		 */
 		public static function set onclick(fn:Function):void {
-			_canvas.source.onclick = fn;
-			_canvas.source.style.pointerEvents = '';
+			_sp.on("click", _sp, fn);
 		}
 		
 		/**
@@ -158,12 +173,13 @@ package laya.utils {
 			//计算更精确的FPS值
 			FPS = Math.round((count * 1000) / (timer - _timer));
 			
-			if (_canvas) {
+			if (_show) {
 				//计算平均值
 				trianglesFaces = Math.round(trianglesFaces / count);
-				drawCall = Math.round(drawCall / count) - 2;
-				shaderCall = Math.round(shaderCall / count);
-				spriteCount = Math.round(spriteCount / count) - 1;
+				drawCall = Math.round(drawCall / count)-2;
+				shaderCall = Math.round(shaderCall / count)-4;
+				spriteCount = Math.round(spriteCount / count)-4;
+				spriteRenderUseCacheCount = Math.round(spriteRenderUseCacheCount / count);
 				canvasNormal = Math.round(canvasNormal / count);
 				canvasBitmap = Math.round(canvasBitmap / count);
 				canvasReCache = Math.ceil(canvasReCache / count);
@@ -172,25 +188,22 @@ package laya.utils {
 				
 				var delay:String = FPS > 0 ? Math.floor(1000 / FPS).toString() : " ";
 				_fpsStr = FPS + (renderSlow ? " slow" : "") + " " + delay;
+				_spriteStr = spriteCount + (spriteRenderUseCacheCount ? ("/" + spriteRenderUseCacheCount) : '');
 				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
 				currentMemorySize = ResourceManager.systemResourceManager.memorySize;
 				
-				var ctx:Context = _ctx;
-				ctx.clearRect(_first ? 0 : _vx, 0, _width, _height);
+				var text:String = "";
 				for (var i:int = 0; i < _view.length; i++) {
 					var one:* = _view[i];
-					//只有第一次才渲染标题文字，减少文字渲染次数
-					if (_first) {
-						ctx.fillStyle = "white";
-						ctx.fillText(one.title, one.x, one.y, null, null, null);
-					}
-					ctx.fillStyle = one.color;
 					var value:* = Stat[one.value];
 					(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
-					ctx.fillText(value + "", one.x + _vx, one.y, null, null, null);
+					(one.units == "K") && (value = Math.floor(value / (1024) * 100) / 100 + " K");
+					text += value + "\n";
 				}
+				_txt.text = text;
 				clear();
 			}
+			
 			_count = 0;
 			_timer = timer;
 		}
