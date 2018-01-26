@@ -173,6 +173,11 @@ void main_normal()
 	vec3 finalDiffuse;
 	#ifdef LIGHTMAP
 		finalDiffuse=texture2D(u_LightMap, v_LightMapUV).rgb*2.0;
+		//float exponent = texture2D(u_LightMap, v_LightMapUV).a;
+		//finalDiffuse = texture2D(u_LightMap, v_LightMapUV).rgb;
+		//float ratio = pow(2.0, exponent * 255.0 - (128.0 + 8.0));
+		//finalDiffuse = finalDiffuse * 255.0 * ratio;	
+		//finalDiffuse = sqrt(finalDiffuse);
 	#else
 		finalDiffuse=vec3(0.0);
 	#endif

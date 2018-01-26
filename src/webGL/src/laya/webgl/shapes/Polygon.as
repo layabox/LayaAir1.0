@@ -1,13 +1,14 @@
 package laya.webgl.shapes {
 	import laya.maths.Matrix;
 	import laya.webgl.utils.Buffer2D;
-	
+	import laya.webgl.shapes.Earcut;
 	public class Polygon extends BasePoly {
 		
 		private var _points:Array;
 		private var _start:int = -1;
 		private var _mat:Matrix = Matrix.create();
-		private var _repaint:Boolean=false;
+		private var _repaint:Boolean = false;
+		private var earcutTriangles:*;
 		public function Polygon(x:Number, y:Number, points:Array, color:uint, borderWidth:int, borderColor:uint) {
 			_points = points.slice(0,points.length);
 			super(x, y, 0, 0, _points.length / 2, color, borderWidth, borderColor);
@@ -48,9 +49,9 @@ package laya.webgl.shapes {
 				{
 					_start = start;
 					indices = [];
-					tLen = Math.floor(tArray.length / 2);
-					for (i = 2; i < tLen; i++) {
-						indices.push(start, start + i - 1, start + i);
+					tLen = earcutTriangles.length;
+					for (i = 0; i < tLen; i++) {
+						indices.push(earcutTriangles[i] + start);
 					}
 					mUint16Array = new Uint16Array(indices);
 				}
@@ -59,6 +60,7 @@ package laya.webgl.shapes {
 				_start = start;
 				indices = [];
 				var verts:Array = [];
+				var vertsEarcut:Array = [];
 				
 				var color:uint = this.color;
 				var r:Number = ((color >> 16) & 0x0000ff) / 255, g:Number = ((color >> 8) & 0xff) / 255, b:Number = (color & 0x0000ff) / 255;
@@ -66,9 +68,12 @@ package laya.webgl.shapes {
 				tLen = Math.floor(tArray.length / 2);
 				for (i = 0; i < tLen; i++) {
 					verts.push(x + tArray[i * 2], y + tArray[i * 2 + 1], r, g, b);
+					vertsEarcut.push(x + tArray[i * 2], y + tArray[i * 2 + 1]);
 				}
-				for (i = 2; i < tLen; i++) {
-					indices.push(start, start + i - 1, start + i);
+				earcutTriangles = Earcut.earcut(vertsEarcut, null, 2);
+				tLen = earcutTriangles.length;
+				for (i = 0; i < tLen; i++) {
+					indices.push(earcutTriangles[i] + start);
 				}
 				mUint16Array = new Uint16Array(indices); 
 				mFloat32Array = new Float32Array(verts);

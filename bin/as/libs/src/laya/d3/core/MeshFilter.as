@@ -36,9 +36,11 @@ package laya.d3.core {
 		 * @return  value 共享网格。
 		 */
 		public function set sharedMesh(value:BaseMesh):void {
-			var oldMesh:BaseMesh = _sharedMesh;
+			var lastValue:BaseMesh = _sharedMesh;
+			(lastValue) && (lastValue._removeReference());
 			_sharedMesh = value;
-			event(Event.MESH_CHANGED, [this, oldMesh, value]);
+			value._addReference();
+			event(Event.MESH_CHANGED, [this, lastValue, value]);
 			
 			if (!value.loaded) {
 				_sharedMesh.once(Event.LOADED, this, _sharedMeshLoaded);
@@ -65,7 +67,6 @@ package laya.d3.core {
 		override public function get _originalBoundingBox():BoundBox {
 			return _sharedMesh.boundingBox;
 		}
-		
 		
 		/**
 		 * @inheritDoc
@@ -95,8 +96,7 @@ package laya.d3.core {
 		override public function _destroy():void {
 			super._destroy();
 			_owner = null;
-			_sharedMesh = null;
-		
+			(_sharedMesh) && (_sharedMesh._removeReference(), _sharedMesh = null);
 		}
 	
 	}

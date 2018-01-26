@@ -2,21 +2,36 @@ package laya.d3.core {
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
+	import laya.d3.shader.ShaderDefines;
 	import laya.utils.Stat;
 	
 	/**
 	 * <code>RenderableSprite3D</code> 类用于可渲染3D精灵的父类，抽象类不允许实例。
 	 */
 	public class RenderableSprite3D extends Sprite3D {
+		///**精灵级着色器宏定义,接收阴影。*/
+		//public static var SHADERDEFINE_RECEIVE_SHADOW:int;
 		/**精灵级着色器宏定义,光照贴图便宜和缩放。*/
-		public static const SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV:int = 0x2;
+		public static var SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV:int = 0x2;
 		/**精灵级着色器宏定义,光照贴图。*/
-		public static const SAHDERDEFINE_LIGHTMAP:int = 0x4;
+		public static var SAHDERDEFINE_LIGHTMAP:int = 0x4;
 		
 		/**着色器变量名，光照贴图缩放和偏移。*/
 		public static const LIGHTMAPSCALEOFFSET:int = 2;
 		/**着色器变量名，光照贴图缩。*/
 		public static const LIGHTMAP:int = 3;
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines();
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			//SHADERDEFINE_RECEIVE_SHADOW = shaderDefines.registerDefine("RECEIVESHADOW");
+			SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV = shaderDefines.registerDefine("SCALEOFFSETLIGHTINGMAPUV");
+			SAHDERDEFINE_LIGHTMAP = shaderDefines.registerDefine("LIGHTMAP");
+		}
 		
 		/** @private */
 		public var _render:BaseRender;

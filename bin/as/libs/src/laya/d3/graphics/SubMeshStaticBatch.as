@@ -116,7 +116,7 @@ package laya.d3.graphics {
 		/**
 		 * @inheritDoc
 		 */
-		override public function _finshInit():void {
+		override public function _finishInit():void {
 			if (_needFinishCombine) {//TODO:合并前应处理排序
 				var curMerVerCount:int = 0;
 				var curIndexCount:int = 0;
@@ -134,8 +134,8 @@ package laya.d3.graphics {
 				var indexDatas:Uint16Array = new Uint16Array(_currentCombineIndexCount);
 				
 				if (_vertexBuffer) {
-					_vertexBuffer.dispose();
-					_indexBuffer.dispose();
+					_vertexBuffer.destroy();
+					_indexBuffer.destroy();
 				}
 				_vertexBuffer = VertexBuffer3D.create(_vertexDeclaration, _currentCombineVertexCount, WebGLContext.STATIC_DRAW);
 				_indexBuffer = IndexBuffer3D.create(IndexBuffer3D.INDEXTYPE_USHORT, _currentCombineIndexCount, WebGLContext.STATIC_DRAW);
@@ -276,8 +276,8 @@ package laya.d3.graphics {
 			_batchOwnerIndices = null;
 			_batchOwners = null;
 			_vertexDeclaration = null;
-			_vertexBuffer.dispose();
-			_indexBuffer.dispose();
+			_vertexBuffer.destroy();
+			_indexBuffer.destroy();
 		}
 		
 		//..................临时.................................

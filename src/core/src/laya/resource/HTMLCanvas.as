@@ -52,7 +52,8 @@ package laya.resource {
 					}
 					return ctx;
 				}
-			} 
+			}
+			lock = true;
 		}
 		
 		/**
@@ -65,10 +66,10 @@ package laya.resource {
 		/**
 		 * 销毁。
 		 */
-		public function destroy():void {
+		override public function destroy():void {
 			_ctx && _ctx.destroy();
 			_ctx = null;
-			dispose();
+			super.destroy();
 		}
 		
 		/**
@@ -136,6 +137,18 @@ package laya.resource {
 		
 		public function getCanvas():*{
 			return _source;
+		}
+		public function toBase64(type:String, encoderOptions:Number, callBack:Function):void {
+			if (_source) {
+				if (Render.isConchApp && _source.toBase64) {
+					_source.toBase64(type, encoderOptions, callBack);
+				}
+				else {
+					var base64Data:String = _source.toDataURL(type, encoderOptions);
+					callBack.call(this, base64Data);
+				}
+			}
+			
 		}
 	}
 }

@@ -2,6 +2,7 @@ package laya.net {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
+	import laya.resource.ICreateResource;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
@@ -76,7 +77,7 @@ package laya.net {
 		 * @param	cache		是否缓存加载的资源。
 		 * @return	如果url为数组，返回true；否则返回指定的资源类对象。
 		 */
-		public function create(url:*, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
+		public function create(url:*, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true, group:String = null):* {
 			if (url is Array) {
 				var items:Array = url as Array;
 				var itemCount:int = items.length;
@@ -90,7 +91,7 @@ package laya.net {
 					item.progress = 0;
 					var progressHandler:Handler = progress ? Handler.create(null, onProgress, [item], false) : null;
 					var completeHandler:Handler = (progress || complete) ? Handler.create(null, onComplete, [item]) : null;
-					_create(item.url, completeHandler, progressHandler, item.clas || clas, item.params || params, item.priority || priority, cache);
+					_create(item.url, completeHandler, progressHandler, item.clas || clas, item.params || params, item.priority || priority, cache, item.group || group);
 				}
 				function onComplete(item:Object, content:* = null):void {
 					loadedCount++;
@@ -111,19 +112,17 @@ package laya.net {
 					progress2.runWith(v);
 				}
 				return true;
-			} else return _create(url, complete, progress, clas, params, priority, cache);
+			} else return _create(url, complete, progress, clas, params, priority, cache, group);
 		}
 		
-		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true):* {
+		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true, group:String = null):* {
 			url = URL.formatURL(url);
-			
 			var item:* = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
 				var creatItem:Array = createMap[extension];
 				if (!creatItem)
 					throw new Error("LoaderManager:unknown file(" + url + ") extension with: " + extension + ".");
-				
 				if (!clas) clas = creatItem[0];
 				var type:String = creatItem[1];
 				if (extension == "atlas") {
@@ -133,16 +132,15 @@ package laya.net {
 					item = clas ? new clas() : null;
 					if (item.hasOwnProperty("_loaded"))
 						item._loaded = false;
-					load(url, Handler.create(null, onLoaded), progress, type, priority, false, null, true);
+					item._setUrl(url);
+					(group) && (item._setGroup(group));
+					_createLoad(item, url, Handler.create(null, onLoaded), progress, type, priority, false, group, true);
 					function onLoaded(data:*):void {
-						(item && !item.disposed && data) && (item.onAsynLoaded.call(item, url, data, params));//TODO:精灵如何处理
+						(item && !item.destroyed && data) && (item.onAsynLoaded.call(item, url, data, params));//TODO:精灵如何处理
 						if (complete) complete.run();
 						Laya.loader.event(url);
 					}
-					if (cache) {
-						cacheRes(url, item);
-						item.url = url;
-					}
+					(cache) && (cacheRes(url, item));
 				}
 			} else {
 				if (!item.hasOwnProperty("loaded") || item.loaded) {
@@ -202,6 +200,44 @@ package laya.net {
 			return this;
 		}
 		
+		/**
+		 * @private
+		 */
+		public function _createLoad(item:*, url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):LoaderManager {
+			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache, group);
+			var content:* = Loader.getRes(url);
+			if (content != null) {
+				//增加延迟回掉
+				Laya.timer.frameOnce(1, null, function():void {
+					progress && progress.runWith(1);
+					complete && complete.runWith(content);
+					//判断是否全部加载，如果是则抛出complete事件
+					_loaderCount || event(Event.COMPLETE);
+				});
+			} else {
+				var info:ResInfo = _resMap[url];
+				if (!info) {
+					info = _infoPool.length ? _infoPool.pop() : new ResInfo();
+					info.url = url;
+					info.clas = item;
+					info.type = type;
+					info.cache = cache;
+					info.group = group;
+					info.ignoreCache = ignoreCache;
+					complete && info.on(Event.COMPLETE, complete.caller, complete.method, complete.args);
+					progress && info.on(Event.PROGRESS, progress.caller, progress.method, progress.args);
+					_resMap[url] = info;
+					priority = priority < this._maxPriority ? priority : this._maxPriority - 1;
+					this._resInfos[priority].push(info);
+					_next();
+				} else {
+					complete && info._createListener(Event.COMPLETE, complete.caller, complete.method, complete.args, false, false);
+					progress && info._createListener(Event.PROGRESS, progress.caller, progress.method, progress.args, false, false);
+				}
+			}
+			return this;
+		}
+		
 		private function _next():void {
 			if (this._loaderCount >= this.maxLoader) return;
 			for (var i:int = 0; i < this._maxPriority; i++) {
@@ -234,6 +270,8 @@ package laya.net {
 				_this._loaderCount--;
 				_this._next();
 			}
+			
+			loader._class = resInfo.clas;
 			loader.load(resInfo.url, resInfo.type, resInfo.cache, resInfo.group, resInfo.ignoreCache);
 		}
 		
@@ -296,7 +334,7 @@ package laya.net {
 		 * 相比clearRes，clearTextureRes只是清理texture里面使用的图片资源，并不销毁texture，再次使用到的时候会自动恢复图片资源
 		 * 而clearRes会彻底销毁texture，导致不能再使用；clearTextureRes能确保立即销毁图片资源，并且不用担心销毁错误，clearRes则采用引用计数方式销毁
 		 * 【注意】如果图片本身在自动合集里面（默认图片小于512*512），内存是不能被销毁的，此图片被大图合集管理器管理
-		 * @param	url	图集地址或者texture地址，比如 Loader.clearTextureRes("res/atlas/comp.atlas"); Loader.clearTextureRes("hall/bg.jpg");	
+		 * @param	url	图集地址或者texture地址，比如 Loader.clearTextureRes("res/atlas/comp.atlas"); Loader.clearTextureRes("hall/bg.jpg");
 		 */
 		public function clearTextureRes(url:String):void {
 			Loader.clearTextureRes(url);
@@ -432,4 +470,5 @@ class ResInfo extends EventDispatcher {
 	public var cache:Boolean;
 	public var group:String;
 	public var ignoreCache:Boolean;
+	public var clas:*;
 }

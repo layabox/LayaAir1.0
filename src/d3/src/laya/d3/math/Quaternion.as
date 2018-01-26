@@ -6,19 +6,19 @@ package laya.d3.math {
 	 */
 	public class Quaternion implements IClone{
 		/**@private */
-		private static var TEMPVector30:Vector3 = new Vector3();
+		public static var TEMPVector30:Vector3 = new Vector3();
 		/**@private */
-		private static var TEMPVector31:Vector3 = new Vector3();
+		public static var TEMPVector31:Vector3 = new Vector3();
 		/**@private */
-		private static var TEMPVector32:Vector3 = new Vector3();
+		public static var TEMPVector32:Vector3 = new Vector3();
 		/**@private */
-		private static var TEMPVector33:Vector3 = new Vector3();
+		public static var TEMPVector33:Vector3 = new Vector3();
 		/**@private */
-		private static var TEMPMatrix0:Matrix4x4 = new Matrix4x4();
+		public static var TEMPMatrix0:Matrix4x4 = new Matrix4x4();
 		/**@private */
-		private static var TEMPMatrix1:Matrix4x4 = new Matrix4x4();
+		public static var TEMPMatrix1:Matrix4x4 = new Matrix4x4();
 		/**@private */
-		private static var _tempMatrix3x3:Matrix3x3 = new Matrix3x3();
+		public static var _tempMatrix3x3:Matrix3x3 = new Matrix3x3();
 		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Quaternion =/*[STATIC SAFE]*/ new Quaternion();

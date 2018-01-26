@@ -9,10 +9,12 @@ package laya.d3.core.material {
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	import laya.d3.shader.ValusArray;
 	import laya.net.Loader;
 	import laya.renders.Render;
 	import laya.resource.Resource;
+	import laya.resource.Texture;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
@@ -84,10 +86,20 @@ package laya.d3.core.material {
 		public static const DEPTHTEST_ALWAYS:int = 0x0207/*WebGLContext.ALWAYS*/;
 		
 		/**@private 材质级着色器宏定义,透明测试。*/
-		public static const SHADERDEFINE_ALPHATEST:int = 0x1;
+		public static var SHADERDEFINE_ALPHATEST:int=0x1;
 		
 		/**@private 着色器变量,透明测试值。*/
 		public static const ALPHATESTVALUE:int = 0;
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines();
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_ALPHATEST = shaderDefines.registerDefine("ALPHATEST");
+		}
 		
 		/** @private */
 		private var _shader:Shader3D;
@@ -200,10 +212,6 @@ package laya.d3.core.material {
 			blendEquationAlpha = BLENDEQUATION_ADD;
 			depthTest = DEPTHTEST_LESS;
 			depthWrite = true;
-			
-			if (Render.isConchNode) {//NATIVE
-				_conchMaterial = __JS__("new ConchMaterial()");
-			}
 		}
 		
 		/**
@@ -212,9 +220,6 @@ package laya.d3.core.material {
 		 */
 		protected function _addShaderDefine(value:int):void {
 			_shaderDefineValue |= value;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.addShaderDefine(value);
-			}
 		}
 		
 		/**
@@ -223,9 +228,6 @@ package laya.d3.core.material {
 		 */
 		protected function _removeShaderDefine(value:int):void {
 			_shaderDefineValue &= ~value;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.removeShaderDefine(value);
-			}
 		}
 		
 		/**
@@ -253,9 +255,6 @@ package laya.d3.core.material {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, buffer);
 			_values[shaderIndex] = buffer;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, buffer, 0);
-			}
 		}
 		
 		/**
@@ -275,9 +274,6 @@ package laya.d3.core.material {
 		protected function _setMatrix4x4(shaderIndex:int, matrix4x4:Matrix4x4):void {
 			_shaderValues.setValue(shaderIndex, matrix4x4 ? matrix4x4.elements : null);
 			_values[shaderIndex] = matrix4x4;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, matrix4x4.elements, 0);
-			}
 		}
 		
 		/**
@@ -298,9 +294,6 @@ package laya.d3.core.material {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, i);
 			_values[shaderIndex] = i;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, i, 1);
-			}
 		}
 		
 		/**
@@ -321,9 +314,6 @@ package laya.d3.core.material {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, number);
 			_values[shaderIndex] = number;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, number, 2);
-			}
 		}
 		
 		/**
@@ -344,9 +334,6 @@ package laya.d3.core.material {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, b);
 			_values[shaderIndex] = b;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, b, 1);
-			}
 		}
 		
 		/**
@@ -367,9 +354,6 @@ package laya.d3.core.material {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, vector2 ? vector2.elements : null);
 			_values[shaderIndex] = vector2;
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, vector2.elements, 0);
-			}
 		}
 		
 		/**
@@ -390,9 +374,6 @@ package laya.d3.core.material {
 			var shaderValue:ValusArray = _shaderValues;
 			shaderValue.setValue(shaderIndex, color ? color.elements : null);
 			_values[shaderIndex] = color;
-			if (_conchMaterial && color) {//NATIVE
-				_conchMaterial.setShaderValue(shaderIndex, color.elements, 0);
-			}
 		}
 		
 		/**
@@ -410,11 +391,14 @@ package laya.d3.core.material {
 		 * @param	texture 纹理。
 		 */
 		protected function _setTexture(shaderIndex:int, texture:BaseTexture):void {
+			var lastValue:BaseTexture = _values[shaderIndex];
 			_values[shaderIndex] = texture;
 			_shaderValues.setValue(shaderIndex, texture);
-			//if (_conchMaterial) {//NATIVE//TODO: texture index
-			//_conchMaterial.setTexture(texture._conchTexture, _textureSharderIndices.indexOf(shaderIndex), shaderIndex);
-			//}
+			
+			if (referenceCount > 0) {
+				(lastValue) && (lastValue._removeReference());
+				(texture) && (texture._addReference());
+			}
 		}
 		
 		/**
@@ -519,20 +503,6 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * 设置使用Shader名字。
-		 * @param name 名称。
-		 */
-		public function setShaderName(name:String):void {
-			var nameID:int = Shader3D.nameKey.getID(name);
-			if (nameID === -1)
-				throw new Error("BaseMaterial: unknown shader name.");
-			_shaderCompile = ShaderCompile3D._preCompileShader[nameID];
-			if (_conchMaterial) {//NATIVE
-				_conchMaterial.setShader(_shaderCompile._conchShader);
-			}
-		}
-		
-		/**
 		 * @inheritDoc
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
@@ -588,6 +558,60 @@ package laya.d3.core.material {
 				throw new Error("BaseMaterial:unkonwn version.");
 			}
 			_endLoaded();
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _addReference():void {
+			super._addReference();
+			var valueCount:int = _values.length;
+			for (var i:int = 0, n:int = valueCount; i < n; i++) {//TODO:需要优化,杜绝is判断，慢
+				var value:* = _values[i];
+				if (value && value is BaseTexture)
+					(value as BaseTexture)._addReference();
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _removeReference():void {
+			super._removeReference();
+			var valueCount:int = _values.length;
+			for (var i:int = 0, n:int = valueCount; i < n; i++) {//TODO:需要优化,杜绝is判断，慢
+				var value:* = _values[i];
+				if (value && value is BaseTexture)
+					(value as BaseTexture)._removeReference();
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function disposeResource():void {
+			blendConstColor = null;
+			_shader = null;
+			_shaderValues = null;
+			
+			var valueCount:int = _values.length;
+			for (var i:int = 0, n:int = valueCount; i < n; i++) {//TODO:需要优化,杜绝is判断，慢
+				var value:* = _values[i];
+				if (value && value is BaseTexture)
+					(value as BaseTexture)._removeReference();
+			}
+			_values = null;
+		}
+		
+		/**
+		 * 设置使用Shader名字。
+		 * @param name 名称。
+		 */
+		public function setShaderName(name:String):void {
+			var nameID:int = Shader3D.nameKey.getID(name);
+			if (nameID === -1)
+				throw new Error("BaseMaterial: unknown shader name.");
+			_shaderCompile = ShaderCompile3D._preCompileShader[nameID];
 		}
 		
 		/**

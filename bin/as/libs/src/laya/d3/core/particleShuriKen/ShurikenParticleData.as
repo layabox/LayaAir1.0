@@ -325,29 +325,6 @@ package laya.d3.core.particleShuriKen {
 				var titleX:int = title.x, titleY:int = title.y;
 				var subU:Number = 1.0 / titleX, subV:Number = 1.0 / titleY;
 				
-				var totalFrameCount:int;
-				var startRow:int;
-				var randomRow:Boolean = textureSheetAnimation.randomRow;
-				switch (textureSheetAnimation.type) {
-				case 0://Whole Sheet
-					totalFrameCount = titleX * titleY;
-					break;
-				case 1://Singal Row
-					totalFrameCount = titleX;
-					if (randomRow) {
-						if (autoRandomSeed) {
-							startRow = Math.round(Math.random() * titleY);
-						} else {
-							rand.seed = randomSeeds[13];
-							startRow = Math.round(rand.getFloat() * titleY);
-							randomSeeds[13] = rand.seed;
-						}
-					} else {
-						startRow = 0;
-					}
-					break;
-				}
-				
 				var startFrameCount:int;
 				var startFrame:StartFrame = textureSheetAnimation.startFrame;
 				switch (startFrame.type) {
@@ -356,10 +333,10 @@ package laya.d3.core.particleShuriKen {
 					break;
 				case 1://随机双常量模式
 					if (autoRandomSeed) {
-						startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random()));
+						startFrameCount = MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, Math.random());
 					} else {
 						rand.seed = randomSeeds[14];
-						startFrameCount = Math.round(MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, rand.getFloat()));
+						startFrameCount = MathUtil.lerp(startFrame.constantMin, startFrame.constantMax, rand.getFloat());
 						randomSeeds[14] = rand.seed;
 					}
 					break;
@@ -372,19 +349,37 @@ package laya.d3.core.particleShuriKen {
 					break;
 				case 2: 
 					if (autoRandomSeed) {
-						startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random()));
+						startFrameCount += MathUtil.lerp(frame.constantMin, frame.constantMax, Math.random());
 					} else {
 						rand.seed = randomSeeds[15];
-						startFrameCount += Math.round(MathUtil.lerp(frame.constantMin, frame.constantMax, rand.getFloat()));
+						startFrameCount += MathUtil.lerp(frame.constantMin, frame.constantMax, rand.getFloat());
 						randomSeeds[15] = rand.seed;
 					}
 					break;
 				}
 				
-				if (!randomRow)
+				var startRow:int;
+				switch (textureSheetAnimation.type) {
+				case 0://Whole Sheet
 					startRow = Math.floor(startFrameCount / titleX);
+					break;
+				case 1://Singal Row
+					if (textureSheetAnimation.randomRow) {
+						if (autoRandomSeed) {
+							startRow = Math.floor(Math.random() * titleY);
+							
+						} else {
+							rand.seed = randomSeeds[13];
+							startRow = Math.floor(rand.getFloat() * titleY);
+							randomSeeds[13] = rand.seed;
+						}
+					} else {
+						startRow = textureSheetAnimation.rowIndex;
+					}
+					break;
+				}
 				
-				var startCol:int = startFrameCount % titleX;
+				var startCol:int = Math.floor(startFrameCount % titleX);
 				startUVInfo = startUVInfo;
 				startUVInfo[0] = subU;
 				startUVInfo[1] = subV;

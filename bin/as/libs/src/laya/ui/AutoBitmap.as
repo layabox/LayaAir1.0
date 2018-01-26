@@ -149,7 +149,7 @@ package laya.ui {
 				//从缓存中读取渲染命令
 				source.$_GID || (source.$_GID = Utils.getGID());
 				var key:String = source.$_GID + "." + width + "." + height + "." + sizeGrid.join(".");
-				if (WeakObject.I.get(key)) {
+				if (Utils.isOKCmdList(WeakObject.I.get(key))) {
 					this.cmds = WeakObject.I.get(key);
 					return;
 				}
@@ -210,7 +210,7 @@ package laya.ui {
 			tex.$_GID || (tex.$_GID = Utils.getGID())
 			var key:String = tex.$_GID + "." + x + "." + y + "." + width + "." + height;
 			var texture:Texture = WeakObject.I.get(key);
-			if (!texture) {
+			if (!texture||!texture.source) {
 				texture = Texture.createFromTexture(tex, x, y, width, height);
 				WeakObject.I.set(key, texture);
 			}

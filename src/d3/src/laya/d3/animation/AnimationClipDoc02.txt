@@ -1,0 +1,78 @@
+版本号:
+	    string version="LAYAANIMATION:02";
+
+数据信息区: 
+        uint32 offset;
+        uint32 length;
+		
+内容段落信息区: 
+	    uint16 blockCount;
+        for(int i=0;i<blockCount;i++){
+		    uint32 blockStart(相对内容区);
+		    uint32 blockLength;
+	    }
+
+ 字符区: 
+	    uint32 offset(相对数据区);
+	    uint16 count;
+
+
+
+*******************************************内容区******************************************
+材质区(READ_ANIMATIONS):
+	    uint16 段落函数字符ID;
+		
+		uint8 frameDataLengthTypeCount;
+		for(int i=0;i<frameDataLengthTypeCount;i++)
+			uint16 frameDataLength;
+
+		uint16 startTimeTypeCount;
+		for(int i=0;i<startTimeTypeCount;i++)
+			float32 startTime;
+
+		uint16 动画名字符索引;
+		float32 动画总时长;
+		bool islooping;
+		uint16 frameRate;
+		int16 节点个数;
+		for(int i=0;i<节点个数;i++){
+		    uint16 pathLength;
+			for(int j=0;j<pathLength;j++)
+				uint16 path;
+			int16 compomentTypeStrIndex;
+			uint16 propertyNameStrIndex;(用'.'隔开)
+			byte frameDataLengthTypeIndex;
+
+			uint16 帧个数;
+			for(int j=0;j<帧个数;j++){
+				uint16 startTimeIndex;
+				for(int j=0;j<dataFloatCount;j++)
+					float32 inTangent;
+				for(int j=0;j<dataFloatCount;j++)
+					float32 outTangent;
+				for(int j=0;j<dataFloatCount;j++)
+					float32 data;
+			}
+		}
+		int16 事件个数;
+		for(int i=0;i<事件个数;i++){
+			float32 time;
+			uint16 函数名字索引;
+			uint16 参数个数
+			for(int i=0;i<参数个数;i++){
+			{
+				参数类型//0:Bool 1:Int 2:float32 3:String
+				事件参数//字符串为索引
+			}
+		}
+*******************************************内容区******************************************
+
+
+
+*******************************************数据区******************************************
+    **************************************字符数据******************************
+    for(int i=0;i<n;i++){
+		string str;
+	}
+    **************************************字符数据******************************
+*******************************************数据区*******************************************

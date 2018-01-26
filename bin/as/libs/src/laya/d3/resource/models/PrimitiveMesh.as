@@ -37,6 +37,10 @@ package laya.d3.resource.models {
 				return null;
 		}
 		
+		public function _getVertexBuffers():Vector.<VertexBuffer3D> {
+			return null;
+		}
+		
 		public function _getIndexBuffer():IndexBuffer3D {
 			return _indexBuffer;
 		}
@@ -82,9 +86,9 @@ package laya.d3.resource.models {
 			return 1;
 		}
 		
-		override protected function detoryResource():void {
-			(_vertexBuffer) && (_vertexBuffer.dispose(), _vertexBuffer = null);
-			(_indexBuffer) && (_indexBuffer.dispose(), _indexBuffer = null);
+		override protected function disposeResource():void {
+			(_vertexBuffer) && (_vertexBuffer.destroy(), _vertexBuffer = null);
+			(_indexBuffer) && (_indexBuffer.destroy(), _indexBuffer = null);
 			memorySize = 0;
 		}
 		

@@ -128,15 +128,14 @@ package laya.d3.resource {
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
 			if (params) {
 				var canRead:* = params[0];
-				(canRead !== undefined) && (_canRead = canRead);
+				(canRead!==undefined) && (_canRead = canRead);
 				var repeat:* = params[1];
-				(repeat !== undefined) && (_repeat = repeat);
+				(repeat!==undefined) && (_repeat = repeat);
 				var format:* = params[2];
-				(format !== undefined) && (_format = format);
+				(format!==undefined) && (_format = format);
 				var mipmap:* = params[3];
 				(mipmap !== undefined) && (_mipmap = mipmap);
 			}
-			this.url = url;//TODO:是否重复设置
 			switch (_format) {
 			case WebGLContext.RGB: 
 			case WebGLContext.RGBA: 
@@ -169,11 +168,7 @@ package laya.d3.resource {
 					//_pixels = _image;
 			}
 			
-			if (_conchTexture) //NATIVE
-				_conchTexture.setTexture2DImage(_image);
-			else
-				activeResource();
-			
+			recreateResource();
 			_endLoaded();
 		}
 		
@@ -191,7 +186,7 @@ package laya.d3.resource {
 		/**
 		 * 销毁资源。
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_source) {
 				WebGL.mainContext.deleteTexture(_source);
 				_source = null;

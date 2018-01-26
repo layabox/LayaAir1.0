@@ -101,6 +101,8 @@ package laya.d3.core.scene {
 		private var __loaded:Boolean;
 		/**@private */
 		private var _url:String;
+		/**@private */
+		private var _group:String;
 		
 		/** @private */
 		protected var _renderState:RenderState = new RenderState();
@@ -184,14 +186,6 @@ package laya.d3.core.scene {
 		 */
 		public function get url():String {
 			return _url;
-		}
-		
-		/**
-		 * 色湖之资源的URL地址。
-		 * @param value URL地址。
-		 */
-		public function set url(value:String):void {
-			_url = value;
 		}
 		
 		/**
@@ -349,6 +343,27 @@ package laya.d3.core.scene {
 			_typeComponentsIndices = new Vector.<Vector.<int>>();
 			_components = new Vector.<Component3D>();
 			//-------------------------------兼容代码--------------------------------
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setUrl(url:String):void {
+			_url = url;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getGroup():String {
+			return _group;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setGroup(value:String):void {
+			_group = value;
 		}
 		
 		/**
@@ -628,6 +643,8 @@ package laya.d3.core.scene {
 			
 			var ambientColorData:Array = nodeData.customProps.ambientColor;
 			(ambientColorData) && (ambientColor = new Vector3(ambientColorData[0], ambientColorData[1], ambientColorData[2]));
+			var fogColorData:Array = nodeData.customProps.fogColor;
+			(fogColorData) && (fogColor = new Vector3(fogColorData[0], fogColorData[1], fogColorData[2]));
 		}
 		
 		/**
@@ -1039,13 +1056,9 @@ package laya.d3.core.scene {
 		 *@private
 		 */
 		public function onAsynLoaded(url:String, data:*, params:Array):void {
-			if (destroyed)//TODO:其它资源是否同样处理
-				return;
-			
 			var json:Object = data[0]
 			if (json.type !== "Scene")
 				throw new Error("Scene: the .lh file root type must be Scene,please use other function to  load  this file.");
-			
 			var innerResouMap:Object = data[1];
 			Utils3D._createNodeByJson(this as ComponentNode, json, this, innerResouMap);//TODO:this as ComponentNode代码需等待结构统一
 			event(Event.HIERARCHY_LOADED, [this]);

@@ -1,5 +1,6 @@
 package physicsModule {
 	import common.CameraMoveScript;
+	import common.ColliderScript;
 	import common.DrawBoxColliderScript;
 	import laya.d3.component.Rigidbody;
     import laya.d3.component.physics.BoxCollider;
@@ -94,7 +95,7 @@ package physicsModule {
 			boxCollider.setFromBoundBox(layaMonkeyMeshSprite3D.meshFilter.sharedMesh.boundingBox);
 			layaMonkeyMeshSprite3D.camera = camera;
 			//添加碰撞事件脚本
-			layaMonkeyMeshSprite3D.addComponent(ColliderScript);
+			layaMonkeyMeshSprite3D.addComponent(common.ColliderScript);
 			//添加刚体组件
 			layaMonkeyMeshSprite3D.addComponent(Rigidbody);
 			//添加键盘事件

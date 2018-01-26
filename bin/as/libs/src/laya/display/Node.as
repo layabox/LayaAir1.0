@@ -53,9 +53,17 @@ package laya.display {
 		/**节点名称。*/
 		public var name:String = "";
 		/**[只读]是否已经销毁。对象销毁后不能再使用。*/
-		public var destroyed:Boolean;
+		public var _destroyed:Boolean;
 		/**时间控制器，默认为Laya.timer。*/
 		public var timer:Timer = Laya.scaleTimer;
+		
+		/**
+		 * [只读]是否已经销毁。对象销毁后不能再使用。
+		 * @return 
+		 */
+		 public function get destroyed():Boolean{
+			return _destroyed;
+		}
 		
 		/**
 		 * <code>Node</code> 类用于创建节点对象，节点是最基本的元素。
@@ -150,7 +158,7 @@ package laya.display {
 		 * @param destroyChild	（可选）是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
 		 */
 		public function destroy(destroyChild:Boolean = true):void {
-			destroyed = true;
+			_destroyed = true;
 			this._parent && this._parent.removeChild(this);
 			
 			//销毁子节点

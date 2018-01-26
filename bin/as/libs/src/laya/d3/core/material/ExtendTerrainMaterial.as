@@ -4,6 +4,7 @@ package laya.d3.core.material {
     import laya.d3.math.Vector4;
     import laya.d3.resource.BaseTexture;
     import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
     
     /**
      * ...
@@ -41,6 +42,20 @@ package laya.d3.core.material {
         public static var SHADERDEFINE_DETAIL_NUM3:int;
         public static var SHADERDEFINE_DETAIL_NUM4:int;
         public static var SHADERDEFINE_DETAIL_NUM5:int;
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_DETAIL_NUM1 = shaderDefines.registerDefine("ExtendTerrain_DETAIL_NUM1");
+            SHADERDEFINE_DETAIL_NUM2 = shaderDefines.registerDefine("ExtendTerrain_DETAIL_NUM2");
+            SHADERDEFINE_DETAIL_NUM3 = shaderDefines.registerDefine("ExtendTerrain_DETAIL_NUM3");
+            SHADERDEFINE_DETAIL_NUM4 = shaderDefines.registerDefine("ExtendTerrain_DETAIL_NUM4");
+            SHADERDEFINE_DETAIL_NUM5 = shaderDefines.registerDefine("ExtendTerrain_DETAIL_NUM5");
+		}
         
         /**
          * 获取splatAlpha贴图。

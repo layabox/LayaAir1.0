@@ -263,8 +263,9 @@ package laya.webgl {
 				offsetY -= sprite.y;
 				var renderTarget:RenderTarget2D = RenderTarget2D.create(canvasWidth, canvasHeight, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0, false);
 				renderTarget.start();
-				Render.context.clear();
-				sprite.render(Render.context, offsetX, RenderState2D.height - canvasHeight + offsetY);
+				renderTarget.clear(0, 0, 0, 0);
+				Render.context.clear();	
+				RenderSprite.renders[_renderType]._fun(sprite, Render.context, offsetX, RenderState2D.height - canvasHeight + offsetY);
 				Render.context.flush();
 				renderTarget.end();
 				var pixels:Uint8Array = renderTarget.getData(0, 0, renderTarget.width, renderTarget.height);

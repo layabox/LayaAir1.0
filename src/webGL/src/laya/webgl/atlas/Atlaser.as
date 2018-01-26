@@ -114,7 +114,7 @@ package laya.webgl.atlas {
 		
 		public function dispose():void {
 			clear();
-			_atlasCanvas.dispose();
+			_atlasCanvas.destroy();
 		}
 	}
 }

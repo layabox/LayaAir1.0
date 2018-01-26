@@ -143,6 +143,8 @@ package laya.events {
 		public static const TRIGGER_STAY:String = "triggerstay";
 		/**退出触发器时触发。*/
 		public static const TRIGGER_EXIT:String = "triggerexit";
+		/**拖尾渲染节点改变时触发。*/
+		public static const TRAIL_Filter_CHANGE:String = "trailfilterchange";
 		
 		/** 事件类型。*/
 		public var type:String;

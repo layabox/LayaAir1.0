@@ -67,7 +67,9 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function set mesh(value:Mesh):void {
 			if (_mesh !== value) {
+				(_mesh) && (_mesh._removeReference());
 				_mesh = value;
+				(value) && (value._addReference());
 				(_owner as ShuriKenParticle3D).particleSystem._initBufferDatas();
 			}
 		}
@@ -182,7 +184,6 @@ package laya.d3.core.particleShuriKen {
 		override public function _renderUpdate(projectionView:Matrix4x4):void {
 			var particleSystem:ShurikenParticleSystem = (_owner as ShuriKenParticle3D).particleSystem;
 			var transform:Transform3D = _owner.transform;
-			
 			switch (particleSystem.simulationSpace) {
 			case 0: //World
 				break;
@@ -243,6 +244,14 @@ package laya.d3.core.particleShuriKen {
 				}
 				return _boundingBox;
 			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _destroy():void {
+			super._destroy();
+			(_mesh) && (_mesh._removeReference(), _mesh = null);
 		}
 	
 	}

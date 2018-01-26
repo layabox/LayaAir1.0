@@ -4,6 +4,9 @@ package laya.utils {
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
+	import laya.renders.Render;
+	import laya.renders.RenderContext;
+	import laya.resource.Texture;
 	import laya.runtime.IConchNode;
 	
 	/**
@@ -344,6 +347,54 @@ package laya.utils {
 			dom.style.height = height + 'px';
 			dom.style.left = transform.x + 'px';
 			dom.style.top = transform.y + 'px';
+		}
+		
+		/**
+		 * @private
+		 * 是否是可用的Texture数组
+		 * @param	textureList
+		 * @return
+		 */
+		public static function isOkTextureList(textureList:Array):Boolean
+		{
+			if (!textureList) return false;
+			var i:int, len:int = textureList.length;
+			var tTexture:Texture;
+			for (i = 0; i < len; i++)
+			{
+				tTexture = textureList[i];
+				if (!tTexture.source) return false;
+			}
+			return true;
+		}
+		
+		/**
+		 * @private
+		 * 是否是可用的绘图指令数组
+		 * @param	cmds
+		 * @return
+		 */
+		public static function isOKCmdList(cmds:Array):Boolean
+		{
+			if (!cmds) return false;
+			var i:int, len:int = cmds.length;
+			var context:RenderContext = Render._context;
+			var cmd:Object;
+			var tex:Texture;
+			for (i = 0; i < len; i++)
+			{
+				cmd = cmds[i];
+				switch(cmd.callee)
+				{
+					case context._drawTexture: 
+					case context._fillTexture: 
+					case context._drawTextureWithTransform: 
+						tex = cmd[0];
+						if (!tex || !tex.source) return false;
+					
+				}
+			}
+			return true;
 		}
 	}
 }

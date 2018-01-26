@@ -56,6 +56,8 @@ package laya.resource {
 		public var _uvID:int = 0;
 		
 		public var _atlasID:int = -1;
+		/** @private */
+		public var scaleRate:Number = 1;
 		
 		/**
 		 * 创建一个 <code>Texture</code> 实例。
@@ -64,9 +66,16 @@ package laya.resource {
 		 */
 		public function Texture(bitmap:Bitmap = null, uv:Array = null) {
 			if (bitmap) {
-				bitmap.useNum++;
+				bitmap._addReference();
 			}
 			setTo(bitmap, uv);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setUrl(url:String):void {
+			this.url = url;
 		}
 		
 		/**
@@ -128,7 +137,7 @@ package laya.resource {
 			var btex:Boolean = source is Texture;
 			var uv:Array = btex ? source.uv : DEF_UV;
 			var bitmap:* = btex ? source.bitmap : source;
-			var bIsAtlas:Boolean = RunDriver.isAtlas(bitmap);
+			var bIsAtlas:* = RunDriver.isAtlas(bitmap);
 			if (bIsAtlas) {
 				var atlaser:* = bitmap._atlaser;
 				var nAtlasID:int = (source as Texture)._atlasID;
@@ -162,6 +171,22 @@ package laya.resource {
 			if (bIsAtlas) {
 				tex.addTextureToAtlas();
 			}
+			
+			var bitmapScale:Number = bitmap.scaleRate;
+			if (bitmapScale && bitmapScale != 1)
+			{
+				tex.sourceWidth /= bitmapScale;
+				tex.sourceHeight /= bitmapScale;
+				tex.width /= bitmapScale;
+				tex.height /= bitmapScale;
+				tex.scaleRate = bitmapScale;
+				tex.offsetX /= bitmapScale;
+				tex.offsetY /= bitmapScale;
+			}else
+			{
+				tex.scaleRate = 1;
+			}
+			
 			return tex;
 		}
 		
@@ -175,13 +200,22 @@ package laya.resource {
 		 * @return 返回一个新的Texture。
 		 */
 		public static function createFromTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
-			var offset:Number = (!Render.isWebGL && Browser.onFirefox || Browser.onEdge)?0.5:0;
-			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX-offset, y - texture.offsetY-offset, width+offset*2, height+offset*2);
+			
+			var texScaleRate:Number = texture.scaleRate;
+			if (texScaleRate != 1)
+			{
+				x *= texScaleRate;
+				y *= texScaleRate;
+				width *= texScaleRate;
+				height *= texScaleRate;
+			}
+			var offset:Number = (!Render.isWebGL && Browser.onFirefox || Browser.onEdge) ? 0.5 : 0;
+			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX - offset, y - texture.offsetY - offset, width + offset * 2, height + offset * 2);
 			var result:Rectangle = rect.intersection(_rect1.setTo(0, 0, texture.width, texture.height), _rect2);
 			if (result)
 				var tex:Texture = create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);
 			else return null;
-			tex.bitmap.useNum--;
+			tex.bitmap._removeReference();
 			return tex;
 		}
 		
@@ -202,7 +236,7 @@ package laya.resource {
 		
 		/** @private 激活资源。*/
 		public function active():void {
-			if(bitmap)	bitmap.activeResource();
+			if (bitmap) bitmap.activeResource();
 		}
 		
 		/** 激活并获取资源。*/
@@ -216,22 +250,20 @@ package laya.resource {
 		 * 销毁纹理（分直接销毁，跟计数销毁两种）。
 		 * @param	forceDispose	(default = false)true为强制销毁主纹理，false是通过计数销毁纹理。
 		 */
-		public function destroy(forceDispose:Boolean = false):void {			
-			if (bitmap && (bitmap as Bitmap).useNum > 0) {
+		public function destroy(forceDispose:Boolean = false):void {
+			if (bitmap && (bitmap as Bitmap).referenceCount > 0) {
 				var temp:* = this.bitmap;
 				if (forceDispose) {
-					if ( Render.isConchApp && temp.source && temp.source.conchDestroy )
-					{
+					if (Render.isConchApp && temp.source && temp.source.conchDestroy) {
 						this.bitmap.source.conchDestroy();
 					}
 					this.bitmap = null;
 					temp.dispose();
-					(temp as Bitmap).useNum = 0;
+					(temp as Bitmap)._clearReference();
 				} else {
-					(temp as Bitmap).useNum--;
-					if ((temp as Bitmap).useNum == 0) {
-						if ( Render.isConchApp && temp.source && temp.source.conchDestroy )
-						{
+					(temp as Bitmap)._removeReference();
+					if ((temp as Bitmap).referenceCount == 0) {
+						if (Render.isConchApp && temp.source && temp.source.conchDestroy) {
 							this.bitmap.source.conchDestroy();
 						}
 						this.bitmap = null;
@@ -318,7 +350,7 @@ package laya.resource {
 			_loaded = false;
 			url = URL.customFormat(url);
 			var fileBitmap:FileBitmap = (this.bitmap || (this.bitmap = HTMLImage.create(url))) as FileBitmap;//WebGl模式被自动替换为WebGLImage
-			if (fileBitmap) fileBitmap.useNum++;
+			if (fileBitmap) fileBitmap._addReference();
 			var _this:Texture = this;
 			fileBitmap.onload = function():void {
 				fileBitmap.onload = null;
@@ -346,14 +378,13 @@ package laya.resource {
 		public function getPixels(x:Number, y:Number, width:Number, height:Number):Array {
 			if (Render.isConchApp) {
 				var temp:* = this.bitmap;
-				if (temp.source && temp.source.getImageData ) {
+				if (temp.source && temp.source.getImageData) {
 					var arraybuffer:ArrayBuffer = temp.source.getImageData(x, y, width, height);
 					var tUint8Array:Uint8Array = new Uint8Array(arraybuffer);
 					return __JS__("Array.from(tUint8Array)");
 				}
 				return null;
-			}
-			else if (Render.isWebGL) {
+			} else if (Render.isWebGL) {
 				return RunDriver.getTexturePixels(this, x, y, width, height);
 			} else {
 				Browser.canvas.size(width, height);
@@ -366,7 +397,7 @@ package laya.resource {
 		
 		/**@private */
 		public function onAsynLoaded(url:String, bitmap:Bitmap):void {
-			if (bitmap) bitmap.useNum++;
+			if (bitmap) bitmap._addReference();
 			setTo(bitmap, uv);
 		}
 	}

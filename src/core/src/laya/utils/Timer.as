@@ -16,11 +16,11 @@ package laya.utils {
 		/** 时针缩放。*/
 		public var scale:Number = 1;
 		/** 当前帧开始的时间。*/
-		public var currTimer:Number = Browser.now();
+		public var currTimer:Number = _now();
 		/** 当前的帧数。*/
 		public var currFrame:int = 0;
 		/**@private */
-		private var _lastTimer:Number = Browser.now();
+		private var _lastTimer:Number = _now();
 		/**@private */
 		private var _mid:int = 1;
 		/**@private */
@@ -47,7 +47,17 @@ package laya.utils {
 		 * 创建 <code>Timer</code> 类的一个实例。
 		 */
 		public function Timer() {
+			_init();
+		}
+		
+		/**@private */
+		protected function _init():void {
 			Laya.timer && Laya.timer.frameLoop(1, this, _update);
+		}
+		
+		/**@private */
+		protected function _now():Number {
+			return __JS__('Date.now()');
 		}
 		
 		/**
@@ -56,11 +66,11 @@ package laya.utils {
 		 */
 		public function _update():void {
 			if (scale <= 0) {
-				_lastTimer = Browser.now();
+				_lastTimer =_now();
 				return;
 			}
 			var frame:int = this.currFrame = this.currFrame + scale;
-			var now:Number = Browser.now();
+			var now:Number = _now();
 			_delta = (now - _lastTimer) * scale;
 			var timer:Number = this.currTimer = this.currTimer + _delta;
 			_lastTimer = now;
@@ -154,7 +164,7 @@ package laya.utils {
 					handler.caller = caller;
 					handler.method = method;
 					handler.args = args;
-					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + Browser.now() - _lastTimer);
+					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + _now() - _lastTimer);
 					return handler;
 				}
 			}
@@ -167,7 +177,7 @@ package laya.utils {
 			handler.caller = caller;
 			handler.method = method;
 			handler.args = args;
-			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + Browser.now() - _lastTimer) + 1;
+			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + _now() - _lastTimer) + 1;
 			
 			//索引handler
 			_indexHandler(handler);

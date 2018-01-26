@@ -66,7 +66,7 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 加载网格模板,注意:不缓存。
+		 * 加载网格模板。
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):Sprite3D {
@@ -86,6 +86,8 @@ package laya.d3.core {
 		private var __loaded:Boolean;
 		/**@private */
 		private var _url:String;
+		/**@private */
+		private var _group:String;
 		
 		/** @private */
 		protected var _active:Boolean;
@@ -221,14 +223,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 色湖之资源的URL地址。
-		 * @param value URL地址。
-		 */
-		public function set url(value:String):void {
-			_url = value;
-		}
-		
-		/**
 		 * 获取精灵变换。
 		 */
 		public function get transform():Transform3D {
@@ -251,6 +245,27 @@ package laya.d3.core {
 			this.name = name ? name : "Sprite3D-" + _nameNumberCounter++;
 			layer = Layer.currentCreationLayer;
 			active = true;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setUrl(url:String):void {
+			_url = url;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getGroup():String {
+			return _group;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setGroup(value:String):void {
+			_group = value;
 		}
 		
 		/**
@@ -450,7 +465,7 @@ package laya.d3.core {
 			var cacheSpriteToNodesMap:Vector.<int> = animator._cacheSpriteToNodesMap;
 			
 			if (isLink) {
-				_transform.dummy = node._transform;
+				_transform.dummy = node.transform;
 				animator._cacheNodesToSpriteMap[nodeIndex] = cacheSpriteToNodesMap.length;
 				cacheSpriteToNodesMap.push(nodeIndex);
 			} else {
@@ -519,7 +534,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		override protected function _addComponent(type:*):Component3D {
+		override public function addComponent(type:*):Component3D {
 			var typeComponentIndex:Vector.<int>;
 			var index:int = _componentsMap.indexOf(type);
 			if (index === -1) {
@@ -555,7 +570,7 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
 		override protected function _removeComponent(mapIndex:int, index:int):void {
 			var i:int, n:int;
@@ -807,73 +822,9 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 添加指定类型组件。
-		 * @param	type 组件类型。
-		 * @return	组件。
-		 */
-		public function addComponent(type:*):Component3D {
-			return _addComponent(type);
-		}
-		
-		/**
-		 * 通过指定类型和类型索引获得组件。
-		 * @param	type 组件类型。
-		 * @param	typeIndex 类型索引。
-		 * @return 组件。
-		 */
-		public function getComponentByType(type:*, typeIndex:int = 0):Component3D {
-			return _getComponentByType(type, typeIndex);
-		}
-		
-		/**
-		 * 通过指定类型获得所有组件。
-		 * @param	type 组件类型。
-		 * @param	components 组件输出队列。
-		 */
-		public function getComponentsByType(type:*, components:Vector.<Component3D>):void {
-			return _getComponentsByType(type, components);
-		}
-		
-		/**
-		 * 通过指定索引获得组件。
-		 * @param	index 索引。
-		 * @return 组件。
-		 */
-		public function getComponentByIndex(index:int):Component3D {
-			return _getComponentByIndex(index);
-		}
-		
-		/**
-		 * 通过指定类型和类型索引移除组件。
-		 * @param	type 组件类型。
-		 * @param	typeIndex 类型索引。
-		 */
-		public function removeComponentByType(type:*, typeIndex:int = 0):void {
-			_removeComponentByType(type, typeIndex);
-		}
-		
-		/**
-		 * 通过指定类型移除所有组件。
-		 * @param	type 组件类型。
-		 */
-		public function removeComponentsByType(type:*):void {
-			_removeComponentByType(type);
-		}
-		
-		/**
-		 * 移除全部组件。
-		 */
-		public function removeAllComponent():void {
-			_removeAllComponent();
-		}
-		
-		/**
 		 *@private
 		 */
 		public function onAsynLoaded(url:String, data:*, params:Array):void {
-			if (destroyed)//TODO:其它资源是否同样处理
-				return;
-			
 			var json:Object = data[0];
 			if (json.type !== "Sprite3D")
 				throw new Error("Sprite3D: The .lh file root type must be Sprite3D,please use other function to  load  this file.");
@@ -895,7 +846,7 @@ package laya.d3.core {
 			var destSprite3D:Sprite3D = destObject as Sprite3D;
 			
 			destSprite3D.name = name/* + "(clone)"*/;//TODO:克隆后不能播放刚体动画，找不到名字
-			destSprite3D.destroyed = destroyed;
+			destSprite3D._destroyed = _destroyed;
 			destSprite3D.timer = timer;
 			destSprite3D._$P = _$P;
 			

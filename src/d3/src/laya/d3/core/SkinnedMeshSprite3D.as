@@ -11,24 +11,36 @@ package laya.d3.core {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.shader.ShaderDefines;
 	import laya.events.Event;
 	import laya.net.Loader;
 	
 	/**
-	 * <code>MeshSprite3D</code> 类用于创建网格。
+	 * <code>SkinnedMeshSprite3D</code> 类用于创建网格。
 	 */
 	public class SkinnedMeshSprite3D extends RenderableSprite3D {
-		/**着色器变量名，蒙皮动画。*/
-		public static const BONES:int = 0;
-		/**@private 精灵级着色器宏定义,蒙皮动画。*/
+		/**精灵级着色器宏定义,蒙皮动画。*/
 		public static var SHADERDEFINE_BONE:int = 0x8;
 		
+		/**着色器变量名，蒙皮动画。*/
+		public static const BONES:int = 0;
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(RenderableSprite3D.shaderDefines);
+		
 		/**
-		 * 加载网格模板,注意:不缓存。
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_BONE = shaderDefines.registerDefine("BONE");
+		}
+		
+		/**
+		 * 加载网格模板。
 		 * @param url 模板地址。
 		 */
-		public static function load(url:String):MeshSprite3D {
-			return Laya.loader.create(url, null, null, MeshSprite3D, null, 1, false);
+		public static function load(url:String):SkinnedMeshSprite3D {
+			return Laya.loader.create(url, null, null, SkinnedMeshSprite3D);
 		}
 		
 		/**@private */
@@ -195,7 +207,7 @@ package laya.d3.core {
 		override protected function _changeHierarchyAnimator(animator:Animator):void {
 			if (animator) {
 				var render:SkinnedMeshRender = skinnedMeshRender;
-				render._cacheAnimator = animator;
+				render._setCacheAnimator(animator);
 				var avatar:Avatar = animator.avatar;
 				(avatar) && (render._setCacheAvatar(avatar));
 			}

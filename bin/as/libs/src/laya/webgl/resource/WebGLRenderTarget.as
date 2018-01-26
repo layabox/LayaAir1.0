@@ -108,7 +108,7 @@ package laya.webgl.resource {
 		
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_frameBuffer) {
 				WebGL.mainContext.deleteTexture(_source);
 				WebGL.mainContext.deleteFramebuffer(_frameBuffer);

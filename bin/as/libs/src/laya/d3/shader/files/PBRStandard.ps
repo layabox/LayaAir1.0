@@ -43,7 +43,7 @@ uniform float u_metallic;
 uniform float u_smoothness;
 uniform float u_smoothnessScale;
 
-#include "PBRLighting.glsl"
+#include "PBRStandardLighting.glsl"
 #include "ShadowHelper.glsl"
 
 varying float v_posViewZ;
@@ -76,25 +76,28 @@ void main_normal()
 	
 	vec2 uv0 = ParallaxOffset(viewDir);
 	
+	vec2 mg;
 	#ifdef DIFFUSETEXTURE
 		vec4 diffuseTextureColor = texture2D(u_DiffuseTexture, uv0);
 		vec4 diffuseColor = diffuseTextureColor * u_DiffuseColor;
+		mg = MetallicGloss(diffuseTextureColor.a, uv0);
 	#else
 		vec4 diffuseColor = u_DiffuseColor;
+		mg = MetallicGloss(1.0, uv0);
 	#endif
 	
 	#ifdef ALPHATEST
 		if(diffuseColor.a < u_AlphaTestValue)
 			discard;
 	#endif
-  
+	
+	gl_FragColor = diffuseColor;
+	
 	vec3 normal = UnpackScaleNormal(uv0);
   
-	vec2 mg = MetallicGloss(diffuseColor, uv0);
-	
 	vec3 gi = (u_AmbientColor * Occlusion(uv0)).rgb;
   
-	vec4 color = LayaAirPBRDiectionLight(diffuseColor.rgb, normal, mg.r, mg.g, viewDir, u_DirectionLight, gi);
+	vec4 color = PBRStandardDiectionLight(diffuseColor.rgb, mg.r, mg.g, normal, viewDir, u_DirectionLight, gi);
 	
 	color.a = diffuseColor.a;
 	

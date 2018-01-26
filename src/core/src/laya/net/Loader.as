@@ -48,11 +48,13 @@ package laya.net {
 		public static const ATLAS:String = "atlas";
 		/** 位图字体类型，加载完成后返回BitmapFont。*/
 		public static const FONT:String = "font";
+		/** TTF字体类型，加载完成后返回null。*/
+		public static const TTF:String = "ttf";
 		
 		public static const PKM:String = "pkm";
 		
 		/** 文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "pkm": "pkm"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "pkm": "pkm", "ttf": "ttf"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析。*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/** 资源分组对应表。*/
@@ -76,6 +78,8 @@ package laya.net {
 		
 		/**@private 加载后的数据对象，只读*/
 		public var _data:*;
+		/**@private */
+		public var _class:*;
 		/**@private */
 		protected var _url:String;
 		/**@private */
@@ -124,6 +128,7 @@ package laya.net {
 			//htmlimage和nativeimage为内部类型
 			if (type === IMAGE || type === "htmlimage" || type === "nativeimage") return _loadImage(url);
 			if (type === SOUND) return _loadSound(url);
+			if (type === TTF) return _loadTTF(url);
 			
 			if (type == ATLAS) {
 				if (preLoadedAtlasConfigMap[url]) {
@@ -165,6 +170,20 @@ package laya.net {
 			if (type) return typeMap[type];
 			console.warn("Not recognize the resources suffix", url);
 			return "text";
+		}
+		
+		
+		/**
+		 * @private
+		 * 加载TTF资源。
+		 * @param	url 资源地址。
+		 */
+		protected function _loadTTF(url:String):void
+		{
+			url = URL.formatURL(url);
+			var ttfLoader:TTFLoader = new TTFLoader();
+			ttfLoader.complete = Handler.create(this, onLoaded);
+			ttfLoader.load(url);
 		}
 		
 		/**
@@ -302,16 +321,30 @@ package laya.net {
 					var atlasURL:String = URL.formatURL(this._url);
 					var map:Array = atlasMap[atlasURL] || (atlasMap[atlasURL] = []);
 					map.dir = directory;
-					for (var name:String in frames) {
+					var scaleRate:Number;
+					scaleRate = this._data.meta.scale;
+					if (scaleRate && scaleRate != 1)
+					{
+						scaleRate = parseFloat(this._data.meta.scale);
+						for (var name:String in frames) {
 						var obj:Object = frames[name];//取对应的图
 						var tPic:Object = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
 						var url:String = URL.formatURL(directory + name);
-						
+						tPic.scaleRate = scaleRate;
 						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
 						loadedMap[url].url = url;
 						map.push(url);
 					}
-					
+					}else{
+					for (name in frames) {
+						obj = frames[name];//取对应的图
+						tPic = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
+						url = URL.formatURL(directory + name);
+						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
+						loadedMap[url].url = url;
+						map.push(url);
+					}
+					}
 					delete _data.pics;
 					
 					/*[IF-FLASH]*/

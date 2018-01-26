@@ -118,6 +118,7 @@ package laya.webgl.shader {
 		 * @param	nameMap 帮助里要详细解释为什么需要nameMap
 		 */
 		public function Shader(vs:String, ps:String, saveName:* = null, nameMap:* = null) {
+			super();
 			if ((!vs) || (!ps)) throw "Shader Error";
 			
 			if (Render.isConchApp || Render.isFlash) {
@@ -136,7 +137,7 @@ package laya.webgl.shader {
 			memorySize = 0;//忽略尺寸尺寸
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			WebGL.mainContext.deleteShader(_vshader);
 			WebGL.mainContext.deleteShader(_pshader);
 			WebGL.mainContext.deleteProgram(_program);

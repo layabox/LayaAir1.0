@@ -5,6 +5,7 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	import laya.net.Loader;
 	
 	/**
@@ -73,6 +74,23 @@ package laya.d3.core.material {
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:StandardMaterial = new StandardMaterial();
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_DIFFUSEMAP = shaderDefines.registerDefine("DIFFUSEMAP");
+			SHADERDEFINE_NORMALMAP = shaderDefines.registerDefine("NORMALMAP");
+			SHADERDEFINE_SPECULARMAP = shaderDefines.registerDefine("SPECULARMAP");
+			SHADERDEFINE_EMISSIVEMAP = shaderDefines.registerDefine("EMISSIVEMAP");
+			SHADERDEFINE_AMBIENTMAP = shaderDefines.registerDefine("AMBIENTMAP");
+			SHADERDEFINE_REFLECTMAP = shaderDefines.registerDefine("REFLECTMAP");
+			SHADERDEFINE_UVTRANSFORM = shaderDefines.registerDefine("UVTRANSFORM");
+			SHADERDEFINE_TILINGOFFSET = shaderDefines.registerDefine("TILINGOFFSET");
+			SHADERDEFINE_ADDTIVEFOG = shaderDefines.registerDefine("ADDTIVEFOG");
+		}
 		
 		/**
 		 * 加载标准材质。

@@ -209,7 +209,7 @@ package laya.d3.resource {
 		/**
 		 * 销毁资源。
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_frameBuffer) {
 				var gl:WebGLContext = WebGL.mainContext;
 				gl.deleteTexture(_source);

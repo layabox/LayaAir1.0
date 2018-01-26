@@ -84,7 +84,7 @@ package laya.d3.resource.tempelet {
 			if (newMaxSegments !== _maxSegments) {
 				_maxSegments = newMaxSegments;
 				if (_vertexBuffer) {
-					_vertexBuffer.dispose();
+					_vertexBuffer.destroy();
 				}
 				_initialize();
 			}
@@ -294,7 +294,7 @@ package laya.d3.resource.tempelet {
 			}
 			
 			if (nextFreeParticle === _firstRetiredElement)//刀光不同于粒子，不能中断。
-				throw new Error("GlitterTemplet:current segement count have large than maxSegments,please adjust the  value of maxSegments or add Glitter Vertex Frequency.");
+				trace("GlitterTemplet:current segement count have large than maxSegments,please adjust the  value of maxSegments or add Glitter Vertex Frequency.");
 			
 			var position0e:Float32Array = position0.elements;
 			var position1e:Float32Array = position1.elements;
@@ -478,7 +478,7 @@ package laya.d3.resource.tempelet {
 			_tempVector3 = null;
 			_owner = null;
 			_vertices = null;
-			_vertexBuffer.dispose();
+			_vertexBuffer.destroy();
 			_vertexBuffer = null;
 			scLeft = null;
 			scRight = null;
@@ -495,6 +495,13 @@ package laya.d3.resource.tempelet {
 			_lastPatchAddPos0 = null;
 			_lastPatchAddPos1 = null;
 		
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
+			return null;
 		}
 		
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE

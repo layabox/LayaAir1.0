@@ -29,7 +29,7 @@ package laya.d3.animation {
 		/**@private */
 		private var _avatarDatasCache:Array;
 		/** @private */
-		private var _skinnedDatasCache:Array
+		private var _skinnedDatasCache:Array;
 		
 		/**@private */
 		public var _version:String;
@@ -38,15 +38,19 @@ package laya.d3.animation {
 		/**@private */
 		public var _nodesMap:Object;
 		/**@private */
-		public var _cachePropertyToNodeMap:Int32Array;
+		public var _cachePropertyMap:Int32Array;
 		/**@private */
 		public var _nodeToCachePropertyMap:Int32Array;
 		/**@private */
-		public var _unCachePropertyToNodeMap:Int32Array;
+		public var _unCachePropertyMap:Int32Array;
 		/**@private */
 		public var _duration:Number;
 		/**@private */
 		public var _frameRate:int;
+		/** @private */
+		public var _animationEvents:Vector.<AnimationEvent>;
+		/** @private */
+		public var _publicClipDatas:Vector.<Float32Array>;
 		
 		/**是否循环。*/
 		public var islooping:Boolean;
@@ -66,6 +70,7 @@ package laya.d3.animation {
 			_animationDatasCache = [];
 			_avatarDatasCache = [];
 			_skinnedDatasCache = [];
+			_animationEvents = new Vector.<AnimationEvent>();
 		}
 		
 		/**
@@ -135,7 +140,7 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _getAvatarDataWithCache(avatar:Avatar, cacheRate:Number, frameIndex:int):Vector.<Matrix4x4> {
+		public function _getAvatarDataWithCache(avatar:Avatar, cacheRate:Number, frameIndex:int):Vector.<Float32Array> {
 			var clipCache:Array = _avatarDatasCache[avatar.id];
 			if (!clipCache) {
 				return null;
@@ -152,36 +157,8 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _cacheAvatarData(avatar:Avatar, cacheRate:Number, frameIndex:int, datas:Vector.<Matrix4x4>):void {
+		public function _cacheAvatarData(avatar:Avatar, cacheRate:Number, frameIndex:int, datas:Vector.<Float32Array>):void {
 			var clipCache:Array = (_avatarDatasCache[avatar.id]) || (_avatarDatasCache[avatar.id] = []);
-			var rateCache:Array = (clipCache[cacheRate]) || (clipCache[cacheRate] = []);
-			rateCache[frameIndex] = datas;
-		}
-		
-		/** @private */
-		public function _getSkinnedDatasWithCache(mesh:Mesh, avatar:Avatar, cacheRate:Number, frameIndex:int):Vector.<Vector.<Float32Array>> {
-			var avatarDatasCache:Array = _skinnedDatasCache[mesh.id];
-			if (!avatarDatasCache) {
-				return null;
-			} else {
-				var clipCache:Array = avatarDatasCache[avatar.id];
-				if (!clipCache) {
-					return null;
-				} else {
-					var rateCache:Array = clipCache[cacheRate];
-					if (!rateCache)
-						return null;
-					else {
-						return rateCache[frameIndex];
-					}
-				}
-			}
-		}
-		
-		/** @private */
-		public function _cacheSkinnedDatasWithCache(mesh:Mesh, avatar:Avatar, cacheRate:Number, frameIndex:int, datas:Vector.<Vector.<Float32Array>>):void {
-			var avatarCache:Array = (_skinnedDatasCache[mesh.id]) || (_skinnedDatasCache[mesh.id] = []);
-			var clipCache:Array = (avatarCache[avatar.id]) || (avatarCache[avatar.id] = []);
 			var rateCache:Array = (clipCache[cacheRate]) || (clipCache[cacheRate] = []);
 			rateCache[frameIndex] = datas;
 		}
@@ -207,14 +184,9 @@ package laya.d3.animation {
 					var frame:Keyframe = node.keyFrames[realFrameIndex];
 					var nextKeyFrame:Keyframe = frame.next;
 					if (nextKeyFrame) {
-						if (propertyMap) {
-							if (cacheProperty) {
-								outDatas = new Float32Array(node.keyFrameWidth);
-								clipDatas[i] = outDatas;
-							} else {
-								outDatas = clipDatas[nodeIndex];
-								(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
-							}
+						if (propertyMap && !cacheProperty) {
+							outDatas = clipDatas[nodeIndex];
+							(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
 						} else {
 							outDatas = new Float32Array(node.keyFrameWidth);
 							clipDatas[i] = outDatas;
@@ -228,19 +200,9 @@ package laya.d3.animation {
 							t = 0;
 						_hermiteInterpolate(frame, t, d, outDatas);
 					} else {
-						
-						if (propertyMap) {
-							if (cacheProperty) {
-								lastFrameIndex = animator._lastFrameIndex;
-								if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
-									continue;
-								
-								outDatas = new Float32Array(node.keyFrameWidth);
-								clipDatas[i] = outDatas;
-							} else {
-								outDatas = clipDatas[nodeIndex];
-								(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
-							}
+						if (propertyMap && !cacheProperty) {
+							outDatas = clipDatas[nodeIndex];
+							(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
 						} else {
 							lastFrameIndex = animator._lastFrameIndex;
 							if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
@@ -255,18 +217,9 @@ package laya.d3.animation {
 							outDatas[j] = frameData[j];//不能设为null，会造成跳过当前帧数据
 					}
 				} else {
-					if (propertyMap) {
-						if (cacheProperty) {
-							lastFrameIndex = animator._lastFrameIndex;
-							if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
-								continue;
-							
-							outDatas = new Float32Array(node.keyFrameWidth);
-							clipDatas[i] = outDatas;
-						} else {
-							outDatas = clipDatas[nodeIndex];
-							(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
-						}
+					if (propertyMap && !cacheProperty) {
+						outDatas = clipDatas[nodeIndex];
+						(outDatas) || (outDatas = clipDatas[nodeIndex] = new Float32Array(node.keyFrameWidth));
 					} else {
 						lastFrameIndex = animator._lastFrameIndex;
 						if (lastFrameIndex !== -1 && frameIndices[lastFrameIndex] === realFrameIndex)//只有非公共数据可以跳过，否则公共数据会错乱
@@ -286,7 +239,7 @@ package laya.d3.animation {
 		/**
 		 * @private
 		 */
-		public function _evaluateAnimationlDatasRealTime(nodeOwners:*/*Vector.<AnimationNode>或Vector.<Sprite3D>*/, playCurTime:Number, outAnimationDatas:Vector.<Float32Array>, hasAvatar:Boolean):void {
+		public function _evaluateAnimationlDatasRealTime(nodeOwners:*/*Vector.<AnimationNode>或Vector.<Sprite3D>*/, playCurTime:Number, outAnimationDatas:Vector.<Float32Array>, propertyMap:Int32Array/*propertyMap为null是无avatar模式*/):void {
 			var i:int, n:int;
 			var nodes:Vector.<KeyframeNode> = _nodes;
 			if (!_realTimeCurrentFrameIndexes) {
@@ -296,27 +249,28 @@ package laya.d3.animation {
 				_realTimeCurrentTimes = new Float32Array(nodes.length);
 			}
 			
-			for (i = 0, n = nodes.length; i < n; i++) {
-				var node:KeyframeNode = nodes[i];
-				if (playCurTime < _realTimeCurrentTimes[i])
-					_realTimeCurrentFrameIndexes[i] = -1;
-				_realTimeCurrentTimes[i] = playCurTime;
+			for (i = 0, n = propertyMap ? propertyMap.length : _nodes.length; i < n; i++) {
+				var index:int = propertyMap ? propertyMap[i] : i;
+				var node:KeyframeNode = nodes[index];
+				if (playCurTime < _realTimeCurrentTimes[index])
+					_realTimeCurrentFrameIndexes[index] = -1;
+				_realTimeCurrentTimes[index] = playCurTime;
 				
-				var nextFrameIndex:int = _realTimeCurrentFrameIndexes[i] + 1;
+				var nextFrameIndex:int = _realTimeCurrentFrameIndexes[index] + 1;
 				var keyFrames:Vector.<Keyframe> = node.keyFrames;
 				var keyFramesCount:int = keyFrames.length;
 				while (nextFrameIndex < keyFramesCount) {
 					if (keyFrames[nextFrameIndex].startTime > playCurTime) {
-						_realTimeCurrentFrameIndexes[i] = nextFrameIndex - 1;
+						_realTimeCurrentFrameIndexes[index] = nextFrameIndex - 1;
 						break;
 					}
 					nextFrameIndex++;
 				}
-				(nextFrameIndex === keyFramesCount) && (_realTimeCurrentFrameIndexes[i] = keyFramesCount - 1);
+				(nextFrameIndex === keyFramesCount) && (_realTimeCurrentFrameIndexes[index] = keyFramesCount - 1);
 				var j:int = 0, m:int;
-				var outDatas:Float32Array = outAnimationDatas[i];
-				(outDatas) || (outDatas = outAnimationDatas[i] = new Float32Array(node.keyFrameWidth));
-				var frame:Keyframe = keyFrames[_realTimeCurrentFrameIndexes[i]];
+				var outDatas:Float32Array = outAnimationDatas[index];
+				(outDatas) || (outDatas = outAnimationDatas[index] = new Float32Array(node.keyFrameWidth));
+				var frame:Keyframe = keyFrames[_realTimeCurrentFrameIndexes[index]];
 				if (frame) {
 					var nextFarme:Keyframe = frame.next;
 					if (nextFarme) {//如果nextFarme为空，不修改数据，保持上一帧
@@ -338,14 +292,42 @@ package laya.d3.animation {
 						outDatas[j] = firstFrameDatas[j];
 				}
 				
-				var owner:* = nodeOwners[i];
+				var owner:* = nodeOwners[index];
 				if (owner) {
-					if (hasAvatar)
+					if (propertyMap)
 						AnimationNode._propertySetFuncs[node.propertyNameID](owner, null, outDatas);
 					else
 						AnimationNode._propertySetFuncs[node.propertyNameID](null, owner, outDatas);
 				}
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _binarySearchEventIndex(time:Number):int {
+			var start:int = 0;
+			var end:int = _animationEvents.length - 1;
+			var mid:int;
+			while (start <= end) {
+				mid = Math.floor((start + end) / 2);
+				var midValue:int = _animationEvents[mid].time;
+				if (midValue == time)
+					return mid;
+				else if (midValue > time)
+					end = mid - 1;
+				else
+					start = mid + 1;
+			}
+			return start;
+		}
+		
+		/**
+		 * 添加动画事件。
+		 */
+		public function addEvent(event:AnimationEvent):void {
+			var index:int = _binarySearchEventIndex(event.time);
+			_animationEvents.splice(index, 0, event);
 		}
 		
 		/**
@@ -358,14 +340,18 @@ package laya.d3.animation {
 			case "LAYAANIMATION:01": 
 				AnimationClipParser01.parse(this, reader);
 				break;
+			case "LAYAANIMATION:02": 
+				AnimationClipParser02.parse(this, reader);
+				break;
 			}
+			completeCreate();
 			_endLoaded();
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			_realTimeCurrentFrameIndexes = null;
 			_realTimeCurrentTimes = null;
 			_fullKeyframeIndicesCache = null;
@@ -375,9 +361,10 @@ package laya.d3.animation {
 			_version = null;
 			_nodes = null;
 			_nodesMap = null;
-			_cachePropertyToNodeMap = null;
+			_cachePropertyMap = null;
 			_nodeToCachePropertyMap = null;
-			_unCachePropertyToNodeMap = null;
+			_unCachePropertyMap = null;
+			_publicClipDatas = null;
 		}
 	}
 }

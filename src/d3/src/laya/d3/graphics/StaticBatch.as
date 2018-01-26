@@ -74,7 +74,7 @@ package laya.d3.graphics {
 			var end:int = _batchRenderElements.length - 1;
 			var mid:int;
 			while (start <= end) {
-				mid = __JS__("parseInt((start + end) / 2)");
+				mid = Math.floor((start + end) / 2);
 				if (_compareBatchRenderElement(_batchRenderElements[mid], renderElement))
 					end = mid - 1;
 				else
@@ -161,7 +161,7 @@ package laya.d3.graphics {
 		/**
 		 * @private
 		 */
-		public function _finshInit():void {
+		public function _finishInit():void {
 			throw new Error("StaticBatch:must override this function.");
 		}
 		
@@ -193,6 +193,13 @@ package laya.d3.graphics {
 		}
 		
 		public function _render(state:RenderState):void {
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
+			return null;
 		}
 		
 		/**NATIVE*/

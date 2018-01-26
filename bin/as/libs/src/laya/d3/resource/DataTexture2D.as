@@ -321,7 +321,7 @@ package laya.d3.resource {
 		/**
 		 * 销毁资源。
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_recreateLock) {
 				_needReleaseAgain = true;
 			}

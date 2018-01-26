@@ -160,8 +160,8 @@ package laya.d3.graphics {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function detoryResource():void {
-			super.detoryResource();
+		override protected function disposeResource():void {
+			super.disposeResource();
 			_buffer = null;
 			memorySize = 0;//还有release没判断
 		}

@@ -4,6 +4,7 @@ package laya.d3.core.material {
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.resource.DataTexture2D;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	import laya.utils.Browser;
 	import laya.webgl.WebGLContext;
 	
@@ -46,6 +47,21 @@ package laya.d3.core.material {
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:PBRMaterial = new PBRMaterial();
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_FIX_METALESS = shaderDefines.registerDefine("FIX_METALESS");
+			SHADERDEFINE_FIX_ROUGHNESS = shaderDefines.registerDefine("FIX_ROUGHNESS");
+			SHADERDEFINE_HAS_TANGENT = shaderDefines.registerDefine("HAS_TANGENT");
+			SHADERDEFINE_HAS_PBRINFO = shaderDefines.registerDefine("HAS_PBRINFO");
+			SHADERDEFINE_USE_GROUNDTRUTH = shaderDefines.registerDefine("USE_GROUNDTRUTH");
+			SHADERDEFINE_TEST_CLIPZ = shaderDefines.registerDefine("CLIPZ");
+		}
 		
 		/**
 		 * 加载标准材质。

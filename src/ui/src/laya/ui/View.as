@@ -177,7 +177,7 @@ package laya.ui {
 		private static function setCompValue(comp:*, prop:String, value:String, view:View = null, dataMap:Array = null):void {
 			//属性赋值
 			if (value is String && value.indexOf("${") > -1) {
-				_sheet || (_sheet = ClassUtils.getClass("laya.data.Sheet"));
+				_sheet || (_sheet = ClassUtils.getClass("laya.data.Table"));
 				if (!_sheet) {
 					console.warn("Can not find class Sheet");
 					return;
@@ -203,12 +203,12 @@ package laya.ui {
 							var arr:Array = (view._watchMap[key2] || (view._watchMap[key2] = []));
 							arr.push(watcher);
 							//监听数据变化
-							_sheet.notifer.on(key2, view, view.changeData, [key2]);
+							_sheet.I.notifer.on(key2, view, view.changeData, [key2]);
 						}
 						//TODO
 						arr = (view._watchMap[key1] || (view._watchMap[key1] = []));
 						arr.push(watcher);
-						_sheet.notifer.on(key1, view, view.changeData, [key1]);
+						_sheet.I.notifer.on(key1, view, view.changeData, [key1]);
 					}
 					//trace(view._watchMap);
 				}

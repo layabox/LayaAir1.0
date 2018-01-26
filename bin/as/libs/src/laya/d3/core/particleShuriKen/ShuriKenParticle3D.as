@@ -1,6 +1,7 @@
 package laya.d3.core.particleShuriKen {
 	import laya.d3.core.ComponentNode;
 	import laya.d3.core.RenderableSprite3D;
+	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.particleShuriKen.module.Burst;
 	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
@@ -30,6 +31,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.Texture2D;
+	import laya.d3.shader.ShaderDefines;
 	import laya.events.Event;
 	import laya.net.Loader;
 	
@@ -41,9 +43,9 @@ package laya.d3.core.particleShuriKen {
 		public static var SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD:int;
 		public static var SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD:int;
 		public static var SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD:int;
-		public static var SHADERDEFINE_RENDERMODE_MESH:int;
-		public static var SHADERDEFINE_RANDOMCOLOROVERLIFETIME:int;
+		
 		public static var SHADERDEFINE_COLOROVERLIFETIME:int;
+		public static var SHADERDEFINE_RANDOMCOLOROVERLIFETIME:int;
 		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT:int;
 		public static var SHADERDEFINE_VELOCITYOVERLIFETIMECURVE:int;
 		public static var SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT:int;
@@ -60,6 +62,7 @@ package laya.d3.core.particleShuriKen {
 		public static var SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE:int;
 		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES:int;
 		public static var SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE:int;
+		public static var SHADERDEFINE_RENDERMODE_MESH:int;
 		public static var SHADERDEFINE_SHAPE:int;
 		
 		public static const WORLDPOSITION:int = 0;
@@ -123,12 +126,46 @@ package laya.d3.core.particleShuriKen {
 		public static const TEXTURESHEETANIMATIONGRADIENTUVS:int = 50;
 		public static const TEXTURESHEETANIMATIONGRADIENTMAXUVS:int = 51;
 		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(RenderableSprite3D.shaderDefines);
+		
 		/**
-		 * 加载网格模板,注意:不缓存。
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_RENDERMODE_BILLBOARD = shaderDefines.registerDefine("SPHERHBILLBOARD");
+			SHADERDEFINE_RENDERMODE_STRETCHEDBILLBOARD = shaderDefines.registerDefine("STRETCHEDBILLBOARD");
+			SHADERDEFINE_RENDERMODE_HORIZONTALBILLBOARD = shaderDefines.registerDefine("HORIZONTALBILLBOARD");
+			SHADERDEFINE_RENDERMODE_VERTICALBILLBOARD = shaderDefines.registerDefine("VERTICALBILLBOARD");
+			
+			SHADERDEFINE_COLOROVERLIFETIME = shaderDefines.registerDefine("COLOROVERLIFETIME");
+			SHADERDEFINE_RANDOMCOLOROVERLIFETIME = shaderDefines.registerDefine("RANDOMCOLOROVERLIFETIME");
+			SHADERDEFINE_VELOCITYOVERLIFETIMECONSTANT = shaderDefines.registerDefine("VELOCITYOVERLIFETIMECONSTANT");
+			SHADERDEFINE_VELOCITYOVERLIFETIMECURVE = shaderDefines.registerDefine("VELOCITYOVERLIFETIMECURVE");
+			SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCONSTANT = shaderDefines.registerDefine("VELOCITYOVERLIFETIMERANDOMCONSTANT");
+			SHADERDEFINE_VELOCITYOVERLIFETIMERANDOMCURVE = shaderDefines.registerDefine("VELOCITYOVERLIFETIMERANDOMCURVE");
+			SHADERDEFINE_TEXTURESHEETANIMATIONCURVE = shaderDefines.registerDefine("TEXTURESHEETANIMATIONCURVE");
+			SHADERDEFINE_TEXTURESHEETANIMATIONRANDOMCURVE = shaderDefines.registerDefine("TEXTURESHEETANIMATIONRANDOMCURVE");
+			SHADERDEFINE_ROTATIONOVERLIFETIME = shaderDefines.registerDefine("ROTATIONOVERLIFETIME");
+			SHADERDEFINE_ROTATIONOVERLIFETIMESEPERATE = shaderDefines.registerDefine("ROTATIONOVERLIFETIMESEPERATE");
+			SHADERDEFINE_ROTATIONOVERLIFETIMECONSTANT = shaderDefines.registerDefine("ROTATIONOVERLIFETIMECONSTANT");
+			SHADERDEFINE_ROTATIONOVERLIFETIMECURVE = shaderDefines.registerDefine("ROTATIONOVERLIFETIMECURVE");
+			SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCONSTANTS = shaderDefines.registerDefine("ROTATIONOVERLIFETIMERANDOMCURVES");
+			SHADERDEFINE_ROTATIONOVERLIFETIMERANDOMCURVES = shaderDefines.registerDefine("ROTATIONOVERLIFETIMERANDOMCURVES");
+			SHADERDEFINE_SIZEOVERLIFETIMECURVE = shaderDefines.registerDefine("SIZEOVERLIFETIMECURVE");
+			SHADERDEFINE_SIZEOVERLIFETIMECURVESEPERATE = shaderDefines.registerDefine("SIZEOVERLIFETIMECURVESEPERATE");
+			SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVES = shaderDefines.registerDefine("SIZEOVERLIFETIMERANDOMCURVES");
+			SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE = shaderDefines.registerDefine("SIZEOVERLIFETIMERANDOMCURVESSEPERATE");
+			SHADERDEFINE_RENDERMODE_MESH = shaderDefines.registerDefine("RENDERMODE_MESH");
+			SHADERDEFINE_SHAPE = shaderDefines.registerDefine("SHAPE");
+		}
+		
+		/**
+		 * 加载网格模板。
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):ShuriKenParticle3D {
-			return Laya.loader.create(url, null, null, ShuriKenParticle3D, null, 1, false);
+			return Laya.loader.create(url, null, null, ShuriKenParticle3D);
 		}
 		
 		/**
@@ -662,6 +699,8 @@ package laya.d3.core.particleShuriKen {
 				textureSheetAnimation.tiles = new Vector2(tilesData[0], tilesData[1]);
 				textureSheetAnimation.type = textureSheetAnimationData.type;
 				textureSheetAnimation.randomRow = textureSheetAnimationData.randomRow;
+				var rowIndex:* = textureSheetAnimationData.rowIndex;
+				(rowIndex !== undefined) && (textureSheetAnimation.rowIndex = rowIndex);
 				textureSheetAnimation.cycles = textureSheetAnimationData.cycles;
 				particleSystem.textureSheetAnimation = textureSheetAnimation;
 			}

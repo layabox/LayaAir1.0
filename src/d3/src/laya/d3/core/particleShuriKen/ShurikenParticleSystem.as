@@ -1577,8 +1577,8 @@ package laya.d3.core.particleShuriKen {
 		 */
 		public function _initBufferDatas():void {
 			if (_vertexBuffer) {//修改了maxCount以及renderMode以及Mesh等需要清空
-				_vertexBuffer.dispose();
-				_indexBuffer.dispose();
+				_vertexBuffer.destroy();
+				_indexBuffer.destroy();
 			}
 			var render:ShurikenParticleRender = _ownerRender;
 			var renderMode:int = render.renderMode;
@@ -1679,8 +1679,8 @@ package laya.d3.core.particleShuriKen {
 		override public function _destroy():void {
 			super._destroy();
 			( _owner.activeInHierarchy) && (_removeUpdateEmissionToTimer());
-			_vertexBuffer.dispose();
-			_indexBuffer.dispose();
+			_vertexBuffer.destroy();
+			_indexBuffer.destroy();
 			_emission._destroy();
 			_owner = null;
 			_vertices = null;
@@ -2189,6 +2189,13 @@ package laya.d3.core.particleShuriKen {
 			var dest:ShurikenParticleSystem = __JS__("new this.constructor()");
 			cloneTo(dest);
 			return dest;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
+			return null;
 		}
 		
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE

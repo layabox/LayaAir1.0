@@ -2,6 +2,7 @@ package sceneModule
 {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
+	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.math.Vector3;

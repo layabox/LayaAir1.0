@@ -79,7 +79,7 @@ void main_normal()
   
 	v_Texcoord0 = a_Texcoord0;
 	#ifdef TILINGOFFSET
-		v_Texcoord0=(v_Texcoord0 * u_TilingOffset.xy) + u_TilingOffset.zw;
+		v_Texcoord0=(vec2(v_Texcoord0.x,v_Texcoord0.y-1.0)*u_TilingOffset.xy)+u_TilingOffset.zw;
 	#endif
 		v_Texcoord0=vec2(v_Texcoord0.x,1.0 + v_Texcoord0.y);
   

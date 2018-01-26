@@ -74,15 +74,17 @@ package laya.d3.shader {
 		public var sharders:Array;
 		
 		/**@private */
-		private var _curMaterialDefinePower:int = 1;
+		private var _spriteDefineCounter:int = 3;
 		/**@private */
-		private var _curSpriteDefinePower:int = 3;
+		private var _spriteInt2name:Array = [];
+		/**@private */
+		private var _spriteName2Int:Object = {};
+		/**@private */
+		private var _materialDefineCounter:int = 1;
 		/**@private */
 		public var _materialInt2name:Array = [];
 		/**@private */
 		public var _materialName2Int:Object = {};
-		/**@private */
-		public var _spriteInt2name:Array = [];
 		
 		public var _conchShader:*;//NATIVE		
 		
@@ -105,7 +107,8 @@ package laya.d3.shader {
 			
 			_materialInt2name[BaseMaterial.SHADERDEFINE_ALPHATEST] = "ALPHATEST";
 			
-			super(name, vs, ps, null);
+			var defineMap:Object = {};
+			super(name, vs, ps, null, defineMap);
 			
 			_attributeMap = attributeMap;
 			var renderElementUnifCount:int = 0, materialUnifCount:int = 0, spriteUnifCount:int = 0;
@@ -266,15 +269,14 @@ package laya.d3.shader {
 		 * @param	name 宏定义名称。
 		 * @return
 		 */
-		public function registerMaterialDefine(name:String):int {
-			var value:int = Math.pow(2, _curMaterialDefinePower++);//TODO:超界处理	
-			_materialInt2name[value] = name;
-			_materialName2Int[name] = value;
-			
-			if (Render.isConchNode) {//NATIVE
-				__JS__("conch.regShaderDefine&&conch.regShaderDefine(name,value);")
+		public function addMaterialDefines(shaderdefines:ShaderDefines):void {
+			var defines:Array = shaderdefines.defines;
+			for (var k:String in defines) {
+				var name:String = defines[k];
+				var i:int = parseInt(k);
+				_materialInt2name[i] = name;
+				_materialName2Int[name] = i;
 			}
-			return value;
 		}
 		
 		/**
@@ -282,14 +284,14 @@ package laya.d3.shader {
 		 * @param	name 宏定义名称。
 		 * @return
 		 */
-		public function registerSpriteDefine(name:String):int {
-			var value:int = Math.pow(2, _curSpriteDefinePower++);//TODO:超界处理	
-			_spriteInt2name[value] = name;
-			
-			if (Render.isConchNode) {//NATIVE
-				__JS__("conch.regShaderDefine&&conch.regShaderDefine(name,value);")
+		public function addSpriteDefines(shaderdefines:ShaderDefines):void {
+			var defines:Array = shaderdefines.defines;
+			for (var k:String in defines) {
+				var name:String = defines[k];
+				var i:int = parseInt(k);
+				_spriteInt2name[i] = name;
+				_spriteName2Int[name] = i;
 			}
-			return value;
 		}
 		
 		/**
@@ -300,6 +302,32 @@ package laya.d3.shader {
 		public function getMaterialDefineByName(name:String):int {
 			return _materialName2Int[name];
 		}
+		
+		//--------------------------------兼容接口------------------------------------------------
+		/**
+		 * 注册材质宏定义。
+		 * @param	name 宏定义名称。
+		 * @return
+		 */
+		public function registerMaterialDefine(name:String):int {
+			var value:int = Math.pow(2, _materialDefineCounter++);//TODO:超界处理	
+			_materialInt2name[value] = name;
+			_materialName2Int[name] = value;
+			return value;
+		}
+		
+				/**
+		 * 注册精灵宏定义。
+		 * @param	name 宏定义名称。
+		 * @return
+		 */
+		public function registerSpriteDefine(name:String):int {
+			var value:int = Math.pow(2, _spriteDefineCounter++);//TODO:超界处理	
+			_spriteInt2name[value] = name;
+			_spriteName2Int[name] = value;
+			return value;
+		}
+		//--------------------------------兼容接口------------------------------------------------
 	
 	}
 

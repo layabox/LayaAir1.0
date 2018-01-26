@@ -102,6 +102,8 @@ package laya.d3.animation {
 			var nodeCount:int = reader.getInt16();
 			var nodes:Vector.<KeyframeNode> = clip._nodes = new Vector.<KeyframeNode>;
 			nodes.length = nodeCount;
+			var publicDatas:Vector.<Float32Array> = clip._publicClipDatas = new Vector.<Float32Array>();
+			publicDatas.length = nodeCount;
 			var nodesMap:Object = clip._nodesMap = {};
 			var cachePropertyToNodeIndex:int = 0, unCachePropertyToNodeIndex:int = 0;
 			for (i = 0; i < nodeCount; i++) {
@@ -166,8 +168,8 @@ package laya.d3.animation {
 			}
 			
 			var nodeToCachePropertyMap:Int32Array = clip._nodeToCachePropertyMap = new Int32Array(nodeCount);
-			var cachePropertyToNodeMap:Int32Array = clip._cachePropertyToNodeMap = new Int32Array(cachePropertyToNodeIndex);
-			var unCachePropertyToNodeMap:Int32Array = clip._unCachePropertyToNodeMap = new Int32Array(unCachePropertyToNodeIndex);
+			var cachePropertyToNodeMap:Int32Array = clip._cachePropertyMap = new Int32Array(cachePropertyToNodeIndex);
+			var unCachePropertyToNodeMap:Int32Array = clip._unCachePropertyMap = new Int32Array(unCachePropertyToNodeIndex);
 			cachePropertyToNodeIndex = unCachePropertyToNodeIndex = 0;
 			for (i = 0; i < nodeCount; i++) {
 				node = nodes[i];

@@ -29,7 +29,6 @@ package advancedModule
 	
 	public class AStarFindPath
 	{
-		/**点击鼠标控制猴子位移**/
 		private var terrainSprite:MeshTerrainSprite3D;
 		private var layaMonkey:Sprite3D;
 		private var path:Vector.<Vector3>;

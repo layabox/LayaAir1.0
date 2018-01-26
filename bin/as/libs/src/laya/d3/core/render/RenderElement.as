@@ -120,8 +120,7 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		public function _destroy():void {
-			if (_staticBatch)
-				_staticBatch._manager._garbageCollection(this);
+			(_staticBatch) && (_staticBatch._manager._garbageCollection(this));
 		}
 	
 	}

@@ -2,6 +2,7 @@ package laya.d3.core.material {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	
 	public class WaterMaterial extends BaseMaterial {
 		public static const DIFFUSETEXTURE:int = 1;
@@ -49,6 +50,21 @@ package laya.d3.core.material {
 		public static const defaultMaterial:WaterMaterial = new WaterMaterial();
 		
 		private var _useVertexDeep:Boolean = false;
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_CUBE_ENV = shaderDefines.registerDefine("CUBE_ENV");
+			SHADERDEFINE_HDR_ENV = shaderDefines.registerDefine("HDR_ENV");
+			SHADERDEFINE_SHOW_NORMAL = shaderDefines.registerDefine("SHOW_NORMAL");
+			SHADERDEFINE_USEVERTEXHEIGHT = shaderDefines.registerDefine("USE_VERTEX_DEEPINFO");
+			SHADERDEFINE_USE_FOAM = shaderDefines.registerDefine("USE_FOAM");
+			SHADERDEFINE_USE_REFRACT_TEX = shaderDefines.registerDefine("USE_REFR_TEX");
+		}
 		
 		/**
 		 * 加载标准材质。

@@ -1,19 +1,19 @@
-package laya.d3.core.material 
-{
+package laya.d3.core.material {
 	import laya.d3.core.TransformUV;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.resource.DataTexture2D;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	import laya.utils.Browser;
 	import laya.webgl.WebGLContext;
+	
 	/**
 	 * ...
 	 * @author WuTaiLang
 	 */
-	public class PBRStandardMaterial extends BaseMaterial
-	{
+	public class PBRStandardMaterial extends BaseMaterial {
 		public static const SmoothnessSource_MetallicGlossTexture_Alpha:int = 0;
 		public static const SmoothnessSource_DiffuseTexture_Alpha:int = 1;
 		
@@ -46,6 +46,24 @@ package laya.d3.core.material
 		public static const PARALLAXSCALE:int = 15;
 		public static const ENABLEEMISSION:int = 16;
 		public static const TILINGOFFSET:int = 17;
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_DIFFUSETEXTURE = shaderDefines.registerDefine("DIFFUSETEXTURE");
+			SHADERDEFINE_METALLICGLOSSTEXTURE = shaderDefines.registerDefine("METALLICGLOSSTEXTURE");
+			SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA = shaderDefines.registerDefine("SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA");
+			SHADERDEFINE_NORMALTEXTURE = shaderDefines.registerDefine("NORMALTEXTURE");
+			SHADERDEFINE_PARALLAXTEXTURE = shaderDefines.registerDefine("PARALLAXTEXTURE");
+			SHADERDEFINE_OCCLUSIONTEXTURE = shaderDefines.registerDefine("OCCLUSIONTEXTURE");
+			SHADERDEFINE_EMISSION = shaderDefines.registerDefine("EMISSION");
+			SHADERDEFINE_EMISSIONTEXTURE = shaderDefines.registerDefine("EMISSIONTEXTURE");
+			SHADERDEFINE_TILINGOFFSET = shaderDefines.registerDefine("TILINGOFFSET");
+		}
 		
 		/**
 		 * 获取漫反射颜色。
@@ -194,19 +212,19 @@ package laya.d3.core.material
 		}
 		
 		///**
-		 //* 获取反射贴图。
-		 //* @return 反射贴图。
-		 //*/
+		//* 获取反射贴图。
+		//* @return 反射贴图。
+		//*/
 		//public function get reflectTexture():BaseTexture {
-			//return _getTexture(REFLECTTEXTURE);
+		//return _getTexture(REFLECTTEXTURE);
 		//}
 		//
 		///**
-		 //* 设置反射贴图。
-		 //* @param value 反射贴图。
-		 //*/
+		//* 设置反射贴图。
+		//* @param value 反射贴图。
+		//*/
 		//public function set reflectTexture(value:BaseTexture):void {
-			//_setTexture(REFLECTTEXTURE, value);
+		//_setTexture(REFLECTTEXTURE, value);
 		//}
 		
 		/**
@@ -295,12 +313,12 @@ package laya.d3.core.material
 		public function set smoothnessSource(value:int):void {
 			if (value == 1)
 				_addShaderDefine(PBRStandardMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA);
-			else{
+			else {
 				_removeShaderDefine(PBRStandardMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA);
 				value = 0;
 			}
 			_setNumber(SMOOTHNESSSOURCE, value);
-		}	
+		}
 		
 		/**
 		 * 获取是否激活放射属性。
@@ -317,7 +335,7 @@ package laya.d3.core.material
 		public function set enableEmission(value:Boolean):void {
 			if (value)
 				_addShaderDefine(PBRStandardMaterial.SHADERDEFINE_EMISSION);
-			else{
+			else {
 				_removeShaderDefine(PBRStandardMaterial.SHADERDEFINE_EMISSION);
 			}
 			_setBool(ENABLEEMISSION, value);
@@ -361,6 +379,14 @@ package laya.d3.core.material
 		
 		/**
 		 * 获取纹理平铺和偏移。
+		 * @return 纹理平铺和偏移。
+		 */
+		public function get tilingOffset():Vector4 {
+			return _getColor(TILINGOFFSET);
+		}
+		
+		/**
+		 * 设置纹理平铺和偏移。
 		 * @param value 纹理平铺和偏移。
 		 */
 		public function set tilingOffset(value:Vector4):void {
@@ -391,8 +417,7 @@ package laya.d3.core.material
 			_setBool(ENABLEEMISSION, false);
 			_setNumber(ALPHATESTVALUE, 0.5);
 		}
-		
-		
+	
 	}
 
 }

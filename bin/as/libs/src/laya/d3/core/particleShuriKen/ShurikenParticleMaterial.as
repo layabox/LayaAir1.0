@@ -3,6 +3,7 @@ package laya.d3.core.particleShuriKen {
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
+	import laya.d3.shader.ShaderDefines;
 	import laya.net.Loader;
 	
 	/**
@@ -52,11 +53,20 @@ package laya.d3.core.particleShuriKen {
 		public static const TINTCOLOR:int = 2;
 		public static const TILINGOFFSET:int = 3;
 		
-		/** @private */
-		private static const _diffuseTextureIndex:int = 0;
-		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:ShurikenParticleMaterial = new ShurikenParticleMaterial();
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_DIFFUSEMAP = shaderDefines.registerDefine("DIFFUSEMAP");
+			SHADERDEFINE_TINTCOLOR = shaderDefines.registerDefine("TINTCOLOR");
+			SHADERDEFINE_ADDTIVEFOG = shaderDefines.registerDefine("ADDTIVEFOG");
+			SHADERDEFINE_TILINGOFFSET = shaderDefines.registerDefine("TILINGOFFSET");
+		}
 		
 		/**
 		 * 加载手里剑粒子材质。
@@ -282,7 +292,7 @@ package laya.d3.core.particleShuriKen {
 		 * @return 漫反射贴图。
 		 */
 		public function get diffuseTexture():BaseTexture {
-			return _getTexture(_diffuseTextureIndex);
+			return _getTexture(DIFFUSETEXTURE);
 		}
 		
 		/**

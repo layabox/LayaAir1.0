@@ -2,6 +2,8 @@ package laya.utils {
 	import laya.display.Sprite;
 	import laya.display.Text;
 	import laya.renders.Render;
+	import laya.resource.Context;
+	import laya.resource.HTMLCanvas;
 	import laya.resource.ResourceManager;
 	
 	/**
@@ -60,6 +62,15 @@ package laya.utils {
 		/**@private */
 		public static var _show:Boolean = false;
 		
+		public static var _useCanvas:Boolean = false;
+		private static var _canvas:HTMLCanvas;
+		private static var _ctx:Context;
+		private static var _first:Boolean;
+		private static var _vx:Number;
+		private static var _width:int;
+		private static var _height:int = 100;
+		
+		
 		/**
 		 * 显示性能统计信息。
 		 * @param	x X轴显示位置。
@@ -70,22 +81,7 @@ package laya.utils {
 				Browser.window.conch.showFPS && Browser.window.conch.showFPS(x, y);
 				return;
 			}
-			var stat:Sprite = _sp;
-			var pixel:Number = Browser.pixelRatio;
-			if (!stat) {
-				stat = new Sprite();
-				_leftText = new Text();
-				_leftText.pos(5, 5);
-				_leftText.color = "#ffffff";
-				stat.addChild(_leftText);
-				
-				_txt = new Text();
-				_txt.pos(80*pixel, 5);
-				_txt.color = "#ffffff";
-				stat.addChild(_txt);
-				_sp = stat;
-			}
-			stat.pos(x, y);
+			if (!Browser.onMiniGame) _useCanvas = true;
 			
 			_show = true;
 			_fpsData.length = 60;
@@ -109,6 +105,62 @@ package laya.utils {
 				_view[4] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
 			}
 			
+			if (_useCanvas)
+			{
+				createUIPre(x,y);
+			}else
+			createUI(x,y);
+			
+			
+			enable();
+		}
+		
+		private static function createUIPre(x:Number, y:Number):void
+		{
+			var pixel:Number = Browser.pixelRatio;
+			_width = pixel * 130;
+			_vx = pixel * 75;
+			_height = pixel * (_view.length * 12 + 3 * pixel) + 4;
+			_fontSize = 12 * pixel;
+			for (var i:int = 0; i < _view.length; i++) {
+				_view[i].x = 4;
+				_view[i].y = i * _fontSize + 2 * pixel;
+			}
+			if (!_canvas) {
+				_canvas = new HTMLCanvas('2D');
+				_canvas.size(_width, _height);
+				_ctx = _canvas.getContext('2d');
+				_ctx.textBaseline = "top";
+				_ctx.font = _fontSize + "px Sans-serif";
+				
+				_canvas.source.style.cssText = "pointer-events:none;background:rgba(150,150,150,0.8);z-index:100000;position: absolute;direction:ltr;left:" + x + "px;top:" + y + "px;width:" + (_width / pixel) + "px;height:" + (_height / pixel) + "px;";
+			}
+			_first = true;
+			loop();
+			_first = false;
+			Browser.container.appendChild(_canvas.source);
+		}
+		
+		private static function createUI(x:Number,y:Number):void
+		{
+			var stat:Sprite = _sp;
+			var pixel:Number = Browser.pixelRatio;
+			if (!stat) {
+				stat = new Sprite();
+				_leftText = new Text();
+				_leftText.pos(5, 5);
+				_leftText.color = "#ffffff";
+				stat.addChild(_leftText);
+				
+				_txt = new Text();
+				_txt.pos(80*pixel, 5);
+				_txt.color = "#ffffff";
+				stat.addChild(_txt);
+				_sp = stat;
+			}
+			
+			stat.pos(x, y);
+			
 			var text:String = "";
 			for (var i:int = 0; i < _view.length; i++) {
 				var one:* = _view[i];
@@ -127,9 +179,7 @@ package laya.utils {
 			stat.graphics.setAlpha(0.5);
 			stat.graphics.drawRect(0, 0, width, height, "#999999");
 			stat.graphics.setAlpha(1);
-			
 			loop();
-			enable();
 		}
 		
 		/**激活性能统计*/
@@ -143,6 +193,10 @@ package laya.utils {
 		public static function hide():void {
 			_show = false;
 			Laya.timer.clear(Stat, loop);
+			if (_canvas)
+			{
+				Browser.removeElement(_canvas.source);
+			}
 		}
 		
 		/**
@@ -157,7 +211,15 @@ package laya.utils {
 		 * 点击性能统计显示区域的处理函数。
 		 */
 		public static function set onclick(fn:Function):void {
-			_sp.on("click", _sp, fn);
+			if (_sp)
+			{
+				_sp.on("click", _sp, fn);
+			}
+			if (_canvas)
+			{
+				_canvas.source.onclick = fn;
+				_canvas.source.style.pointerEvents = '';
+			}
 		}
 		
 		/**
@@ -176,9 +238,17 @@ package laya.utils {
 			if (_show) {
 				//计算平均值
 				trianglesFaces = Math.round(trianglesFaces / count);
-				drawCall = Math.round(drawCall / count)-2;
-				shaderCall = Math.round(shaderCall / count)-4;
-				spriteCount = Math.round(spriteCount / count)-4;
+				
+				if (!_useCanvas) {
+					drawCall = Math.round(drawCall / count)-2;
+					shaderCall = Math.round(shaderCall / count)-4;
+					spriteCount = Math.round(spriteCount / count) - 4;
+				}else
+				{
+					drawCall = Math.round(drawCall / count)-2;
+					shaderCall = Math.round(shaderCall / count);
+					spriteCount = Math.round(spriteCount / count) - 1;
+				}
 				spriteRenderUseCacheCount = Math.round(spriteRenderUseCacheCount / count);
 				canvasNormal = Math.round(canvasNormal / count);
 				canvasBitmap = Math.round(canvasBitmap / count);
@@ -191,21 +261,50 @@ package laya.utils {
 				_spriteStr = spriteCount + (spriteRenderUseCacheCount ? ("/" + spriteRenderUseCacheCount) : '');
 				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
 				currentMemorySize = ResourceManager.systemResourceManager.memorySize;
-				
-				var text:String = "";
-				for (var i:int = 0; i < _view.length; i++) {
-					var one:* = _view[i];
-					var value:* = Stat[one.value];
-					(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
-					(one.units == "K") && (value = Math.floor(value / (1024) * 100) / 100 + " K");
-					text += value + "\n";
-				}
-				_txt.text = text;
+				if (_useCanvas)
+				{
+					renderInfoPre();
+				}else
+				renderInfo();
 				clear();
 			}
 			
 			_count = 0;
 			_timer = timer;
+		}
+		
+		private static function renderInfoPre():void
+		{
+			if (_canvas)
+			{
+				var ctx:Context = _ctx;
+				ctx.clearRect(_first ? 0 : _vx, 0, _width, _height);
+				for (var i:int = 0; i < _view.length; i++) {
+					var one:* = _view[i];
+					//只有第一次才渲染标题文字，减少文字渲染次数
+					if (_first) {
+						ctx.fillStyle = "white";
+						ctx.fillText(one.title, one.x, one.y, null, null, null);
+					}
+					ctx.fillStyle = one.color;
+					var value:* = Stat[one.value];
+					(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
+					ctx.fillText(value + "", one.x + _vx, one.y, null, null, null);
+				}
+			}
+		}
+		
+		private static function renderInfo():void
+		{
+			var text:String = "";
+			for (var i:int = 0; i < _view.length; i++) {
+				var one:* = _view[i];
+				var value:* = Stat[one.value];
+				(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
+				(one.units == "K") && (value = Math.floor(value / (1024) * 100) / 100 + " K");
+				text += value + "\n";
+			}
+			_txt.text = text;
 		}
 	}
 }

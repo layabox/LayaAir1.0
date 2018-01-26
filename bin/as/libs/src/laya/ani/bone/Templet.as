@@ -717,7 +717,7 @@ package laya.ani.bone {
 		/**
 		 * 释放纹理
 		 */
-		public function destroy():void {
+		override public function destroy():void {
 			_isDestroyed = true;
 			for each (var tTexture:Texture in subTextureDic) {
 				if(tTexture)
@@ -736,7 +736,7 @@ package laya.ani.bone {
 			if (url) {
 				delete TEMPLET_DICTIONARY[url];
 			}
-			dispose();
+			super.destroy();
 		}
 		
 		/***********************************下面为一些儿访问接口*****************************************/

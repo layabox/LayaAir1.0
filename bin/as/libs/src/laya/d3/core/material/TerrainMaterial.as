@@ -5,6 +5,7 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	
 	/**
 	 * ...
@@ -44,6 +45,19 @@ package laya.d3.core.material {
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:TerrainMaterial = new TerrainMaterial();
+		
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_DETAIL_NUM1 = shaderDefines.registerDefine("DETAIL_NUM1");
+			SHADERDEFINE_DETAIL_NUM2 = shaderDefines.registerDefine("DETAIL_NUM2");
+			SHADERDEFINE_DETAIL_NUM4 = shaderDefines.registerDefine("DETAIL_NUM4");
+			SHADERDEFINE_DETAIL_NUM3 = shaderDefines.registerDefine("DETAIL_NUM3");
+		}
 		
 		/**
 		 * 加载闪光材质。

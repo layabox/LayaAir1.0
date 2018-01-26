@@ -16,11 +16,11 @@ package laya.d3.graphics {
 		/**
 		 * @private
 		 */
-		private static function _addToRenderQueueStaticBatch(sprite3D:Sprite3D):void {
+		private static function _addToStaticBatchQueue(sprite3D:Sprite3D):void {
 			if (sprite3D is RenderableSprite3D)
 				(sprite3D as RenderableSprite3D)._addToInitStaticBatchManager();
 			for (var i:int = 0, n:int = sprite3D.numChildren; i < n; i++)
-				_addToRenderQueueStaticBatch(sprite3D._childs[i] as Sprite3D);
+				_addToStaticBatchQueue(sprite3D._childs[i] as Sprite3D);
 		}
 		
 		/**
@@ -39,12 +39,12 @@ package laya.d3.graphics {
 				}
 			} else {
 				if (staticBatchRoot)
-					_addToRenderQueueStaticBatch(staticBatchRoot);
+					_addToStaticBatchQueue(staticBatchRoot);
 			}
 			for (i = 0, n = _staticBatchManagers.length; i < n; i++) {
 				staticBatchManager = _staticBatchManagers[i];
 				staticBatchManager._initStaticBatchs(staticBatchRoot);
-				staticBatchManager._finshInit();
+				staticBatchManager._finishInit();
 			}
 		}
 		
@@ -64,9 +64,9 @@ package laya.d3.graphics {
 		/**
 		 * @private
 		 */
-		protected function _finshInit():void {
+		protected function _finishInit():void {
 			for (var key:String in _staticBatches)
-				_staticBatches[key]._finshInit();
+				_staticBatches[key]._finishInit();
 			_initBatchRenderElements.length = 0;
 		}
 		

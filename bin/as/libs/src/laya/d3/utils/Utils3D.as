@@ -541,10 +541,8 @@ package laya.d3.utils {
 		/**
 		 * @private
 		 */
-		public static function _createAffineTransformationArray(trans:Float32Array, rot:Float32Array, scale:Float32Array, out:Matrix4x4):void {
+		public static function _createAffineTransformationArray(trans:Float32Array, rot:Float32Array, scale:Float32Array, outE:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var outE:Float32Array = out.elements
-			
 			var x:Number = rot[0], y:Number = rot[1], z:Number = rot[2], w:Number = rot[3], x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
 			var xx:Number = x * x2, xy:Number = x * y2, xz:Number = x * z2, yy:Number = y * y2, yz:Number = y * z2, zz:Number = z * z2;
 			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2, sx:Number = scale[0], sy:Number = scale[1], sz:Number = scale[2];
@@ -570,11 +568,11 @@ package laya.d3.utils {
 		/**
 		 * @private
 		 */
-		public static function _mulMatrixArray(leftMatrix:Matrix4x4, rightMatrix:Matrix4x4, outArray:Float32Array, outOffset:int):void {
+		public static function _mulMatrixArray(leftMatrixE:Float32Array, rightMatrix:Matrix4x4, outArray:Float32Array, outOffset:int):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
 			var rightMatrixE:Float32Array = rightMatrix.elements;
-			var leftMatrixE:Float32Array = leftMatrix.elements;
+			//var leftMatrixE:Float32Array = leftMatrix.elements;
 			var m11:Number = rightMatrixE[0], m12:Number = rightMatrixE[1], m13:Number = rightMatrixE[2], m14:Number = rightMatrixE[3];
 			var m21:Number = rightMatrixE[4], m22:Number = rightMatrixE[5], m23:Number = rightMatrixE[6], m24:Number = rightMatrixE[7];
 			var m31:Number = rightMatrixE[8], m32:Number = rightMatrixE[9], m33:Number = rightMatrixE[10], m34:Number = rightMatrixE[11];
@@ -595,6 +593,130 @@ package laya.d3.utils {
 				outArray[ai2OutOffset + i] = ai0 * m31 + ai1 * m32 + ai2 * m33 + ai3 * m34;
 				outArray[ai3OutOffset + i] = ai0 * m41 + ai1 * m42 + ai2 * m43 + ai3 * m44;
 			}
+		}
+		
+		public static function getYawPitchRoll(quaternion:Float32Array, out:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			transformQuat(Vector3.ForwardRH, quaternion, Quaternion.TEMPVector31/*forwarldRH*/);
+			
+			transformQuat(Vector3.Up, quaternion, Quaternion.TEMPVector32/*up*/);
+			var upe:Float32Array = Quaternion.TEMPVector32.elements;
+			
+			angleTo(Vector3.ZERO, Quaternion.TEMPVector31, Quaternion.TEMPVector33/*angle*/);
+			var anglee:Float32Array = Quaternion.TEMPVector33.elements;
+			
+			if (anglee[0] == Math.PI / 2) {
+				anglee[1] = arcTanAngle(upe[2], upe[0]);
+				anglee[2] = 0;
+			} else if (anglee[0] == -Math.PI / 2) {
+				anglee[1] = arcTanAngle(-upe[2], -upe[0]);
+				anglee[2] = 0;
+			} else {
+				Matrix4x4.createRotationY(-anglee[1], Quaternion.TEMPMatrix0);
+				Matrix4x4.createRotationX(-anglee[0], Quaternion.TEMPMatrix1);
+				
+				Vector3.transformCoordinate(Quaternion.TEMPVector32, Quaternion.TEMPMatrix0, Quaternion.TEMPVector32);
+				Vector3.transformCoordinate(Quaternion.TEMPVector32, Quaternion.TEMPMatrix1, Quaternion.TEMPVector32);
+				anglee[2] = arcTanAngle(upe[1], -upe[0]);
+			}
+			
+			// Special cases.
+			if (anglee[1] <= -Math.PI)
+				anglee[1] = Math.PI;
+			if (anglee[2] <= -Math.PI)
+				anglee[2] = Math.PI;
+			
+			if (anglee[1] >= Math.PI && anglee[2] >= Math.PI) {
+				anglee[1] = 0;
+				anglee[2] = 0;
+				anglee[0] = Math.PI - anglee[0];
+			}
+			
+			out[0] = anglee[1];
+			out[1] = anglee[0];
+			out[2] = anglee[2];
+		}
+		
+		private static function arcTanAngle(x:Number, y:Number):Number {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			if (x == 0) {
+				if (y == 1)
+					return Math.PI / 2;
+				return -Math.PI / 2;
+			}
+			if (x > 0)
+				return Math.atan(y / x);
+			if (x < 0) {
+				if (y > 0)
+					return Math.atan(y / x) + Math.PI;
+				return Math.atan(y / x) - Math.PI;
+			}
+			return 0;
+		}
+		
+		private static function angleTo(from:Vector3, location:Vector3, angle:Vector3):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			Vector3.subtract(location, from, Quaternion.TEMPVector30);
+			Vector3.normalize(Quaternion.TEMPVector30, Quaternion.TEMPVector30);
+			
+			angle.elements[0] = Math.asin(Quaternion.TEMPVector30.y);
+			angle.elements[1] = arcTanAngle(-Quaternion.TEMPVector30.z, -Quaternion.TEMPVector30.x);
+		}
+		
+		public static function transformQuat(source:Vector3, rotation:Float32Array, out:Vector3):void {
+			var destination:Float32Array = out.elements;
+			var se:Float32Array = source.elements;
+			var re:Float32Array = rotation;
+			
+			var x:Number = se[0], y:Number = se[1], z:Number = se[2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
+			
+			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
+			
+			destination[0] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+			destination[1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+			destination[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function quaterionNormalize(f:Float32Array, e:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var x:Number = f[0], y:Number = f[1], z:Number = f[2], w:Number = f[3];
+			var len:Number = x * x + y * y + z * z + w * w;
+			if (len > 0) {
+				len = 1 / Math.sqrt(len);
+				e[0] = x * len;
+				e[1] = y * len;
+				e[2] = z * len;
+				e[3] = w * len;
+			}
+		}
+		
+		public static function matrix4x4MultiplyFFF(a:Float32Array, b:Float32Array, e:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var i:int, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
+			if (e === b) {
+				b = new Float32Array(16);
+				for (i = 0; i < 16; ++i) {
+					b[i] = e[i];
+				}
+			}
+			
+			for (i = 0; i < 4; i++) {
+				ai0 = a[i];
+				ai1 = a[i + 4];
+				ai2 = a[i + 8];
+				ai3 = a[i + 12];
+				e[i] = ai0 * b[0] + ai1 * b[1] + ai2 * b[2] + ai3 * b[3];
+				e[i + 4] = ai0 * b[4] + ai1 * b[5] + ai2 * b[6] + ai3 * b[7];
+				e[i + 8] = ai0 * b[8] + ai1 * b[9] + ai2 * b[10] + ai3 * b[11];
+				e[i + 12] = ai0 * b[12] + ai1 * b[13] + ai2 * b[14] + ai3 * b[15];
+			}
+		}
+		
+		public static function matrix4x4MultiplyMFM(left:Matrix4x4, right:Float32Array, out:Matrix4x4):void {
+			matrix4x4MultiplyFFF(left.elements,right,out.elements);
 		}
 	}
 

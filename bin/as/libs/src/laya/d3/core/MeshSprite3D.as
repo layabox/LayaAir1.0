@@ -29,11 +29,11 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 加载网格模板,注意:不缓存。
+		 * 加载网格模板。
 		 * @param url 模板地址。
 		 */
 		public static function load(url:String):MeshSprite3D {
-			return Laya.loader.create(url, null, null, MeshSprite3D, null, 1, false);
+			return Laya.loader.create(url, null, null, MeshSprite3D);
 		}
 		
 		/**

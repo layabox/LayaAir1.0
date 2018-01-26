@@ -458,18 +458,7 @@ package laya.d3.core {
 			_calculateProjectionMatrix();
 		}
 		
-		override public function destroy(destroyChild:Boolean = true):void {
-			//postProcess = null;
-			//AmbientLight = null;
-			if (_sky) {
-				_sky._ownerCamera = null;
-				_sky = null;
-			}
-			renderTarget = null;
-			
-			Laya.stage.off(Event.RESIZE, this, _onScreenSizeChanged);
-			super.destroy(destroyChild);
-		}
+		
 		
 		/**
 		 * 向前移动。
@@ -560,6 +549,19 @@ package laya.d3.core {
 		{
 			var cameraPool:Vector.<BaseCamera> = scene._cameraPool;
 			cameraPool.splice(cameraPool.indexOf(this), 1);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function destroy(destroyChild:Boolean = true):void {
+			//postProcess = null;
+			//AmbientLight = null;
+			(_sky) && (_sky.destroy());
+			renderTarget = null;
+			
+			Laya.stage.off(Event.RESIZE, this, _onScreenSizeChanged);
+			super.destroy(destroyChild);
 		}
 	}
 }

@@ -165,7 +165,7 @@ package laya.d3.core {
 			var end:int = _collsionTestList.length - 1;
 			var mid:int;
 			while (start <= end) {
-				mid = __JS__("parseInt((start + end) / 2)");
+				mid = Math.floor((start + end) / 2);
 				var midValue:int = _collsionTestList[mid];
 				if (midValue == _number)
 					return mid;

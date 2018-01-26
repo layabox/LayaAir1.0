@@ -4,6 +4,7 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.BaseTexture;
 	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.ShaderDefines;
 	
 	/**
 	 * <code>BlinnPhongMaterial</code> 类用于实现Blinn-Phong材质。
@@ -43,6 +44,20 @@ package laya.d3.core.material {
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:BlinnPhongMaterial = new BlinnPhongMaterial();
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
+		
+		/**
+		 * @private
+		 */
+		public static function __init__():void {
+			SHADERDEFINE_DIFFUSEMAP = shaderDefines.registerDefine("DIFFUSEMAP");
+			SHADERDEFINE_NORMALMAP = shaderDefines.registerDefine("NORMALMAP");
+			SHADERDEFINE_SPECULARMAP = shaderDefines.registerDefine("SPECULARMAP");
+			SHADERDEFINE_REFLECTMAP = shaderDefines.registerDefine("REFLECTMAP");
+			SHADERDEFINE_TILINGOFFSET = shaderDefines.registerDefine("TILINGOFFSET");
+			SHADERDEFINE_ADDTIVEFOG = shaderDefines.registerDefine("ADDTIVEFOG");;
+		}
 		
 		/**
 		 * 加载标准材质。
@@ -56,6 +71,8 @@ package laya.d3.core.material {
 		private var _albedoColor:Vector4;
 		/**@private */
 		private var _albedoIntensity:Number;
+		/**@private */
+		private var _enableLighting:Boolean;
 		
 		/**
 		 * 设置渲染模式。
@@ -303,6 +320,28 @@ package laya.d3.core.material {
 			_setTexture(REFLECTTEXTURE, value);
 		}
 		
+		/**
+		 * 获取是否启用光照。
+		 * @return 是否启用光照。
+		 */
+		public function get enableLighting():Boolean {
+			return _enableLighting;
+		}
+		
+		/**
+		 * 设置是否启用光照。
+		 * @param value 是否启用光照。
+		 */
+		public function set enableLighting(value:Boolean):void {
+			if (_enableLighting !== value) {
+				if (value)
+					_removeDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+				else
+					_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+				_enableLighting = value;
+			}
+		}
+		
 		public function BlinnPhongMaterial() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
@@ -316,6 +355,7 @@ package laya.d3.core.material {
 			_setColor(MATERIALREFLECT, new Vector3(1.0, 1.0, 1.0));
 			_setNumber(ALPHATESTVALUE, 0.5);
 			_setColor(TILINGOFFSET, new Vector4(1.0, 1.0, 0.0, 0.0));
+			_enableLighting = true;
 			renderMode = RENDERMODE_OPAQUE;
 		}
 		

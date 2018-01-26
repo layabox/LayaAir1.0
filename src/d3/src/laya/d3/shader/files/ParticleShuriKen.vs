@@ -560,8 +560,8 @@ vec2 computeParticleUV(in vec2 uv,in float normalizedAge)
 		float frame=getFrameFromGradient(u_TSAGradientUVs,cycleNormalizedAge-floor(cycleNormalizedAge));
 		float totalULength=frame*u_TSASubUVLength.x;
 		float floorTotalULength=floor(totalULength);
-	    uv.x=uv.x+totalULength-floorTotalULength;
-		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;
+	    uv.x+=totalULength-floorTotalULength;
+		uv.y+=floorTotalULength*u_TSASubUVLength.y;
     #endif
 	#ifdef TEXTURESHEETANIMATIONRANDOMCURVE
 		float cycleNormalizedAge=normalizedAge*u_TSACycles;
@@ -569,8 +569,8 @@ vec2 computeParticleUV(in vec2 uv,in float normalizedAge)
 	    float frame=floor(mix(getFrameFromGradient(u_TSAGradientUVs,uvNormalizedAge),getFrameFromGradient(u_TSAMaxGradientUVs,uvNormalizedAge),a_Random1.x));
 		float totalULength=frame*u_TSASubUVLength.x;
 		float floorTotalULength=floor(totalULength);
-	    uv.x=uv.x+totalULength-floorTotalULength;
-		uv.y=uv.y+floorTotalULength*u_TSASubUVLength.y;
+	    uv.x+=totalULength-floorTotalULength;
+		uv.y+=floorTotalULength*u_TSASubUVLength.y;
     #endif
 	return uv;
 }
@@ -659,14 +659,15 @@ void main()
    
    #ifdef HORIZONTALBILLBOARD
 		vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效
-        const vec3 cameraUpVector=vec3(0.0,0.0,-1.0);
-	    const vec3 sideVector = vec3(1.0,0.0,0.0);
-		corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
+        const vec3 cameraUpVector=vec3(0.0,0.0,1.0);
+	    const vec3 sideVector = vec3(-1.0,0.0,0.0);
+		
 		float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
         float c = cos(rot);
         float s = sin(rot);
         mat2 rotation= mat2(c, -s, s, c);
 	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因
+		corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
         center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);
    #endif
    
@@ -674,12 +675,13 @@ void main()
 		vec2 corner=a_CornerTextureCoordinate.xy;//Billboard模式z轴无效
         const vec3 cameraUpVector =vec3(0.0,1.0,0.0);
         vec3 sideVector = normalize(cross(u_CameraDirection,cameraUpVector));
-		corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
+		
 		float rot = computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
         float c = cos(rot);
         float s = sin(rot);
         mat2 rotation= mat2(c, -s, s, c);
 	    corner=rotation*corner*cos(0.78539816339744830961566084581988);//TODO:临时缩小cos45,不确定U3D原因
+		corner*=computeParticleSizeBillbard(a_StartSize.xy,normalizedAge);
         center +=u_SizeScale.xzy*(corner.x*sideVector+ corner.y*cameraUpVector);
    #endif
    

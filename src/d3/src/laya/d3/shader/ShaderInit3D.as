@@ -9,6 +9,7 @@ package laya.d3.shader {
 	import laya.d3.core.material.ExtendTerrainMaterial;
 	import laya.d3.core.material.GlitterMaterial;
 	import laya.d3.core.material.PBRMaterial;
+	import laya.d3.core.material.PBRSpecularMaterial;
 	import laya.d3.core.material.StandardMaterial;
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.core.material.PBRStandardMaterial;
@@ -56,9 +57,12 @@ package laya.d3.shader {
 			
 			Shader3D.addInclude("LightHelper.glsl", __INCLUDESTR__("files/LightHelper.glsl"));//兼容性
 			Shader3D.addInclude("Lighting.glsl", __INCLUDESTR__("files/Lighting.glsl"));
-			Shader3D.addInclude("PBRLighting.glsl", __INCLUDESTR__("files/PBRLighting.glsl"));
 			Shader3D.addInclude("ShadowHelper.glsl", __INCLUDESTR__("files/ShadowHelper.glsl"));
 			Shader3D.addInclude("WaveFunction.glsl", __INCLUDESTR__("files/WaveFunction.glsl"));
+			Shader3D.addInclude("BRDF.glsl", __INCLUDESTR__("files/PBRLibs/BRDF.glsl"));
+			Shader3D.addInclude("PBRUtils.glsl", __INCLUDESTR__("files/PBRLibs/PBRUtils.glsl"));
+			Shader3D.addInclude("PBRStandardLighting.glsl", __INCLUDESTR__("files/PBRLibs/PBRStandardLighting.glsl"));
+			Shader3D.addInclude("PBRSpecularLighting.glsl", __INCLUDESTR__("files/PBRLibs/PBRSpecularLighting.glsl"));
 			
 			var vs:String, ps:String;
 			var attributeMap:Object = {
@@ -320,6 +324,61 @@ package laya.d3.shader {
 			PBRStandardMaterial.SHADERDEFINE_EMISSION = shaderCompile.registerMaterialDefine("EMISSION");
 			PBRStandardMaterial.SHADERDEFINE_EMISSIONTEXTURE = shaderCompile.registerMaterialDefine("EMISSIONTEXTURE");
 			PBRStandardMaterial.SHADERDEFINE_TILINGOFFSET = shaderCompile.registerMaterialDefine("TILINGOFFSET");
+			
+			//PBRSpecular
+			attributeMap = {
+				'a_Position': VertexElementUsage.POSITION0, 
+				'a_Normal': VertexElementUsage.NORMAL0,
+				'a_Tangent0': VertexElementUsage.TANGENT0,
+				'a_Texcoord0': VertexElementUsage.TEXTURECOORDINATE0,
+				'a_BoneWeights': VertexElementUsage.BLENDWEIGHT0, 
+				'a_BoneIndices': VertexElementUsage.BLENDINDICES0
+			};
+			uniformMap = {
+				'u_Bones': [SkinnedMeshSprite3D.BONES, Shader3D.PERIOD_RENDERELEMENT], 
+				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE],
+				'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
+				'u_AlphaTestValue': [BaseMaterial.ALPHATESTVALUE, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseColor': [PBRSpecularMaterial.DIFFUSECOLOR, Shader3D.PERIOD_MATERIAL], 
+				'u_SpecularColor': [PBRSpecularMaterial.SPECULARCOLOR, Shader3D.PERIOD_MATERIAL], 
+				'u_EmissionColor': [PBRSpecularMaterial.EMISSIONCOLOR, Shader3D.PERIOD_MATERIAL], 
+				'u_DiffuseTexture': [PBRSpecularMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL],
+				'u_NormalTexture': [PBRSpecularMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_ParallaxTexture': [PBRSpecularMaterial.PARALLAXTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_SpecularTexture': [PBRSpecularMaterial.SPECULARTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_OcclusionTexture': [PBRSpecularMaterial.OCCLUSIONTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_EmissionTexture': [PBRSpecularMaterial.EMISSIONTEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_smoothness': [PBRSpecularMaterial.SMOOTHNESS, Shader3D.PERIOD_MATERIAL],
+				'u_smoothnessScale': [PBRSpecularMaterial.SMOOTHNESSSCALE, Shader3D.PERIOD_MATERIAL],
+				'u_occlusionStrength': [PBRSpecularMaterial.OCCLUSIONSTRENGTH, Shader3D.PERIOD_MATERIAL],
+				'u_normalScale': [PBRSpecularMaterial.NORMALSCALE, Shader3D.PERIOD_MATERIAL],
+				'u_parallaxScale': [PBRSpecularMaterial.PARALLAXSCALE, Shader3D.PERIOD_MATERIAL],
+				'u_TilingOffset': [PBRSpecularMaterial.TILINGOFFSET, Shader3D.PERIOD_MATERIAL],
+				'u_DirectionLight.Direction': [Scene.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
+				'u_DirectionLight.Color': [Scene.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE],
+				'u_AmbientColor': [Scene.AMBIENTCOLOR, Shader3D.PERIOD_SCENE],
+				'u_shadowMap1': [Scene.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap2': [Scene.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
+				'u_shadowMap3': [Scene.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
+				'u_shadowPSSMDistance': [Scene.SHADOWDISTANCE, Shader3D.PERIOD_SCENE], 
+				'u_lightShadowVP': [Scene.SHADOWLIGHTVIEWPROJECT, Shader3D.PERIOD_SCENE], 
+				'u_shadowPCFoffset': [Scene.SHADOWMAPPCFOFFSET, Shader3D.PERIOD_SCENE]
+			};
+			var PBRSpecular:int = Shader3D.nameKey.add("PBRSpecular");
+			vs = __INCLUDESTR__("files/PBRSpecular.vs");
+			ps = __INCLUDESTR__("files/PBRSpecular.ps");
+			shaderCompile = ShaderCompile3D.add(PBRSpecular, vs, ps, attributeMap, uniformMap);
+			PBRSpecularMaterial.SHADERDEFINE_DIFFUSETEXTURE = shaderCompile.registerMaterialDefine("DIFFUSETEXTURE");
+			PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE = shaderCompile.registerMaterialDefine("SPECULARTEXTURE");
+			PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA = shaderCompile.registerMaterialDefine("SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA");
+			PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE = shaderCompile.registerMaterialDefine("NORMALTEXTURE");
+			PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE = shaderCompile.registerMaterialDefine("PARALLAXTEXTURE");
+			PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE = shaderCompile.registerMaterialDefine("OCCLUSIONTEXTURE");
+			PBRSpecularMaterial.SHADERDEFINE_EMISSION = shaderCompile.registerMaterialDefine("EMISSION");
+			PBRSpecularMaterial.SHADERDEFINE_EMISSIONTEXTURE = shaderCompile.registerMaterialDefine("EMISSIONTEXTURE");
+			PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET = shaderCompile.registerMaterialDefine("TILINGOFFSET");
+			
 			//water
 			attributeMap = {
 				'a_position': VertexElementUsage.POSITION0, 
@@ -463,6 +522,7 @@ package laya.d3.shader {
 			vs = __INCLUDESTR__("files/ParticleShuriKen.vs");
 			ps = __INCLUDESTR__("files/ParticleShuriKen.ps");
 			shaderCompile = ShaderCompile3D.add(PARTICLESHURIKEN, vs, ps, attributeMap, uniformMap);
+			
 			ShurikenParticleMaterial.SHADERDEFINE_DIFFUSEMAP = shaderCompile.registerMaterialDefine("DIFFUSEMAP");
 			ShurikenParticleMaterial.SHADERDEFINE_TINTCOLOR = shaderCompile.registerMaterialDefine("TINTCOLOR");
 			ShurikenParticleMaterial.SHADERDEFINE_ADDTIVEFOG = shaderCompile.registerMaterialDefine("ADDTIVEFOG");
@@ -491,6 +551,7 @@ package laya.d3.shader {
 			ShuriKenParticle3D.SHADERDEFINE_SIZEOVERLIFETIMERANDOMCURVESSEPERATE = shaderCompile.registerSpriteDefine("SIZEOVERLIFETIMERANDOMCURVESSEPERATE");
 			ShuriKenParticle3D.SHADERDEFINE_RENDERMODE_MESH = shaderCompile.registerSpriteDefine("RENDERMODE_MESH");
 			ShuriKenParticle3D.SHADERDEFINE_SHAPE = shaderCompile.registerSpriteDefine("SHAPE");
+			
 			
 			attributeMap = {
 				'a_Position': VertexElementUsage.POSITION0, 
@@ -645,11 +706,31 @@ package laya.d3.shader {
             ps = __INCLUDESTR__("files/extendTerrain.ps");
 			
             var extendTerrainCompile3D:ShaderCompile3D = ShaderCompile3D.add(extendTerrainShader, vs, ps, attributeMap, uniformMap);
-            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM1 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM1");
-            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM2 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM2");
-            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM3 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM3");
-            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM4 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM4");
-            ExtendTerrainMaterial.SHADERDEFINE_DETAIL_NUM5 = extendTerrainCompile3D.registerMaterialDefine("ExtendTerrain_DETAIL_NUM5");
+			extendTerrainCompile3D.addSpriteDefines(RenderableSprite3D.shaderDefines);
+			extendTerrainCompile3D.addSpriteDefines(ExtendTerrainMaterial.shaderDefines);
+			
+//			//Trail
+//			attributeMap = {
+//				'a_Position': VertexElementUsage.POSITION0,
+//				'a_Color' : VertexElementUsage.COLOR0,
+//				'a_Texcoord0X': VertexElementUsage.TEXTURECOORDINATE0X,
+//				'a_Texcoord0Y': VertexElementUsage.TEXTURECOORDINATE0Y
+//			};
+//			uniformMap = {
+//				'u_VMatrix': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA],
+//				'u_PMatrix': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA],
+//				'u_MainTexture': [TrailMaterial.MAINTEXTURE, Shader3D.PERIOD_MATERIAL], 
+//				'u_MainColor': [TrailMaterial.MAINCOLOR, Shader3D.PERIOD_MATERIAL]
+//			};
+//			
+//			var trailShader:int = Shader3D.nameKey.add("Trail");
+//            vs = __INCLUDESTR__("files/Trail.vs");
+//            ps = __INCLUDESTR__("files/Trail.ps");
+//			
+//            var trailCompile3D:ShaderCompile3D = ShaderCompile3D.add(trailShader, vs, ps, attributeMap, uniformMap);
+//			TrailMaterial.SHADERDEFINE_MAINTEXTURE = trailCompile3D.registerMaterialDefine("MAINTEXTURE");
+//			//trailCompile3D.addSpriteDefines(RenderableSprite3D.shaderDefines);
+//			//trailCompile3D.addSpriteDefines(TrailMaterial.shaderDefines);
 		}
 	
 	}

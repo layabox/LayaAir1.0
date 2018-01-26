@@ -1,4 +1,4 @@
-package
+package common
 {
 	import laya.d3.component.Script;
 	import laya.d3.component.physics.Collider;
@@ -8,8 +8,8 @@ package
 	public class ColliderScript extends Script
 	{
 		private var _color:Vector4 = new Vector4(1, 0, 0, 1);
-		private var _tempColor1:Vector4 = new Vector4(2.5, 2.5, 2.5, 1);
-		private var _tempColor2:Vector4 = new Vector4(0.4, 0.4, 0.4, 1);
+		private var _tempColor1:Vector4 = new Vector4(4, 4, 4, 1);
+		private var _tempColor2:Vector4 = new Vector4(0.25, 0.25, 0.25, 1);
 		public function ColliderScript()
 		{
 			super();

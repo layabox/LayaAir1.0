@@ -220,7 +220,7 @@ package laya.webgl.resource {
 			if (!_destroy) {
 				_loaded = false;
 				bitmap.offAll();
-				bitmap.detoryResource();
+				bitmap.disposeResource();
 				bitmap.dispose();
 				this.offAll();
 				bitmap = null;

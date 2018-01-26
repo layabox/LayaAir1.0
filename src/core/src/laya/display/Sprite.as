@@ -1019,8 +1019,10 @@ package laya.display {
 		 * <p>也可以获取原始图片数据，分享到网上，从而实现截图效果，示例：</p>
 		 *
 		 * var htmlCanvas:HTMLCanvas = sprite.drawToCanvas(100, 100, 0, 0);//把精灵绘制到canvas上面
-		 * var canvas:* = htmlCanvas.getCanvas();//获取原生的canvas对象
-		 * trace(canvas.toDataURL("image/png"));//打印图片base64信息，可以发给服务器或者保存为图片
+		 * 
+		 * htmlCanvas.toBase64("image/png",0.92,function(base64){//webgl和canvas模式下为同步方法，加速器下是异步方法
+		 * 						trace(base64);//打印图片base64信息，可以发给服务器或者保存为图片
+		 * 						});
 		 *
 		 * @param	canvasWidth 画布宽度。
 		 * @param	canvasHeight 画布高度。
@@ -1474,8 +1476,10 @@ package laya.display {
 		 */
 		public function hitTestPoint(x:Number, y:Number):Boolean {
 			var point:Point = globalToLocal(Point.TEMP.setTo(x, y));
+			x = point.x;
+			y = point.y;
 			var rect:Rectangle = _$P.hitArea ? _$P.hitArea : (_width > 0 && _height > 0)? Rectangle.TEMP.setTo(0, 0, _width, _height): getSelfBounds();
-			return rect.contains(point.x, point.y);
+			return rect.contains(x, y);
 		}
 		
 		/**获得相对于本对象上的鼠标坐标信息。*/

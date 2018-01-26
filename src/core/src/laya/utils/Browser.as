@@ -26,6 +26,8 @@ package laya.utils {
 		private static var u:String;
 		/** 表示是否在 ios 设备。*/
 		public static var onIOS:Boolean;
+		/** 表示是否在 Mac 设备。*/
+		public static var onMac:Boolean;
 		/** 表示是否在移动设备。*/
 		public static var onMobile:Boolean;
 		/** 表示是否在 iphone设备。*/
@@ -50,9 +52,9 @@ package laya.utils {
 		public static var onEdge:Boolean;
 		/** 表示是否在IE浏览器内*/
 		public static var onIE:Boolean;
-		/** 表示是否在微信内*/
+		/** 微信内*/
 		public static var onWeiXin:Boolean;
-		/** 表示是否在微信小游戏内 */
+		/** @private */
 		public static var onMiniGame:Boolean;
 		/** 表示是否在 PC 端。*/
 		public static var onPC:Boolean;		
@@ -87,7 +89,7 @@ package laya.utils {
 			//TODO:优化
 			__JS__("window.requestAnimationFrame=window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (c){return window.setTimeout(c, 1000 / 60);};");
 			//强制修改body样式
-			__JS__("var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';");
+			//__JS__("var $BS=window.document.body.style;$BS.margin=0;$BS.overflow='hidden';");
 			//强制修改meta标签
 			//__JS__("var metas=window.document.getElementsByTagName('meta');");
 			//__JS__("var i=0,flag=false,content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no';");
@@ -99,6 +101,7 @@ package laya.utils {
 			onIOS = /*[STATIC SAFE]*/ !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
 			onMobile = /*[STATIC SAFE]*/ u.indexOf("Mobile") > -1;
 			onIPhone = /*[STATIC SAFE]*/ u.indexOf("iPhone") > -1;
+			onMac = /*[STATIC SAFE]*/ u.indexOf("Mac OS X") > -1;
 			onIPad = /*[STATIC SAFE]*/ u.indexOf("iPad") > -1;
 			onAndriod = /*[STATIC SAFE]*/ u.indexOf('Android') > -1 || u.indexOf('Adr') > -1;
 			onWP = /*[STATIC SAFE]*/ u.indexOf("Windows Phone") > -1;
@@ -112,7 +115,10 @@ package laya.utils {
 			onEdge = /*[STATIC SAFE]*/ u.indexOf('Edge') > -1;
 			onMiniGame = /*[STATIC SAFE]*/ u.indexOf('MiniGame') > -1;
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
-			
+			if (onMiniGame && window.focus == null)
+			{
+				console.error("请先初始化小游戏适配库，详细教程https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0");
+			}
 			webAudioEnabled =/*[STATIC SAFE]*/ window["AudioContext"] || window["webkitAudioContext"] || window["mozAudioContext"] ? true : false;
 			soundType =/*[STATIC SAFE]*/ webAudioEnabled ? "WEBAUDIOSOUND" : "AUDIOSOUND";
 			
@@ -200,13 +206,13 @@ package laya.utils {
 			return window.innerHeight || document.body.clientHeight || document.documentElement.clientHeight;
 		}
 		
-		/** 浏览器窗口物理宽度。考虑了设备像素比。*/
+		/** 浏览器窗口物理宽度，其值等于clientWidth * pixelRatio，并且浏览器发生反转之后，宽高会互换。*/
 		public static function get width():Number {
 			__init__();
 			return ((Laya.stage && Laya.stage.canvasRotation) ? clientHeight : clientWidth) * pixelRatio;
 		}
 		
-		/** 浏览器窗口物理高度。考虑了设备像素比。*/
+		/** 浏览器窗口物理高度，其值等于clientHeight * pixelRatio，并且浏览器发生反转之后，宽高会互换。*/
 		public static function get height():Number {
 			__init__();
 			return ((Laya.stage && Laya.stage.canvasRotation) ? clientWidth : clientHeight) * pixelRatio;

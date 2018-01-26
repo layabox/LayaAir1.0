@@ -19,7 +19,6 @@ package animationModule
 	 */
 	public class BoneLinkSprite3D
 	{
-		/**点击鼠标乘骑坐骑**/
 		private var statue:int = 0;
 		private var dragon1:Sprite3D;
 		private var dragon2:Sprite3D;

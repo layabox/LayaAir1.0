@@ -10,7 +10,8 @@ package laya.webgl.shader {
 		public static var bindShader:BaseShader;
 		
 		public function BaseShader() {
-		
+			super();
+			lock = true;
 		}
 	
 	}

@@ -20,7 +20,7 @@ package laya.d3.shadowMap {
 	 */
 	public class ParallelSplitShadowMap {
 		/**@private 精灵级着色器宏定义,接收阴影。*/
-		public static const SHADERDEFINE_RECEIVE_SHADOW:int = 0x1;
+		public static var SHADERDEFINE_RECEIVE_SHADOW:int= 0x1;
 		
 		/**@private */
 		public static var SHADERDEFINE_CAST_SHADOW:int = 0x200;
@@ -41,8 +41,6 @@ package laya.d3.shadowMap {
 		
 		/**@private */
 		public static const MAX_PSSM_COUNT:int = 3;
-		
-		
 		
 		/**@private */
 		private var lastNearPlane:Number;
@@ -492,7 +490,7 @@ package laya.d3.shadowMap {
 				for (i = 1; i < nNum; i++) {
 					if (_renderTarget[i] == null || _renderTarget[i].width != _shadowMapTextureSize || _renderTarget[i].height != _shadowMapTextureSize) {
 						if (_renderTarget[i] != null) {
-							_renderTarget[i].dispose();
+							_renderTarget[i].destroy();
 						}
 						_renderTarget[i] = new RenderTexture(_shadowMapTextureSize, _shadowMapTextureSize, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, WebGLContext.DEPTH_COMPONENT16, false, false, WebGLContext.NEAREST, WebGLContext.NEAREST);
 					}
@@ -619,7 +617,7 @@ package laya.d3.shadowMap {
 			 */
 			Matrix4x4.multiply(curLightCamera.viewMatrix, cameraMatViewInv, _tempMatrix44);
 			var tempValueElement:Float32Array = _tempValue.elements;
-			var corners:Vector.<Vector3> =new Vector.<Vector3>();
+			var corners:Vector.<Vector3> = new Vector.<Vector3>();
 			corners.length = 8;
 			_boundingBox[_currentPSSM].getCorners(corners);
 			for (var i:int = 0; i < 8; i++) {
@@ -724,7 +722,7 @@ package laya.d3.shadowMap {
 		public function disposeAllRenderTarget():void {
 			for (var i:int = 0, n:int = _numberOfPSSM + 1; i < n; i++) {
 				if (_renderTarget[i]) {
-					_renderTarget[i].dispose();
+					_renderTarget[i].destroy();
 					_renderTarget[i] = null;
 				}
 			}

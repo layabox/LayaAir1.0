@@ -33,7 +33,7 @@ package laya.d3.graphics {
 			} else {
 				return lightMapIndexOffset;
 			}
-			
+		
 		}
 		
 		//private var _batchOwnerIndices:Vector.<Vector.<int>>;//TODO:
@@ -61,7 +61,7 @@ package laya.d3.graphics {
 				key = material.id.toString() + vertexDeclaration.id.toString() + number.toString();//TODO:效率问题
 			
 			if (!_staticBatches[key])//TODO:是否需要判断
-				_staticBatches[key] = staticBatch = new SubMeshStaticBatch(key,this,rootOwner, vertexDeclaration, material);
+				_staticBatches[key] = staticBatch = new SubMeshStaticBatch(key, this, rootOwner, vertexDeclaration, material);
 			else
 				staticBatch = _staticBatches[key];
 			
@@ -73,12 +73,12 @@ package laya.d3.graphics {
 		 */
 		override protected function _initStaticBatchs(rootOwner:Sprite3D):void {//TODO:多次调用合并重新分配问题以及_rootSprite3Ds删除问题。
 			_initBatchRenderElements.sort(_sortPrepareStaticBatch);
-			
+
 			var lastMaterial:BaseMaterial;
 			var lastVertexDeclaration:VertexDeclaration;
 			var lastCanMerage:Boolean = false;
 			var curStaticBatch:SubMeshStaticBatch;
-			
+		
 			var batchNumber:int = 0;
 			for (var i:int = 0, n:int = _initBatchRenderElements.length; i < n; i++) {
 				var renderElement:RenderElement = _initBatchRenderElements[i];
@@ -96,12 +96,17 @@ package laya.d3.graphics {
 							curStaticBatch = _getStaticBatch(rootOwner, lastVertexDeclaration, lastMaterial, batchNumber);//TODO:不以材质区分,材质为动态？
 							
 							oldStaticBatch = lastRenderObj._staticBatch as SubMeshStaticBatch;
-							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineBatchRenderObj(lastRenderObj));
-							curStaticBatch._addCombineBatchRenderObj(lastRenderObj);
+							if (oldStaticBatch !== curStaticBatch) {
+								(oldStaticBatch) && (oldStaticBatch._deleteCombineBatchRenderObj(lastRenderObj));
+								curStaticBatch._addCombineBatchRenderObj(lastRenderObj);
+							}
 							
 							oldStaticBatch = renderElement._staticBatch as SubMeshStaticBatch;
-							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineBatchRenderObj(renderElement));
-							curStaticBatch._addCombineBatchRenderObj(renderElement);
+							if (oldStaticBatch !== curStaticBatch) {
+								(oldStaticBatch) && (oldStaticBatch._deleteCombineBatchRenderObj(renderElement));
+								curStaticBatch._addCombineBatchRenderObj(renderElement);
+							}
+							
 							lastCanMerage = true;
 						}
 					} else {
@@ -110,8 +115,10 @@ package laya.d3.graphics {
 							batchNumber++;//修改编号，区分批处理。
 						} else {
 							oldStaticBatch = renderElement._staticBatch as SubMeshStaticBatch;
-							(oldStaticBatch) && (oldStaticBatch !== curStaticBatch) && (oldStaticBatch._deleteCombineBatchRenderObj(renderElement));
-							curStaticBatch._addCombineBatchRenderObj(renderElement)
+							if (oldStaticBatch !== curStaticBatch) {
+								(oldStaticBatch) && (oldStaticBatch._deleteCombineBatchRenderObj(renderElement));
+								curStaticBatch._addCombineBatchRenderObj(renderElement)
+							}
 						}
 					}
 				} else {

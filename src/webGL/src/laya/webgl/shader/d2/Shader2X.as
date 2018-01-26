@@ -34,8 +34,8 @@ package laya.webgl.shader.d2 {
 			return _params2dQuick1;
 		}
 		
-		override protected function detoryResource():void {
-			super.detoryResource();
+		override protected function disposeResource():void {
+			super.disposeResource();
 			_params2dQuick1 = null;
 			_params2dQuick2 = null;
 		}

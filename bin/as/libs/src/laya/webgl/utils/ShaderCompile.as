@@ -128,7 +128,6 @@ package laya.webgl.utils {
 						var ofs2:int = str.indexOf(c, i + 1);
 						if (ofs2 < 0) {
 							throw "Sharder err:" + str;
-							return null;
 						}
 						out.push(str.substr(i + 1, ofs2 - i - 1));
 						i = ofs2;
@@ -152,14 +151,15 @@ package laya.webgl.utils {
 			return out;
 		}
 		
-		public function ShaderCompile(name:Number, vs:String, ps:String, nameMap:*) {
+		public function ShaderCompile(name:Number, vs:String, ps:String, nameMap:*,defs:Object=null) {
 			function _compile(script:String):ShaderNode {
 				var includefiles:Array = [];
 				var top:ShaderNode = new ShaderNode(includefiles);
-				_compileToTree(top, script.split('\n'), 0, includefiles);
+				_compileToTree(top, script.split('\n'), 0, includefiles,defs);
 				return top;
-			}
-			//先要去掉注释,还没有完成			
+			}			
+			
+			//先要去掉注释,还没有完成
 			var startTime:Number = Browser.now();
 			_VS = _compile(vs);
 			_PS = _compile(ps);
@@ -168,12 +168,13 @@ package laya.webgl.utils {
 				trace("ShaderCompile use time:" + (Browser.now() - startTime) + "  size:" + vs.length + "/" + ps.length);
 		}
 		
-		private function _compileToTree(parent:ShaderNode, lines:Array, start:int, includefiles:Array):void {
+		private static var _splitToWordExps3:RegExp =new RegExp("[ \\t=\\+\\-*/&%!<>!%\(\),;\\|]", "g");
+		private function _compileToTree(parent:ShaderNode, lines:Array, start:int, includefiles:Array,defs:Object):void {
 			var node:ShaderNode, preNode:ShaderNode;
 			var text:String, name:String, fname:String;
 			var ofs:int, words:Array, noUseNode:ShaderNode;
-			
-			for (var i:int = start; i < lines.length; i++) {
+			var i:int, n:int, j:int;
+			for (i = start; i < lines.length; i++) {
 				text = lines[i];
 				if (text.length < 1) continue;
 				ofs = text.indexOf("//");
@@ -187,7 +188,7 @@ package laya.webgl.utils {
 				
 				if ((ofs = text.indexOf("#")) >= 0) {
 					name = "#";
-					for (var j:int = ofs + 1, n:int = text.length; j < n; j++) {
+					for (j = ofs + 1, n = text.length; j < n; j++) {
 						var c:String = text.charAt(j);
 						if (c === ' ' || c === '\t' || c === '?') break;
 						name += c;
@@ -207,19 +208,33 @@ package laya.webgl.utils {
 						}
 						node.setParent(parent);
 						parent = node;
+						if (defs){
+							words = text.substr(j).split(_splitToWordExps3);
+							for (j = 0; j < words.length; j++){
+								text = words[j];
+								text.length && (defs[ text ] = true);
+							}
+						}
 						continue;
 					case "#if": 
 						node.src = text;
 						node.noCompile = true;
 						node.setParent(parent);
 						parent = node;
+						if (defs){
+							words = text.substr(j).split(_splitToWordExps3);
+							for (j = 0; j < words.length; j++){
+								text = words[j];
+								text.length && text!="defined" && (defs[ text ] = true);
+							}
+						}
 						continue;
 					case "#else": 
 						node.src = text;
 						parent = parent.parent;
 						preNode = parent.childs[parent.childs.length - 1];
-						node.noCompile = preNode.noCompile;
-						if (!node.noCompile) {
+						node.noCompile = preNode.noCompile
+						if (!(node.noCompile)) {
 							node.condition = preNode.condition;
 							node.conditionType = preNode.conditionType == IFDEF_YES ? IFDEF_ELSE : IFDEF_YES;
 							node.text = "//"+node.text+" "+preNode.text+" "+node.conditionType;
@@ -227,11 +242,11 @@ package laya.webgl.utils {
 						node.setParent(parent);
 						parent = node;
 						continue;
-					case "#endif": 
+					case "#endif":
 						parent = parent.parent;
 						preNode = parent.childs[parent.childs.length - 1];
 						node.noCompile = preNode.noCompile;
-						if (!node.noCompile) {
+						if (!(node.noCompile)) {
 							node.text = "//"+node.text;
 						}
 						node.setParent(parent);
@@ -246,7 +261,7 @@ package laya.webgl.utils {
 						if ((ofs = words[0].indexOf("?")) < 0) {
 							node.setParent(parent);
 							text = inlcudeFile.getWith(words[2] == 'with' ? words[3] : null);
-							_compileToTree(node, text.split('\n'), 0, includefiles);
+							_compileToTree(node, text.split('\n'), 0, includefiles,defs);
 							node.text = "";
 							continue;
 						}

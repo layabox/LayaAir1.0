@@ -99,8 +99,6 @@ package laya.display {
 		public var focus:Node;
 		/**@private 相对浏览器左上角的偏移，弃用，请使用_canvasTransform。*/
 		public var offset:Point = new Point();
-		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
-		public var frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
 		public var designWidth:Number = 0;
 		/**设计高度（初始化时设置的高度Laya.init(width,height)）*/
@@ -145,7 +143,10 @@ package laya.display {
 		public var _scenes:Array;
 		/**@private webgl Color*/
 		public static var _wgColor:Array;
-		
+		/**@private */
+		private var _frameRate:String = "fast";
+		/**@private */
+		public static const FRAME_MOUSE_THREDHOLD:Number = 2000;
 		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
 			transform = Matrix.create();
@@ -229,6 +230,33 @@ package laya.display {
 		 */
 		private function _isInputting():Boolean {
 			return (Browser.onMobile && Input.isInputting);
+		}
+		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
+		public function set frameRate(value:String):void {
+			_frameRate = value;
+			if (Render.isConchApp) {
+				switch (_frameRate) {
+					case FRAME_SLOW: 
+						Browser.window.conch && Browser.window.conchConfig.setSlowFrame && Browser.window.conchConfig.setSlowFrame(true);
+						break;
+					case FRAME_FAST:
+						Browser.window.conch && Browser.window.conchConfig.setSlowFrame && Browser.window.conchConfig.setSlowFrame(false);
+						break;
+					case FRAME_MOUSE:
+						Browser.window.conch && Browser.window.conchConfig.setMouseFrame && Browser.window.conchConfig.setMouseFrame(FRAME_MOUSE_THREDHOLD);
+						break;
+					case FRAME_SLEEP:
+						Browser.window.conch && Browser.window.conchConfig.setLimitFPS && Browser.window.conchConfig.setLimitFPS(1);
+						break;
+					default: 
+						throw new Error("Stage:frameRate invalid.");
+						break;
+				}
+			}
+		}
+		
+		public function get frameRate():String {
+			return _frameRate;
 		}
 		
 		override public function set width(value:Number):void {
@@ -597,7 +625,7 @@ package laya.display {
 		
 		/**@inheritDoc */
 		override public function render(context:RenderContext, x:Number, y:Number):void {
-			if (frameRate === FRAME_SLEEP) {
+			if (_frameRate === FRAME_SLEEP) {
 				var now:Number = Browser.now();
 				if (now - _frameStartTime >= 1000) _frameStartTime = now;
 				else return;
@@ -616,7 +644,7 @@ package laya.display {
 			}
 			
 			_frameStartTime = Browser.now();
-			var frameMode:String = frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : frameRate;
+			var frameMode:String = _frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < FRAME_MOUSE_THREDHOLD) ? FRAME_FAST : FRAME_SLOW) : _frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
 			
@@ -661,7 +689,7 @@ package laya.display {
 				if (Render.isWebGL) {
 					context.clear();
 					super.render(context, x, y);
-					Stat._show && Stat._sp.render(context, x, y);
+					Stat._show&& Stat._sp && Stat._sp.render(context, x, y);
 					
 					RunDriver.clear(_bgColor);
 					RunDriver.beginFlush();
@@ -671,7 +699,7 @@ package laya.display {
 				} else {
 					RunDriver.clear(_bgColor);
 					super.render(context, x, y);
-					Stat._show && Stat._sp.render(context, x, y);
+					Stat._show&& Stat._sp && Stat._sp.render(context, x, y);
 				}
 			}
 		}

@@ -14,8 +14,6 @@ package laya.resource {
 		protected var _w:Number;
 		/**@private 高度*/
 		protected var _h:Number;
-		/**@private */
-		public var useNum:int = 0;
 		
 		/***
 		 * 宽度。

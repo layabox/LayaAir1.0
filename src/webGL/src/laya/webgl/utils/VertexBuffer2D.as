@@ -50,8 +50,8 @@ package laya.webgl.utils {
 			_floatArray32 && (_floatArray32 = new Float32Array(_buffer));
 		}
 		
-		override protected function detoryResource():void {
-			super.detoryResource();
+		override protected function disposeResource():void {
+			super.disposeResource();
 			//if (_glBuffer) {
 			var enableAtributes:Array = Buffer._enableAtributes;
 			for (var i:int = 0; i < 10; i++) {

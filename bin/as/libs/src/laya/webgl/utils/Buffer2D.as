@@ -195,8 +195,8 @@ package laya.webgl.utils {
 			return scuess;
 		}
 		
-		override protected function detoryResource():void {
-			super.detoryResource();
+		override protected function disposeResource():void {
+			super.disposeResource();
 			_upload = true;
 			_uploadSize = 0;
 		}

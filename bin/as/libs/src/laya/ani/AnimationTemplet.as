@@ -154,7 +154,7 @@ package laya.ani {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			_aniVersion = null;
 			_anis = null;
 			_aniMap = null;
@@ -221,7 +221,7 @@ package laya.ani {
 		public function getOriginalData(aniIndex:int, originalData:Float32Array, nodesFrameIndices:Array, frameIndex:int, playCurTime:Number):void {
 			var oneAni:AnimationContent = _anis[aniIndex];
 			
-			//if (disposed)
+			//if (destroyed)
 			//throw new Error("模型已释放");
 			
 			var nodes:Vector.<AnimationNodeContent> = oneAni.nodes;

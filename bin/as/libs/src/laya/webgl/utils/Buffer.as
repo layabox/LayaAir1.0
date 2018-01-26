@@ -42,7 +42,7 @@ package laya.webgl.utils {
 			completeCreate();
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_glBuffer) {
 				WebGL.mainContext.deleteBuffer(_glBuffer);
 				_glBuffer = null;

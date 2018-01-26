@@ -1,4 +1,5 @@
 package laya.d3.core.render {
+	import laya.d3.core.BaseCamera;
 	import laya.d3.core.PhasorSpriter3D;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
@@ -150,12 +151,8 @@ package laya.d3.core.render {
 		public function get material():BaseMaterial {
 			var material:BaseMaterial = _materials[0];
 			if (material && !_materialsInstance[0]) {
-				var instanceMaterial:BaseMaterial = __JS__("new material.constructor()");
-				material.cloneTo(instanceMaterial);//深拷贝
-				instanceMaterial.name = instanceMaterial.name + "(Instance)";
-				_materialsInstance[0] = true;
-				_materials[0] = instanceMaterial;
-				event(Event.MATERIAL_CHANGED, [this, 0, instanceMaterial]);
+				var insMat:BaseMaterial = _getInstanceMaterial(material,0);
+				event(Event.MATERIAL_CHANGED, [this, 0, insMat]);
 			}
 			return _materials[0];
 		}
@@ -165,11 +162,7 @@ package laya.d3.core.render {
 		 * @param value 第一个实例材质。
 		 */
 		public function set material(value:BaseMaterial):void {
-			if (_materials[0] !== value) {
-				_materials[0] = value;
-				_materialsInstance[0] = false;
-				event(Event.MATERIAL_CHANGED, [this, 0, value]);
-			}
+			sharedMaterial = value;
 		}
 		
 		/**
@@ -178,14 +171,9 @@ package laya.d3.core.render {
 		 */
 		public function get materials():Vector.<BaseMaterial> {
 			for (var i:int = 0, n:int = _materials.length; i < n; i++) {
-				var material:BaseMaterial = _materials[i];
 				if (!_materialsInstance[i]) {
-					var instanceMaterial:BaseMaterial = __JS__("new material.constructor()");
-					material.cloneTo(instanceMaterial);//深拷贝
-					instanceMaterial.name = instanceMaterial.name + "(Instance)";
-					_materialsInstance[i] = true;
-					_materials[i] = instanceMaterial;
-					event(Event.MATERIAL_CHANGED, [this, i, instanceMaterial]);
+					var insMat:BaseMaterial = _getInstanceMaterial(_materials[i],i);
+					event(Event.MATERIAL_CHANGED, [this, i, insMat]);
 				}
 			}
 			return _materials.slice();
@@ -196,17 +184,7 @@ package laya.d3.core.render {
 		 * @param value 实例材质列表。
 		 */
 		public function set materials(value:Vector.<BaseMaterial>):void {
-			if (!value)
-				throw new Error("MeshRender: materials value can't be null.");
-			var len:int = value.length;
-			_materialsInstance.length = len;
-			for (var i:int = 0; i < len; i++) {
-				if (_materials[i] !== value[i]) {
-					_materialsInstance[i] = false;
-					event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
-				}
-			}
-			_materials = value;
+			sharedMaterials = value;
 		}
 		
 		/**
@@ -222,9 +200,11 @@ package laya.d3.core.render {
 		 * @param value 第一个材质。
 		 */
 		public function set sharedMaterial(value:BaseMaterial):void {
-			if (_materials[0] !== value) {
+			var lastValue:BaseMaterial = _materials[0];
+			if (lastValue !== value) {
 				_materials[0] = value;
 				_materialsInstance[0] = false;
+				_changeMaterialReference(lastValue, value);
 				event(Event.MATERIAL_CHANGED, [this, 0, value]);
 			}
 		}
@@ -248,8 +228,10 @@ package laya.d3.core.render {
 			var len:int = value.length;
 			_materialsInstance.length = len;
 			for (var i:int = 0; i < len; i++) {
-				if (_materials[i] !== value[i]) {
+				var lastValue:BaseMaterial = _materials[i];
+				if (lastValue !== value[i]) {
 					_materialsInstance[i] = false;
+					_changeMaterialReference(lastValue, value[i]);
 					event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
 				}
 			}
@@ -348,6 +330,27 @@ package laya.d3.core.render {
 			receiveShadow = false;
 			sortingFudge = 0.0;
 			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _changeMaterialReference(lastValue:BaseMaterial, value:BaseMaterial):void {
+			(lastValue) && (lastValue._removeReference());
+			value._addReference();
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getInstanceMaterial(material:BaseMaterial,index:int):BaseMaterial {
+			var insMat:BaseMaterial = __JS__("new material.constructor()");
+			material.cloneTo(insMat);//深拷贝
+			insMat.name = insMat.name + "(Instance)";
+			_materialsInstance[index] = true;
+			_changeMaterialReference(_materials[index], insMat);
+			_materials[index] = insMat;
+			return insMat;
 		}
 		
 		/**
@@ -537,8 +540,12 @@ package laya.d3.core.render {
 		 */
 		public function _destroy():void {
 			offAll();
-			for (var i:int = 0, n:int = _renderElements.length; i < n; i++)
+			var i:int = 0, n:int = 0;
+			for (i = 0, n = _renderElements.length; i < n; i++)
 				_renderElements[i]._destroy();
+			for (i = 0, n = _materials.length; i < n; i++)
+				_materials[i]._removeReference();
+			
 			_renderElements = null;
 			_owner = null;
 			_materials = null;

@@ -31,9 +31,11 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * 添加指定类型组件。
+		 * @param	type 组件类型。
+		 * @return	组件。
 		 */
-		protected function _addComponent(type:*):Component3D {
+		public function addComponent(type:*):Component3D {
 			var typeComponentIndex:Vector.<int>;
 			var index:int = _componentsMap.indexOf(type);
 			if (index === -1) {
@@ -65,7 +67,7 @@ package laya.d3.core {
 			
 			_components.splice(componentIndex, 1);
 			if (component is Script)
-				_scripts.splice(_scripts.indexOf(component as Script),1);
+				_scripts.splice(_scripts.indexOf(component as Script), 1);
 			
 			componentIndices.splice(index, 1);
 			(componentIndices.length === 0) && (_typeComponentsIndices.splice(mapIndex, 1), _componentsMap.splice(mapIndex, 1));
@@ -85,9 +87,12 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * 通过指定类型和类型索引获得组件。
+		 * @param	type 组件类型。
+		 * @param	typeIndex 类型索引。
+		 * @return 组件。
 		 */
-		protected function _getComponentByType(type:*, typeIndex:int = 0):Component3D {
+		public function getComponentByType(type:*, typeIndex:int = 0):Component3D {
 			var mapIndex:int = _componentsMap.indexOf(type);
 			if (mapIndex === -1)
 				return null;
@@ -95,9 +100,11 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * 通过指定类型获得所有组件。
+		 * @param	type 组件类型。
+		 * @param	components 组件输出队列。
 		 */
-		protected function _getComponentsByType(type:*, components:Vector.<Component3D>):void {
+		public function getComponentsByType(type:*, components:Vector.<Component3D>):void {
 			var index:int = _componentsMap.indexOf(type);
 			if (index === -1) {
 				components.length = 0;
@@ -112,16 +119,20 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * 通过指定索引获得组件。
+		 * @param	index 索引。
+		 * @return 组件。
 		 */
-		protected function _getComponentByIndex(index:int):Component3D {
+		public function getComponentByIndex(index:int):Component3D {
 			return _components[index];
 		}
 		
 		/**
-		 * @private
+		 * 通过指定类型和类型索引移除组件。
+		 * @param	type 组件类型。
+		 * @param	typeIndex 类型索引。
 		 */
-		protected function _removeComponentByType(type:*, typeIndex:int = 0):void {
+		public function removeComponentByType(type:*, typeIndex:int = 0):void {
 			var mapIndex:int = _componentsMap.indexOf(type);
 			if (mapIndex === -1)
 				return;
@@ -129,9 +140,10 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * 通过指定类型移除所有组件。
+		 * @param	type 组件类型。
 		 */
-		protected function _removeComponentsByType(type:*):void {
+		public function removeComponentsByType(type:*):void {
 			var mapIndex:int = _componentsMap.indexOf(type);
 			if (mapIndex === -1)
 				return;
@@ -141,11 +153,11 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
+		 * 移除全部组件。
 		 */
-		protected function _removeAllComponent():void {
+		public function removeAllComponent():void {
 			for (var i:int = 0, n:int = _componentsMap.length; i < n; _componentsMap.length < n ? n-- : i++)
-				_removeComponentsByType(_componentsMap[i]);
+				removeComponentsByType(_componentsMap[i]);
 		}
 		
 		/**

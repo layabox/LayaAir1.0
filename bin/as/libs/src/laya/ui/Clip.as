@@ -279,6 +279,10 @@ package laya.ui {
 				
 				var key:String = _skin + w + h;
 				var clips:Array = WeakObject.I.get(key);
+				if (!Utils.isOkTextureList(clips))
+				{
+					clips = null;
+				}
 				if (clips) _sources = clips;
 				else {
 					_sources = [];

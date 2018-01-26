@@ -50,33 +50,15 @@ package laya.d3.core {
 		private function _parseNode(nodaData:Object, node:AnimationNode):void {
 			var name:String = nodaData.props.name;
 			node.name = name;
-			var customProps:Object = nodaData.customProps;
-			var transform:AnimationTransform3D = node._transform;
 			
-			var localPosition:Vector3 = transform.localPosition;
-			var posE:Float32Array = localPosition.elements;
-			var posData:Array = customProps.translate;
-			posE[0] = posData[0];
-			posE[1] = posData[1];
-			posE[2] = posData[2];
-			transform.localPosition = localPosition;
-			
-			var localRotation:Quaternion = transform.localRotation;
-			var rotE:Float32Array = localRotation.elements;
-			var rotData:Array = customProps.rotation;
-			rotE[0] = rotData[0];
-			rotE[1] = rotData[1];
-			rotE[2] = rotData[2];
-			rotE[3] = rotData[3];
-			transform.localRotation = localRotation;
-			
-			var localScale:Vector3 = transform.localScale;
-			var scaE:Float32Array = localScale.elements;
-			var scaData:Array = customProps.scale;
-			scaE[0] = scaData[0];
-			scaE[1] = scaData[1];
-			scaE[2] = scaData[2];
-			transform.localScale = localScale;
+			if (node._parent) {//根节点无需设置数据
+				var customProps:Object = nodaData.customProps;
+				var transform:AnimationTransform3D = node.transform;
+				transform._localRotationEuler = new Float32Array(3);
+				transform.setLocalPosition(new Float32Array(customProps.translate));
+				transform.setLocalRotation(new Float32Array(customProps.rotation));
+				transform.setLocalScale(new Float32Array(customProps.scale));
+			}
 			
 			var childrenData:Array = nodaData.child;
 			for (var i:int = 0, n:int = childrenData.length; i < n; i++) {
@@ -109,16 +91,13 @@ package laya.d3.core {
 		public function _cloneDatasToAnimator(destAnimator:Animator):void {
 			var destRoot:AnimationNode = _rootNode.clone();
 			var avatarNodes:Vector.<AnimationNode> = new Vector.<AnimationNode>();
-			destAnimator._avatarRootNode = destRoot;
 			destAnimator._avatarNodeMap = {};
 			destAnimator._avatarNodes = avatarNodes;
 			_initCloneToAnimator(destRoot, destAnimator);
 			for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {
 				var avatarNode:AnimationNode = avatarNodes[i];
-				if (avatarNode._parent)
-					avatarNode._transform._setWorldMatrixAndUpdate(new Matrix4x4());
-				else
-					avatarNode._transform._setWorldMatrixNoUpdate(null);
+				if (!avatarNode._parent)
+					avatarNode.transform._setWorldMatrixIgnoreUpdate(null);//根节点不需要更新
 			}
 		}
 		

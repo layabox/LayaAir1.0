@@ -305,6 +305,7 @@ package laya.display {
 				}
 			} else {
 				_this_._setFramesFromCache(_actionName, true);
+				index = 0;
 				if (loaded) loaded.run();
 			}
 			return this;

@@ -34,7 +34,6 @@ package laya.d3.graphics {
 		public static const STARTLIFETIME:int = 24;
 		public static const TIME0:int = 33;
 		
-		
 		public static const SHAPEPOSITIONSTARTLIFETIME:int = 30;
 		public static const DIRECTIONTIME:int = 32;
 		public static const SIZEROTATION0:int = 27;
@@ -45,5 +44,8 @@ package laya.d3.graphics {
 		public static const RANDOM1:int = 35;
 		public static const SIMULATIONWORLDPOSTION:int = 36;
 		public static const SIMULATIONWORLDROTATION:int = 37;
+		
+		public static const TEXTURECOORDINATE0X:int = 38;
+		public static const TEXTURECOORDINATE0Y:int = 39;
 	}
 }

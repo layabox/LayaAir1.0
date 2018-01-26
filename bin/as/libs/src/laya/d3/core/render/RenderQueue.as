@@ -139,6 +139,7 @@ package laya.d3.core.render {
 			var scene:Scene = _scene;
 			var camera:BaseCamera = state.camera;
 			var cameraID:int = camera.id;
+			var vbs:Vector.<VertexBuffer3D>;
 			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
 			var forceUploadParams:Boolean;
 			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
@@ -155,14 +156,24 @@ package laya.d3.core.render {
 					owner._preRenderUpdateComponents(state);//TODO:静态合并组件问题。
 					renderObj = renderElement.renderObj, material = renderElement._material;
 					if (_begainRenderElement(state, renderObj, material)) {
+						vbs = renderObj._getVertexBuffers();
 						vertexBuffer = renderObj._getVertexBuffer(0);
 						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
+						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);//TODO:需要合并vertexDeclaration
 						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
-						
-						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
-							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
-							shader._uploadVertexBuffer = vertexBuffer;
+						if (vbs) {
+							if (shader._uploadVertexBuffer !== vbs || forceUploadParams) {
+								for (var j:int = 0; j < vbs.length; j++ ){
+									var vb:VertexBuffer3D = vbs[j];
+									shader.uploadAttributesX(vb.vertexDeclaration.shaderValues.data, vb);
+								}
+								shader._uploadVertexBuffer = vbs;
+							}
+						} else {
+							if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
+								shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
+								shader._uploadVertexBuffer = vertexBuffer;
+							}
 						}
 						
 						if (shader._uploadScene !== scene || forceUploadParams) {

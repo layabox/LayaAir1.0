@@ -351,6 +351,10 @@ package laya.ui {
 			img.$_GID || (img.$_GID = Utils.getGID());
 			var key:String = img.$_GID +"-"+ _stateNum;
 			var clips:Array = WeakObject.I.get(key);
+			if (!Utils.isOkTextureList(clips))
+			{
+				clips = null;
+			}
 			if (clips) _sources = clips;
 			else {
 				_sources = [];

@@ -8,14 +8,14 @@ package laya.display {
 	 * <code>BitmapFont</code> 是位图字体类，用于定义位图字体信息。
 	 */
 	public class BitmapFont {
-		private var _texture:Texture;
-		private var _fontCharDic:Object = {};
-		private var _fontWidthMap:Object = {};
-		private var _complete:Handler;
-		private var _path:String;
-		private var _maxWidth:Number = 0;
-		private var _spaceWidth:Number = 10;
-		private var _padding:Array;
+		protected var _texture:Texture;
+		protected var _fontCharDic:Object = {};
+		protected var _fontWidthMap:Object = {};
+		protected var _complete:Handler;
+		protected var _path:String;
+		protected var _maxWidth:Number = 0;
+		protected var _spaceWidth:Number = 10;
+		protected var _padding:Array;
 		/**当前位图字体字号。*/
 		public var fontSize:Number = 12;
 		/**表示是否根据实际使用的字体大小缩放位图字体大小。*/
@@ -26,7 +26,7 @@ package laya.display {
 		/**
 		 * 通过指定位图字体文件路径，加载位图字体文件，加载完成后会自动解析。
 		 * @param	path		位图字体文件的路径。
-		 * @param	complete	加载并解析完成的回调。
+		 * @param	complete	加载并解析完成的回调。如果成功返回this,如果失败返回null
 		 */
 		public function loadFont(path:String, complete:Handler):void {
 			_path = path;
@@ -38,9 +38,9 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		private function onLoaded():void {
+		protected function onLoaded():void {
 			this.parseFont(Loader.getRes(_path), Loader.getRes(_path.replace(".fnt", ".png")));
-			_complete && _complete.run();
+			_complete && _complete.runWith(_texture?this:null);
 		}
 		
 		/**
@@ -90,6 +90,7 @@ package laya.display {
 		}
 		
 		/**
+		 * @private
 		 * 解析字体文件。
 		 * @param	xml			字体文件XML。
 		 * @param	texture		字体的纹理。

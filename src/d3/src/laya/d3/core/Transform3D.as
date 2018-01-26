@@ -26,8 +26,6 @@ package laya.d3.core {
 		
 		/**@private */
 		private static const _angleToRandin:Number = 180 / Math.PI;
-		/**@private */
-		private static const _randinToAngle:Number = 180 * Math.PI;
 		
 		/** @private */
 		private var _owner:Sprite3D;
@@ -256,9 +254,9 @@ package laya.d3.core {
 				_localRotation.getYawPitchRoll(_tempVector30);
 				var eulerE:Float32Array = _tempVector30.elements;
 				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
-				localRotationEulerE[0] = eulerE[1] / _randinToAngle;
-				localRotationEulerE[1] = eulerE[0] / _randinToAngle;
-				localRotationEulerE[2] = eulerE[2] / _randinToAngle;
+				localRotationEulerE[0] = eulerE[1] * _angleToRandin;
+				localRotationEulerE[1] = eulerE[0] * _angleToRandin;
+				localRotationEulerE[2] = eulerE[2] * _angleToRandin;
 			}
 			return _localRotationEuler;
 		}

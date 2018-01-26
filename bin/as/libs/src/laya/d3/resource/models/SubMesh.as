@@ -211,6 +211,13 @@ package laya.d3.resource.models {
 		/**
 		 * @private
 		 */
+		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
+			return null;
+		}
+		
+		/**
+		 * @private
+		 */
 		public function _beforeRender(state:RenderState):Boolean {
 			_vertexBuffer._bind();
 			_indexBuffer._bind();
@@ -276,8 +283,8 @@ package laya.d3.resource.models {
 		 * <p><b>注意：</b>会强制解锁清理。</p>
 		 */
 		public function dispose():void {
-			_indexBuffer.dispose();
-			_vertexBuffer.dispose();
+			_indexBuffer.destroy();
+			_vertexBuffer.destroy();
 			_mesh = null;
 			_boneIndicesList = null;
 			_subIndexBufferStart = null;

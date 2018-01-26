@@ -148,7 +148,7 @@ package laya.webgl.resource {
 			memorySize = _w * _h * 4;
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (!(AtlasResourceManager.enabled && _allowMerageInAtlas) && _source) {
 				WebGL.mainContext.deleteTexture(_source);
 				_source = null;

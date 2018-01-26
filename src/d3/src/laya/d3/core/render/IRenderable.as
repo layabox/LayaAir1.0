@@ -12,6 +12,7 @@ package laya.d3.core.render {
 		function _getVertexBuffer(index:int=0):VertexBuffer3D;
 		function _getIndexBuffer():IndexBuffer3D;
 		function _beforeRender(state:RenderState):Boolean;
+		function _getVertexBuffers():Vector.<VertexBuffer3D>;
 		function _render(state:RenderState):void;
 		
 		function _renderRuntime(conchGraphics3D:*,renderElement:RenderElement,state:RenderState):void;//NATIVE

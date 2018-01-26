@@ -16,27 +16,8 @@ package laya.d3.resource {
 			return Laya.loader.create(url, null, null, TextureCube);
 		}
 		
-		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**@private */
-		private const _texCount:int = 6;
-		
-		/**HTML Image*/
 		private var _images:Array;
-		
-		/**@private 文件路径全名。*/
-		protected var _srcs:String;
-		
-		/**异步加载锁*/
-		protected var _recreateLock:Boolean = false;
-		/**异步加载完成后是否需要释放（有可能在恢复过程中,再次被释放，用此变量做标记）*/
-		protected var _needReleaseAgain:Boolean = false;
-		
-		/**
-		 * 文件路径全名。
-		 */
-		public function get srcs():String {
-			return _srcs;
-		}
 		
 		/**
 		 * @inheritDoc
@@ -46,6 +27,7 @@ package laya.d3.resource {
 		}
 		
 		public function TextureCube() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
 			_type = WebGLContext.TEXTURE_CUBE_MAP;
 		}
@@ -72,8 +54,9 @@ package laya.d3.resource {
 		}
 		
 		private function _createWebGlTexture():void {
+			const texCount:int = 6;
 			var i:int;
-			for (i = 0; i < _texCount; i++) {
+			for (i = 0; i < texCount; i++) {
 				if (!_images[i]) {
 					throw "create GLTextur err:no data:" + _images[i];
 				}
@@ -125,78 +108,28 @@ package laya.d3.resource {
 			}
 			
 			if (isPOT)
-				memorySize = w * h * 4 * (1 + 1 / 3) * _texCount;//使用mipmap则在原来的基础上增加1/3
+				memorySize = w * h * 4 * (1 + 1 / 3) * texCount;//使用mipmap则在原来的基础上增加1/3
 			else
-				memorySize = w * h * 4 * _texCount;
-			_recreateLock = false;
+				memorySize = w * h * 4 * texCount;
 		}
 		
 		override protected function recreateResource():void {
-			if (_srcs == null)
+			if (_url == null)
 				return;
-			
-			_needReleaseAgain = false;
-			if (!_images[0]) {
-				_recreateLock = true;
-				var _this:TextureCube = this;
-				
-				for (var i:int = 0; i < _texCount; i++) {
-					_images[i] = new Browser.window.Image();
-					_images[i].crossOrigin = "";
-					
-					var index:int = i;
-					_images[index].onload = function():void {
-						var j:int;
-						if (_this._needReleaseAgain)//异步处理，加载完后可能，如果强制释放资源存在已被释放的风险
-						{
-							for (j = 0; j < _texCount; j++)
-								if (!_this._images[j].complete)
-									return;
-							
-							_this._needReleaseAgain = false;
-							
-							for (j = 0; j < _texCount; j++) {
-								_this._images[j].onload = null;
-								_this._images[j] = null;
-							}
-							return;
-						}
-						
-						for (j = 0; j < _texCount; j++)
-							if (!_this._images[j].complete)
-								return;
-						
-						_this._createWebGlTexture();
-						_this.completeCreate();//处理创建完成后相关操作
-					};
-					_images[i].src = _srcs[i];
-				}
-			} else {
-				if (_recreateLock) {
-					return;
-				}
-				_createWebGlTexture();
-				completeCreate();//处理创建完成后相关操作
-			}
+			_createWebGlTexture();
+			completeCreate();//处理创建完成后相关操作
 		}
 		
 		/**
 		 * @private
 		 */
 		override public function onAsynLoaded(url:String, data:*, params:Array):void {
-			_srcs = url;
 			_onTextureLoaded(data as Array);
-			if (_conchTexture) //NATIVE
-				_conchTexture.setTextureCubeImages(_images);
-			else
-				activeResource();
+			activeResource();
 			_endLoaded();
 		}
 		
-		override protected function detoryResource():void {
-			if (_recreateLock) {
-				_needReleaseAgain = true;
-			}
+		override protected function disposeResource():void {
 			if (_source) {
 				WebGL.mainContext.deleteTexture(_source);
 				_source = null;

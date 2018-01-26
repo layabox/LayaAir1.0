@@ -3317,7 +3317,7 @@ var AnimationTemplet=(function(_super){
 	/**
 	*@inheritDoc
 	*/
-	__proto.detoryResource=function(){
+	__proto.disposeResource=function(){
 		this._aniVersion=null;
 		this._anis=null;
 		this._aniMap=null;
@@ -3977,17 +3977,17 @@ var Skeleton=(function(_super){
 		if (tFactory){
 			if (tFactory.isParseFail){
 				this._parseFail();
-				}else{
+				}else {
 				if (tFactory.isParserComplete){
 					this._parseComplete();
-					}else{
+					}else {
 					tFactory.on(/*laya.events.Event.COMPLETE*/"complete",this,this._parseComplete);
 					tFactory.on(/*laya.events.Event.ERROR*/"error",this,this._parseFail);
 				}
 			}
 			}else {
 			tFactory=new Templet();
-			tFactory.url=this._aniPath;
+			tFactory._setUrl(this._aniPath);
 			Templet.TEMPLET_DICTIONARY[this._aniPath]=tFactory;
 			tFactory.on(/*laya.events.Event.COMPLETE*/"complete",this,this._parseComplete);
 			tFactory.on(/*laya.events.Event.ERROR*/"error",this,this._parseFail);
@@ -4114,18 +4114,18 @@ var Skeleton=(function(_super){
 		var dTime=tCurrTime-this._lastTime;
 		if (autoKey){
 			this._player._update(dTime);
-			}else{
+			}else {
 			preIndex=-1;
 		}
 		this._lastTime=tCurrTime;
 		if (!this._player)return;
 		this._index=this._clipIndex=this._player.currentKeyframeIndex;
 		if (this._index < 0)return;
-		if (dTime>0&&this._clipIndex==preIndex&&this._lastUpdateAniClipIndex==this._aniClipIndex){
+		if (dTime > 0 && this._clipIndex==preIndex && this._lastUpdateAniClipIndex==this._aniClipIndex){
 			return;
 		}
 		this._lastUpdateAniClipIndex=this._aniClipIndex;
-		if (preIndex > this._clipIndex&&this._eventIndex!=0){
+		if (preIndex > this._clipIndex && this._eventIndex !=0){
 			this._emitMissedEvents(this._player.playStart,this._player.playEnd,this._eventIndex);
 			this._eventIndex=0;
 		};
@@ -4151,10 +4151,10 @@ var Skeleton=(function(_super){
 					this.graphics=tGraphics;
 				}
 				return;
-				}else{
+				}else {
 				var i=0,minIndex=0;
 				minIndex=this._clipIndex;
-				while ((!this._templet.getGrahicsDataWithCache(this._aniClipIndex,minIndex-1))&&(minIndex>0)){
+				while ((!this._templet.getGrahicsDataWithCache(this._aniClipIndex,minIndex-1))&& (minIndex > 0)){
 					minIndex--;
 				}
 				if (minIndex < this._clipIndex){
@@ -4170,9 +4170,9 @@ var Skeleton=(function(_super){
 					this.graphics=tGraphics;
 				}
 				return;
-				}else{
+				}else {
 				minIndex=this._clipIndex;
-				while ((!this._getGrahicsDataWithCache(this._aniClipIndex,minIndex-1))&&(minIndex>0)){
+				while ((!this._getGrahicsDataWithCache(this._aniClipIndex,minIndex-1))&& (minIndex > 0)){
 					minIndex--;
 				}
 				if (minIndex < this._clipIndex){
@@ -4274,7 +4274,7 @@ var Skeleton=(function(_super){
 				tPathConstraint=this._pathDic[tBoneData.name];
 				if (tPathConstraint){
 					var tByte=new Byte(tBoneData.extenData);
-					switch(tByte.getByte()){
+					switch (tByte.getByte()){
 						case 1:
 							tPathConstraint.position=this._curOriginalData[tStartIndex++];
 							break ;
@@ -4351,7 +4351,7 @@ var Skeleton=(function(_super){
 			this._setDeform(tDeformAniData,tDeformDic,this._boneSlotArray,curTime);
 			var tSkin;
 			for (tSkin in tSkinDeformAni){
-				if (tSkin!="default"&&tSkin!=this._skinName){
+				if (tSkin !="default" && tSkin !=this._skinName){
 					tDeformAniData=tSkinDeformAni [tSkin];
 					this._setDeform(tDeformAniData,tDeformDic,this._boneSlotArray,curTime);
 				}
@@ -4371,7 +4371,7 @@ var Skeleton=(function(_super){
 					tGraphics.save();
 					tGraphics.alpha(tSlotData3);
 				}
-				if (!isNaN(tSlotData2)&&tSlotData2!=-2){
+				if (!isNaN(tSlotData2)&& tSlotData2 !=-2){
 					if (this._templet.attachmentNames){
 						tDBBoneSlot.showDisplayByName(this._templet.attachmentNames[tSlotData2]);
 						}else {
@@ -4406,7 +4406,7 @@ var Skeleton=(function(_super){
 					tGraphics.save();
 					tGraphics.alpha(tSlotData3);
 				}
-				if (!isNaN(tSlotData2)&&tSlotData2!=-2){
+				if (!isNaN(tSlotData2)&& tSlotData2 !=-2){
 					if (this._templet.attachmentNames){
 						tDBBoneSlot.showDisplayByName(this._templet.attachmentNames[tSlotData2]);
 						}else {
@@ -4647,7 +4647,7 @@ var Skeleton=(function(_super){
 				this._drawOrder=null;
 				this._eventIndex=0;
 				this._player.play(index,this._player.playbackRate,duration,start,end);
-				if(freshSkin)
+				if (freshSkin)
 					this._templet.showSkinByIndex(this._boneSlotDic,this._skinIndex);
 				if (this._pause){
 					this._pause=false;
@@ -4739,7 +4739,7 @@ var Skeleton=(function(_super){
 		(destroyChild===void 0)&& (destroyChild=true);
 		_super.prototype.destroy.call(this,destroyChild);
 		this._templet=null;
-		if(this._player)this._player.offAll();
+		if (this._player)this._player.offAll();
 		this._player=null;
 		this._curOriginalData=null;
 		this._boneMatrixArray.length=0;
@@ -5957,7 +5957,7 @@ var Templet=(function(_super){
 		if (this.url){
 			delete Templet.TEMPLET_DICTIONARY[this.url];
 		}
-		this.dispose();
+		laya.resource.Resource.prototype.destroy.call(this);
 	}
 
 	/**

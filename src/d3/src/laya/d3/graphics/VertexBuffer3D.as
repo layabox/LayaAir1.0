@@ -94,7 +94,6 @@ package laya.d3.graphics {
 		public function setData(data:Float32Array, bufferOffset:int = 0, dataStartIndex:int = 0, dataCount:uint = 4294967295/*uint.MAX_VALUE*/):void {
 			if (dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/)
 				data = new Float32Array(data.buffer, dataStartIndex * 4, dataCount);
-			
 			if (!Render.isConchNode) {//!NATIVE
 				_bind();
 				_gl.bufferSubData(_bufferType, bufferOffset * 4, data);
@@ -125,7 +124,7 @@ package laya.d3.graphics {
 		}
 		
 		/** 销毁顶点缓冲。*/
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			var gl:WebGLContext = WebGL.mainContext;
 			var elements:Array = _vertexDeclaration.getVertexElements();
 			var enableAtributes:Array = Buffer._enableAtributes;
@@ -135,7 +134,7 @@ package laya.d3.graphics {
 					enableAtributes[i] = null;
 				}
 			}
-			super.detoryResource();
+			super.disposeResource();
 			_buffer = null;
 			_vertexDeclaration = null;
 			memorySize = 0;

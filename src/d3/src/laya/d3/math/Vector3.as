@@ -5,7 +5,6 @@ package laya.d3.math {
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
 	public class Vector3 implements IClone {
-		/*[FILEINDEX:1]*/
 		/**@private	*/
 		public static const _tempVector4:Vector4 = new Vector4();
 		

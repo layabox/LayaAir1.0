@@ -11,6 +11,7 @@ package laya.d3.core {
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	
@@ -19,24 +20,24 @@ package laya.d3.core {
 	 */
 	public class SkinnedMeshRender extends MeshRender {
 		/**@private */
-		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
-		
-		/**@private */
 		private var _cacheAvatar:Avatar;
 		/**@private */
 		private var _cacheMesh:Mesh;
 		/** @private */
 		private var _cacheAnimationNode:Vector.<AnimationNode>;
 		/** @private */
-		private var _skinnedDatas:Float32Array;
+		private var _cacheAnimationNodeIndex:Vector.<int>;
 		/** @private */
-		private var _publicSubSkinnedDatas:Vector.<Vector.<Float32Array>>;
+		private var _subSkinnedDatas:Vector.<Vector.<Float32Array>>;
 		/** @private */
 		private var _localBoundingBoxCorners:Vector.<Vector3>;
 		/**@private */
 		private var _localBoundBox:BoundBox;
 		/**@private */
-		public var _cacheAnimator:Animator;
+		private var _cacheAnimator:Animator;
+		/**@private */
+		private var _rootIndex:int;
+		
 		/**@private */
 		public var _rootBone:String;
 		
@@ -94,6 +95,7 @@ package laya.d3.core {
 			super(owner);
 			_owner.transform.off(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);//移除super内构造函数无用事件注册
 			
+			_cacheAnimationNodeIndex = new Vector.<int>();
 			_cacheAnimationNode = new Vector.<AnimationNode>();
 			_localBoundingBoxCorners = new Vector.<Vector3>(8);
 			(_owner as SkinnedMeshSprite3D).meshFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
@@ -104,8 +106,9 @@ package laya.d3.core {
 		 */
 		private static function _splitAnimationDatas(indices:Uint8Array, bonesData:Float32Array, subAnimationDatas:Float32Array):void {
 			for (var i:int = 0, n:int = indices.length, ii:int = 0; i < n; i++) {
+				var index:int = indices[i] << 4;
 				for (var j:int = 0; j < 16; j++, ii++)
-					subAnimationDatas[ii] = bonesData[(indices[i] << 4) + j];
+					subAnimationDatas[ii] = bonesData[index + j];
 			}
 		}
 		
@@ -116,9 +119,14 @@ package laya.d3.core {
 			var meshBoneNames:Vector.<String> = _cacheMesh._boneNames;
 			var binPoseCount:int = meshBoneNames.length;
 			_cacheAnimationNode.length = binPoseCount;
+			_cacheAnimationNodeIndex.length = binPoseCount;
+			var avatarNodes:Vector.<AnimationNode> = _cacheAnimator._avatarNodes;
 			var nodeMap:Object = _cacheAnimator._avatarNodeMap;
-			for (var i:int = 0; i < binPoseCount; i++)
-				_cacheAnimationNode[i] = nodeMap[meshBoneNames[i]];
+			for (var i:int = 0; i < binPoseCount; i++) {
+				var node:AnimationNode = nodeMap[meshBoneNames[i]];
+				_cacheAnimationNode[i] = node;
+				_cacheAnimationNodeIndex[i] = avatarNodes.indexOf(node);
+			}
 		}
 		
 		/**
@@ -176,11 +184,10 @@ package laya.d3.core {
 		 */
 		private function _onMeshLoaded(mesh:Mesh):void {
 			var subMeshCount:int = mesh.subMeshCount;
-			_skinnedDatas = new Float32Array(mesh.InverseAbsoluteBindPoses.length * 16);
-			_publicSubSkinnedDatas = new Vector.<Vector.<Float32Array>>();
-			_publicSubSkinnedDatas.length = subMeshCount;
+			_subSkinnedDatas = new Vector.<Vector.<Float32Array>>();
+			_subSkinnedDatas.length = subMeshCount;
 			for (var i:int = 0; i < subMeshCount; i++) {
-				var subMeshDatas:Vector.<Float32Array> = _publicSubSkinnedDatas[i] = new Vector.<Float32Array>();
+				var subMeshDatas:Vector.<Float32Array> = _subSkinnedDatas[i] = new Vector.<Float32Array>();
 				var boneIndicesList:Vector.<Uint8Array> = mesh.getSubMesh(i)._boneIndicesList;
 				for (var j:int = 0, m:int = boneIndicesList.length; j < m; j++)
 					subMeshDatas[j] = new Float32Array(boneIndicesList[j].length * 16);
@@ -190,8 +197,17 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
+		public function _setCacheAnimator(animator:Animator):void {
+			_cacheAnimator = animator;
+			(_rootBone) && (_rootIndex = animator._avatarNodes.indexOf(animator._avatarNodeMap[_rootBone]));
+		}
+		
+		/**
+		 * @private
+		 */
 		public function _setRootBone(name:String):void {
 			_rootBone = name;
+			(_cacheAnimator) && (_rootIndex = _cacheAnimator._avatarNodes.indexOf(_cacheAnimator._avatarNodeMap[name]));
 		}
 		
 		/**
@@ -265,68 +281,44 @@ package laya.d3.core {
 			var animator:Animator = _cacheAnimator;
 			var subMeshCount:int = _cacheMesh.subMeshCount;
 			var ownerTrans:Transform3D = _owner.transform;
+			var cache:Boolean = animator._canCache;
 			if (animator) {
+				var curAvatarAnimationDatas:Vector.<Float32Array> = _cacheAnimator._curAvatarNodeDatas;
 				if (_hasIndependentBound) {
-					var rootBone:AnimationNode = animator._avatarNodeMap[_rootBone];
-					var mat:Matrix4x4 = _tempMatrix0;
-					Matrix4x4.multiply((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, rootBone._transform._getWorldMatrix(), mat);
-					
 					var ownWorMat:Matrix4x4 = ownerTrans.worldMatrix;
-					mat.cloneTo(ownWorMat);//更新根骨骼矩阵到自身精灵
+					if (cache)
+						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, curAvatarAnimationDatas[_rootIndex], ownWorMat);
+					else
+						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, animator._avatarNodeMap[_rootBone].transform.getWorldMatrix(), ownWorMat);
 					ownerTrans.worldMatrix = ownWorMat;//TODO:涉及到更新顺序，必须先更新父再更新子
 				}
 				//else{}//兼容性代码
 				
-				var animatorOwner:Sprite3D = animator.owner as Sprite3D;//根节点不缓存
-				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, animatorOwner._transform.worldMatrix);
-				projViewWorld = animatorOwner.getProjectionViewWorldMatrix(projectionView);
+				var aniOwner:Sprite3D = animator.owner as Sprite3D;//根节点不缓存
+				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, aniOwner._transform.worldMatrix);
+				projViewWorld = aniOwner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 				
-				if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
-					var i:int, n:int, j:int;
-					var subSkinnedDatas:Vector.<Vector.<Float32Array>>, boneIndicesCount:int, inverseBindPoses:Vector.<Matrix4x4>, boneIndicesList:Vector.<Uint8Array>, subMeshDatas:Vector.<Float32Array>;
-					if (animator.playState !== AnimationState.stopped && animator._canCache) {//停止时使用非缓存模式
-						subSkinnedDatas = animator.currentPlayClip._getSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, animator.cachePlayRate, animator.currentFrameIndex);
-						if (subSkinnedDatas) {
-							for (i = 0; i < subMeshCount; i++)
-								(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas[i];//TODO:日后确认是否合理
-							if (Laya3D.debugMode)
-								_renderRenderableBoundBox();
-							return;
+				if (animator.playState === AnimationState.playing) {//暂停或者停止直接使用上一帧骨骼数据
+					if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
+						var i:int, n:int;
+						var inverseBindPoses:Vector.<Matrix4x4> = _cacheMesh._inverseBindPoses;
+						var skinnedDatas:Float32Array = _cacheMesh._skinnedDatas;
+						if (cache) {
+							for (i = 0, n = inverseBindPoses.length; i < n; i++)
+								Utils3D._mulMatrixArray(curAvatarAnimationDatas[_cacheAnimationNodeIndex[i]], inverseBindPoses[i], skinnedDatas, i * 16);
+						} else {
+							for (i = 0, n = inverseBindPoses.length; i < n; i++)
+								Utils3D._mulMatrixArray(_cacheAnimationNode[i].transform.getWorldMatrix(), inverseBindPoses[i], skinnedDatas, i * 16);
 						}
 						
-						animator._updateTansformProperty();//避免Animator数据已缓存，无法更新
-						inverseBindPoses = _cacheMesh._inverseBindPoses;
-						for (i = 0, n = inverseBindPoses.length; i < n; i++)
-							Utils3D._mulMatrixArray(_cacheAnimationNode[i]._transform._getWorldMatrix(), inverseBindPoses[i], _skinnedDatas, i * 16);
-						
-						subSkinnedDatas = new Vector.<Vector.<Float32Array>>();
-						subSkinnedDatas.length = subMeshCount;
 						for (i = 0; i < subMeshCount; i++) {
-							subMeshDatas = subSkinnedDatas[i] = new Vector.<Float32Array>();
-							
-							boneIndicesList = _cacheMesh.getSubMesh(i)._boneIndicesList;
-							boneIndicesCount = boneIndicesList.length;
-							subMeshDatas.length = boneIndicesCount;
-							for (j = 0; j < boneIndicesCount; j++) {
-								subMeshDatas[j] = new Float32Array(boneIndicesList[j].length * 16);
-								_splitAnimationDatas(boneIndicesList[j], _skinnedDatas, subMeshDatas[j]);
-							}
-							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subMeshDatas;//TODO:日后确认是否合理
-						}
-						animator.currentPlayClip._cacheSkinnedDatasWithCache(_cacheMesh, _cacheAvatar, animator.cachePlayRate, animator.currentFrameIndex, subSkinnedDatas);
-					} else {
-						inverseBindPoses = _cacheMesh._inverseBindPoses;
-						for (i = 0, n = inverseBindPoses.length; i < n; i++)
-							Utils3D._mulMatrixArray(_cacheAnimationNode[i]._transform._getWorldMatrix(), inverseBindPoses[i], _skinnedDatas, i * 16);
-						
-						for (i = 0; i < subMeshCount; i++) {
-							boneIndicesList = _cacheMesh.getSubMesh(i)._boneIndicesList;
-							boneIndicesCount = boneIndicesList.length;
-							subMeshDatas = _publicSubSkinnedDatas[i]
-							for (j = 0; j < boneIndicesCount; j++)
-								_splitAnimationDatas(boneIndicesList[j], _skinnedDatas, subMeshDatas[j]);
-							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subMeshDatas;//TODO:日后确认是否合理
+							var boneIndicesList:Vector.<Uint8Array> = _cacheMesh.getSubMesh(i)._boneIndicesList;
+							var boneIndicesCount:int = boneIndicesList.length;
+							var subSkinnedDatas:Vector.<Float32Array> = _subSkinnedDatas[i];
+							for (var j:int = 0; j < boneIndicesCount; j++)
+								_splitAnimationDatas(boneIndicesList[j], skinnedDatas, subSkinnedDatas[j]);
+							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas;//TODO:日后确认是否合理
 						}
 					}
 				}
@@ -335,7 +327,7 @@ package laya.d3.core {
 				projViewWorld = _owner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 			}
-			
+	
 			if (Laya3D.debugMode)
 				_renderRenderableBoundBox();
 		}

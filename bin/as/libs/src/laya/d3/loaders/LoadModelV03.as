@@ -261,6 +261,7 @@ package laya.d3.loaders {
 				var inverseGlobalBindPose:Matrix4x4 = new Matrix4x4(invGloBindPoseDatas[i + 0], invGloBindPoseDatas[i + 1], invGloBindPoseDatas[i + 2], invGloBindPoseDatas[i + 3], invGloBindPoseDatas[i + 4], invGloBindPoseDatas[i + 5], invGloBindPoseDatas[i + 6], invGloBindPoseDatas[i + 7], invGloBindPoseDatas[i + 8], invGloBindPoseDatas[i + 9], invGloBindPoseDatas[i + 10], invGloBindPoseDatas[i + 11], invGloBindPoseDatas[i + 12], invGloBindPoseDatas[i + 13], invGloBindPoseDatas[i + 14], invGloBindPoseDatas[i + 15]);
 				_mesh._inverseBindPoses.push(inverseGlobalBindPose);
 			}
+			_mesh._skinnedDatas = new Float32Array(invGloBindPoseDatas.length*16);
 			
 			//trace("READ_MESH:" + name);
 			return true;
@@ -301,8 +302,9 @@ package laya.d3.loaders {
 				subIndexBufferCount[i] = _readData.getUint32();
 				var boneDicofs:int = _readData.getUint32();
 				var boneDicsize:int = _readData.getUint32();
-				submesh._boneIndicesList[i] = new Uint8Array(arrayBuffer.slice(offset + boneDicofs, offset + boneDicofs + boneDicsize));
+				boneIndicesList[i] = new Uint8Array(arrayBuffer.slice(offset + boneDicofs, offset + boneDicofs + boneDicsize));
 			}
+			
 			
 			_subMeshes.push(submesh);
 			return true;

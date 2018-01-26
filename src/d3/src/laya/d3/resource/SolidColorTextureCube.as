@@ -83,7 +83,7 @@ package laya.d3.resource {
 			completeCreate();//处理创建完成后相关操作
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_source) {
 				WebGL.mainContext.deleteTexture(_source);
 				_source = null;

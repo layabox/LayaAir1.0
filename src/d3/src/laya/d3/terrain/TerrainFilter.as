@@ -93,8 +93,8 @@ package laya.d3.terrain {
 		override public function _destroy():void {
 			super._destroy();
 			_owner = null;
-			if (_vertexBuffer) _vertexBuffer.dispose();
-			if (_indexBuffer) _indexBuffer.dispose();
+			if (_vertexBuffer) _vertexBuffer.destroy();
+			if (_indexBuffer) _indexBuffer.destroy();
 		}
 		
 		protected function recreateResource():void {
@@ -258,7 +258,7 @@ package laya.d3.terrain {
 		}
 		
 		public function _beforeRender(state:RenderState):Boolean {
-			_vertexBuffer._bind();
+			_vertexBuffer._bind();			
 			_indexBuffer._bind();
 			var terrainMaterial:TerrainMaterial = state.renderElement._material as TerrainMaterial;
 			if (terrainMaterial.blend == BaseMaterial.BLEND_DISABLE) {
@@ -268,6 +268,13 @@ package laya.d3.terrain {
 				}
 			}
 			return true;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
+			return null;
 		}
 		
 		public function _render(state:RenderState):void {

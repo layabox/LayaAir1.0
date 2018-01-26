@@ -164,7 +164,7 @@ private function _releaseMem():void
 			if (_vb)
 			{
 				_vb.releaseResource();
-				_vb.dispose();
+				_vb.destroy();
 				_vb.destory();
 				_vb = null;
 			}
@@ -446,7 +446,7 @@ private function _releaseMem():void
 				
 				var pre:DrawStyle = _shader2D.fillStyle;
 				fillStyle && (_shader2D.fillStyle = DrawStyle.create(fillStyle));
-				
+
 				var shader:Shader2D = _shader2D;
 				var curShader:Value2D = _curSubmit.shaderValue;
 				
@@ -1500,32 +1500,12 @@ private function _releaseMem():void
 			//var tArray:Array = RenderState2D.getMatrArray();
 			//RenderState2D.mat2MatArray(_curMat, tArray);
 			var tempSubmit:Submit;
-			if (!isConvexPolygon) {
-				//开启模板缓冲，把模板操作设为GL_INVERT
-				//开启模板缓冲，填充模板数据
-				var submit:SubmitStencil = SubmitStencil.create(4);
-				addRenderObject(submit);
-				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
-				_submits[_submits._length++] = tempSubmit;
-				submit = SubmitStencil.create(5);
-				addRenderObject(submit);
-			}
 			//通过模板数据来开始真实的绘制
 			tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
 			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
 			(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
 			tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
 			_submits[_submits._length++] = tempSubmit;
-			if (!isConvexPolygon) {
-				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
-				SubmitStencil.restore2(this,tempSubmit);
-			}
 			//画闭合线
 			if (lineWidth > 0) {
 				if (mHaveLineKey) {

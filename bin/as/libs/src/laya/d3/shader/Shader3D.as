@@ -87,7 +87,7 @@ package laya.d3.shader {
 		/**@private */
 		public var _uploadScene:Scene;
 		/**@private */
-		public var _uploadVertexBuffer:VertexBuffer3D;
+		public var _uploadVertexBuffer:*;
 		
 		/**
 		 * 根据vs和ps信息生成shader对象
@@ -97,7 +97,9 @@ package laya.d3.shader {
 		 * @param	nameMap 帮助里要详细解释为什么需要nameMap
 		 */
 		public function Shader3D(vs:String, ps:String, attributeMap:Object, sceneUniformMap:Object, cameraUniformMap:Object, spriteUniformMap:Object, materialUniformMap:Object, renderElementUniformMap:Object) {
+			super();
 			if ((!vs) || (!ps)) throw "Shader Error";
+			
 			if (Render.isConchApp || Render.isFlash) {
 				customCompile = true;
 			}
@@ -119,7 +121,7 @@ package laya.d3.shader {
 			memorySize = 0;//忽略尺寸尺寸
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			WebGL.mainContext.deleteShader(_vshader);
 			WebGL.mainContext.deleteShader(_pshader);
 			WebGL.mainContext.deleteProgram(_program);
@@ -529,6 +531,24 @@ package laya.d3.shader {
 				value = attributeShaderValue[_attributeParamsMap[i]];
 				if (value != null) {
 					_bufferUsage && _bufferUsage[one.name] && _bufferUsage[one.name].bind();
+					shaderCall += one.fun.call(this, one, value);
+				}
+			}
+			Stat.shaderCall += shaderCall;
+		}
+		
+		/**
+		 * 按数组的定义提交
+		 * @param	shaderValue 数组格式[name,value,...]
+		 */
+		public function uploadAttributesX(attributeShaderValue:Array, vb:VertexBuffer3D):void {
+			var value:*;
+			var one:*, shaderCall:int = 0;
+			for (var i:int = 0, n:int = _attributeParamsMap.length; i < n; i += 2) {
+				one = _attributeParamsMap[i + 1];
+				value = attributeShaderValue[_attributeParamsMap[i]];
+				if (value != null) {
+					vb._bind();
 					shaderCall += one.fun.call(this, one, value);
 				}
 			}

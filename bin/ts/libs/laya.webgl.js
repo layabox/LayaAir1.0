@@ -19,68 +19,6 @@ Laya.interface('laya.webgl.text.ICharSegment');
 Laya.interface('laya.webgl.canvas.save.ISaveData');
 Laya.interface('laya.webgl.resource.IMergeAtlasBitmap');
 Laya.interface('laya.filters.IFilterActionGL','laya.filters.IFilterAction');
-//class laya.webgl.canvas.save.SaveBase
-var SaveBase=(function(){
-	function SaveBase(){
-		//this._valueName=null;
-		//this._value=null;
-		//this._dataObj=null;
-		//this._newSubmit=false;
-	}
-
-	__class(SaveBase,'laya.webgl.canvas.save.SaveBase');
-	var __proto=SaveBase.prototype;
-	Laya.imps(__proto,{"laya.webgl.canvas.save.ISaveData":true})
-	__proto.isSaveMark=function(){return false;}
-	__proto.restore=function(context){
-		this._dataObj[this._valueName]=this._value;
-		SaveBase._cache[SaveBase._cache._length++]=this;
-		this._newSubmit && (context._curSubmit=Submit.RENDERBASE,context._renderKey=0);
-	}
-
-	SaveBase._createArray=function(){
-		var value=[];
-		value._length=0;
-		return value;
-	}
-
-	SaveBase._init=function(){
-		var namemap=SaveBase._namemap={};
-		namemap[0x1]="ALPHA";
-		namemap[0x2]="fillStyle";
-		namemap[0x8]="font";
-		namemap[0x100]="lineWidth";
-		namemap[0x200]="strokeStyle";
-		namemap[0x2000]="_mergeID";
-		namemap[0x400]=namemap[0x800]=namemap[0x1000]=[];
-		namemap[0x4000]="textBaseline";
-		namemap[0x8000]="textAlign";
-		namemap[0x10000]="_nBlendType";
-		namemap[0x100000]="shader";
-		namemap[0x200000]="filters";
-		return namemap;
-	}
-
-	SaveBase.save=function(context,type,dataObj,newSubmit){
-		if ((context._saveMark._saveuse & type)!==type){
-			context._saveMark._saveuse |=type;
-			var cache=SaveBase._cache;
-			var o=cache._length > 0 ? cache[--cache._length] :(new SaveBase());
-			o._value=dataObj[o._valueName=SaveBase._namemap[type]];
-			o._dataObj=dataObj;
-			o._newSubmit=newSubmit;
-			var _save=context._save;
-			_save[_save._length++]=o;
-		}
-	}
-
-	__static(SaveBase,
-	['_cache',function(){return this._cache=laya.webgl.canvas.save.SaveBase._createArray();},'_namemap',function(){return this._namemap=SaveBase._init();}
-	]);
-	return SaveBase;
-})()
-
-
 //class laya.filters.webgl.FilterActionGL
 var FilterActionGL=(function(){
 	function FilterActionGL(){}
@@ -755,6 +693,68 @@ var Path=(function(){
 	}
 
 	return Path;
+})()
+
+
+//class laya.webgl.canvas.save.SaveBase
+var SaveBase=(function(){
+	function SaveBase(){
+		//this._valueName=null;
+		//this._value=null;
+		//this._dataObj=null;
+		//this._newSubmit=false;
+	}
+
+	__class(SaveBase,'laya.webgl.canvas.save.SaveBase');
+	var __proto=SaveBase.prototype;
+	Laya.imps(__proto,{"laya.webgl.canvas.save.ISaveData":true})
+	__proto.isSaveMark=function(){return false;}
+	__proto.restore=function(context){
+		this._dataObj[this._valueName]=this._value;
+		SaveBase._cache[SaveBase._cache._length++]=this;
+		this._newSubmit && (context._curSubmit=Submit.RENDERBASE,context._renderKey=0);
+	}
+
+	SaveBase._createArray=function(){
+		var value=[];
+		value._length=0;
+		return value;
+	}
+
+	SaveBase._init=function(){
+		var namemap=SaveBase._namemap={};
+		namemap[0x1]="ALPHA";
+		namemap[0x2]="fillStyle";
+		namemap[0x8]="font";
+		namemap[0x100]="lineWidth";
+		namemap[0x200]="strokeStyle";
+		namemap[0x2000]="_mergeID";
+		namemap[0x400]=namemap[0x800]=namemap[0x1000]=[];
+		namemap[0x4000]="textBaseline";
+		namemap[0x8000]="textAlign";
+		namemap[0x10000]="_nBlendType";
+		namemap[0x100000]="shader";
+		namemap[0x200000]="filters";
+		return namemap;
+	}
+
+	SaveBase.save=function(context,type,dataObj,newSubmit){
+		if ((context._saveMark._saveuse & type)!==type){
+			context._saveMark._saveuse |=type;
+			var cache=SaveBase._cache;
+			var o=cache._length > 0 ? cache[--cache._length] :(new SaveBase());
+			o._value=dataObj[o._valueName=SaveBase._namemap[type]];
+			o._dataObj=dataObj;
+			o._newSubmit=newSubmit;
+			var _save=context._save;
+			_save[_save._length++]=o;
+		}
+	}
+
+	__static(SaveBase,
+	['_cache',function(){return this._cache=laya.webgl.canvas.save.SaveBase._createArray();},'_namemap',function(){return this._namemap=SaveBase._init();}
+	]);
+	return SaveBase;
 })()
 
 
@@ -1686,6 +1686,465 @@ var BasePoly=(function(){
 	}
 
 	return BasePoly;
+})()
+
+
+//class laya.webgl.shapes.Earcut
+var Earcut=(function(){
+	function Earcut(){}
+	__class(Earcut,'laya.webgl.shapes.Earcut');
+	Earcut.earcut=function(data,holeIndices,dim){
+		dim=dim || 2;
+		var hasHoles=holeIndices && holeIndices.length,
+		outerLen=hasHoles ? holeIndices[0] *dim :data.length,
+		outerNode=Earcut.linkedList(data,0,outerLen,dim,true),
+		triangles=[];
+		if (!outerNode)return triangles;
+		var minX,minY,maxX,maxY,x,y,invSize;
+		if (hasHoles)outerNode=Earcut.eliminateHoles(data,holeIndices,outerNode,dim);
+		if (data.length > 80 *dim){
+			minX=maxX=data[0];
+			minY=maxY=data[1];
+			for (var i=dim;i < outerLen;i+=dim){
+				x=data[i];
+				y=data[i+1];
+				if (x < minX)minX=x;
+				if (y < minY)minY=y;
+				if (x > maxX)maxX=x;
+				if (y > maxY)maxY=y;
+			}
+			invSize=Math.max(maxX-minX,maxY-minY);
+			invSize=invSize!==0 ? 1 / invSize :0;
+		}
+		Earcut.earcutLinked(outerNode,triangles,dim,minX,minY,invSize);
+		return triangles;
+	}
+
+	Earcut.linkedList=function(data,start,end,dim,clockwise){
+		var i,last;
+		if (clockwise===(Earcut.signedArea(data,start,end,dim)> 0)){
+			for (i=start;i < end;i+=dim)last=Earcut.insertNode(i,data[i],data[i+1],last);
+			}else {
+			for (i=end-dim;i >=start;i-=dim)last=Earcut.insertNode(i,data[i],data[i+1],last);
+		}
+		if (last && Earcut.equals(last,last.next)){
+			Earcut.removeNode(last);
+			last=last.next;
+		}
+		return last;
+	}
+
+	Earcut.filterPoints=function(start,end){
+		if (!start)return start;
+		if (!end)end=start;
+		var p=start,
+		again;
+		do {
+			again=false;
+			if (!p.steiner && (Earcut.equals(p,p.next)|| Earcut.area(p.prev,p,p.next)===0)){
+				Earcut.removeNode(p);
+				p=end=p.prev;
+				if (p===p.next)break ;
+				again=true;
+				}else {
+				p=p.next;
+			}
+		}while (again || p!==end);
+		return end;
+	}
+
+	Earcut.earcutLinked=function(ear,triangles,dim,minX,minY,invSize,pass){
+		if (!ear)return;
+		if (!pass && invSize)Earcut.indexCurve(ear,minX,minY,invSize);
+		var stop=ear,
+		prev,next;
+		while (ear.prev!==ear.next){
+			prev=ear.prev;
+			next=ear.next;
+			if (invSize ? Earcut.isEarHashed(ear,minX,minY,invSize):Earcut.isEar(ear)){
+				triangles.push(prev.i / dim);
+				triangles.push(ear.i / dim);
+				triangles.push(next.i / dim);
+				Earcut.removeNode(ear);
+				ear=next.next;
+				stop=next.next;
+				continue ;
+			}
+			ear=next;
+			if (ear===stop){
+				if (!pass){
+					Earcut.earcutLinked(Earcut.filterPoints(ear,null),triangles,dim,minX,minY,invSize,1);
+					}else if (pass===1){
+					ear=Earcut.cureLocalIntersections(ear,triangles,dim);
+					Earcut.earcutLinked(ear,triangles,dim,minX,minY,invSize,2);
+					}else if (pass===2){
+					Earcut.splitEarcut(ear,triangles,dim,minX,minY,invSize);
+				}
+				break ;
+			}
+		}
+	}
+
+	Earcut.isEar=function(ear){
+		var a=ear.prev,
+		b=ear,
+		c=ear.next;
+		if (Earcut.area(a,b,c)>=0)return false;
+		var p=ear.next.next;
+		while (p!==ear.prev){
+			if (Earcut.pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,p.x,p.y)&&
+				Earcut.area(p.prev,p,p.next)>=0)return false;
+			p=p.next;
+		}
+		return true;
+	}
+
+	Earcut.isEarHashed=function(ear,minX,minY,invSize){
+		var a=ear.prev,
+		b=ear,
+		c=ear.next;
+		if (Earcut.area(a,b,c)>=0)return false;
+		var minTX=a.x < b.x ? (a.x < c.x ? a.x :c.x):(b.x < c.x ? b.x :c.x),
+		minTY=a.y < b.y ? (a.y < c.y ? a.y :c.y):(b.y < c.y ? b.y :c.y),
+		maxTX=a.x > b.x ? (a.x > c.x ? a.x :c.x):(b.x > c.x ? b.x :c.x),
+		maxTY=a.y > b.y ? (a.y > c.y ? a.y :c.y):(b.y > c.y ? b.y :c.y);
+		var minZ=Earcut.zOrder(minTX,minTY,minX,minY,invSize),
+		maxZ=Earcut.zOrder(maxTX,maxTY,minX,minY,invSize);
+		var p=ear.nextZ;
+		while (p && p.z <=maxZ){
+			if (p!==ear.prev && p!==ear.next &&
+				Earcut.pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,p.x,p.y)&&
+			Earcut.area(p.prev,p,p.next)>=0)return false;
+			p=p.nextZ;
+		}
+		p=ear.prevZ;
+		while (p && p.z >=minZ){
+			if (p!==ear.prev && p!==ear.next &&
+				Earcut.pointInTriangle(a.x,a.y,b.x,b.y,c.x,c.y,p.x,p.y)&&
+			Earcut.area(p.prev,p,p.next)>=0)return false;
+			p=p.prevZ;
+		}
+		return true;
+	}
+
+	Earcut.cureLocalIntersections=function(start,triangles,dim){
+		var p=start;
+		do {
+			var a=p.prev,
+			b=p.next.next;
+			if (!Earcut.equals(a,b)&& Earcut.intersects(a,p,p.next,b)&& Earcut.locallyInside(a,b)&& Earcut.locallyInside(b,a)){
+				triangles.push(a.i / dim);
+				triangles.push(p.i / dim);
+				triangles.push(b.i / dim);
+				Earcut.removeNode(p);
+				Earcut.removeNode(p.next);
+				p=start=b;
+			}
+			p=p.next;
+		}while (p!==start);
+		return p;
+	}
+
+	Earcut.splitEarcut=function(start,triangles,dim,minX,minY,invSize){
+		var a=start;
+		do {
+			var b=a.next.next;
+			while (b!==a.prev){
+				if (a.i!==b.i && Earcut.isValidDiagonal(a,b)){
+					var c=Earcut.splitPolygon(a,b);
+					a=Earcut.filterPoints(a,a.next);
+					c=Earcut.filterPoints(c,c.next);
+					Earcut.earcutLinked(a,triangles,dim,minX,minY,invSize);
+					Earcut.earcutLinked(c,triangles,dim,minX,minY,invSize);
+					return;
+				}
+				b=b.next;
+			}
+			a=a.next;
+		}while (a!==start);
+	}
+
+	Earcut.eliminateHoles=function(data,holeIndices,outerNode,dim){
+		var queue=[],
+		i,len,start,end,list;
+		for (i=0,len=holeIndices.length;i < len;i++){
+			start=holeIndices[i] *dim;
+			end=i < len-1 ? holeIndices[i+1] *dim :data.length;
+			list=Earcut.linkedList(data,start,end,dim,false);
+			if (list===list.next)list.steiner=true;
+			queue.push(Earcut.getLeftmost(list));
+		}
+		queue.sort(Earcut.compareX);
+		for (i=0;i < queue.length;i++){
+			Earcut.eliminateHole(queue[i],outerNode);
+			outerNode=Earcut.filterPoints(outerNode,outerNode.next);
+		}
+		return outerNode;
+	}
+
+	Earcut.compareX=function(a,b){
+		return a.x-b.x;
+	}
+
+	Earcut.eliminateHole=function(hole,outerNode){
+		outerNode=Earcut.findHoleBridge(hole,outerNode);
+		if (outerNode){
+			var b=Earcut.splitPolygon(outerNode,hole);
+			Earcut.filterPoints(b,b.next);
+		}
+	}
+
+	Earcut.findHoleBridge=function(hole,outerNode){
+		var p=outerNode,
+		hx=hole.x,
+		hy=hole.y,
+		qx=-Infinity,
+		m;
+		do {
+			if (hy <=p.y && hy >=p.next.y && p.next.y!==p.y){
+				var x=p.x+(hy-p.y)*(p.next.x-p.x)/ (p.next.y-p.y);
+				if (x <=hx && x > qx){
+					qx=x;
+					if (x===hx){
+						if (hy===p.y)return p;
+						if (hy===p.next.y)return p.next;
+					}
+					m=p.x < p.next.x ? p :p.next;
+				}
+			}
+			p=p.next;
+		}while (p!==outerNode);
+		if (!m)return null;
+		if (hx===qx)return m.prev;
+		var stop=m,
+		mx=m.x,
+		my=m.y,
+		tanMin=Infinity,
+		tan;
+		p=m.next;
+		while (p!==stop){
+			if (hx >=p.x && p.x >=mx && hx!==p.x &&
+				Earcut.pointInTriangle(hy < my ? hx :qx,hy,mx,my,hy < my ? qx :hx,hy,p.x,p.y)){
+				tan=Math.abs(hy-p.y)/ (hx-p.x);
+				if ((tan < tanMin || (tan===tanMin && p.x > m.x))&& Earcut.locallyInside(p,hole)){
+					m=p;
+					tanMin=tan;
+				}
+			}
+			p=p.next;
+		}
+		return m;
+	}
+
+	Earcut.indexCurve=function(start,minX,minY,invSize){
+		var p=start;
+		do {
+			if (p.z===null)p.z=Earcut.zOrder(p.x,p.y,minX,minY,invSize);
+			p.prevZ=p.prev;
+			p.nextZ=p.next;
+			p=p.next;
+		}while (p!==start);
+		p.prevZ.nextZ=null;
+		p.prevZ=null;
+		Earcut.sortLinked(p);
+	}
+
+	Earcut.sortLinked=function(list){
+		var i,p,q,e,tail,numMerges,pSize,qSize,
+		inSize=1;
+		do {
+			p=list;
+			list=null;
+			tail=null;
+			numMerges=0;
+			while (p){
+				numMerges++;
+				q=p;
+				pSize=0;
+				for (i=0;i < inSize;i++){
+					pSize++;
+					q=q.nextZ;
+					if (!q)break ;
+				}
+				qSize=inSize;
+				while (pSize > 0 || (qSize > 0 && q)){
+					if (pSize!==0 && (qSize===0 || !q || p.z <=q.z)){
+						e=p;
+						p=p.nextZ;
+						pSize--;
+						}else {
+						e=q;
+						q=q.nextZ;
+						qSize--;
+					}
+					if (tail)tail.nextZ=e;
+					else list=e;
+					e.prevZ=tail;
+					tail=e;
+				}
+				p=q;
+			}
+			tail.nextZ=null;
+			inSize *=2;
+		}while (numMerges > 1);
+		return list;
+	}
+
+	Earcut.zOrder=function(x,y,minX,minY,invSize){
+		x=32767 *(x-minX)*invSize;
+		y=32767 *(y-minY)*invSize;
+		x=(x | (x << 8))& 0x00FF00FF;
+		x=(x | (x << 4))& 0x0F0F0F0F;
+		x=(x | (x << 2))& 0x33333333;
+		x=(x | (x << 1))& 0x55555555;
+		y=(y | (y << 8))& 0x00FF00FF;
+		y=(y | (y << 4))& 0x0F0F0F0F;
+		y=(y | (y << 2))& 0x33333333;
+		y=(y | (y << 1))& 0x55555555;
+		return x | (y << 1);
+	}
+
+	Earcut.getLeftmost=function(start){
+		var p=start,
+		leftmost=start;
+		do {
+			if (p.x < leftmost.x)leftmost=p;
+			p=p.next;
+		}while (p!==start);
+		return leftmost;
+	}
+
+	Earcut.pointInTriangle=function(ax,ay,bx,by,cx,cy,px,py){
+		return (cx-px)*(ay-py)-(ax-px)*(cy-py)>=0 &&
+		(ax-px)*(by-py)-(bx-px)*(ay-py)>=0 &&
+		(bx-px)*(cy-py)-(cx-px)*(by-py)>=0;
+	}
+
+	Earcut.isValidDiagonal=function(a,b){
+		return a.next.i!==b.i && a.prev.i!==b.i && !Earcut.intersectsPolygon(a,b)&&
+		Earcut.locallyInside(a,b)&& Earcut.locallyInside(b,a)&& Earcut.middleInside(a,b);
+	}
+
+	Earcut.area=function(p,q,r){
+		return (q.y-p.y)*(r.x-q.x)-(q.x-p.x)*(r.y-q.y);
+	}
+
+	Earcut.equals=function(p1,p2){
+		return p1.x===p2.x && p1.y===p2.y;
+	}
+
+	Earcut.intersects=function(p1,q1,p2,q2){
+		if ((Earcut.equals(p1,q1)&& Earcut.equals(p2,q2))||
+			(Earcut.equals(p1,q2)&& Earcut.equals(p2,q1)))return true;
+		return Earcut.area(p1,q1,p2)> 0!==Earcut.area(p1,q1,q2)> 0 &&
+		Earcut.area(p2,q2,p1)> 0!==Earcut.area(p2,q2,q1)> 0;
+	}
+
+	Earcut.intersectsPolygon=function(a,b){
+		var p=a;
+		do {
+			if (p.i!==a.i && p.next.i!==a.i && p.i!==b.i && p.next.i!==b.i &&
+				Earcut.intersects(p,p.next,a,b))return true;
+			p=p.next;
+		}while (p!==a);
+		return false;
+	}
+
+	Earcut.locallyInside=function(a,b){
+		return Earcut.area(a.prev,a,a.next)< 0 ?
+		Earcut.area(a,b,a.next)>=0 && Earcut.area(a,a.prev,b)>=0 :
+		Earcut.area(a,b,a.prev)< 0 || Earcut.area(a,a.next,b)< 0;
+	}
+
+	Earcut.middleInside=function(a,b){
+		var p=a,
+		inside=false,
+		px=(a.x+b.x)/ 2,
+		py=(a.y+b.y)/ 2;
+		do {
+			if (((p.y > py)!==(p.next.y > py))&& p.next.y!==p.y &&
+				(px < (p.next.x-p.x)*(py-p.y)/ (p.next.y-p.y)+p.x))
+			inside=!inside;
+			p=p.next;
+		}while (p!==a);
+		return inside;
+	}
+
+	Earcut.splitPolygon=function(a,b){
+		var a2=new EarcutNode(a.i,a.x,a.y),
+		b2=new EarcutNode(b.i,b.x,b.y),
+		an=a.next,
+		bp=b.prev;
+		a.next=b;
+		b.prev=a;
+		a2.next=an;
+		an.prev=a2;
+		b2.next=a2;
+		a2.prev=b2;
+		bp.next=b2;
+		b2.prev=bp;
+		return b2;
+	}
+
+	Earcut.insertNode=function(i,x,y,last){
+		var p=new EarcutNode(i,x,y);
+		if (!last){
+			p.prev=p;
+			p.next=p;
+			}else {
+			p.next=last.next;
+			p.prev=last;
+			last.next.prev=p;
+			last.next=p;
+		}
+		return p;
+	}
+
+	Earcut.removeNode=function(p){
+		p.next.prev=p.prev;
+		p.prev.next=p.next;
+		if (p.prevZ)p.prevZ.nextZ=p.nextZ;
+		if (p.nextZ)p.nextZ.prevZ=p.prevZ;
+	}
+
+	Earcut.signedArea=function(data,start,end,dim){
+		var sum=0;
+		for (var i=start,j=end-dim;i < end;i+=dim){
+			sum+=(data[j]-data[i])*(data[i+1]+data[j+1]);
+			j=i;
+		}
+		return sum;
+	}
+
+	return Earcut;
+})()
+
+
+//class laya.webgl.shapes.EarcutNode
+var EarcutNode=(function(){
+	function EarcutNode(i,x,y){
+		this.i=null;
+		this.x=null;
+		this.y=null;
+		this.prev=null;
+		this.next=null;
+		this.z=null;
+		this.prevZ=null;
+		this.nextZ=null;
+		this.steiner=null;
+		this.i=i;
+		this.x=x;
+		this.y=y;
+		this.prev=null;
+		this.next=null;
+		this.z=null;
+		this.prevZ=null;
+		this.nextZ=null;
+		this.steiner=false;
+	}
+
+	__class(EarcutNode,'laya.webgl.shapes.EarcutNode');
+	return EarcutNode;
 })()
 
 
@@ -3161,7 +3620,7 @@ var RenderState2D=(function(){
 //class laya.webgl.utils.ShaderCompile
 var ShaderCompile=(function(){
 	var ShaderNode,InlcudeFile;
-	function ShaderCompile(name,vs,ps,nameMap){
+	function ShaderCompile(name,vs,ps,nameMap,defs){
 		//this._nameMap=null;
 		//this._VS=null;
 		//this._PS=null;
@@ -3169,7 +3628,7 @@ var ShaderCompile=(function(){
 		function _compile (script){
 			var includefiles=[];
 			var top=new ShaderNode(includefiles);
-			_$this._compileToTree(top,script.split('\n'),0,includefiles);
+			_$this._compileToTree(top,script.split('\n'),0,includefiles,defs);
 			return top;
 		};
 		var startTime=Browser.now();
@@ -3182,11 +3641,12 @@ var ShaderCompile=(function(){
 
 	__class(ShaderCompile,'laya.webgl.utils.ShaderCompile');
 	var __proto=ShaderCompile.prototype;
-	__proto._compileToTree=function(parent,lines,start,includefiles){
+	__proto._compileToTree=function(parent,lines,start,includefiles,defs){
 		var node,preNode;
 		var text,name,fname;
 		var ofs=0,words,noUseNode;
-		for (var i=start;i < lines.length;i++){
+		var i=0,n=0,j=0;
+		for (i=start;i < lines.length;i++){
 			text=lines[i];
 			if (text.length < 1)continue ;
 			ofs=text.indexOf("//");
@@ -3198,7 +3658,7 @@ var ShaderCompile=(function(){
 			node.noCompile=true;
 			if ((ofs=text.indexOf("#"))>=0){
 				name="#";
-				for (var j=ofs+1,n=text.length;j < n;j++){
+				for (j=ofs+1,n=text.length;j < n;j++){
 					var c=text.charAt(j);
 					if (c===' ' || c==='\t' || c==='?')break ;
 					name+=c;
@@ -3218,19 +3678,33 @@ var ShaderCompile=(function(){
 						}
 						node.setParent(parent);
 						parent=node;
+						if (defs){
+							words=text.substr(j).split(ShaderCompile._splitToWordExps3);
+							for (j=0;j < words.length;j++){
+								text=words[j];
+								text.length && (defs[ text]=true);
+							}
+						}
 						continue ;
 					case "#if":
 						node.src=text;
 						node.noCompile=true;
 						node.setParent(parent);
 						parent=node;
+						if (defs){
+							words=text.substr(j).split(ShaderCompile._splitToWordExps3);
+							for (j=0;j < words.length;j++){
+								text=words[j];
+								text.length && text!="defined" && (defs[ text]=true);
+							}
+						}
 						continue ;
 					case "#else":
 						node.src=text;
 						parent=parent.parent;
 						preNode=parent.childs[parent.childs.length-1];
-						node.noCompile=preNode.noCompile;
-						if (!node.noCompile){
+						node.noCompile=preNode.noCompile
+						if (!(node.noCompile)){
 							node.condition=preNode.condition;
 							node.conditionType=preNode.conditionType==1 ? 2 :1;
 							node.text="//"+node.text+" "+preNode.text+" "+node.conditionType;
@@ -3242,7 +3716,7 @@ var ShaderCompile=(function(){
 						parent=parent.parent;
 						preNode=parent.childs[parent.childs.length-1];
 						node.noCompile=preNode.noCompile;
-						if (!node.noCompile){
+						if (!(node.noCompile)){
 							node.text="//"+node.text;
 						}
 						node.setParent(parent);
@@ -3257,7 +3731,7 @@ var ShaderCompile=(function(){
 						if ((ofs=words[0].indexOf("?"))< 0){
 							node.setParent(parent);
 							text=inlcudeFile.getWith(words[2]=='with' ? words[3] :null);
-							this._compileToTree(node,text.split('\n'),0,includefiles);
+							this._compileToTree(node,text.split('\n'),0,includefiles,defs);
 							node.text="";
 							continue ;
 						}
@@ -3392,7 +3866,6 @@ var ShaderCompile=(function(){
 					var ofs2=str.indexOf(c,i+1);
 					if (ofs2 < 0){
 						throw "Sharder err:"+str;
-						return null;
 					}
 					out.push(str.substr(i+1,ofs2-i-1));
 					i=ofs2;
@@ -3422,7 +3895,7 @@ var ShaderCompile=(function(){
 	ShaderCompile.IFDEF_PARENT=3;
 	ShaderCompile.includes={};
 	__static(ShaderCompile,
-	['_removeAnnotation',function(){return this._removeAnnotation=new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)","g");},'_reg',function(){return this._reg=new RegExp("(\".*\")|('.*')|([#\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])","g");},'_splitToWordExps',function(){return this._splitToWordExps=new RegExp("[(\".*\")]+|[('.*')]+|([ \\t=\\+\\-*/&%!<>!%\(\),;])","g");},'shaderParamsMap',function(){return this.shaderParamsMap={"float":/*laya.webgl.WebGLContext.FLOAT*/0x1406,"int":/*laya.webgl.WebGLContext.INT*/0x1404,"bool":/*laya.webgl.WebGLContext.BOOL*/0x8B56,"vec2":/*laya.webgl.WebGLContext.FLOAT_VEC2*/0x8B50,"vec3":/*laya.webgl.WebGLContext.FLOAT_VEC3*/0x8B51,"vec4":/*laya.webgl.WebGLContext.FLOAT_VEC4*/0x8B52,"ivec2":/*laya.webgl.WebGLContext.INT_VEC2*/0x8B53,"ivec3":/*laya.webgl.WebGLContext.INT_VEC3*/0x8B54,"ivec4":/*laya.webgl.WebGLContext.INT_VEC4*/0x8B55,"bvec2":/*laya.webgl.WebGLContext.BOOL_VEC2*/0x8B57,"bvec3":/*laya.webgl.WebGLContext.BOOL_VEC3*/0x8B58,"bvec4":/*laya.webgl.WebGLContext.BOOL_VEC4*/0x8B59,"mat2":/*laya.webgl.WebGLContext.FLOAT_MAT2*/0x8B5A,"mat3":/*laya.webgl.WebGLContext.FLOAT_MAT3*/0x8B5B,"mat4":/*laya.webgl.WebGLContext.FLOAT_MAT4*/0x8B5C,"sampler2D":/*laya.webgl.WebGLContext.SAMPLER_2D*/0x8B5E,"samplerCube":/*laya.webgl.WebGLContext.SAMPLER_CUBE*/0x8B60};}
+	['_removeAnnotation',function(){return this._removeAnnotation=new RegExp("(/\\*([^*]|[\\r\\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/)|(//.*)","g");},'_reg',function(){return this._reg=new RegExp("(\".*\")|('.*')|([#\\w\\*-\\.+/()=<>{}\\\\]+)|([,;:\\\\])","g");},'_splitToWordExps',function(){return this._splitToWordExps=new RegExp("[(\".*\")]+|[('.*')]+|([ \\t=\\+\\-*/&%!<>!%\(\),;])","g");},'shaderParamsMap',function(){return this.shaderParamsMap={"float":/*laya.webgl.WebGLContext.FLOAT*/0x1406,"int":/*laya.webgl.WebGLContext.INT*/0x1404,"bool":/*laya.webgl.WebGLContext.BOOL*/0x8B56,"vec2":/*laya.webgl.WebGLContext.FLOAT_VEC2*/0x8B50,"vec3":/*laya.webgl.WebGLContext.FLOAT_VEC3*/0x8B51,"vec4":/*laya.webgl.WebGLContext.FLOAT_VEC4*/0x8B52,"ivec2":/*laya.webgl.WebGLContext.INT_VEC2*/0x8B53,"ivec3":/*laya.webgl.WebGLContext.INT_VEC3*/0x8B54,"ivec4":/*laya.webgl.WebGLContext.INT_VEC4*/0x8B55,"bvec2":/*laya.webgl.WebGLContext.BOOL_VEC2*/0x8B57,"bvec3":/*laya.webgl.WebGLContext.BOOL_VEC3*/0x8B58,"bvec4":/*laya.webgl.WebGLContext.BOOL_VEC4*/0x8B59,"mat2":/*laya.webgl.WebGLContext.FLOAT_MAT2*/0x8B5A,"mat3":/*laya.webgl.WebGLContext.FLOAT_MAT3*/0x8B5B,"mat4":/*laya.webgl.WebGLContext.FLOAT_MAT4*/0x8B5C,"sampler2D":/*laya.webgl.WebGLContext.SAMPLER_2D*/0x8B5E,"samplerCube":/*laya.webgl.WebGLContext.SAMPLER_CUBE*/0x8B60};},'_splitToWordExps3',function(){return this._splitToWordExps3=new RegExp("[ \\t=\\+\\-*/&%!<>!%\(\),;\\|]","g");}
 	]);
 	ShaderCompile.__init$=function(){
 		//class ShaderNode
@@ -3726,8 +4199,9 @@ var WebGL=(function(){
 			offsetY-=sprite.y;
 			var renderTarget=RenderTarget2D.create(canvasWidth,canvasHeight,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,0,false);
 			renderTarget.start();
+			renderTarget.clear(0,0,0,0);
 			Render.context.clear();
-			sprite.render(Render.context,offsetX,RenderState2D.height-canvasHeight+offsetY);
+			RenderSprite.renders[_renderType]._fun(sprite,Render.context,offsetX,RenderState2D.height-canvasHeight+offsetY);
 			Render.context.flush();
 			renderTarget.end();
 			var pixels=renderTarget.getData(0,0,renderTarget.width,renderTarget.height);
@@ -4523,7 +4997,7 @@ var WebGLContext2D=(function(_super){
 		this._save=null;
 		if (this._vb){
 			this._vb.releaseResource();
-			this._vb.dispose();
+			this._vb.destroy();
 			this._vb.destory();
 			this._vb=null;
 		}
@@ -5616,29 +6090,11 @@ var WebGLContext2D=(function(_super){
 		tPath.update();
 		var tPosArray=[this.mX,this.mY];
 		var tempSubmit;
-		if (!isConvexPolygon){
-			var submit=SubmitStencil.create(4);
-			this.addRenderObject(submit);
-			tempSubmit=Submit.createShape(this,tPath.ib,tPath.vb,tPath.count,tPath.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
-			tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
-			(tempSubmit.shaderValue).u_pos=tPosArray;
-			tempSubmit.shaderValue.u_mmat2=RenderState2D.EMPTYMAT4_ARRAY;
-			this._submits[this._submits._length++]=tempSubmit;
-			submit=SubmitStencil.create(5);
-			this.addRenderObject(submit);
-		}
 		tempSubmit=Submit.createShape(this,tPath.ib,tPath.vb,tPath.count,tPath.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
 		tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
 		(tempSubmit.shaderValue).u_pos=tPosArray;
 		tempSubmit.shaderValue.u_mmat2=RenderState2D.EMPTYMAT4_ARRAY;
 		this._submits[this._submits._length++]=tempSubmit;
-		if (!isConvexPolygon){
-			tempSubmit=Submit.createShape(this,tPath.ib,tPath.vb,tPath.count,tPath.offset,Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.PRIMITIVE*/0x04,0));
-			tempSubmit.shaderValue.ALPHA=this._shader2D.ALPHA;
-			(tempSubmit.shaderValue).u_pos=tPosArray;
-			tempSubmit.shaderValue.u_mmat2=RenderState2D.EMPTYMAT4_ARRAY;
-			SubmitStencil.restore2(this,tempSubmit);
-		}
 		if (lineWidth > 0){
 			if (this.mHaveLineKey){
 				var tShapeLine=VectorGraphManager.getInstance().shapeLineDic[this.mId];
@@ -6214,7 +6670,7 @@ var Atlaser=(function(_super){
 
 	__proto.dispose=function(){
 		this.clear();
-		this._atlasCanvas.dispose();
+		this._atlasCanvas.destroy();
 	}
 
 	__getset(0,__proto,'InAtlasWebGLImagesOffsetValue',function(){
@@ -6475,6 +6931,7 @@ var Polygon=(function(_super){
 		this._points=null;
 		this._start=-1;
 		this._repaint=false;
+		this.earcutTriangles=null;
 		this._mat=Matrix.create();
 		this._points=points.slice(0,points.length);
 		Polygon.__super.call(this,x,y,0,0,this._points.length / 2,color,borderWidth,borderColor);
@@ -6506,9 +6963,9 @@ var Polygon=(function(_super){
 			if (this._start !=start){
 				this._start=start;
 				indices=[];
-				tLen=Math.floor(tArray.length / 2);
-				for (i=2;i < tLen;i++){
-					indices.push(start,start+i-1,start+i);
+				tLen=this.earcutTriangles.length;
+				for (i=0;i < tLen;i++){
+					indices.push(this.earcutTriangles[i]+start);
 				}
 				this.mUint16Array=new Uint16Array(indices);
 			}
@@ -6517,14 +6974,18 @@ var Polygon=(function(_super){
 			this._start=start;
 			indices=[];
 			var verts=[];
+			var vertsEarcut=[];
 			var color=this.color;
 			var r=((color >> 16)& 0x0000ff)/ 255,g=((color >> 8)& 0xff)/ 255,b=(color & 0x0000ff)/ 255;
 			tLen=Math.floor(tArray.length / 2);
 			for (i=0;i < tLen;i++){
 				verts.push(this.x+tArray[i *2],this.y+tArray[i *2+1],r,g,b);
+				vertsEarcut.push(this.x+tArray[i *2],this.y+tArray[i *2+1]);
 			}
-			for (i=2;i < tLen;i++){
-				indices.push(start,start+i-1,start+i);
+			this.earcutTriangles=Earcut.earcut(vertsEarcut,null,2);
+			tLen=this.earcutTriangles.length;
+			for (i=0;i < tLen;i++){
+				indices.push(this.earcutTriangles[i]+start);
 			}
 			this.mUint16Array=new Uint16Array(indices);
 			this.mFloat32Array=new Float32Array(verts);
@@ -6760,6 +7221,7 @@ var SubmitTexture=(function(_super){
 var BaseShader=(function(_super){
 	function BaseShader(){
 		BaseShader.__super.call(this);
+		this.lock=true;
 	}
 
 	__class(BaseShader,'laya.webgl.shader.BaseShader',_super);
@@ -6911,7 +7373,7 @@ var RenderTarget2D=(function(_super){
 		if (!this._destroy){
 			this._loaded=false;
 			this.bitmap.offAll();
-			this.bitmap.detoryResource();
+			this.bitmap.disposeResource();
 			this.bitmap.dispose();
 			this.offAll();
 			this.bitmap=null;
@@ -7028,7 +7490,7 @@ var Buffer=(function(_super){
 		this.completeCreate();
 	}
 
-	__proto.detoryResource=function(){
+	__proto.disposeResource=function(){
 		if (this._glBuffer){
 			WebGL.mainContext.deleteBuffer(this._glBuffer);
 			this._glBuffer=null;
@@ -7190,7 +7652,7 @@ var AtlasWebGLCanvas=(function(_super){
 	}
 
 	/***销毁资源*/
-	__proto.detoryResource=function(){
+	__proto.disposeResource=function(){
 		if (this._source){
 			WebGL.mainContext.deleteTexture(this._source);
 			this._source=null;
@@ -7316,7 +7778,7 @@ __proto.recreateResource=function(){
 }
 
 
-__proto.detoryResource=function(){
+__proto.disposeResource=function(){
 	if (this._source && !this.iscpuSource){
 		WebGL.mainContext.deleteTexture(this._source);
 		this._source=null;
@@ -7359,6 +7821,16 @@ __proto.texSubImage2D=function(webglCanvas,xoffset,yoffset){
 	gl.texSubImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,xoffset,yoffset,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,webglCanvas._source);
 	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,false);
 	(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
+}
+
+
+__proto.toBase64=function(type,encoderOptions,callBack){
+	var base64Data=null;
+	if (this._canvas){
+		base64Data=this._canvas.toDataURL(type,encoderOptions);
+	}
+
+	callBack.call(this,base64Data);
 }
 
 
@@ -7636,7 +8108,7 @@ var WebGLRenderTarget=(function(_super){
 		this.completeCreate();
 	}
 
-	__proto.detoryResource=function(){
+	__proto.disposeResource=function(){
 		if (this._frameBuffer){
 			WebGL.mainContext.deleteTexture(this._source);
 			WebGL.mainContext.deleteFramebuffer(this._frameBuffer);
@@ -7770,7 +8242,7 @@ __proto.createWebGlTexture=function(){
 }
 
 
-__proto.detoryResource=function(){
+__proto.disposeResource=function(){
 	if (!(AtlasResourceManager.enabled && this._allowMerageInAtlas)&& this._source){
 		WebGL.mainContext.deleteTexture(this._source);
 		this._source=null;
@@ -7857,7 +8329,7 @@ var Shader=(function(_super){
 	}
 
 	//忽略尺寸尺寸
-	__proto.detoryResource=function(){
+	__proto.disposeResource=function(){
 		WebGL.mainContext.deleteShader(this._vshader);
 		WebGL.mainContext.deleteShader(this._pshader);
 		WebGL.mainContext.deleteProgram(this._program);
@@ -8469,8 +8941,8 @@ var Buffer2D=(function(_super){
 		return scuess;
 	}
 
-	__proto.detoryResource=function(){
-		_super.prototype.detoryResource.call(this);
+	__proto.disposeResource=function(){
+		_super.prototype.disposeResource.call(this);
 		this._upload=true;
 		this._uploadSize=0;
 	}
@@ -8587,8 +9059,8 @@ var Shader2X=(function(_super){
 		return this._params2dQuick1;
 	}
 
-	__proto.detoryResource=function(){
-		_super.prototype.detoryResource.call(this);
+	__proto.disposeResource=function(){
+		_super.prototype.disposeResource.call(this);
 		this._params2dQuick1=null;
 		this._params2dQuick2=null;
 	}
@@ -8701,8 +9173,8 @@ var VertexBuffer2D=(function(_super){
 		this._floatArray32 && (this._floatArray32=new Float32Array(this._buffer));
 	}
 
-	__proto.detoryResource=function(){
-		_super.prototype.detoryResource.call(this);
+	__proto.disposeResource=function(){
+		_super.prototype.disposeResource.call(this);
 		var enableAtributes=Buffer._enableAtributes;
 		for (var i=0;i < 10;i++){
 			WebGL.mainContext.disableVertexAttribArray(i);
@@ -8759,7 +9231,7 @@ var WebGLImage=(function(_super){
 		this.minFifter=-1;
 		this.magFifter=-1;
 		if ((typeof data=='string')){
-			this.url=data;
+			this._url=data;
 			this._src=data;
 			this._image=new Browser.window.Image();
 			if (def){
@@ -8771,7 +9243,7 @@ var WebGLImage=(function(_super){
 			(data)&& (this._image.src=data);
 			}else if ((data instanceof ArrayBuffer)){
 			this._src=def;
-			this.url=this._src;
+			this._url=this._src;
 			var readData=new Byte(data);
 			var magicNumber=readData.readUTFBytes(4);
 			var version=readData.readUTFBytes(2);
@@ -8786,7 +9258,7 @@ var WebGLImage=(function(_super){
 			(AtlasResourceManager.enabled)&& (this._w < AtlasResourceManager.atlasLimitWidth && this._h < AtlasResourceManager.atlasLimitHeight)? this._allowMerageInAtlas=true :this._allowMerageInAtlas=false;
 			}else {
 			this._src=def;
-			this.url=this._src;
+			this._url=this._src;
 			this._image=data["source"] || data;
 			this.onresize();
 		}
@@ -8881,7 +9353,7 @@ var WebGLImage=(function(_super){
 	}
 
 	/***销毁资源*/
-	__proto.detoryResource=function(){
+	__proto.disposeResource=function(){
 		if (this._recreateLock){
 			this._needReleaseAgain=true;
 		}

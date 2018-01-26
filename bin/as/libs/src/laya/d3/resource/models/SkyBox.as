@@ -51,9 +51,10 @@ package laya.d3.resource.models {
 		 * @param value 天空立方体纹理。
 		 */
 		public function set textureCube(value:TextureCube):void {
-			_textureCube = value;
-			if (_conchSky) {//NATIVE
-				_conchSky.setTextureCube(_textureCube._conchTexture, 0, Sky.DIFFUSETEXTURE);
+			if (_textureCube !== value) {
+				(_textureCube) && (_textureCube._removeReference());//TODO:销毁问题
+				_textureCube = value;
+				(value) && (value._addReference());
 			}
 		}
 		
@@ -61,11 +62,11 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>SkyBox</code> 实例。
 		 */
 		public function SkyBox() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
-			name = "Skybox-" + _nameNumber;
 			_nameNumber++;
 			loadShaderParams();
-			recreateResource();
+			createResource();
 			alphaBlending = 1;
 			colorIntensity = 1;
 		
@@ -76,14 +77,17 @@ package laya.d3.resource.models {
 		 */
 		protected function _getShader(state:RenderState):Shader3D {
 			var shaderDefineValue:int = state.scene._shaderDefineValue;
-			_shader = _shaderCompile.withCompile(shaderDefineValue,0,0);
+			_shader = _shaderCompile.withCompile(shaderDefineValue, 0, 0);
 			return _shader;
 		}
 		
 		/**
 		 * @private
 		 */
-		override protected function recreateResource():void {//TODO:通过索引改为顶点复用
+		protected function createResource():void {
+			//TODO:通过索引改为顶点复用
+			//改成静态
+			
 			//(this._released) || (dispose());//如果已存在，则释放资源
 			_numberVertices = 36;
 			_numberIndices = 36;
@@ -165,15 +169,6 @@ package laya.d3.resource.models {
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW, true);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			memorySize = (_vertexBuffer._byteLength + _indexBuffer._byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
-			completeCreate();
-			
-			if (_conchSky) {//NATIVE
-				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
-				_sharderNameID = Shader3D.nameKey.getID("SkyBox");
-				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[_sharderNameID];
-				_conchSky.setShader(shaderCompile._conchShader);
-			}
 		}
 		
 		/**
@@ -219,6 +214,14 @@ package laya.d3.resource.models {
 				Stat.trianglesFaces += 12;
 				Stat.drawCall++;
 			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function destroy():void {
+			super.destroy();
+			(_textureCube) && (_textureCube._removeReference(), _textureCube = null);
 		}
 	
 	}

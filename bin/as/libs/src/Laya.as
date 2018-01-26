@@ -37,7 +37,7 @@ package {
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.13";
+		public static var version:String = "1.7.15";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -48,6 +48,9 @@ package {
 		public static var PlatformClass:ICPlatformClass = __JS__("window.PlatformClass");
 		/**@private */
 		private static var _isinit:Boolean = false;
+		/**@private */
+		public static var MiniAdpter:Object = /*[STATIC SAFE]*/__JS__('{ init:function() { if (window.navigator && window.navigator.userAgent  && window.navigator.userAgent.indexOf("MiniGame") >-1) console.error("请先引用小游戏适配库laya.wxmini.js,详细教程：https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0") }};');
+		
 		/**
 		 * 初始化引擎。使用引擎需要先初始化引擎，否则可能会报错。
 		 * @param	width 初始化的游戏窗口宽度，又称设计宽度。

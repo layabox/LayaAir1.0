@@ -43,8 +43,8 @@ package laya.d3.animation {
 			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.tilingOffset", _getSkinnedMeshRenderSharedMaterialTilingOffset, _setSkinnedMeshRenderSharedMaterialTilingOffset);
 			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.albedoColor", _getSkinnedMeshRenderSharedMaterialAlbedo, _setSkinnedMeshRenderSharedMaterialAlbedo);
 			
-			registerAnimationNodeProperty("meshRender.sharedMaterial.albedo", _getMeshRenderSharedMaterialAlbedo, _setMeshRenderSharedMaterialAlbedo);
-			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.albedo", _getSkinnedMeshRenderSharedMaterialAlbedo, _setSkinnedMeshRenderSharedMaterialAlbedo);
+			registerAnimationNodeProperty("meshRender.sharedMaterial.albedo", _getMeshRenderSharedMaterialAlbedo, _setMeshRenderSharedMaterialAlbedo);//兼容
+			registerAnimationNodeProperty("skinnedMeshRender.sharedMaterial.albedo", _getSkinnedMeshRenderSharedMaterialAlbedo, _setSkinnedMeshRenderSharedMaterialAlbedo);//兼容
 		}
 		
 		/**
@@ -66,26 +66,18 @@ package laya.d3.animation {
 		
 		/**@private */
 		public var _parent:AnimationNode;
-		/**@private */
-		public var _transform:AnimationTransform3D;
+		/**@private [只读]*/
+		public var transform:AnimationTransform3D;
 		
 		/**节点名称。 */
 		public var name:String;
-		
-		/**
-		 * 获取变换。
-		 * @return 变换。
-		 */
-		public function transform():AnimationTransform3D {
-			return _transform;
-		}
 		
 		/**
 		 * @private
 		 */
 		private static function _getLocalPosition(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			if (animationNode)
-				return animationNode._transform.localPosition.elements;
+				return animationNode.transform.getLocalPosition();
 			else
 				return sprite3D._transform.localPosition.elements;
 		}
@@ -94,15 +86,11 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setLocalPosition(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var localPosition:Vector3;
 			if (animationNode) {
-				var transform:AnimationTransform3D = animationNode._transform;
-				localPosition = transform._localPosition;
-				localPosition.elements = value;
-				transform._setLocalPosition(localPosition);
+				animationNode.transform.setLocalPosition(value);
 			} else {
 				var spriteTransform:Transform3D = sprite3D._transform;
-				localPosition = spriteTransform.localPosition;
+				var localPosition:Vector3 = spriteTransform.localPosition;
 				localPosition.elements = value;
 				spriteTransform.localPosition = localPosition;
 			}
@@ -113,7 +101,7 @@ package laya.d3.animation {
 		 */
 		private static function _getLocalRotation(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			if (animationNode)
-				return animationNode._transform.localRotation.elements;
+				return animationNode.transform.getLocalRotation();
 			else
 				return sprite3D._transform.localRotation.elements;
 		}
@@ -122,15 +110,11 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setLocalRotation(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var localRotation:Quaternion;
 			if (animationNode) {
-				var transform:AnimationTransform3D = animationNode._transform;
-				localRotation = transform._localRotation;
-				localRotation.elements = value;
-				transform._setLocalRotation(localRotation);
+				animationNode.transform.setLocalRotation(value);
 			} else {
 				var spriteTransform:Transform3D = sprite3D._transform;
-				localRotation = spriteTransform.localRotation;
+				var localRotation:Quaternion = spriteTransform.localRotation;
 				localRotation.elements = value;
 				spriteTransform.localRotation = localRotation;
 			}
@@ -141,7 +125,7 @@ package laya.d3.animation {
 		 */
 		private static function _getLocalScale(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			if (animationNode)
-				return animationNode._transform.localScale.elements;
+				return animationNode.transform.getLocalScale();
 			else
 				return sprite3D._transform.localScale.elements;
 		}
@@ -150,15 +134,11 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setLocalScale(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var localScale:Vector3;
 			if (animationNode) {
-				var transform:AnimationTransform3D = animationNode._transform;
-				localScale = transform._localScale;
-				localScale.elements = value;
-				transform._setLocalScale(localScale);
+				animationNode.transform.setLocalScale(value);
 			} else {
 				var spriteTransform:Transform3D = sprite3D._transform;
-				localScale = spriteTransform.localScale;
+				var localScale:Vector3 = spriteTransform.localScale;
 				localScale.elements = value;
 				spriteTransform.localScale = localScale;
 			}
@@ -169,7 +149,7 @@ package laya.d3.animation {
 		 */
 		private static function _getLocalRotationEuler(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			if (animationNode)
-				return animationNode._transform.localRotationEuler.elements;
+				return animationNode.transform.getLocalRotationEuler();
 			else
 				return sprite3D._transform.localRotationEuler.elements;
 		}
@@ -178,15 +158,11 @@ package laya.d3.animation {
 		 * @private
 		 */
 		private static function _setLocalRotationEuler(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
-			var localRotationEuler:Vector3;
 			if (animationNode) {
-				var transform:AnimationTransform3D = animationNode._transform;
-				localRotationEuler = transform._localRotationEuler;
-				localRotationEuler.elements = value;
-				transform._setLocalRotationEuler(localRotationEuler);
+				animationNode.transform.setLocalRotationEuler(value);
 			} else {
 				var spriteTransform:Transform3D = sprite3D._transform;
-				localRotationEuler = spriteTransform.localRotationEuler;
+				var localRotationEuler:Vector3 = spriteTransform.localRotationEuler;
 				localRotationEuler.elements = value;
 				spriteTransform.localRotationEuler = localRotationEuler;
 			}
@@ -198,7 +174,7 @@ package laya.d3.animation {
 		private static function _getMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			var material:*;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;//以下类似处理均为防止AnimationNode无关联实体节点
+				var entity:Transform3D = animationNode.transform._entity;//以下类似处理均为防止AnimationNode无关联实体节点
 				if (entity) {
 					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial;
 					return material.tilingOffset.elements;
@@ -216,7 +192,7 @@ package laya.d3.animation {
 		private static function _setMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
 			var material:*, tilingOffset:Vector4;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as MeshSprite3D).meshRender.material;
 					tilingOffset = material.tilingOffset;
@@ -237,7 +213,7 @@ package laya.d3.animation {
 		private static function _getMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			var material:*;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as MeshSprite3D).meshRender.sharedMaterial;
 					return material.albedoColor.elements;
@@ -255,7 +231,7 @@ package laya.d3.animation {
 		private static function _setMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
 			var material:*, albedo:Vector4;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as MeshSprite3D).meshRender.material;
 					albedo = material.albedoColor;
@@ -276,7 +252,7 @@ package laya.d3.animation {
 		private static function _getSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			var material:*;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial;
 					return material.tilingOffset.elements;
@@ -294,7 +270,7 @@ package laya.d3.animation {
 		private static function _setSkinnedMeshRenderSharedMaterialTilingOffset(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
 			var material:*, tilingOffset:Vector4;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material;
 					tilingOffset = material.tilingOffset;
@@ -315,7 +291,7 @@ package laya.d3.animation {
 		private static function _getSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			var material:*;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.sharedMaterial;
 					return material.albedoColor.elements;
@@ -334,7 +310,7 @@ package laya.d3.animation {
 		private static function _setSkinnedMeshRenderSharedMaterialAlbedo(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
 			var material:*, albedo:Vector4;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as SkinnedMeshSprite3D).skinnedMeshRender.material;
 					albedo = material.albedoColor;
@@ -355,7 +331,7 @@ package laya.d3.animation {
 		private static function _getParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, sprite3D:Sprite3D):Float32Array {
 			var material:*;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as ShuriKenParticle3D).particleRender.sharedMaterial;
 					return material.tintColor.elements;
@@ -373,7 +349,7 @@ package laya.d3.animation {
 		private static function _setParticleRenderSharedMaterialTintColor(animationNode:AnimationNode, sprite3D:Sprite3D, value:Float32Array):void {
 			var material:*, tintColor:Vector4;
 			if (animationNode) {
-				var entity:Transform3D = animationNode._transform._entity;
+				var entity:Transform3D = animationNode.transform._entity;
 				if (entity) {
 					material = (entity.owner as ShuriKenParticle3D).particleRender.material;
 					tintColor = material.tintColor;
@@ -394,7 +370,7 @@ package laya.d3.animation {
 		public function AnimationNode() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_childs = new Vector.<AnimationNode>();
-			_transform = new AnimationTransform3D(this);
+			transform = new AnimationTransform3D(this);
 		}
 		
 		/**
@@ -403,7 +379,7 @@ package laya.d3.animation {
 		 */
 		public function addChild(child:AnimationNode):void {
 			child._parent = this;
-			child._transform.parent = _transform;
+			child.transform.setParent(transform);
 			_childs.push(child);
 		}
 		
@@ -449,25 +425,18 @@ package laya.d3.animation {
 		 * @param	destObject 克隆源。
 		 */
 		public function cloneTo(destObject:*):void {
-			var destAnimationNode:AnimationNode = destObject as AnimationNode;
-			destAnimationNode.name = name;
-			var destTransform:AnimationTransform3D = destAnimationNode._transform;
-			
-			var destLocalPosition:Vector3 = destTransform.localPosition;
-			_transform.localPosition.cloneTo(destLocalPosition);
-			destTransform.localPosition = destLocalPosition;
-			
-			var destLocalRotation:Quaternion = destTransform.localRotation;
-			_transform.localRotation.cloneTo(destLocalRotation);
-			destTransform.localRotation = destLocalRotation;
-			
-			var destLocalScale:Vector3 = destTransform.localScale;
-			_transform.localScale.cloneTo(destLocalScale);
-			destTransform.localScale = destLocalScale;
-			
+			var destNode:AnimationNode = destObject as AnimationNode;
+			destNode.name = name;
 			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
-				var destChild:AnimationNode = _childs[i].clone();
-				destAnimationNode.addChild(destChild);
+				var child:AnimationNode = _childs[i];
+				var destChild:AnimationNode = child.clone();
+				destNode.addChild(destChild);
+				var transform:AnimationTransform3D = child.transform;
+				var destTransform:AnimationTransform3D = destChild.transform;
+				destTransform.setLocalPosition(transform.getLocalPosition());//浅拷贝
+				destTransform.setLocalRotation(transform.getLocalRotation());//浅拷贝
+				destTransform.setLocalScale(transform.getLocalScale());//浅拷贝
+				destTransform._localRotationEuler=transform._localRotationEuler;//浅拷贝
 			}
 		}
 		

@@ -204,6 +204,13 @@ package laya.d3.graphics {
 			Stat.trianglesFaces += indexCount / 3;
 		}
 		
+		/**
+		 * @private
+		 */
+		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
+			return null;
+		}
+		
 		/**NATIVE*/
 		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
 		

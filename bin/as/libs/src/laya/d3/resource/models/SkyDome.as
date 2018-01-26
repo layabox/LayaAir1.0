@@ -54,13 +54,14 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 设置天空立方体纹理。
-		 * @param value 天空立方体纹理。
+		 * 设置天空纹理。
+		 * @param value 天空纹理。
 		 */
 		public function set texture(value:Texture2D):void {
-			_texture = value;
-			if (_conchSky) {//NATIVE
-				_conchSky.setTexture(_texture._conchTexture, 0, Sky.DIFFUSETEXTURE);
+			if (_texture !== value) {
+				(_texture) && (_texture._removeReference());//TODO:销毁问题
+				_texture = value;
+				(value) && (value._addReference());
 			}
 		}
 		
@@ -68,8 +69,8 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>SkyBox</code> 实例。
 		 */
 		public function SkyDome() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
-			name = "SkyDome-" + _nameNumber;
 			_nameNumber++;
 			loadShaderParams();
 			recreateResource();
@@ -89,7 +90,7 @@ package laya.d3.resource.models {
 		/**
 		 * @private
 		 */
-		override protected function recreateResource():void {//TODO:通过索引改为顶点复用
+		 protected function recreateResource():void {//TODO:通过索引改为顶点复用
 			//(this._released) || (dispose());//如果已存在，则释放资源
 			
 			_numberVertices = (_stacks + 1) * (_slices + 1);
@@ -140,8 +141,6 @@ package laya.d3.resource.models {
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			memorySize = (_vertexBuffer._byteLength + _indexBuffer._byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
-			completeCreate();
 			if (_conchSky) {//NATIVE
 				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
 				_sharderNameID = Shader3D.nameKey.getID("SkyDome");
@@ -207,6 +206,14 @@ package laya.d3.resource.models {
 		
 		public function loadEnvInfo(envInfo:String):void {
 			Laya.loader.load(envInfo, Handler.create(this, onEnvDescLoaded, [envInfo]));
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function destroy():void {
+			super.destroy();
+			(_texture) && (_texture._removeReference(), _texture = null);
 		}
 	
 	}

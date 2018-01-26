@@ -104,7 +104,7 @@ package laya.webgl.resource {
 			minFifter = -1;
 			magFifter = -1;
 			if (data is String) {
-				url = data;
+				_url = data;
 				_src = data;
 				_image = new Browser.window.Image();
 				if (def) {
@@ -116,7 +116,7 @@ package laya.webgl.resource {
 				(data) && (_image.src = data);
 			} else if (data is ArrayBuffer) {
 				_src = def;
-				url = _src;//也不是字符串，为啥要赋值给URL?
+				_url = _src;//也不是字符串，为啥要赋值给URL?
 				var readData:Byte = new Byte(data);
 				var magicNumber:String = readData.readUTFBytes(4);
 				var version:String = readData.readUTFBytes(2);
@@ -132,7 +132,7 @@ package laya.webgl.resource {
 				
 			} else {
 				_src = def;
-				url = _src;//也不是字符串，为啥要赋值给URL?
+				_url = _src;//也不是字符串，为啥要赋值给URL?
 				_image = data["source"] || data;//src["source"]为canvas,src为ImageBitmap
 				onresize();
 			}
@@ -234,7 +234,7 @@ package laya.webgl.resource {
 		}
 		
 		/***销毁资源*/
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_recreateLock) {
 				_needReleaseAgain = true;
 			}

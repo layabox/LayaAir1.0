@@ -63,7 +63,7 @@ package laya.webgl.resource {
 			_ctx && _ctx.clear();
 		}
 		
-		public function destroy():void {
+		override public function destroy():void {
 			_ctx && _ctx.destroy();
 			_ctx = null;
 		}
@@ -103,7 +103,7 @@ package laya.webgl.resource {
 			completeCreate();
 		}
 		
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_source && !iscpuSource) {
 				WebGL.mainContext.deleteTexture(_source);
 				_source = null;
@@ -147,7 +147,12 @@ package laya.webgl.resource {
 			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 		}
-	
+		public function toBase64(type:String, encoderOptions:Number, callBack:Function):void {
+			var base64Data:String = null;
+			if (_canvas) {
+				base64Data = _canvas.toDataURL(type, encoderOptions);
+			}
+			callBack.call(this, base64Data);
+		}
 	}
-
 }

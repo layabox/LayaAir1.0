@@ -119,7 +119,7 @@ package laya.resource {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			if (_recreateLock)
 				_needReleaseAgain = true;
 			(_source) && (_source = null, memorySize = 0);

@@ -35,6 +35,8 @@ package laya.d3.resource.models {
 		public var _boneNames:Vector.<String>;
 		/** @private */
 		public var _inverseBindPoses:Vector.<Matrix4x4>;
+		/** @private */
+		public var _skinnedDatas:Float32Array;
 		
 		
 		
@@ -177,7 +179,7 @@ package laya.d3.resource.models {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function detoryResource():void {
+		override protected function disposeResource():void {
 			for (var i:int = 0; i < _subMeshes.length; i++)
 				_subMeshes[i].dispose();
 			_materials = null;

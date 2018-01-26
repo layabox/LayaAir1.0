@@ -15,7 +15,7 @@ package laya.d3.resource.models {
 	/**
 	 * <code>Sky</code> 类用于创建天空的父类，抽象类不允许实例。
 	 */
-	public class Sky extends Resource {
+	public class Sky {
 		public static const MVPMATRIX:int = 0;
 		public static const INTENSITY:int = 1;
 		public static const ALPHABLENDING:int = 2;
@@ -129,9 +129,11 @@ package laya.d3.resource.models {
 		public function set envDiffuseSHRed(value:Float32Array):void {
 			__ownerCamera._shaderValues.setValue(BaseCamera.DIFFUSEIRRADMATR, value);
 		}
+		
 		public function set envDiffuseSHGreen(value:Float32Array):void {
 			__ownerCamera._shaderValues.setValue(BaseCamera.DIFFUSEIRRADMATG, value);
 		}
+		
 		public function set envDiffuseSHBlue(value:Float32Array):void {
 			__ownerCamera._shaderValues.setValue(BaseCamera.DIFFUSEIRRADMATB, value);
 		}
@@ -150,6 +152,7 @@ package laya.d3.resource.models {
 		 * 创建一个 <code>Sky</code> 实例。
 		 */
 		public function Sky() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
 			_shaderValue = new ValusArray();
 			if (Render.isConchNode) {
@@ -203,6 +206,13 @@ package laya.d3.resource.models {
 		 * @private
 		 */
 		public function _render(state:RenderState):void {
+		}
+		
+		/**
+		 * 销毁天空。
+		 */
+		public function destroy():void {
+			__ownerCamera = null;
 		}
 	
 	}

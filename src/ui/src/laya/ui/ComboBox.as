@@ -444,6 +444,7 @@ package laya.ui {
 					_list.zOrder = 1001;
 					Laya._currentStage.addChild(_list);
 					Laya.stage.once(Event.MOUSE_DOWN, this, removeList);
+					Laya.stage.on(Event.MOUSE_WHEEL, this, _onStageMouseWheel);
 					_list.selectedIndex = _selectedIndex;
 				} else {
 					_list && _list.removeSelf();
@@ -451,10 +452,18 @@ package laya.ui {
 			}
 		}
 		
+		private function _onStageMouseWheel(e:Event):void
+		{
+			if(!_list||_list.contains(e.target)) return;
+			removeList(null);
+		}
+		
 		/**
 		 * 关闭下拉列表。
 		 */
 		protected function removeList(e:Event):void {
+			Laya.stage.off(Event.MOUSE_DOWN, this, removeList);
+			Laya.stage.off(Event.MOUSE_WHEEL, this, _onStageMouseWheel);
 			isOpen = false;
 		}
 		
