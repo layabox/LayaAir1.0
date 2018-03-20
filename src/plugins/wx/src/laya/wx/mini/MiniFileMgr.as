@@ -1,5 +1,7 @@
 package laya.wx.mini {
 	import laya.events.EventDispatcher;
+	import laya.net.Loader;
+	import laya.resource.Texture;
 	import laya.utils.Handler;
 	
 	public class MiniFileMgr extends EventDispatcher {
@@ -179,6 +181,13 @@ package laya.wx.mini {
 			var fileurlkey:String = readyUrl.split("?")[0];
 			var fileObj:Object = getFileInfo(readyUrl);
 			var saveFilePath:String = getFileNativePath(tempFileName);
+			
+			//这里存储图片文件到磁盘里，需要检查磁盘空间容量是否已满50M，如果超过50M就需要清理掉不用的资源
+			var totalSize:int = 50 * 1024 * 1024;//总量50M
+			var chaSize:int = 5 * 1024 * 1024;//差值4M
+			var fileUseSize:int = getCacheUseSize();//目前使用量
+			if((fileUseSize + chaSize) >= totalSize)
+				onClearCacheRes(5 * 1024 * 1024);//如果存储满了需要清理资源,检查没用的资源清理，然后在做存储
 			fs.copyFile({srcPath: tempFilePath, destPath: saveFilePath, success: function(data):void {
 				if (!fileObj) {
 					onSaveFile(readyUrl, tempFileName);
@@ -186,10 +195,41 @@ package laya.wx.mini {
 				} else {
 					if (fileObj.readyUrl != readyUrl)
 						remove(tempFileName, readyUrl, callBack);
+					else
+						callBack != null && callBack.runWith([0]);
 				}
 			}, fail: function(data):void {
 				callBack != null && callBack.runWith([1, data]);
 			}});
+		}
+		
+		/**
+		 * 清理缓存到磁盘的图片,每次释放默认5M，可以配置
+		 */		
+		private static function onClearCacheRes(memSize:int):void
+		{
+			var clearFileSize:int = 0;
+			for(var key:String in filesListObj)
+			{
+				var fileObj:* = filesListObj[key];
+				if(key != "fileUsedSize")
+				{
+					if(clearFileSize >= memSize)
+						break;//清理容量超过设置值就跳出清理操作
+					var texture:Texture = Loader.getRes(fileObj.readyUrl);
+					if(texture && texture.bitmap.useNum == 0)
+					{
+						//无引用直接删除
+						clearFileSize += fileObj.size;
+						remove("",fileObj.readyUrl);
+					}else if(texture == null)
+					{
+						//无引用直接删除
+						clearFileSize += fileObj.size;
+						remove("",fileObj.readyUrl);
+					}
+				}
+			}
 		}
 		
 		/**
@@ -203,17 +243,16 @@ package laya.wx.mini {
 		
 		/**
 		 * 从本地删除文件
-		 * @param tempFileName 文件临时地址
+		 * @param tempFileName 文件临时地址 ,为空字符串时就会从文件列表删除
 		 * @param readyUrl 文件真实下载地址
 		 * @param callBack 回调处理，在存储图片时用到
 		 */
 		public static function remove(tempFileName:String, readyUrl:String = "", callBack:Handler = null):void {
 			var fileObj:Object = getFileInfo(readyUrl);
 			var deleteFileUrl:String = getFileNativePath(fileObj.md5);
-			Laya.loader.clearRes(fileObj.readyUrl);
 			fs.unlink({filePath: deleteFileUrl, success: function(data:*):void {
-				if (readyUrl != "")
-					onSaveFile(readyUrl, tempFileName);
+				var isAdd:Boolean = tempFileName != "" ? true : false;
+				onSaveFile(readyUrl, tempFileName,isAdd);//清理文件列表
 				callBack != null && callBack.runWith([0]);
 			}, fail: function(data:*):void {
 			}});
@@ -224,14 +263,55 @@ package laya.wx.mini {
 		 * @param readyUrl
 		 * @param md5Name
 		 */
-		private static function onSaveFile(readyUrl:String, md5Name:String):void {
+		public static function onSaveFile(readyUrl:String, md5Name:String,isAdd:Boolean = true):void {
 			var fileurlkey:String = readyUrl.split("?")[0];
-			filesListObj[fileurlkey] = {md5: md5Name, readyUrl: readyUrl};
-			fs.writeFile({filePath: fileNativeDir + "/" + fileListName, encoding: 'utf8', data: JSON.stringify(filesListObj), success: function(data):void {
-			}, fail: function(data):void {
-			}});
+			if(filesListObj['fileUsedSize'] == null)
+				filesListObj['fileUsedSize'] =  0;
+			if(isAdd)
+			{
+				filesListObj[fileurlkey] = {md5: md5Name, readyUrl: readyUrl};//获取文件大小为异步操作，如果放到完成回调里可能会出现文件列表获取没有内容
+				var fileNativeName:String = getFileNativePath(md5Name);
+				fs.getFileInfo({
+					filePath:fileNativeName,
+					success:function(data:Object):void
+					{
+//						trace("-------------readyUrl:" + readyUrl + "----size:" + data.size);
+						filesListObj[fileurlkey] = {md5: md5Name, readyUrl: readyUrl,size:data.size};
+						filesListObj['fileUsedSize'] = parseInt(filesListObj['fileUsedSize']) + data.size;
+//						trace("-------------readyUrl:" + readyUrl + "----size:" + data.size + "-------totalSize:" + filesListObj['fileUsedSize']);
+						fs.writeFile({filePath: fileNativeDir + "/" + fileListName, encoding: 'utf8', data: JSON.stringify(filesListObj), success: function(data):void {
+						}, fail: function(data):void {
+						}});
+					},
+					fail:function(data:Object):void{
+						trace("fail");
+						trace(data);
+					},
+					complete:function(data:Object):void
+					{
+					}
+				});
+			}else
+			{
+				var fileSize:int = parseInt(filesListObj[fileurlkey].size);
+				filesListObj['fileUsedSize']=parseInt(filesListObj['fileUsedSize']) - fileSize;
+				delete filesListObj[fileurlkey];
+				fs.writeFile({filePath: fileNativeDir + "/" + fileListName, encoding: 'utf8', data: JSON.stringify(filesListObj), success: function(data):void {
+				}, fail: function(data):void {
+				}});
+			}
 		}
 		
+		/**
+		 *获取当前缓存使用的空间大小(字节数，除以1024 再除以1024可以换算成M)
+		 * @return 
+		 */		
+		public static function getCacheUseSize():Number
+		{
+			if(filesListObj && filesListObj['fileUsedSize'])
+				return filesListObj['fileUsedSize'];
+			return 0;
+		}
 		/**
 		 * 判断资源目录是否存在
 		 * @param dirPath 磁盘设定路径

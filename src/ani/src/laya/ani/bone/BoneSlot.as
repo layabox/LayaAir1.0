@@ -111,14 +111,18 @@ package laya.ani.bone {
 		 * @param	index
 		 */
 		public function showDisplayByIndex(index:int):void {
-			if (_replaceDic[index]) index = _replaceDic[index];
+			if (_replaceDic[index]!=null) index = _replaceDic[index];
 			if (currSlotData && index > -1 && index < currSlotData.displayArr.length) {
 				displayIndex = index;
 				currDisplayData = currSlotData.displayArr[index];
 				if (currDisplayData) {
 					var tName:String = currDisplayData.name;
 					currTexture = templet.getTexture(tName);
-					if (currTexture && Render.isWebGL && currDisplayData.type == 0 && currDisplayData.uvs)
+					//if (currTexture && Render.isWebGL && currDisplayData.type == 0 && currDisplayData.uvs)
+					//{
+						//currTexture = currDisplayData.createTexture(currTexture);
+					//}
+					if (currTexture && !Render.isConchApp && currDisplayData.type == 0 && currDisplayData.uvs)
 					{
 						currTexture = currDisplayData.createTexture(currTexture);
 					}

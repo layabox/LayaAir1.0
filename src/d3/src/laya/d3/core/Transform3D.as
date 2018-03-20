@@ -316,9 +316,9 @@ package laya.d3.core {
 		public function get rotation():Quaternion {
 			if (_rotationUpdate) {
 				if (_parent != null)
-					Quaternion.multiply(_parent.rotation, _localRotation, _rotation);
+					Quaternion.multiply(_parent.rotation, localRotation, _rotation);//使用localRotation不使用_localRotation,内部需要计算
 				else
-					_localRotation.cloneTo(_rotation);
+					localRotation.cloneTo(_rotation);//使用localRotation不使用_localRotation,内部需要计算
 				
 				_rotationUpdate = false;
 			}

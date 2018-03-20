@@ -1,4 +1,5 @@
 package laya.net {
+	import laya.events.Event;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
@@ -14,20 +15,61 @@ package laya.net {
 		private static const _testString:String = "LayaTTFFont";
 		public var fontName:String;
 		public var complete:Handler;
+		public var err:Handler;
 		private var _fontTxt:String;
 		private var _url:String;
 		private var _div:*;
 		private var _txtWidth:Number;
+		private var _http:HttpRequest;
 		
 		public function load(fontPath:String):void {
 			_url = fontPath;
 			var tArr:Array = fontPath.split(".ttf")[0].split("/");
 			fontName = tArr[tArr.length - 1];
+			if (Browser.window.conch)
+			{
+				_loadConch();
+			}else
 			if (Browser.window.FontFace) {
 				this._loadWithFontFace()
 			}
 			else {
 				this._loadWithCSS();
+			}
+		}
+		
+		private function _loadConch():void
+		{
+			_http = new HttpRequest();
+			_http.on(Event.ERROR, this, _onErr);
+			_http.on(Event.COMPLETE, this, _onHttpLoaded);
+			_http.send(_url, null, "get", Loader.BUFFER);
+		}
+		
+		private function _onHttpLoaded(data:* = null):void
+		{
+			Browser.window.conch.setFontFaceFromBuffer(fontName, data);
+			_clearHttp();
+			_complete();
+		}
+		
+		private function _clearHttp():void
+		{
+			if (_http)
+			{
+				_http.off(Event.ERROR, this, _onErr);
+				_http.off(Event.COMPLETE, this, _onHttpLoaded);
+				_http = null;
+			}
+		}
+		
+		private function _onErr():void
+		{
+			_clearHttp();
+			if (err)
+			{
+				err.runWith("fail:" + _url);
+				err = null;
 			}
 		}
 		

@@ -1,4 +1,5 @@
 package laya.ani.bone {
+	import laya.renders.Render;
 	import laya.resource.Texture;
 	
 	
@@ -46,6 +47,14 @@ package laya.ani.bone {
 				texture.offsetY = -currTexture.offsetY;
 				texture.sourceWidth = currTexture.sourceWidth;
 				texture.sourceHeight = currTexture.sourceHeight;
+			}
+			
+			if (!Render.isWebGL)
+			{
+				if (uvs[1] > uvs[5])
+				{
+					texture.offsetY = texture.sourceHeight - texture.height - texture.offsetY;
+				}
 			}
 			return texture;
 		}

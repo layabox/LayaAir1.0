@@ -1,10 +1,8 @@
 package laya.wx.mini {
 	import laya.display.Input;
-	import laya.display.Stage;
-	import laya.media.Sound;
-	import laya.media.SoundManager;
 	import laya.net.Loader;
 	import laya.net.URL;
+	import laya.resource.Texture;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
@@ -33,11 +31,11 @@ package laya.wx.mini {
 		 */
 		public static function init(isPosMsg:Boolean = false,isSon:Boolean = false):void {
 			if (_inited) return;
+			_inited = true;
 			window = __JS__('window');
 			if(window.navigator.userAgent.indexOf('MiniGame') <0) return;
-			_inited = true;
 			isZiYu = isSon;
-			isPosMsgYu = isPosMsg;			
+			isPosMsgYu = isPosMsg;
 			EnvConfig = {};
 			
 			//设置资源存储目录
@@ -46,6 +44,8 @@ package laya.wx.mini {
 				MiniFileMgr.setNativeFileDir("/layaairGame");
 				MiniFileMgr.existDir(MiniFileMgr.fileNativeDir, Handler.create(MiniAdpter, onMkdirCallBack));
 			}
+			systemInfo = __JS__('wx.getSystemInfoSync()');
+			
 			//所有原引擎中有适配代码
 			//适配Browser中的window.focus()
 			window.focus = function():void {
@@ -85,7 +85,7 @@ package laya.wx.mini {
 			//文件加载处理
 			Loader.prototype.load = MiniLoader.prototype.load;
 			//文件清理处理
-			//Loader.prototype.clearRes = MiniLoader.prototype.clearRes;
+			Loader['clearRes'] = clearRes;
 			//修改图片加载
 			Loader.prototype._loadImage = MiniImage.prototype._loadImage;
 			
@@ -101,6 +101,38 @@ package laya.wx.mini {
 			}
 		}
 		
+		/**
+		 * 清理文件缓存的资源 
+		 * @param url
+		 * @param forceDispose
+		 */		
+		public static function clearRes(url:String,forceDispose:Boolean = false):void
+		{
+			url = URL.formatURL(url);
+			//删除图集
+			var arr:Array = Loader.getAtlas(url);
+			if (arr) {
+				for (var i:int = 0, n:int = arr.length; i < n; i++) {
+					var resUrl:String = arr[i];
+					var tex:Texture = Loader.getRes(resUrl);
+					delete Loader.loadedMap[resUrl];
+					if (tex) tex.destroy(forceDispose);
+					
+				}
+				arr.length = 0;
+				delete Loader['atlasMap'][url];
+				delete Loader.loadedMap[url];
+				//释放文件缓存的资源
+				MiniFileMgr.remove("",url);
+			} else {
+				var res:* = Loader.loadedMap[url];
+				if (res) {
+					delete Loader.loadedMap[url];
+					if (res is Texture && res.bitmap) Texture(res).destroy(forceDispose);				
+				}
+			}
+		}
+		
 		private static function onMkdirCallBack(errorCode:int, data:*):void {
 			if (!errorCode)
 				MiniFileMgr.filesListObj = JSON.parse(data.data);
@@ -110,9 +142,8 @@ package laya.wx.mini {
 		public static function pixelRatio():Number {
 			if (!EnvConfig.pixelRatioInt) {
 				try {
-					var systemInfo:Object = __JS__('wx.getSystemInfoSync()');
+					trace(systemInfo);
 					EnvConfig.pixelRatioInt = systemInfo.pixelRatio;
-					systemInfo = systemInfo;
 					return systemInfo.pixelRatio;
 				} catch (error:Error) {
 				}

@@ -436,7 +436,8 @@ package laya.d3.animation {
 				destTransform.setLocalPosition(transform.getLocalPosition());//浅拷贝
 				destTransform.setLocalRotation(transform.getLocalRotation());//浅拷贝
 				destTransform.setLocalScale(transform.getLocalScale());//浅拷贝
-				destTransform._localRotationEuler=transform._localRotationEuler;//浅拷贝
+				destTransform._localRotationEuler = transform._localRotationEuler;//浅拷贝
+				destTransform._setWorldMatrixIgnoreUpdate(transform.getWorldMatrix());//浅拷贝
 			}
 		}
 		

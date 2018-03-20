@@ -47,5 +47,6 @@ package laya.d3.graphics {
 		
 		public static const TEXTURECOORDINATE0X:int = 38;
 		public static const TEXTURECOORDINATE0Y:int = 39;
+		public static const OFFSETVECTOR:int = 40;
 	}
 }

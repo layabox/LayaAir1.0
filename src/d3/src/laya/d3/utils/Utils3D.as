@@ -39,6 +39,7 @@ package laya.d3.utils {
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
+	import laya.d3.core.trail.TrailSprite3D;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -196,6 +197,9 @@ package laya.d3.utils {
 					break;
 				case "ShuriKenParticle3D": 
 					node = new ShuriKenParticle3D();
+					break;
+				case "TrailSprite3D":
+					node = new TrailSprite3D();
 					break;
 				case "Terrain": 
 					node = new Terrain();

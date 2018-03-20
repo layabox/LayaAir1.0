@@ -194,12 +194,15 @@ package laya.display {
 			window.document.addEventListener(visibilityChange, visibleChangeFun);
 			function visibleChangeFun():void {
 				if (Browser.document[state] == "hidden") {
-					_isVisibility = false;
-					if (_this._isInputting()) Input["inputElement"].target.focus = false;
+					_this._setStageVisible(false);
 				} else {
-					_isVisibility = true;
+					_this._setStageVisible(true);
 				}
-				_this.event(Event.VISIBILITY_CHANGE);
+			}
+			
+			window.document.addEventListener("qbrowserVisibilityChange", qbroserVisibleChangeFun);
+			function qbroserVisibleChangeFun(e:*):void {
+				_this._setStageVisible(!e.hidden);
 			}
 			window.addEventListener("resize", function():void {
 				// 处理屏幕旋转。旋转后收起输入法。
@@ -222,6 +225,14 @@ package laya.display {
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
 			if (Browser.onMobile) on(Event.MOUSE_DOWN, this, _onmouseMove);
+		}
+		
+		private function _setStageVisible(value:Boolean):void
+		{
+			if (_isVisibility == value) return;
+			_isVisibility = value;
+			if (!_isVisibility) if (_isInputting()) Input["inputElement"].target.focus = false;
+			this.event(Event.VISIBILITY_CHANGE);
 		}
 		
 		/**
@@ -625,7 +636,7 @@ package laya.display {
 		
 		/**@inheritDoc */
 		override public function render(context:RenderContext, x:Number, y:Number):void {
-			if (_frameRate === FRAME_SLEEP) {
+			if (_frameRate === FRAME_SLEEP && !Render.isConchApp) {
 				var now:Number = Browser.now();
 				if (now - _frameStartTime >= 1000) _frameStartTime = now;
 				else return;
@@ -650,7 +661,7 @@ package laya.display {
 			
 			Stat.renderSlow = !isFastMode;
 			
-			if (isFastMode || isDoubleLoop) {
+			if (isFastMode || isDoubleLoop || Render.isConchApp) {
 				Stat.loopCount++;
 				MouseManager.instance.runEvent();
 				Laya.timer._update();

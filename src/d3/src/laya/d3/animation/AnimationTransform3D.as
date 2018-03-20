@@ -234,7 +234,7 @@ package laya.d3.animation {
 			} else {
 				var entityTransform:Transform3D = _entity.owner._transform;
 				var entityLocalRotationEuler:Vector3 = _entity.localRotationEuler;
-					var elements:Float32Array = entityLocalRotationEuler.elements;
+				var elements:Float32Array = entityLocalRotationEuler.elements;
 				elements[0] = value[0];
 				elements[1] = value[1];
 				elements[2] = value[2];

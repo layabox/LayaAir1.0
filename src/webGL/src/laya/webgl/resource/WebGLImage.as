@@ -194,7 +194,7 @@ package laya.webgl.resource {
 			_image.onload = null;
 			_image = null;
 			
-			if (isPot)
+			if (isPot && this.mipmap)
 				memorySize = _w * _h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
 			else
 				memorySize = _w * _h * 4;

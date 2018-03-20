@@ -85,7 +85,7 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	separateConstantMax  最大分轴固定角速度。
 		 * @return  渐变角速度。
 		 */
-		public static function createByRandomTwoConstantSeparate(separateConstantMin:Vector4, separateConstantMax:Vector4):GradientAngularVelocity {
+		public static function createByRandomTwoConstantSeparate(separateConstantMin:Vector3, separateConstantMax:Vector3):GradientAngularVelocity {
 			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
 			gradientAngularVelocity._type = 2;
 			gradientAngularVelocity._separateAxes = true;
@@ -160,9 +160,9 @@ package laya.d3.core.particleShuriKen.module {
 		/**@private */
 		private var _constantMax:Number;
 		/**@private */
-		private var _constantMinSeparate:Vector4;
+		private var _constantMinSeparate:Vector3;
 		/**@private */
-		private var _constantMaxSeparate:Vector4;
+		private var _constantMaxSeparate:Vector3;
 		
 		/**@private */
 		private var _gradientMin:GradientDataNumber;
@@ -265,14 +265,14 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * 最小分轴随机双固定角速度。
 		 */
-		public function get constantMinSeparate():Vector4 {
+		public function get constantMinSeparate():Vector3 {
 			return _constantMinSeparate;
 		}
 		
 		/**
 		 * 最大分轴随机双固定角速度。
 		 */
-		public function get constantMaxSeparate():Vector4 {
+		public function get constantMaxSeparate():Vector3 {
 			return _constantMaxSeparate;
 		}
 		

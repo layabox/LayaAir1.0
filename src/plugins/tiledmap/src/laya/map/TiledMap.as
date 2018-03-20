@@ -245,6 +245,7 @@ package laya.map {
 						if (tAnimation) {
 							var tAniData:TileMapAniData = new TileMapAniData();
 							_animationDic[p] = tAniData;
+							tAniData.image = tileset.image;
 							for (var j:int = 0; j < tAnimation.length; j++) {
 								var tAnimationItem:Object = tAnimation[j];
 								tAniData.mAniIdArray.push(tAnimationItem.tileid);
@@ -309,6 +310,7 @@ package laya.map {
 			return tResultPath;
 		}
 		
+		private var _texutreStartDic:Object = { };
 		/**
 		 * 纹理加载完成，如果所有的纹理加载，开始初始化地图
 		 * @param	e 纹理数据
@@ -336,6 +338,7 @@ package laya.map {
 			var tTileHNum:int = Math.floor((tImageHeight - tTileSet.margin - tTileTextureH) / (tTileTextureH + tTileSet.spacing)) + 1;
 			
 			var tTileTexSet:TileTexSet = null;
+			_texutreStartDic[tTileSet.image] = _tileTexSetArr.length;
 			for (var i:int = 0; i < tTileHNum; i++) {
 				for (var j:int = 0; j < tTileWNum; j++) {
 					tTileTexSet = new TileTexSet();
@@ -383,8 +386,12 @@ package laya.map {
 		private function initMap():void {
 			var i:int, n:int;
 			for (var p:*in _animationDic) {
-				var tTileTexSet:TileTexSet = getTexture(parseInt(p) + 1);
+				
+				
 				var tAniData:TileMapAniData = _animationDic[p];
+				var gStart:int;
+				gStart = _texutreStartDic[tAniData.image];
+				var tTileTexSet:TileTexSet = getTexture(parseInt(p) + gStart);
 				if (tAniData.mAniIdArray.length > 0) {
 					tTileTexSet.textureArray = [];
 					tTileTexSet.durationTimeArray = tAniData.mDurationTimeArray;
@@ -394,7 +401,7 @@ package laya.map {
 						tTileTexSet.animationTotalTime += tTileTexSet.durationTimeArray[i];
 					}
 					for (i = 0, n = tAniData.mAniIdArray.length; i < n; i++) {
-						var tTexture:TileTexSet = getTexture(tAniData.mAniIdArray[i] + 1);
+						var tTexture:TileTexSet = getTexture(tAniData.mAniIdArray[i] + gStart);
 						tTileTexSet.textureArray.push(tTexture);
 					}
 				}
@@ -1543,6 +1550,7 @@ class TileMapAniData {
 	public var mAniIdArray:Array = [];
 	public var mDurationTimeArray:Array = [];
 	public var mTileTexSetArr:Array = [];
+	public var image:*;
 }
 
 class TileSet {

@@ -6,6 +6,7 @@ package laya.webgl.resource {
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	
+	/**@private */
 	public class WebGLCanvas extends Bitmap {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		//public static var create:Function = function(type:String):* {
@@ -13,6 +14,8 @@ package laya.webgl.resource {
 		//}
 		
 		public static var _createContext:Function;
+		public var flipY:Boolean = true;	//上传的时候是否上下颠倒
+		public var premulAlpha:Boolean = false; //上传的时候是否预乘alpha
 		
 		private var _ctx:Context;
 		//private var _is2D:Boolean = false;
@@ -31,6 +34,7 @@ package laya.webgl.resource {
 		//}
 		
 		public var iscpuSource:Boolean;
+		public var alwaysChange:Boolean = false;
 		
 		//待调整移除
 		//public function WebGLCanvas(type:String) {
@@ -76,8 +80,13 @@ package laya.webgl.resource {
 			_ctx = context;
 		}
 		
-		public function getContext(contextID:String, other:* = null):Context {
+		public function getContext(contextID:String, other:* = null):Context {			
 			return _ctx ? _ctx : (_ctx = _createContext(this));
+		}
+		
+		override public function get source():* {
+			if (alwaysChange) reloadCanvasData();
+			return _source;
 		}
 		
 		/*override public function copyTo(dec:Bitmap):void {
@@ -98,6 +107,12 @@ package laya.webgl.resource {
 			_ctx && (_ctx.asBitmap = value);
 		}
 		
+		override public function activeResource(force:Boolean = false):void {
+			if (!_source) {
+				recreateResource();
+			}
+		}
+		
 		override protected function recreateResource():void {
 			createWebGlTexture();
 			completeCreate();
@@ -114,18 +129,19 @@ package laya.webgl.resource {
 		private function createWebGlTexture():void {
 			var gl:WebGLContext = WebGL.mainContext;
 			if (!_canvas) {
-				throw "create GLTextur err:no data:" + _canvas;
+				//throw "create GLTextur err:no data:" + _canvas;
 			}
 			var glTex:* = _source = gl.createTexture();
 			iscpuSource = false;
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-			gl.pixelStorei(WebGLContext.UNPACK_FLIP_Y_WEBGL, 1);
+			gl.pixelStorei(WebGLContext.UNPACK_FLIP_Y_WEBGL, flipY?1:0);
 			//var imgdata:* = Browser.context.getImageData(0, 0, _w, _h);//_canvas's ctx
 			//gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);//TODO canvas? 如果是canvas应该不用设置
+			premulAlpha&&gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _imgData);
-			//gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			premulAlpha && gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MAG_FILTER, WebGLContext.LINEAR);
 			gl.texParameteri(WebGLContext.TEXTURE_2D, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR);
@@ -136,6 +152,23 @@ package laya.webgl.resource {
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			//_canvas = null;
 		}
+		
+		private function reloadCanvasData():void {
+			var gl:WebGLContext = WebGL.mainContext;
+			if (!_source) {
+				throw "reloadCanvasData error, gl texture not created!";
+			}
+			var preTarget:* = WebGLContext.curBindTexTarget;
+			var preTexture:* = WebGLContext.curBindTexValue;
+			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
+			premulAlpha&&gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+			gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _imgData);
+			premulAlpha && gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			
+			gl.pixelStorei(WebGLContext.UNPACK_FLIP_Y_WEBGL, 0);
+			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
+			//_canvas = null;
+		}		
 		
 		public function texSubImage2D(webglCanvas:WebGLCanvas, xoffset:Number, yoffset:Number):void {
 			var gl:WebGLContext = WebGL.mainContext;

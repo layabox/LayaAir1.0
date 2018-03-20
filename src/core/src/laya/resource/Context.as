@@ -16,6 +16,7 @@ package laya.resource {
 		private static var replaceKeys:Array = ["font", "fillStyle", "textBaseline"];
 		/*** @private */
 		private static var newKeys:Array = [];
+		private static var _inited:Boolean = false;
 		
 		/*** @private */
 		public var _canvas:HTMLCanvas;
@@ -24,6 +25,8 @@ package laya.resource {
 		/*** @private */
 		public static function __init__(to:*=null):void {			
 			/*[IF-FLASH]*/ return;
+			if (_inited) return;
+			_inited = true;
 			var from:* = Context.prototype;
 			//forxiaochengxu
 			to = to || __JS__("CanvasRenderingContext2D.prototype");

@@ -495,7 +495,7 @@ package laya.d3.component {
 				Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);//TODO:当前帧注册，下一帧执行
 				(playOnWake && clip) && (play());
 			} else {
-				(playState !== AnimationState.stopped) && (stop());
+				(playState !== AnimationState.stopped) && (_stoped=true);//调用stop抛事件会出BUG（在删除节点操作会触发，事件内又添加节点）
 				Laya.timer.clear(this, _updateAnimtionPlayer);
 			}
 		}

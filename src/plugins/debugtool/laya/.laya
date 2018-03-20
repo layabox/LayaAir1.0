@@ -1,0 +1,32 @@
+<project version="0.9.8">
+   <asynRes>img,temp,sound                                                </asynRes>
+   <unDealRes>embed                                                </unDealRes>
+   <resTypes>png,jpg   </resTypes>
+   <resExportPath>bin/h5/res/atlas   </resExportPath>
+   <codeExportPath>src/laya/debug/ui   </codeExportPath>
+   <codeImports><![CDATA[import laya.ui.*;                     ]]>   </codeImports>
+   <codeImportsJS><![CDATA[var View=laya.ui.View;
+var Dialog=laya.ui.Dialog;                     ]]>   </codeImportsJS>
+   <uiType>0   </uiType>
+   <uiExportPath>bin/ui.swf   </uiExportPath>
+   <boxTypes>Box,List,Tab,RadioGroup,ViewStack,Panel,HBox,VBox,Tree   </boxTypes>
+   <pageTypes>View,Dialog   </pageTypes>
+   <shareResPath/>
+   <codeType>0   </codeType>
+   <disableBinaryPic>1   </disableBinaryPic>
+   <resCanCompress/>
+   <resPublishQuality>80                                                </resPublishQuality>
+   <langPath/>
+   <defaultFont/>
+   <codeImportsTS><![CDATA[import View=laya.ui.View;
+import Dialog=laya.ui.Dialog;                  ]]>   </codeImportsTS>
+   <textureWidth>2048   </textureWidth>
+   <textureHeight>2048   </textureHeight>
+   <picWidth>512   </picWidth>
+   <picHeight>512   </picHeight>
+   <power2>false   </power2>
+   <trimempty>true   </trimempty>
+   <ver>0.9.9 beta   </ver>
+   <resExportPathE>bin/h5                  </resExportPathE>
+   <asynResExportPath>bin/h5   </asynResExportPath>
+</project>

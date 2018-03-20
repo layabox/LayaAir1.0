@@ -67,6 +67,7 @@ package laya.resource {
 		public function Texture(bitmap:Bitmap = null, uv:Array = null) {
 			if (bitmap) {
 				bitmap._addReference();
+				//bitmap._referenceCount++;
 			}
 			setTo(bitmap, uv);
 		}
@@ -84,7 +85,13 @@ package laya.resource {
 		 * @param	uv UV数据信息
 		 */
 		public function setTo(bitmap:Bitmap = null, uv:Array = null):void {
-			this.bitmap = bitmap;
+			if (__JS__("bitmap instanceof window.HTMLElement") ) {
+				var canvas:HTMLCanvas = HTMLCanvas.create("2D",bitmap);
+				this.bitmap = canvas;
+				
+			}else{
+				this.bitmap = bitmap;
+			}
 			this.uv = uv || DEF_UV;
 			if (bitmap) {
 				_w = bitmap.width;
@@ -209,8 +216,7 @@ package laya.resource {
 				width *= texScaleRate;
 				height *= texScaleRate;
 			}
-			var offset:Number = (!Render.isWebGL && Browser.onFirefox || Browser.onEdge) ? 0.5 : 0;
-			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX - offset, y - texture.offsetY - offset, width + offset * 2, height + offset * 2);
+			var rect:Rectangle = Rectangle.TEMP.setTo(x - texture.offsetX, y - texture.offsetY, width, height);
 			var result:Rectangle = rect.intersection(_rect1.setTo(0, 0, texture.width, texture.height), _rect2);
 			if (result)
 				var tex:Texture = create(texture, result.x, result.y, result.width, result.height, result.x - rect.x, result.y - rect.y, width, height);

@@ -5,7 +5,7 @@ package laya.webgl.canvas.save {
 	public class SaveTransform implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
-		private static var _no:* =/*[STATIC SAFE]*/ SaveBase._createArray();
+		private static var _no:* = SaveBase._createArray();
 		
 		public var _savematrix:Matrix;
 		public var _matrix:Matrix = new Matrix();

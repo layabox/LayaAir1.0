@@ -143,7 +143,7 @@ package laya.media.webaudio {
 		
 		private function _tryClearBuffer(sourceNode:*):void
 		{
-			if (!Browser.onIOS)
+			if (!Browser.onMac)
 			{
 				_tryCleanFailed = true;
 				return;

@@ -55,10 +55,25 @@ package laya.wx.mini {
 			}
 			
 			function _clearSound():void {
-				_sound.onCanplay(null);
-				_sound.onError(null);
+				_sound.onCanplay(bindToThis(onCanPlayCallBack,this));
+				_sound.onError(bindToThis(onCanPlayCallBack,this));
 			}
+		}
 		
+		/**
+		 * 给传入的函数绑定作用域，返回绑定后的函数。
+		 * @param	fun 函数对象。
+		 * @param	scope 函数作用域。
+		 * @return 绑定后的函数。
+		 */
+		public static function bindToThis(fun:Function, scope:*):Function {
+			var rst:Function = fun;
+			__JS__("rst=fun.bind(scope);");
+			return rst;
+		}
+		
+		private function onCanPlayCallBack():void
+		{
 		}
 		
 		/**
@@ -106,5 +121,4 @@ package laya.wx.mini {
 			}
 		}
 	}
-
 }

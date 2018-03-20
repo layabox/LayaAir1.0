@@ -1,0 +1,17 @@
+<res>
+   <item name="view/bg_panel.png" type="Image" compress="0" quality="80" props="sizeGrid=5,5,5,5"/>
+   <item name="view/search.png" type="Clip" compress="0" quality="80" props="clipY=2" pack="true"/>
+   <item name="comp/textinput.png" type="TextInput" compress="0" quality="80" props="sizeGrid=5,5,5,5 color=#a0a0a0" pack="0"/>
+   <item name="comp/clip_selectBox.png" type="Clip" compress="0" quality="80" props=""/>
+   <item name="comp/textarea.png" type="TextArea" compress="0" quality="80" props="sizeGrid=3,3,3,3"/>
+   <item name="comp/combobox.png" type="ComboBox" compress="0" quality="80" props="sizeGrid=5,35,5,5 labelColors=#a0a0a0,#fffff,#ffffff#fffff" pack="0" picType="0"/>
+   <item name="comp/button.png" type="Button" compress="0" quality="80" props="mouseEnabled=true labelColors=#ffffff,#ffffff,#ffffff,#ffffff" pack="0"/>
+   <item name="view/save.png" type="Button" compress="0" quality="80" props=""/>
+   <item name="view/resize.png" type="Button" compress="0" pack="0" quality="80" props="stateNum=3"/>
+   <item name="view/clickanalyse.png" type="Image" compress="0" pack="0" quality="80" props="clipY=3"/>
+   <item name="view/tab_panel.png" type="Button" compress="0" pack="0" quality="80" props="labelColors=#ffffff,#ffffff,#ffffff,#ffffff"/>
+   <item name="view/create.png" type="CheckBox" compress="0" pack="0" quality="80" props=""/>
+   <item name="view/rendertime.png" type="CheckBox" compress="0" pack="0" quality="80" props=""/>
+   <item name="view/cache.png" type="CheckBox" compress="0" pack="0" quality="80" props=""/>
+   <item name="comp/checkbox.png" type="CheckBox" compress="0" pack="0" quality="80" props="labelColors=#a0a0a0,#fffff,#ffffff,#fffff" picType="0"/>
+</res>

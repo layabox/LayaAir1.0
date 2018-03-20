@@ -36,7 +36,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):Boolean {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, _owner.transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = _owner.getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
@@ -44,6 +44,7 @@ package laya.d3.core {
 			var templet:GlitterTemplet = (_owner as Glitter).templet;
 			_setShaderValueNumber(Glitter.DURATION, templet.lifeTime);
 			_setShaderValueNumber(Glitter.CURRENTTIME, templet._currentTime);//设置粒子的时间参数，可通过此参数停止粒子动画
+			return true;
 		}
 	
 	}

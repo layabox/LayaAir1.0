@@ -276,7 +276,7 @@ package laya.d3.core {
 		/**
 		 * @inheritDoc
 		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):Boolean {
 			var projViewWorld:Matrix4x4;
 			var animator:Animator = _cacheAnimator;
 			var subMeshCount:int = _cacheMesh.subMeshCount;
@@ -299,27 +299,25 @@ package laya.d3.core {
 				projViewWorld = aniOwner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 				
-				if (animator.playState === AnimationState.playing) {//暂停或者停止直接使用上一帧骨骼数据
-					if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
-						var i:int, n:int;
-						var inverseBindPoses:Vector.<Matrix4x4> = _cacheMesh._inverseBindPoses;
-						var skinnedDatas:Float32Array = _cacheMesh._skinnedDatas;
-						if (cache) {
-							for (i = 0, n = inverseBindPoses.length; i < n; i++)
-								Utils3D._mulMatrixArray(curAvatarAnimationDatas[_cacheAnimationNodeIndex[i]], inverseBindPoses[i], skinnedDatas, i * 16);
-						} else {
-							for (i = 0, n = inverseBindPoses.length; i < n; i++)
-								Utils3D._mulMatrixArray(_cacheAnimationNode[i].transform.getWorldMatrix(), inverseBindPoses[i], skinnedDatas, i * 16);
-						}
-						
-						for (i = 0; i < subMeshCount; i++) {
-							var boneIndicesList:Vector.<Uint8Array> = _cacheMesh.getSubMesh(i)._boneIndicesList;
-							var boneIndicesCount:int = boneIndicesList.length;
-							var subSkinnedDatas:Vector.<Float32Array> = _subSkinnedDatas[i];
-							for (var j:int = 0; j < boneIndicesCount; j++)
-								_splitAnimationDatas(boneIndicesList[j], skinnedDatas, subSkinnedDatas[j]);
-							(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas;//TODO:日后确认是否合理
-						}
+				if (_cacheMesh && _cacheMesh.loaded && _cacheAvatar && _cacheAvatar.loaded) {
+					var i:int, n:int;
+					var inverseBindPoses:Vector.<Matrix4x4> = _cacheMesh._inverseBindPoses;
+					var skinnedDatas:Float32Array = _cacheMesh._skinnedDatas;
+					if (cache) {
+						for (i = 0, n = inverseBindPoses.length; i < n; i++)
+							Utils3D._mulMatrixArray(curAvatarAnimationDatas[_cacheAnimationNodeIndex[i]], inverseBindPoses[i], skinnedDatas, i * 16);
+					} else {
+						for (i = 0, n = inverseBindPoses.length; i < n; i++)
+							Utils3D._mulMatrixArray(_cacheAnimationNode[i].transform.getWorldMatrix(), inverseBindPoses[i], skinnedDatas, i * 16);
+					}
+					
+					for (i = 0; i < subMeshCount; i++) {
+						var boneIndicesList:Vector.<Uint8Array> = _cacheMesh.getSubMesh(i)._boneIndicesList;
+						var boneIndicesCount:int = boneIndicesList.length;
+						var subSkinnedDatas:Vector.<Float32Array> = _subSkinnedDatas[i];
+						for (var j:int = 0; j < boneIndicesCount; j++)
+							_splitAnimationDatas(boneIndicesList[j], skinnedDatas, subSkinnedDatas[j]);
+						(_renderElements[i] as SubMeshRenderElement)._skinAnimationDatas = subSkinnedDatas;//TODO:日后确认是否合理
 					}
 				}
 			} else {
@@ -327,9 +325,10 @@ package laya.d3.core {
 				projViewWorld = _owner.getProjectionViewWorldMatrix(projectionView);
 				_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
 			}
-	
+			
 			if (Laya3D.debugMode)
 				_renderRenderableBoundBox();
+			return true;
 		}
 		
 		//.......................................兼容代码........................................

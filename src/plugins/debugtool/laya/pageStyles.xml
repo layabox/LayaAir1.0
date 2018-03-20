@@ -1,0 +1,3 @@
+<page>
+   <item name="debugui/comps/RankListItem.ui" props="runtime=laya.debug.uicomps.RankListItem"/>
+</page>

@@ -31,6 +31,8 @@ package laya.utils {
 		private var _usedTimer:int;
 		/**@private */
 		private var _usedPool:Boolean;
+		/**@private */
+		private var _delayParam:Array;
 		/**@private 唯一标识，TimeLintLite用到*/
 		public var gid:int = 0;
 		/**更新回调，缓动数值发生变化时，回调变化的值*/
@@ -110,6 +112,7 @@ package laya.utils {
 			this._usedTimer = 0;
 			this._startTimer = Browser.now();
 			this._usedPool = usePool;
+			this._delayParam = null;
 			this.update = props.update;
 			
 			//判断是否覆盖			
@@ -125,7 +128,11 @@ package laya.utils {
 			
 			if (runNow) {
 				if (delay <= 0) firstStart(target, props, isTo);
-				else Laya.scaleTimer.once(delay, this, firstStart, [target, props, isTo]);
+				else
+				{
+					_delayParam = [target, props, isTo];
+					Laya.scaleTimer.once(delay, this, firstStart, _delayParam);
+				} 
 			} else {
 				_initProps(target, props, isTo);
 			}
@@ -133,6 +140,7 @@ package laya.utils {
 		}
 		
 		private function firstStart(target:*, props:Object, isTo:Boolean):void {
+			_delayParam = null;
 			if (target.destroyed) {
 				this.clear();
 				return;
@@ -173,6 +181,7 @@ package laya.utils {
 			//[IF-JS]if (target.destroyed) return clearTween(target);
 			
 			var usedTimer:Number = this._usedTimer = time - this._startTimer - this._delay;
+
 			if (usedTimer < 0) return;
 			if (usedTimer >= this._duration) return complete();
 			
@@ -222,6 +231,15 @@ package laya.utils {
 		public function pause():void {
 			Laya.scaleTimer.clear(this, _beginLoop);
 			Laya.scaleTimer.clear(this, _doEase);
+			Laya.scaleTimer.clear(this, firstStart);
+			var time:Number = Browser.now();
+			var dTime:Number;
+			dTime = time - this._startTimer - this._delay;
+			if (dTime < 0)
+			{
+				this._usedTimer = dTime;
+			}
+			
 		}
 		
 		/**
@@ -284,6 +302,7 @@ package laya.utils {
 			this._target = null;
 			this._ease = null;
 			this._props = null;
+			this._delayParam = null;
 			
 			if (this._usedPool) {
 				this.update = null;
@@ -318,6 +337,11 @@ package laya.utils {
 			pause();
 			this._usedTimer = 0;
 			this._startTimer = Browser.now();
+			if (this._delayParam)
+			{
+				Laya.scaleTimer.once( this._delay, this, firstStart, this._delayParam);
+				return;
+			}
 			var props:Array = this._props;
 			for (var i:int, n:int = props.length; i < n; i++) {
 				var prop:Array = props[i];
@@ -332,7 +356,19 @@ package laya.utils {
 		public function resume():void {
 			if (this._usedTimer >= this._duration) return;
 			this._startTimer = Browser.now() - this._usedTimer - this._delay;
-			_beginLoop();
+			if (this._delayParam)
+			{
+				if (this._usedTimer < 0)
+				{
+					Laya.scaleTimer.once(-this._usedTimer, this, firstStart, this._delayParam);
+				}else
+				{
+					firstStart.apply(this, this._delayParam);
+				}
+			}else
+			{
+				_beginLoop();
+			}	
 		}
 		
 		private static function easeNone(t:Number, b:Number, c:Number, d:Number):Number {
