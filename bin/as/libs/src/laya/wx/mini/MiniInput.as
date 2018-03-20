@@ -30,6 +30,18 @@ package laya.wx.mini {
 			//替换声音
 			SoundManager._soundClass = MiniSound;
 			SoundManager._musicClass = MiniSound;
+			
+			//运行环境判断
+			var model:String= MiniAdpter.systemInfo.model;
+			var system:String = MiniAdpter.systemInfo.system;
+			if(model.indexOf("iPhone") != -1)
+			{
+				Browser.onIPhone = true;
+			}
+			if(system.indexOf("Android") != -1 || system.indexOf("Adr") != -1)
+			{
+				Browser.onAndriod = true;
+			}
 		}
 		
 		private static function _onStageResize():void {

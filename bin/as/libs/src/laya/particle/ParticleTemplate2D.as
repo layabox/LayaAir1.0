@@ -159,7 +159,7 @@ package laya.particle
 		
 		public function dispose():void
 		{
-			//_vertexBuffer2D.dispose();
+			_vertexBuffer2D.dispose();
 			_indexBuffer2D.dispose();
 		}
 	}

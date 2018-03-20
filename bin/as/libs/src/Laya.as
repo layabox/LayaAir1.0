@@ -37,7 +37,7 @@ package {
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.15";
+		public static var version:String = "1.7.16";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */

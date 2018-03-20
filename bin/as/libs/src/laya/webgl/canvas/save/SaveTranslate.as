@@ -5,7 +5,7 @@ package laya.webgl.canvas.save {
 	public class SaveTranslate implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
-		private static var _no:* =/*[STATIC SAFE]*/ SaveBase._createArray();
+		private static var _no:* = SaveBase._createArray();
 		
 		public var _x:Number;
 		public var _y:Number;

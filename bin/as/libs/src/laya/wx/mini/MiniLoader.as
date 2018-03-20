@@ -55,17 +55,19 @@ package laya.wx.mini {
 							return;
 						}
 					}
-					if (URL.rootPath == "")
-						var fileNativeUrl:String = url;
-					else
-						fileNativeUrl = url.split(URL.rootPath)[0];
-						
+					url = URL.formatURL(url);
+					//临时
+					//if(url.indexOf("ui.json") != -1)
+					//{
+						//encoding = "utf8";
+						//url = "ui.json";
+					//}
 					if (url.indexOf("http://") != -1 || url.indexOf("https://") != -1) {
 						//远端文件加载走xmlhttprequest
 						MiniAdpter.EnvConfig.load.call(thisLoader, url, type, cache, group, ignoreCache);
 					} else {
 						//读取本地磁盘非写入的文件，只是检测文件是否需要本地读取还是外围加载
-						MiniFileMgr.readFile(fileNativeUrl, encoding, new Handler(MiniLoader, onReadNativeCallBack, [encoding, url, type, cache, group, ignoreCache, thisLoader]), url);
+						MiniFileMgr.readFile(url, encoding, new Handler(MiniLoader, onReadNativeCallBack, [encoding, url, type, cache, group, ignoreCache, thisLoader]), url);
 					}
 				} else {
 					//远端文件加载走xmlhttprequest
@@ -101,22 +103,6 @@ package laya.wx.mini {
 			} else if (errorCode == 1) {
 				//远端文件加载走xmlhttprequest
 				MiniAdpter.EnvConfig.load.call(thisLoader, url, type, cache, group, ignoreCache);
-			}
-		}
-		
-		/**
-		 * 清理资源
-		 * @param url
-		 * @param forceDispose
-		 */
-		public function clearRes(url:String, forceDispose:Boolean = false):void {
-			var thisLoader:* = this;
-			thisLoader.clearRes(url, forceDispose);
-			var fileObj:Object = MiniFileMgr.getFileInfo(url);
-			if (fileObj && (url.indexOf("http://") != -1 || url.indexOf("https://") != -1)) {
-				var fileMd5Name:String = fileObj.md5;
-				var fileNativeUrl:String = MiniFileMgr.getFileNativePath(fileMd5Name);
-				MiniFileMgr.remove(fileNativeUrl);
 			}
 		}
 	}

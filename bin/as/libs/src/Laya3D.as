@@ -210,6 +210,7 @@ package {
 				}
 				break;
 			case "MeshSprite3D": 
+			case "TrailSprite3D": 
 			case "SkinnedMeshSprite3D": 
 				var meshPath:String;
 				if (node.instanceParams) {//兼容代码

@@ -94,7 +94,7 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):Boolean {
 			var transform:Transform3D = _owner.transform;
 			if (transform) {
 				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
@@ -107,6 +107,7 @@ package laya.d3.core {
 			
 			if (Laya3D.debugMode)
 				_renderRenderableBoundBox();
+			return true;
 		}
 	}
 

@@ -321,29 +321,28 @@ package laya.net {
 					var atlasURL:String = URL.formatURL(this._url);
 					var map:Array = atlasMap[atlasURL] || (atlasMap[atlasURL] = []);
 					map.dir = directory;
-					var scaleRate:Number;
-					scaleRate = this._data.meta.scale;
-					if (scaleRate && scaleRate != 1)
+					var scaleRate:Number = 1;
+					if (this._data.meta && this._data.meta.scale && this._data.meta.scale != 1)
 					{
 						scaleRate = parseFloat(this._data.meta.scale);
 						for (var name:String in frames) {
-						var obj:Object = frames[name];//取对应的图
-						var tPic:Object = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
-						var url:String = URL.formatURL(directory + name);
-						tPic.scaleRate = scaleRate;
-						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
-						loadedMap[url].url = url;
-						map.push(url);
-					}
+							var obj:Object = frames[name];//取对应的图
+							var tPic:Object = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
+							var url:String = URL.formatURL(directory + name);
+							tPic.scaleRate = scaleRate;
+							cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
+							loadedMap[url].url = url;
+							map.push(url);
+						}
 					}else{
-					for (name in frames) {
-						obj = frames[name];//取对应的图
-						tPic = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
-						url = URL.formatURL(directory + name);
-						cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
-						loadedMap[url].url = url;
-						map.push(url);
-					}
+						for (name in frames) {
+							obj = frames[name];//取对应的图
+							tPic = pics[obj.frame.idx ? obj.frame.idx : 0];//是否释放
+							url = URL.formatURL(directory + name);
+							cacheRes(url, Texture.create(tPic, obj.frame.x, obj.frame.y, obj.frame.w, obj.frame.h, obj.spriteSourceSize.x, obj.spriteSourceSize.y, obj.sourceSize.w, obj.sourceSize.h));
+							loadedMap[url].url = url;
+							map.push(url);
+						}
 					}
 					delete _data.pics;
 					

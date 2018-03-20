@@ -597,7 +597,7 @@ var DrawStyle=(function(){
 				return color._drawStyle || (color._drawStyle=new DrawStyle(value));
 			}
 		}
-		return null;
+		return laya.webgl.canvas.DrawStyle.DEFAULT;
 	}
 
 	__static(DrawStyle,
@@ -4195,6 +4195,9 @@ var WebGL=(function(){
 			}
 		}
 		RunDriver.drawToCanvas=function (sprite,_renderType,canvasWidth,canvasHeight,offsetX,offsetY){
+			if (canvasWidth <=0 || canvasHeight <=0){
+				console.log("[error] canvasWidth and canvasHeight should greater than zero");
+			}
 			offsetX-=sprite.x;
 			offsetY-=sprite.y;
 			var renderTarget=RenderTarget2D.create(canvasWidth,canvasHeight,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,0,false);
@@ -4264,6 +4267,12 @@ var WebGL=(function(){
 		RunDriver.skinAniSprite=function (){
 			var tSkinSprite=new SkinMesh()
 			return tSkinSprite;
+		}
+		HTMLCanvas.create=function (type,canvas){
+			var ret=new WebGLCanvas();
+			ret._imgData=canvas;
+			ret.flipY=false;
+			return ret;
 		}
 		Filter._filterStart=function (scope,sprite,context,x,y){
 			var b=scope.getValue("bounds");
@@ -4472,6 +4481,9 @@ var WebGL=(function(){
 	WebGL.init=function(canvas,width,height){
 		WebGL.mainCanvas=canvas;
 		HTMLCanvas._createContext=function (canvas){
+			return new WebGLContext2D(canvas);
+		}
+		WebGLCanvas._createContext=function (canvas){
 			return new WebGLContext2D(canvas);
 		};
 		var gl=laya.webgl.WebGL.mainContext;
@@ -7719,15 +7731,21 @@ var AtlasWebGLCanvas=(function(_super){
 })(Bitmap)
 
 
+/**@private */
 //class laya.webgl.resource.WebGLCanvas extends laya.resource.Bitmap
 var WebGLCanvas=(function(_super){
 	function WebGLCanvas(){
+		this.flipY=true;
+		//上传的时候是否上下颠倒
+		this.premulAlpha=false;
+		//上传的时候是否预乘alpha
 		//this._ctx=null;
 		/**HTML Canvas*/
 		//this._canvas=null;
 		//this._imgData=null;
 		//}
 		//this.iscpuSource=false;
+		this.alwaysChange=false;
 		WebGLCanvas.__super.call(this);
 	}
 
@@ -7772,6 +7790,15 @@ __proto.size=function(w,h){
 }
 
 
+__proto.activeResource=function(force){
+	(force===void 0)&& (force=false);
+	if (!this._source){
+		this.recreateResource();
+	}
+
+}
+
+
 __proto.recreateResource=function(){
 	this.createWebGlTexture();
 	this.completeCreate();
@@ -7791,7 +7818,6 @@ __proto.disposeResource=function(){
 __proto.createWebGlTexture=function(){
 	var gl=WebGL.mainContext;
 	if (!this._canvas){
-		throw "create GLTextur err:no data:"+this._canvas;
 	};
 
 	var glTex=this._source=gl.createTexture();
@@ -7799,14 +7825,34 @@ __proto.createWebGlTexture=function(){
 	var preTarget=WebGLContext.curBindTexTarget;
 	var preTexture=WebGLContext.curBindTexValue;
 	WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,glTex);
-	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_FLIP_Y_WEBGL*/0x9240,1);
+	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_FLIP_Y_WEBGL*/0x9240,this.flipY?1:0);
+	this.premulAlpha&&gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,true);
 	gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._imgData);
+	this.premulAlpha && gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,false);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MAG_FILTER*/0x2800,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 	gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_FLIP_Y_WEBGL*/0x9240,0);
 	this.memorySize=this._w *this._h *4;
+	(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
+}
+
+
+//_canvas=null;
+__proto.reloadCanvasData=function(){
+	var gl=WebGL.mainContext;
+	if (!this._source){
+		throw "reloadCanvasData error, gl texture not created!";
+	};
+
+	var preTarget=WebGLContext.curBindTexTarget;
+	var preTexture=WebGLContext.curBindTexValue;
+	WebGLContext.bindTexture(gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
+	this.premulAlpha&&gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,true);
+	gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.RGBA*/0x1908,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this._imgData);
+	this.premulAlpha && gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL*/0x9241,false);
+	gl.pixelStorei(/*laya.webgl.WebGLContext.UNPACK_FLIP_Y_WEBGL*/0x9240,0);
 	(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 }
 
@@ -7836,6 +7882,12 @@ __proto.toBase64=function(type,encoderOptions,callBack){
 
 __getset(0,__proto,'context',function(){
 	return this._ctx;
+});
+
+
+__getset(0,__proto,'source',function(){
+	if (this.alwaysChange)this.reloadCanvasData();
+	return this._source;
 });
 
 
@@ -8104,6 +8156,9 @@ var WebGLRenderTarget=(function(_super){
 		gl.bindFramebuffer(/*laya.webgl.WebGLContext.FRAMEBUFFER*/0x8D40,null);
 		(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 		gl.bindRenderbuffer(/*laya.webgl.WebGLContext.RENDERBUFFER*/0x8D41,null);
+		if (isPot && this._mipMap)
+			this.memorySize=this._w *this._h *4 *(1+1 / 3);
+		else
 		this.memorySize=this._w *this._h *4;
 		this.completeCreate();
 	}
@@ -8238,6 +8293,9 @@ __proto.createWebGlTexture=function(){
 
 	(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 	this.canvas=null;
+	if (isPOT && this.mipmap)
+		this.memorySize=this._w *this._h *4 *(1+1 / 3);
+	else
 	this.memorySize=this._w *this._h *4;
 }
 
@@ -9314,7 +9372,7 @@ var WebGLImage=(function(_super){
 		(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 		this._image.onload=null;
 		this._image=null;
-		if (isPot)
+		if (isPot && this.mipmap)
 			this.memorySize=this._w *this._h *4 *(1+1 / 3);
 		else
 		this.memorySize=this._w *this._h *4;

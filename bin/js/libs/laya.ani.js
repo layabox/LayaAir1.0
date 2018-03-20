@@ -583,14 +583,14 @@ var BoneSlot=(function(){
 	*@param index
 	*/
 	__proto.showDisplayByIndex=function(index){
-		if (this._replaceDic[index])index=this._replaceDic[index];
+		if (this._replaceDic[index]!=null)index=this._replaceDic[index];
 		if (this.currSlotData && index >-1 && index < this.currSlotData.displayArr.length){
 			this.displayIndex=index;
 			this.currDisplayData=this.currSlotData.displayArr[index];
 			if (this.currDisplayData){
 				var tName=this.currDisplayData.name;
 				this.currTexture=this.templet.getTexture(tName);
-				if (this.currTexture && Render.isWebGL && this.currDisplayData.type==0 && this.currDisplayData.uvs){
+				if (this.currTexture && !Render.isConchApp && this.currDisplayData.type==0 && this.currDisplayData.uvs){
 					this.currTexture=this.currDisplayData.createTexture(this.currTexture);
 				}
 			}
@@ -2344,6 +2344,11 @@ var SkinSlotDisplayData=(function(){
 			this.texture.offsetY=-currTexture.offsetY;
 			this.texture.sourceWidth=currTexture.sourceWidth;
 			this.texture.sourceHeight=currTexture.sourceHeight;
+		}
+		if (!Render.isWebGL){
+			if (this.uvs[1] > this.uvs[5]){
+				this.texture.offsetY=this.texture.sourceHeight-this.texture.height-this.texture.offsetY;
+			}
 		}
 		return this.texture;
 	}

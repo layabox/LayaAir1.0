@@ -262,7 +262,7 @@ package laya.display {
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
 			alpha = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
-			
+			var offset:Number = (!Render.isWebGL && Browser.onFirefox || Browser.onEdge) ? 0.5 : 0;
 			var wRate:Number = width / tex.sourceWidth;
 			var hRate:Number = height / tex.sourceHeight;
 			width = tex.width * wRate;
@@ -276,6 +276,10 @@ package laya.display {
 			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
 			
 			var args:Array;
+			x -= offset;
+			y -= offset;
+			width += 2 * offset;
+			height += 2 * offset;
 			if (_cache.length) {
 				args = _cache.pop();
 				args[0] = tex;

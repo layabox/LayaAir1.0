@@ -126,7 +126,7 @@ package laya.ui {
 		 * 滑块位置发生改变的处理函数。
 		 */
 		protected function onSliderChange():void {
-			value = slider.value;
+			if(_value !=slider.value) value = slider.value;
 		}
 		
 		/**
@@ -273,13 +273,16 @@ package laya.ui {
 		
 		public function set value(v:Number):void {
 			if (v !== _value) {
-				if (_isElastic) _value = v;
-				else {
-					slider.value = v;
-					_value = slider.value;
+				_value = v;
+				if (!_isElastic) {	
+					if (slider._value != v) {
+						slider._value = v;
+						slider.changeValue();
+					}
+					_value = slider._value;
 				}
 				event(Event.CHANGE);
-				changeHandler && changeHandler.runWith(value);
+				changeHandler && changeHandler.runWith(_value);
 			}
 		}
 		
@@ -477,7 +480,11 @@ package laya.ui {
 			Laya.stage.off(Event.MOUSE_OUT, this, onStageMouseUp2);
 			Laya.timer.clear(this, loop);
 			
-			if (_clickOnly) return;
+			if (_clickOnly)
+			{
+				if(_value>=min&&_value<=max)
+				 return;
+			}
 			_target.mouseEnabled = true;
 			
 			if (this._isElastic) {

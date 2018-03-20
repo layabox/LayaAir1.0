@@ -58,6 +58,7 @@ package laya.d3.core {
 				transform.setLocalPosition(new Float32Array(customProps.translate));
 				transform.setLocalRotation(new Float32Array(customProps.rotation));
 				transform.setLocalScale(new Float32Array(customProps.scale));
+				transform._setWorldMatrixAndUpdate(new Float32Array(16));
 			}
 			
 			var childrenData:Array = nodaData.child;
@@ -90,15 +91,11 @@ package laya.d3.core {
 		 */
 		public function _cloneDatasToAnimator(destAnimator:Animator):void {
 			var destRoot:AnimationNode = _rootNode.clone();
+			destRoot.transform._setWorldMatrixIgnoreUpdate(null);//根节点不需要更新
 			var avatarNodes:Vector.<AnimationNode> = new Vector.<AnimationNode>();
 			destAnimator._avatarNodeMap = {};
 			destAnimator._avatarNodes = avatarNodes;
 			_initCloneToAnimator(destRoot, destAnimator);
-			for (var i:int = 0, n:int = avatarNodes.length; i < n; i++) {
-				var avatarNode:AnimationNode = avatarNodes[i];
-				if (!avatarNode._parent)
-					avatarNode.transform._setWorldMatrixIgnoreUpdate(null);//根节点不需要更新
-			}
 		}
 		
 		/**

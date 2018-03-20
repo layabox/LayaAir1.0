@@ -181,8 +181,13 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @inheritDoc
 		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):Boolean {
 			var particleSystem:ShurikenParticleSystem = (_owner as ShuriKenParticle3D).particleSystem;
+			
+			if (!Laya.stage.isVisibility||!particleSystem.isAlive)
+				return false;
+				
+			
 			var transform:Transform3D = _owner.transform;
 			switch (particleSystem.simulationSpace) {
 			case 0: //World
@@ -229,6 +234,7 @@ package laya.d3.core.particleShuriKen {
 			
 			if (Laya3D.debugMode)
 				_renderRenderableBoundBox();
+			return true;
 		}
 		
 		/**

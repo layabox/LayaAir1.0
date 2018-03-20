@@ -17,7 +17,7 @@ package laya.webgl.canvas {
 					return color._drawStyle || (color._drawStyle = new DrawStyle(value));
 				}
 			}
-			return null;
+			return DrawStyle.DEFAULT;
 		}
 		
 		public function DrawStyle(value:*) {

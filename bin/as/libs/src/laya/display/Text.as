@@ -557,6 +557,32 @@ package laya.display {
 		}
 		
 		/**
+		 * @private
+		 */
+		protected function _isPassWordMode():Boolean
+		{
+			var style:CSSStyle = _style as CSSStyle;
+			var password:Boolean = style.password;
+			if (("prompt" in this) && this['prompt'] == this._text)
+				password = false;
+			return password;
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _getPassWordTxt(txt:String):String
+		{
+			var len:int = txt.length;
+			var word:String;
+			word = "";
+			for (var j:int = len; j > 0; j--) {
+				word += "●";
+			}
+			return word;
+		}
+		
+		/**
 		 * 渲染文字。
 		 * @param	begin 开始渲染的行索引。
 		 * @param	visibleLineCount 渲染的行数。
@@ -564,7 +590,6 @@ package laya.display {
 		protected function renderText(begin:int, visibleLineCount:int):void {
 			var graphics:Graphics = this.graphics;
 			graphics.clear(true);
-			
 			var ctxFont:String = (italic ? "italic " : "") + (bold ? "bold " : "") + fontSize + "px " + (Browser.onIPhone ? (Text._fontFamilyMap[font] || font) : font);
 			Browser.context.font = ctxFont;
 			
@@ -717,6 +742,10 @@ package laya.display {
 			
 			_lines.length = 0;
 			_lineWidths.length = 0;
+			if (_isPassWordMode())//如果是password显示状态应该使用密码符号计算
+			{
+				parseLines(_getPassWordTxt(this._text));
+			}else
 			parseLines(this._text);
 			
 			evalTextSize();

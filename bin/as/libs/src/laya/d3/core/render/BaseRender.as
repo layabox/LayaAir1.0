@@ -495,7 +495,8 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		public function _renderUpdate(projectionView:Matrix4x4):void {
+		public function _renderUpdate(projectionView:Matrix4x4):Boolean {
+			return true;
 		}
 		
 		/**

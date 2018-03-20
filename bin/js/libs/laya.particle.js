@@ -1141,6 +1141,7 @@ var ParticleTemplate2D=(function(_super){
 	}
 
 	__proto.dispose=function(){
+		this._vertexBuffer2D.dispose();
 		this._indexBuffer2D.dispose();
 	}
 

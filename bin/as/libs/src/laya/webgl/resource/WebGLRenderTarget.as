@@ -103,7 +103,10 @@ package laya.webgl.resource {
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			gl.bindRenderbuffer(WebGLContext.RENDERBUFFER, null);
-			memorySize = _w * _h * 4;
+			if (isPot && this._mipMap)
+				memorySize = _w * _h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
+			else
+				memorySize = _w * _h * 4;
 			completeCreate();
 		
 		}

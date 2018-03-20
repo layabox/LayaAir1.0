@@ -363,7 +363,7 @@ package laya.utils {
 			for (i = 0; i < len; i++)
 			{
 				tTexture = textureList[i];
-				if (!tTexture.source) return false;
+				if (!tTexture||!tTexture.source) return false;
 			}
 			return true;
 		}

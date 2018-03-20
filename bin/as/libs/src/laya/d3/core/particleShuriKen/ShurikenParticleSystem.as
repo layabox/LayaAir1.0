@@ -1366,7 +1366,7 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		private function _updateEmission():void {
-			if (!Laya.stage.isVisibility)
+			if (!Laya.stage.isVisibility||!isAlive)
 				return;
 			if (_simulateUpdate){
 				_simulateUpdate = false;
@@ -1539,13 +1539,12 @@ package laya.d3.core.particleShuriKen {
 					_burstsIndex = 0;
 					totalEmitCount += _burst(0, _emissionTime);
 				} else {
-					_isPlaying = false;
-					
 					totalEmitCount = Math.min(maxParticles - aliveParticleCount, totalEmitCount);
 					for (i = 0; i < totalEmitCount; i++)
 						emit(emitTime);
 					
-					this.event(Event.STOPPED);
+					_isPlaying = false;
+					stop();
 					return;
 				}
 			} else {
@@ -2054,7 +2053,8 @@ package laya.d3.core.particleShuriKen {
 			default: 
 				throw new Error("Utils3D: startDelayType is invalid.");
 			}
-			_frameRateTime+= _playStartDelay;//同步频率模式发射时间,更新函数中小于延迟时间不会更新此时间。
+			
+			_frameRateTime = _currentTime+_playStartDelay;//同步频率模式发射时间,更新函数中小于延迟时间不会更新此时间。
 			
 			_startUpdateLoopCount = Stat.loopCount;
 			this.event(Event.PLAYED);

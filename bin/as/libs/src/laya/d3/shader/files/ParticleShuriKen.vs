@@ -123,10 +123,10 @@ uniform int u_SimulationSpace;
 #endif
 #ifdef ROTATIONOVERLIFETIMESEPERATE
   #if defined(ROTATIONOVERLIFETIMECONSTANT)||defined(ROTATIONOVERLIFETIMERANDOMCONSTANTS)
-    uniform  vec4 u_ROLAngularVelocityConstSeprarate;
+    uniform  vec3 u_ROLAngularVelocityConstSeprarate;
   #endif
   #ifdef ROTATIONOVERLIFETIMERANDOMCONSTANTS
-    uniform  vec4 u_ROLAngularVelocityConstMaxSeprarate;
+    uniform  vec3 u_ROLAngularVelocityConstMaxSeprarate;
   #endif
   #if defined(ROTATIONOVERLIFETIMECURVE)||defined(ROTATIONOVERLIFETIMERANDOMCURVES)
     uniform  vec2 u_ROLAngularVelocityGradientX[4];
@@ -478,7 +478,7 @@ vec3 computeParticleSizeMesh(in vec3 size,in float normalizedAge)
 float computeParticleRotationFloat(in float rotation,in float age,in float normalizedAge)
 { 
 	#ifdef ROTATIONOVERLIFETIME
-	#ifdef ROTATIONOVERLIFETIMECONSTANT
+		#ifdef ROTATIONOVERLIFETIMECONSTANT
 			float ageRot=u_ROLAngularVelocityConst*age;
 	        rotation+=ageRot;
 		#endif
@@ -494,7 +494,7 @@ float computeParticleRotationFloat(in float rotation,in float age,in float norma
 		#endif
 	#endif
 	#ifdef ROTATIONOVERLIFETIMESEPERATE
-	#ifdef ROTATIONOVERLIFETIMECONSTANT
+		#ifdef ROTATIONOVERLIFETIMECONSTANT
 			float ageRot=u_ROLAngularVelocityConstSeprarate.z*age;
 	        rotation+=ageRot;
 		#endif
@@ -512,8 +512,9 @@ float computeParticleRotationFloat(in float rotation,in float age,in float norma
 	return rotation;
 }
 
+
 #if defined(RENDERMODE_MESH)&&(defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE))
-vec3 computeParticleRotationMesh(in vec3 rotation,in float age,in float normalizedAge)
+vec3 computeParticleRotationVec3(in vec3 rotation,in float age,in float normalizedAge)
 { 
 	#ifdef ROTATIONOVERLIFETIME
 	#ifdef ROTATIONOVERLIFETIMECONSTANT
@@ -693,23 +694,27 @@ void main()
 				center+= rotationByQuaternions(u_SizeScale*rotationByEuler(a_MeshPosition*size,rotation),worldRotation);
 			}
 			else{
-				float angle=computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
-				if(a_ShapePositionStartLifeTime.x!=0.0||a_ShapePositionStartLifeTime.y!=0.0)
-				{
-					center+= (rotationByQuaternions(rotationByAxis(u_SizeScale*a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_ShapePositionStartLifeTime.xy,0.0))),angle),worldRotation));//已验证
-				}
-				else
-				{
-					#ifdef SHAPE
-						center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),angle),worldRotation));
-					#else
-						if(u_SimulationSpace==0)
-							center+=rotationByAxis(u_SizeScale*a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle);//已验证
-						else if(u_SimulationSpace==1)
-							center+=rotationByQuaternions(u_SizeScale*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle),worldRotation);//已验证
-					#endif
-				}
-					
+				#ifdef ROTATIONOVERLIFETIME
+					float angle=computeParticleRotationFloat(a_StartRotation0.x, age,normalizedAge);
+					if(a_ShapePositionStartLifeTime.x!=0.0||a_ShapePositionStartLifeTime.y!=0.0){
+						center+= (rotationByQuaternions(rotationByAxis(u_SizeScale*a_MeshPosition*size,normalize(cross(vec3(0.0,0.0,1.0),vec3(a_ShapePositionStartLifeTime.xy,0.0))),angle),worldRotation));//已验证
+					}
+					else{
+						#ifdef SHAPE
+							center+= u_SizeScale.xzy*(rotationByQuaternions(rotationByAxis(a_MeshPosition*size,vec3(0.0,-1.0,0.0),angle),worldRotation));
+						#else
+							if(u_SimulationSpace==0)
+								center+=rotationByAxis(u_SizeScale*a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle);//已验证
+							else if(u_SimulationSpace==1)
+								center+=rotationByQuaternions(u_SizeScale*rotationByAxis(a_MeshPosition*size,vec3(0.0,0.0,-1.0),angle),worldRotation);//已验证
+						#endif
+					}
+				#endif
+				#ifdef ROTATIONOVERLIFETIMESEPERATE
+					//TODO:是否应合并if(u_ThreeDStartRotation)分支代码,待测试
+					vec3 angle=computeParticleRotationVec3(vec3(0.0,0.0,a_StartRotation0.z), age,normalizedAge);
+					center+= (rotationByQuaternions(rotationByEuler(u_SizeScale*a_MeshPosition*size,vec3(angle.x,angle.y,angle.z)),worldRotation));//已验证
+				#endif	
 			}
 		#else
 			if(u_ThreeDStartRotation){

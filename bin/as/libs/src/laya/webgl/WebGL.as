@@ -259,6 +259,9 @@ package laya.webgl {
 			}
 			
 			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
+				if (canvasWidth <= 0 || canvasHeight <= 0) {
+					trace("[error] canvasWidth and canvasHeight should greater than zero");	
+				}
 				offsetX -= sprite.x;
 				offsetY -= sprite.y;
 				var renderTarget:RenderTarget2D = RenderTarget2D.create(canvasWidth, canvasHeight, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, 0, false);
@@ -340,6 +343,17 @@ package laya.webgl {
 				var tSkinSprite:SkinMesh = new SkinMesh()
 				return tSkinSprite;
 			}
+			
+			/**
+			 * 临时。只是给小游戏用，以后考虑一个正规方法。
+			 */
+			HTMLCanvas.create = function(type:String, canvas:*= null):WebGLCanvas {
+				var ret:WebGLCanvas = new WebGLCanvas();
+				ret._imgData = canvas;
+				ret.flipY = false;
+				return ret;
+			}
+
 			
 			Filter._filterStart = function(scope:SubmitCMDScope, sprite:*, context:RenderContext, x:Number, y:Number):void {
 				var b:Rectangle = scope.getValue("bounds");
@@ -575,6 +589,9 @@ package laya.webgl {
 		public static function init(canvas:HTMLCanvas, width:int, height:int):void {
 			mainCanvas = canvas;
 			HTMLCanvas._createContext = function(canvas:HTMLCanvas):* {
+				return new WebGLContext2D(canvas);
+			}
+			WebGLCanvas._createContext = function(canvas:HTMLCanvas):* {
 				return new WebGLContext2D(canvas);
 			}
 			

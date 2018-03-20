@@ -17,6 +17,8 @@ package laya.d3.shader {
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
 	import laya.d3.core.scene.Scene;
+	import laya.d3.core.trail.TrailMaterial;
+	import laya.d3.core.trail.TrailSprite3D;
 	import laya.d3.graphics.VertexElementUsage;
 	import laya.d3.resource.models.Sky;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
@@ -709,28 +711,39 @@ package laya.d3.shader {
 			extendTerrainCompile3D.addSpriteDefines(RenderableSprite3D.shaderDefines);
 			extendTerrainCompile3D.addSpriteDefines(ExtendTerrainMaterial.shaderDefines);
 			
-//			//Trail
-//			attributeMap = {
-//				'a_Position': VertexElementUsage.POSITION0,
-//				'a_Color' : VertexElementUsage.COLOR0,
-//				'a_Texcoord0X': VertexElementUsage.TEXTURECOORDINATE0X,
-//				'a_Texcoord0Y': VertexElementUsage.TEXTURECOORDINATE0Y
-//			};
-//			uniformMap = {
-//				'u_VMatrix': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA],
-//				'u_PMatrix': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA],
-//				'u_MainTexture': [TrailMaterial.MAINTEXTURE, Shader3D.PERIOD_MATERIAL], 
-//				'u_MainColor': [TrailMaterial.MAINCOLOR, Shader3D.PERIOD_MATERIAL]
-//			};
-//			
-//			var trailShader:int = Shader3D.nameKey.add("Trail");
-//            vs = __INCLUDESTR__("files/Trail.vs");
-//            ps = __INCLUDESTR__("files/Trail.ps");
-//			
-//            var trailCompile3D:ShaderCompile3D = ShaderCompile3D.add(trailShader, vs, ps, attributeMap, uniformMap);
-//			TrailMaterial.SHADERDEFINE_MAINTEXTURE = trailCompile3D.registerMaterialDefine("MAINTEXTURE");
-//			//trailCompile3D.addSpriteDefines(RenderableSprite3D.shaderDefines);
-//			//trailCompile3D.addSpriteDefines(TrailMaterial.shaderDefines);
+			//Trail
+			attributeMap = {
+				'a_Position'    : VertexElementUsage.POSITION0,
+				'a_OffsetVector': VertexElementUsage.OFFSETVECTOR,
+				//'a_Color'       : VertexElementUsage.COLOR0,
+				'a_Texcoord0X'  : VertexElementUsage.TEXTURECOORDINATE0X,
+				'a_Texcoord0Y'  : VertexElementUsage.TEXTURECOORDINATE0Y,
+				'a_BirthTime'   : VertexElementUsage.TIME0
+			};
+			uniformMap = {
+				'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
+				'u_VMatrix': [BaseCamera.VIEWMATRIX, Shader3D.PERIOD_CAMERA],
+				'u_PMatrix': [BaseCamera.PROJECTMATRIX, Shader3D.PERIOD_CAMERA],
+				'u_TilingOffset': [TrailMaterial.TILINGOFFSET, Shader3D.PERIOD_MATERIAL],
+				'u_MainTexture': [TrailMaterial.DIFFUSETEXTURE, Shader3D.PERIOD_MATERIAL], 
+				'u_MainColor': [TrailMaterial.TINTCOLOR, Shader3D.PERIOD_MATERIAL],
+				'u_CurTime' : [TrailSprite3D.CURTIME, Shader3D.PERIOD_SPRITE],
+				'u_LifeTime' : [TrailSprite3D.LIFETIME, Shader3D.PERIOD_SPRITE],
+				'u_WidthCurve' : [TrailSprite3D.WIDTHCURVE, Shader3D.PERIOD_SPRITE],
+				'u_WidthCurveKeyLength' : [TrailSprite3D.WIDTHCURVEKEYLENGTH, Shader3D.PERIOD_SPRITE],
+				'u_GradientColorkey' : [TrailSprite3D.GRADIENTCOLORKEY, Shader3D.PERIOD_SPRITE],
+				'u_GradientAlphakey' : [TrailSprite3D.GRADIENTALPHAKEY, Shader3D.PERIOD_SPRITE]
+			};
+			
+			var trailShader:int = Shader3D.nameKey.add("Trail");
+            vs = __INCLUDESTR__("files/Trail.vs");
+            ps = __INCLUDESTR__("files/Trail.ps");
+            var trailCompile3D:ShaderCompile3D = ShaderCompile3D.add(trailShader, vs, ps, attributeMap, uniformMap);
+			TrailMaterial.SHADERDEFINE_DIFFUSETEXTURE = trailCompile3D.registerMaterialDefine("DIFFUSETEXTURE");
+			TrailMaterial.SHADERDEFINE_TILINGOFFSET = trailCompile3D.registerSpriteDefine("TILINGOFFSET");
+			TrailSprite3D.SHADERDEFINE_GRADIENTMODE_BLEND = trailCompile3D.registerSpriteDefine("GRADIENTMODE_BLEND");
+			//trailCompile3D.addSpriteDefines(RenderableSprite3D.shaderDefines);
+			//trailCompile3D.addSpriteDefines(TrailMaterial.shaderDefines);
 		}
 	
 	}

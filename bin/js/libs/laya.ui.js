@@ -9,8 +9,8 @@
 	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
 	var Utils=laya.utils.Utils,WeakObject=laya.utils.WeakObject;
 Laya.interface('laya.ui.IItem');
-Laya.interface('laya.ui.ISelect');
 Laya.interface('laya.ui.IRender');
+Laya.interface('laya.ui.ISelect');
 Laya.interface('laya.ui.IComponent');
 Laya.interface('laya.ui.IBox','IComponent');
 /**
@@ -3192,7 +3192,7 @@ var ScrollBar=(function(_super){
 	*滑块位置发生改变的处理函数。
 	*/
 	__proto.onSliderChange=function(){
-		this.value=this.slider.value;
+		if(this._value !=this.slider.value)this.value=this.slider.value;
 	}
 
 	/**
@@ -3350,7 +3350,10 @@ var ScrollBar=(function(_super){
 		Laya.stage.off(/*laya.events.Event.MOUSE_UP*/"mouseup",this,this.onStageMouseUp2);
 		Laya.stage.off(/*laya.events.Event.MOUSE_OUT*/"mouseout",this,this.onStageMouseUp2);
 		Laya.timer.clear(this,this.loop);
-		if (this._clickOnly)return;
+		if (this._clickOnly){
+			if(this._value>=this.min&&this._value<=this.max)
+				return;
+		}
 		this._target.mouseEnabled=true;
 		if (this._isElastic){
 			if (this._value < this.min){
@@ -3491,13 +3494,16 @@ var ScrollBar=(function(_super){
 		return this._value;
 		},function(v){
 		if (v!==this._value){
-			if (this._isElastic)this._value=v;
-			else {
-				this.slider.value=v;
-				this._value=this.slider.value;
+			this._value=v;
+			if (!this._isElastic){
+				if (this.slider._value !=v){
+					this.slider._value=v;
+					this.slider.changeValue();
+				}
+				this._value=this.slider._value;
 			}
 			this.event(/*laya.events.Event.CHANGE*/"change");
-			this.changeHandler && this.changeHandler.runWith(this.value);
+			this.changeHandler && this.changeHandler.runWith(this._value);
 		}
 	});
 

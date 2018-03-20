@@ -57,7 +57,7 @@ package laya.ui {
 		/**@private */
 		protected var _tick:Number = 1;
 		/**@private */
-		protected var _value:Number = 0;
+		public var _value:Number = 0;
 		/**@private */
 		protected var _skin:String;
 		/**@private */
@@ -308,7 +308,7 @@ package laya.ui {
 		 * @private
 		 * 改变滑块的位置值。
 		 */
-		protected function changeValue():void {
+		public function changeValue():void {
 			//_value = Math.round(_value / _tick) * _tick;			
 			var pow:Number = Math.pow(10, (_tick + "").length - 1);
 			_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;

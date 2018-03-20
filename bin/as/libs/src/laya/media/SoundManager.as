@@ -4,6 +4,7 @@ package laya.media {
 	import laya.net.Loader;
 	import laya.net.URL;
 	import laya.renders.Render;
+	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
 	
@@ -169,6 +170,7 @@ package laya.media {
 		 * 背景音乐和所有音效是否静音。
 		 */
 		public static function set muted(value:Boolean):void {
+			if (value == _muted) return;
 			if (value) {
 				stopAllSound();
 			}
@@ -195,14 +197,30 @@ package laya.media {
 		 * 背景音乐（不包括音效）是否静音。
 		 */
 		public static function set musicMuted(value:Boolean):void {
+			if (value == _musicMuted) return;
 			if (value) {
 				if (_tMusic)
-					stopSound(_tMusic);
+				{
+					if (_musicChannel&&!_musicChannel.isStopped)
+					{
+						_musicChannel.pause();
+					}else
+					{
+						_musicChannel = null;
+					}
+				}else
+				{
+					_musicChannel = null;
+				}
+					
 				_musicMuted = value;
 			} else {
 				_musicMuted = value;
 				if (_tMusic) {
-					playMusic(_tMusic);
+					if (_musicChannel)
+					{
+						_musicChannel.resume();
+					}
 				}
 			}
 		
@@ -248,7 +266,11 @@ package laya.media {
 				}
 				if (_soundMuted) return null;
 			}
-			var tSound:Sound = Laya.loader.getRes(url);
+			var tSound:Sound;
+			if (!Browser.onMiniGame)
+			{
+				tSound= Laya.loader.getRes(url);
+			}
 			if (!soundClass) soundClass = _soundClass;
 			if (!tSound) {
 				tSound = new soundClass();

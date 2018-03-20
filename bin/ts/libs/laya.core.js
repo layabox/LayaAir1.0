@@ -415,7 +415,7 @@ var ___Laya=(function(){
 	Laya.timer=null;
 	Laya.scaleTimer=null;
 	Laya.loader=null;
-	Laya.version="1.7.15";
+	Laya.version="1.7.16";
 	Laya.render=null;
 	Laya._currentStage=null;
 	Laya._isinit=false;
@@ -1497,6 +1497,7 @@ var Graphics=(function(){
 		if (!width)width=tex.sourceWidth;
 		if (!height)height=tex.sourceHeight;
 		alpha=alpha < 0 ? 0 :(alpha > 1 ? 1 :alpha);
+		var offset=(!Render.isWebGL && Browser.onFirefox || Browser.onEdge)? 0.5 :0;
 		var wRate=width / tex.sourceWidth;
 		var hRate=height / tex.sourceHeight;
 		width=tex.width *wRate;
@@ -1506,6 +1507,10 @@ var Graphics=(function(){
 		y+=tex.offsetY *hRate;
 		this._sp && (this._sp._renderType |=/*laya.renders.RenderSprite.GRAPHICS*/0x200);
 		var args;
+		x-=offset;
+		y-=offset;
+		width+=2 *offset;
+		height+=2 *offset;
 		if (Graphics._cache.length){
 			args=Graphics._cache.pop();
 			args[0]=tex;
@@ -4756,6 +4761,7 @@ var SoundManager=(function(){
 	__getset(1,SoundManager,'muted',function(){
 		return SoundManager._muted;
 		},function(value){
+		if (value==SoundManager._muted)return;
 		if (value){
 			SoundManager.stopAllSound();
 		}
@@ -4769,14 +4775,24 @@ var SoundManager=(function(){
 	__getset(1,SoundManager,'musicMuted',function(){
 		return SoundManager._musicMuted;
 		},function(value){
+		if (value==SoundManager._musicMuted)return;
 		if (value){
-			if (SoundManager._tMusic)
-				SoundManager.stopSound(SoundManager._tMusic);
+			if (SoundManager._tMusic){
+				if (SoundManager._musicChannel&&!SoundManager._musicChannel.isStopped){
+					SoundManager._musicChannel.pause();
+					}else{
+					SoundManager._musicChannel=null;
+				}
+				}else{
+				SoundManager._musicChannel=null;
+			}
 			SoundManager._musicMuted=value;
 			}else {
 			SoundManager._musicMuted=value;
 			if (SoundManager._tMusic){
-				SoundManager.playMusic(SoundManager._tMusic);
+				if (SoundManager._musicChannel){
+					SoundManager._musicChannel.resume();
+				}
 			}
 		}
 	});
@@ -4866,7 +4882,10 @@ var SoundManager=(function(){
 			}
 			if (SoundManager._soundMuted)return null;
 		};
-		var tSound=Laya.loader.getRes(url);
+		var tSound;
+		if (!Browser.onMiniGame){
+			tSound=Laya.loader.getRes(url);
+		}
 		if (!soundClass)soundClass=SoundManager._soundClass;
 		if (!tSound){
 			tSound=new soundClass();
@@ -5129,10 +5148,12 @@ var TTFLoader=(function(){
 	function TTFLoader(){
 		this.fontName=null;
 		this.complete=null;
+		this.err=null;
 		this._fontTxt=null;
 		this._url=null;
 		this._div=null;
 		this._txtWidth=NaN;
+		this._http=null;
 	}
 
 	__class(TTFLoader,'laya.net.TTFLoader');
@@ -5141,11 +5162,43 @@ var TTFLoader=(function(){
 		this._url=fontPath;
 		var tArr=fontPath.split(".ttf")[0].split("/");
 		this.fontName=tArr[tArr.length-1];
+		if (Browser.window.conch){
+			this._loadConch();
+		}else
 		if (Browser.window.FontFace){
 			this._loadWithFontFace()
 		}
 		else {
 			this._loadWithCSS();
+		}
+	}
+
+	__proto._loadConch=function(){
+		this._http=new HttpRequest();
+		this._http.on(/*laya.events.Event.ERROR*/"error",this,this._onErr);
+		this._http.on(/*laya.events.Event.COMPLETE*/"complete",this,this._onHttpLoaded);
+		this._http.send(this._url,null,"get",/*laya.net.Loader.BUFFER*/"arraybuffer");
+	}
+
+	__proto._onHttpLoaded=function(data){
+		Browser.window.conch.setFontFaceFromBuffer(this.fontName,data);
+		this._clearHttp();
+		this._complete();
+	}
+
+	__proto._clearHttp=function(){
+		if (this._http){
+			this._http.off(/*laya.events.Event.ERROR*/"error",this,this._onErr);
+			this._http.off(/*laya.events.Event.COMPLETE*/"complete",this,this._onHttpLoaded);
+			this._http=null;
+		}
+	}
+
+	__proto._onErr=function(){
+		this._clearHttp();
+		if (this.err){
+			this.err.runWith("fail:"+this._url);
+			this.err=null;
 		}
 	}
 
@@ -6490,6 +6543,8 @@ var Context=(function(){
 	}
 
 	Context.__init__=function(to){
+		if (Context._inited)return;
+		Context._inited=true;
 		var from=laya.resource.Context.prototype;
 		to=to || /*__JS__ */CanvasRenderingContext2D.prototype;
 		to.__fillText=to.fillText;
@@ -6549,6 +6604,7 @@ var Context=(function(){
 	}
 
 	Context.newKeys=[];
+	Context._inited=false;
 	__static(Context,
 	['_default',function(){return this._default=new Context();},'replaceKeys',function(){return this.replaceKeys=["font","fillStyle","textBaseline"];}
 	]);
@@ -9655,6 +9711,8 @@ var Tween=(function(){
 		//this._usedTimer=0;
 		/**@private */
 		//this._usedPool=false;
+		/**@private */
+		//this._delayParam=null;
 		/**@private 唯一标识，TimeLintLite用到*/
 		this.gid=0;
 		/**更新回调，缓动数值发生变化时，回调变化的值*/
@@ -9709,6 +9767,7 @@ var Tween=(function(){
 		this._usedTimer=0;
 		this._startTimer=Browser.now();
 		this._usedPool=usePool;
+		this._delayParam=null;
 		this.update=props.update;
 		var gid=(target.$_GID || (target.$_GID=Utils.getGID()));
 		if (!Tween.tweenMap[gid]){
@@ -9719,7 +9778,10 @@ var Tween=(function(){
 		}
 		if (runNow){
 			if (delay <=0)this.firstStart(target,props,isTo);
-			else Laya.scaleTimer.once(delay,this,this.firstStart,[target,props,isTo]);
+			else{
+				this._delayParam=[target,props,isTo];
+				Laya.scaleTimer.once(delay,this,this.firstStart,this._delayParam);
+			}
 			}else {
 			this._initProps(target,props,isTo);
 		}
@@ -9727,6 +9789,7 @@ var Tween=(function(){
 	}
 
 	__proto.firstStart=function(target,props,isTo){
+		this._delayParam=null;
 		if (target.destroyed){
 			this.clear();
 			return;
@@ -9796,6 +9859,13 @@ var Tween=(function(){
 	__proto.pause=function(){
 		Laya.scaleTimer.clear(this,this._beginLoop);
 		Laya.scaleTimer.clear(this,this._doEase);
+		Laya.scaleTimer.clear(this,this.firstStart);
+		var time=Browser.now();
+		var dTime=NaN;
+		dTime=time-this._startTimer-this._delay;
+		if (dTime < 0){
+			this._usedTimer=dTime;
+		}
 	}
 
 	/**
@@ -9826,6 +9896,7 @@ var Tween=(function(){
 		this._target=null;
 		this._ease=null;
 		this._props=null;
+		this._delayParam=null;
 		if (this._usedPool){
 			this.update=null;
 			Pool.recover("tween",this);
@@ -9857,6 +9928,10 @@ var Tween=(function(){
 		this.pause();
 		this._usedTimer=0;
 		this._startTimer=Browser.now();
+		if (this._delayParam){
+			Laya.scaleTimer.once(this._delay,this,this.firstStart,this._delayParam);
+			return;
+		};
 		var props=this._props;
 		for (var i=0,n=props.length;i < n;i++){
 			var prop=props[i];
@@ -9871,7 +9946,15 @@ var Tween=(function(){
 	__proto.resume=function(){
 		if (this._usedTimer >=this._duration)return;
 		this._startTimer=Browser.now()-this._usedTimer-this._delay;
-		this._beginLoop();
+		if (this._delayParam){
+			if (this._usedTimer < 0){
+				Laya.scaleTimer.once(-this._usedTimer,this,this.firstStart,this._delayParam);
+				}else{
+				this.firstStart.apply(this,this._delayParam);
+			}
+			}else{
+			this._beginLoop();
+		}
 	}
 
 	/**设置当前执行比例**/
@@ -10116,7 +10199,7 @@ var Utils=(function(){
 		var tTexture;
 		for (i=0;i < len;i++){
 			tTexture=textureList[i];
-			if (!tTexture.source)return false;
+			if (!tTexture||!tTexture.source)return false;
 		}
 		return true;
 	}
@@ -12582,9 +12665,8 @@ var Loader=(function(_super){
 				var atlasURL=URL.formatURL(this._url);
 				var map=Loader.atlasMap[atlasURL] || (Loader.atlasMap[atlasURL]=[]);
 				map.dir=directory;
-				var scaleRate=NaN;
-				scaleRate=this._data.meta.scale;
-				if (scaleRate && scaleRate !=1){
+				var scaleRate=1;
+				if (this._data.meta && this._data.meta.scale && this._data.meta.scale !=1){
 					scaleRate=parseFloat(this._data.meta.scale);
 					for (var name in frames){
 						var obj=frames[name];
@@ -14139,7 +14221,12 @@ var Texture=(function(_super){
 	*@param uv UV数据信息
 	*/
 	__proto.setTo=function(bitmap,uv){
-		this.bitmap=bitmap;
+		if (/*__JS__ */bitmap instanceof window.HTMLElement){
+			var canvas=HTMLCanvas.create("2D",bitmap);
+			this.bitmap=canvas;
+			}else{
+			this.bitmap=bitmap;
+		}
 		this.uv=uv || Texture.DEF_UV;
 		if (bitmap){
 			this._w=bitmap.width;
@@ -14406,8 +14493,7 @@ var Texture=(function(_super){
 			width *=texScaleRate;
 			height *=texScaleRate;
 		};
-		var offset=(!Render.isWebGL && Browser.onFirefox || Browser.onEdge)? 0.5 :0;
-		var rect=Rectangle.TEMP.setTo(x-texture.offsetX-offset,y-texture.offsetY-offset,width+offset *2,height+offset *2);
+		var rect=Rectangle.TEMP.setTo(x-texture.offsetX,y-texture.offsetY,width,height);
 		var result=rect.intersection(Texture._rect1.setTo(0,0,texture.width,texture.height),Texture._rect2);
 		if (result)
 			var tex=Texture.create(texture,result.x,result.y,result.width,result.height,result.x-rect.x,result.y-rect.y,width,height);
@@ -16622,7 +16708,7 @@ var WebAudioSoundChannel=(function(_super){
 	}
 
 	__proto._tryClearBuffer=function(sourceNode){
-		if (!Browser.onIOS){
+		if (!Browser.onMac){
 			WebAudioSoundChannel._tryCleanFailed=true;
 			return;
 		}
@@ -17203,6 +17289,30 @@ var Text=(function(_super){
 	}
 
 	/**
+	*@private
+	*/
+	__proto._isPassWordMode=function(){
+		var style=this._style;
+		var password=style.password;
+		if (("prompt" in this)&& this['prompt']==this._text)
+			password=false;
+		return password;
+	}
+
+	/**
+	*@private
+	*/
+	__proto._getPassWordTxt=function(txt){
+		var len=txt.length;
+		var word;
+		word="";
+		for (var j=len;j > 0;j--){
+			word+="●";
+		}
+		return word;
+	}
+
+	/**
 	*渲染文字。
 	*@param begin 开始渲染的行索引。
 	*@param visibleLineCount 渲染的行数。
@@ -17339,6 +17449,9 @@ var Text=(function(_super){
 		Browser.context.font=this._getCSSStyle().font;
 		this._lines.length=0;
 		this._lineWidths.length=0;
+		if (this._isPassWordMode()){
+			this.parseLines(this._getPassWordTxt(this._text));
+		}else
 		this.parseLines(this._text);
 		this.evalTextSize();
 		if (this.checkEnabledViewportOrNot())
@@ -18000,12 +18113,14 @@ var Stage=(function(_super){
 		window.document.addEventListener(visibilityChange,visibleChangeFun);
 		function visibleChangeFun (){
 			if (Browser.document[state]=="hidden"){
-				_$this._isVisibility=false;
-				if (_this._isInputting())Input["inputElement"].target.focus=false;
+				_this._setStageVisible(false);
 				}else {
-				_$this._isVisibility=true;
+				_this._setStageVisible(true);
 			}
-			_this.event(/*laya.events.Event.VISIBILITY_CHANGE*/"visibilitychange");
+		}
+		window.document.addEventListener("qbrowserVisibilityChange",qbroserVisibleChangeFun);
+		function qbroserVisibleChangeFun (e){
+			_this._setStageVisible(!e.hidden);
 		}
 		window.addEventListener("resize",function(){
 			var orientation=Browser.window.orientation;
@@ -18025,6 +18140,13 @@ var Stage=(function(_super){
 
 	__class(Stage,'laya.display.Stage',_super);
 	var __proto=Stage.prototype;
+	__proto._setStageVisible=function(value){
+		if (this._isVisibility==value)return;
+		this._isVisibility=value;
+		if (!this._isVisibility)if (this._isInputting())Input["inputElement"].target.focus=false;
+		this.event(/*laya.events.Event.VISIBILITY_CHANGE*/"visibilitychange");
+	}
+
 	/**
 	*@private
 	*在移动端输入时，输入法弹出期间不进行画布尺寸重置。
@@ -18202,7 +18324,7 @@ var Stage=(function(_super){
 
 	/**@inheritDoc */
 	__proto.render=function(context,x,y){
-		if (this._frameRate==="sleep"){
+		if (this._frameRate==="sleep" && !Render.isConchApp){
 			var now=Browser.now();
 			if (now-this._frameStartTime >=1000)this._frameStartTime=now;
 			else return;
@@ -18222,7 +18344,7 @@ var Stage=(function(_super){
 		var isFastMode=(frameMode!=="slow");
 		var isDoubleLoop=(this._renderCount % 2===0);
 		Stat.renderSlow=!isFastMode;
-		if (isFastMode || isDoubleLoop){
+		if (isFastMode || isDoubleLoop || Render.isConchApp){
 			Stat.loopCount++;
 			MouseManager.instance.runEvent();
 			Laya.timer._update();
@@ -18702,7 +18824,7 @@ var FileBitmap=(function(_super){
 */
 //class laya.resource.HTMLCanvas extends laya.resource.Bitmap
 var HTMLCanvas=(function(_super){
-	function HTMLCanvas(type){
+	function HTMLCanvas(type,canvas){
 		//this._ctx=null;
 		this._is2D=false;
 		HTMLCanvas.__super.call(this);
@@ -18710,7 +18832,9 @@ var HTMLCanvas=(function(_super){
 		this._source=this;
 		if (type==="2D" || (type==="AUTO" && !Render.isWebGL)){
 			this._is2D=true;
-			this._source=Browser.createElement("canvas");
+			this._source=canvas || Browser.createElement("canvas");
+			this._w=this._source.width;
+			this._h=this._source.height;
 			var o=this;
 			o.getContext=function (contextID,other){
 				if (_$this._ctx)return _$this._ctx;
@@ -18819,8 +18943,8 @@ var HTMLCanvas=(function(_super){
 	__getset(0,__proto,'asBitmap',null,function(value){
 	});
 
-	HTMLCanvas.create=function(type){
-		return new HTMLCanvas(type);
+	HTMLCanvas.create=function(type,canvas){
+		return new HTMLCanvas(type,canvas);
 	}
 
 	HTMLCanvas.TYPE2D="2D";

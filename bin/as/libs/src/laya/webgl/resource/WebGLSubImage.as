@@ -145,7 +145,10 @@ package laya.webgl.resource {
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			
 			canvas = null;
-			memorySize = _w * _h * 4;
+			if (isPOT && this.mipmap)
+				memorySize = _w * _h * 4 * (1 + 1 / 3);//使用mipmap则在原来的基础上增加1/3
+			else
+				memorySize = _w * _h * 4;
 		}
 		
 		override protected function disposeResource():void {

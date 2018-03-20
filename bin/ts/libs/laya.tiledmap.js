@@ -135,6 +135,7 @@ var TiledMap=(function(){
 		*是否在加载完成之后cache所有大格子
 		*/
 		this.cacheAllAfterInit=false;
+		this._texutreStartDic={};
 		this._rect=new Rectangle();
 		this._paddingRect=new Rectangle();
 		this._mapRect=new GRect();
@@ -229,6 +230,7 @@ var TiledMap=(function(){
 					if (tAnimation){
 						var tAniData=new TileMapAniData();
 						this._animationDic[p]=tAniData;
+						tAniData.image=tileset.image;
 						for (var j=0;j < tAnimation.length;j++){
 							var tAnimationItem=tAnimation[j];
 							tAniData.mAniIdArray.push(tAnimationItem.tileid);
@@ -314,6 +316,7 @@ var TiledMap=(function(){
 		var tTileWNum=Math.floor((tImageWidth-tTileSet.margin-tTileTextureW)/ (tTileTextureW+tTileSet.spacing))+1;
 		var tTileHNum=Math.floor((tImageHeight-tTileSet.margin-tTileTextureH)/ (tTileTextureH+tTileSet.spacing))+1;
 		var tTileTexSet=null;
+		this._texutreStartDic[tTileSet.image]=this._tileTexSetArr.length;
 		for (var i=0;i < tTileHNum;i++){
 			for (var j=0;j < tTileWNum;j++){
 				tTileTexSet=new TileTexSet();
@@ -358,8 +361,10 @@ var TiledMap=(function(){
 	__proto.initMap=function(){
 		var i=0,n=0;
 		for (var p in this._animationDic){
-			var tTileTexSet=this.getTexture(parseInt(p)+1);
 			var tAniData=this._animationDic[p];
+			var gStart=0;
+			gStart=this._texutreStartDic[tAniData.image];
+			var tTileTexSet=this.getTexture(parseInt(p)+gStart);
 			if (tAniData.mAniIdArray.length > 0){
 				tTileTexSet.textureArray=[];
 				tTileTexSet.durationTimeArray=tAniData.mDurationTimeArray;
@@ -369,7 +374,7 @@ var TiledMap=(function(){
 					tTileTexSet.animationTotalTime+=tTileTexSet.durationTimeArray[i];
 				}
 				for (i=0,n=tAniData.mAniIdArray.length;i < n;i++){
-					var tTexture=this.getTexture(tAniData.mAniIdArray[i]+1);
+					var tTexture=this.getTexture(tAniData.mAniIdArray[i]+gStart);
 					tTileTexSet.textureArray.push(tTexture);
 				}
 			}
@@ -1415,6 +1420,7 @@ var TiledMap=(function(){
 				this.mAniIdArray=[];
 				this.mDurationTimeArray=[];
 				this.mTileTexSetArr=[];
+				this.image=null;
 			}
 			__class(TileMapAniData,'');
 			return TileMapAniData;

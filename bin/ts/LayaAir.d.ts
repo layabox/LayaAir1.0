@@ -1364,7 +1364,7 @@ declare module laya.d3.animation {
         _unCachePropertyMap: Int32Array;
         _duration: number;
         _frameRate: number;
-        _events: Array<any>;
+        _animationEvents: Array<any>;
         _publicClipDatas: Array<any>;
         /**是否循环。*/
         islooping: boolean;
@@ -1536,6 +1536,7 @@ declare module laya.d3.animation {
      * <code>Transform3D</code> 类用于实现3D变换。
      */
     class AnimationTransform3D extends EventDispatcher {
+        _localRotationEuler: Float32Array;
         _owner: AnimationNode;
         _worldUpdate: boolean;
         _entity: Transform3D;
@@ -3023,7 +3024,7 @@ declare module laya.d3.core {
         /**
          * @private
          */
-        _renderUpdate(projectionView: Matrix4x4): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
     }
 }
 declare module laya.d3.core {
@@ -5019,7 +5020,7 @@ declare module laya.d3.core {
         /**
          * @private
          */
-        _renderUpdate(projectionView: Matrix4x4): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
     }
 }
 declare module laya.d3.core {
@@ -5360,6 +5361,7 @@ declare module laya.d3.core.particleShuriKen.module {
 }
 declare module laya.d3.core.particleShuriKen.module {
     import IClone = laya.d3.core.IClone;
+    import Vector3 = laya.d3.math.Vector3;
     import Vector4 = laya.d3.math.Vector4;
     /**
      * <code>GradientRotation</code> 类用于创建渐变角速度。
@@ -5404,7 +5406,7 @@ declare module laya.d3.core.particleShuriKen.module {
          * @param	separateConstantMax  最大分轴固定角速度。
          * @return  渐变角速度。
          */
-        static createByRandomTwoConstantSeparate(separateConstantMin: Vector4, separateConstantMax: Vector4): GradientAngularVelocity;
+        static createByRandomTwoConstantSeparate(separateConstantMin: Vector3, separateConstantMax: Vector3): GradientAngularVelocity;
         /**
          * 通过随机双渐变角速度创建一个 <code>GradientAngularVelocity</code> 实例。
          * @param	gradientMin 最小渐变角速度。
@@ -5470,11 +5472,11 @@ declare module laya.d3.core.particleShuriKen.module {
         /**
          * 最小分轴随机双固定角速度。
          */
-        readonly constantMinSeparate: Vector4;
+        readonly constantMinSeparate: Vector3;
         /**
          * 最大分轴随机双固定角速度。
          */
-        readonly constantMaxSeparate: Vector4;
+        readonly constantMaxSeparate: Vector3;
         /**
          *最小渐变角速度。
          */
@@ -6686,7 +6688,7 @@ declare module laya.d3.core.particleShuriKen {
         /**
          * @inheritDoc
          */
-        _renderUpdate(projectionView: Matrix4x4): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
         /**
          * @inheritDoc
          */
@@ -7240,7 +7242,7 @@ declare module laya.d3.core.render {
         /**
          * @private
          */
-        _renderUpdate(projectionView: Matrix4x4): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
         /**
          * @private
          */
@@ -7262,7 +7264,7 @@ declare module laya.d3.core.render {
      * <code>IRender</code> 接口用于实现3D对象的渲染相关功能。
      */
     interface IRenderable {
-        _getVertexBuffer(index?: number): VertexBuffer3D;
+        _getVertexBuffer(index: number): VertexBuffer3D;
         _getIndexBuffer(): IndexBuffer3D;
         _beforeRender(state: RenderState): boolean;
         _getVertexBuffers(): Array<VertexBuffer3D>;
@@ -7988,7 +7990,7 @@ declare module laya.d3.core {
         /**
          * @inheritDoc
          */
-        _renderUpdate(projectionView: Matrix4x4): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
         _hasIndependentBound: boolean;
     }
 }
@@ -8270,6 +8272,463 @@ declare module laya.d3.core {
          * @inheritDoc
          */
         destroy(destroyChild?: boolean): void;
+    }
+}
+declare module laya.d3.core.trail.module {
+    class Color {
+        /**
+         * 红色
+         */
+        static red: Color;
+        /**
+         * 绿色
+         */
+        static green: Color;
+        /**
+         * 蓝色
+         */
+        static blue: Color;
+        /**
+         * 蓝绿色
+         */
+        static cyan: Color;
+        /**
+         * 黄色
+         */
+        static yellow: Color;
+        /**
+         * 品红色
+         */
+        static magenta: Color;
+        /**
+         * 灰色
+         */
+        static gray: Color;
+        /**
+         * 白色
+         */
+        static white: Color;
+        /**
+         * 黑色
+         */
+        static black: Color;
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+        constructor(r: number, g: number, b: number, a: number);
+    }
+}
+declare module laya.d3.core.trail.module {
+    class Gradient {
+        _colorKeyData: Float32Array;
+        _alphaKeyData: Float32Array;
+        /**
+         * 获取梯度模式。
+         * @return  梯度模式。
+         */
+        /**
+         * 设置梯度模式。
+         * @param value 梯度模式。
+         */
+        mode: number;
+        /**
+         * 获取颜色值关键帧数据
+         */
+        /**
+         * 设置颜色值关键帧数据
+         */
+        colorKeys: Array<any>;
+        /**
+         * 获取透明度关键帧数据
+         */
+        /**
+         * 设置透明度关键帧数据
+         */
+        alphaKeys: Array<any>;
+        constructor();
+        /**
+         * 设置渐变，使用一组颜色关键帧数据和透明度关键帧数据。
+         * @param	colorKeys 渐变的颜色值关键帧数据(最大长度为10)。
+         * @param	alphaKeys 渐变的透明度关键帧数据(最大长度为10)。
+         */
+        setKeys(colorKeys: Array<any>, alphaKeys: Array<any>): void;
+    }
+}
+declare module laya.d3.core.trail.module {
+    class GradientAlphaKey {
+        /**
+         * 获取透明度。
+         * @return  透明度。
+         */
+        /**
+         * 设置透明度。
+         * @param value 透明度。
+         */
+        alpha: number;
+        /**
+         * 获取时间。
+         * @return  时间。
+         */
+        /**
+         * 设置时间。
+         * @param value 时间。
+         */
+        time: number;
+        constructor(alpha: number, time: number);
+    }
+}
+declare module laya.d3.core.trail.module {
+    class GradientColorKey {
+        /**
+         * 获取颜色值。
+         * @return  颜色值。
+         */
+        /**
+         * 设置颜色值。
+         * @param value 颜色值。
+         */
+        color: Color;
+        /**
+         * 获取时间。
+         * @return  时间。
+         */
+        /**
+         * 设置时间。
+         * @param value 时间。
+         */
+        time: number;
+        constructor(color: Color, time: number);
+    }
+}
+declare module laya.d3.core.trail.module {
+    /**
+     * ...
+     * @author ...
+     */
+    class GradientMode {
+        /**
+         * 找到与请求的评估时间相邻的两个键,并线性插值在他们之间,以获得一种混合的颜色。
+         */
+        static Blend: number;
+        /**
+         * 返回一个固定的颜色，通过查找第一个键的时间值大于所请求的评估时间。
+         */
+        static Fixed: number;
+    }
+}
+declare module laya.d3.core.trail.module {
+    /**
+     * ...
+     * @author ...
+     */
+    class TextureMode {
+        /**
+         * 拉伸模式。
+         */
+        static Stretch: number;
+        /**
+         * 平铺模式。
+         */
+        static Tile: number;
+    }
+}
+declare module laya.d3.core.trail.module {
+    class TrailKeyFrame {
+        time: number;
+        inTangent: number;
+        outTangent: number;
+        value: number;
+    }
+}
+declare module laya.d3.core.trail {
+    import GeometryFilter = laya.d3.core.GeometryFilter;
+    import IRenderable = laya.d3.core.render.IRenderable;
+    import RenderState = laya.d3.core.render.RenderState;
+    import Gradient = laya.d3.core.trail.module.Gradient;
+    import Vector3 = laya.d3.math.Vector3;
+    /**
+     * ...
+     * @author ...
+     */
+    class TrailFilter extends GeometryFilter {
+        _owner: TrailSprite3D;
+        _curtime: number;
+        _curSubTrailFinishPosition: Vector3;
+        _curSubTrailFinishDirection: Vector3;
+        _curSubTrailFinishCurTime: number;
+        _curSubTrailFinished: boolean;
+        _hasLifeSubTrail: boolean;
+        _trailTotalLength: number;
+        _trailSupplementLength: number;
+        _trailDeadLength: number;
+        /**
+         * 获取淡出时间。
+         * @return  淡出时间。
+         */
+        /**
+         * 设置淡出时间。
+         * @param value 淡出时间。
+         */
+        time: number;
+        /**
+         * 获取新旧顶点之间最小距离。
+         * @return  新旧顶点之间最小距离。
+         */
+        /**
+         * 设置新旧顶点之间最小距离。
+         * @param value 新旧顶点之间最小距离。
+         */
+        minVertexDistance: number;
+        /**
+         * 获取宽度倍数。
+         * @return  宽度倍数。
+         */
+        /**
+         * 设置宽度倍数。
+         * @param value 宽度倍数。
+         */
+        widthMultiplier: number;
+        /**
+         * 获取宽度曲线。
+         * @return  宽度曲线。
+         */
+        /**
+         * 设置宽度曲线。
+         * @param value 宽度曲线。
+         */
+        widthCurve: Array<any>;
+        /**
+         * 获取颜色梯度。
+         * @return  颜色梯度。
+         */
+        /**
+         * 设置颜色梯度。
+         * @param value 颜色梯度。
+         */
+        colorGradient: Gradient;
+        /**
+         * 获取纹理模式。
+         * @return  纹理模式。
+         */
+        /**
+         * 设置纹理模式。
+         * @param value 纹理模式。
+         */
+        textureMode: number;
+        constructor(owner: TrailSprite3D);
+        getRenderElementsCount(): number;
+        addRenderElement(): number;
+        getRenderElement(index: number): IRenderable;
+        _update(state: RenderState): void;
+        /**
+         * @private
+         */
+        _destroy(): void;
+    }
+}
+declare module laya.d3.core.trail {
+    import BaseMaterial = laya.d3.core.material.BaseMaterial;
+    import Vector4 = laya.d3.math.Vector4;
+    import BaseTexture = laya.d3.resource.BaseTexture;
+    import ShaderDefines = laya.d3.shader.ShaderDefines;
+    /**
+     * ...
+     * @author ...
+     */
+    class TrailMaterial extends BaseMaterial {
+        /** 默认材质，禁止修改*/
+        static defaultMaterial: TrailMaterial;
+        static SHADERDEFINE_DIFFUSETEXTURE: number;
+        static SHADERDEFINE_TILINGOFFSET: number;
+        static DIFFUSETEXTURE: number;
+        static TINTCOLOR: number;
+        static TILINGOFFSET: number;
+        static shaderDefines: ShaderDefines;
+        /**
+         * @private
+         */
+        static __init__(): void;
+        /**
+         * 加载标准材质。
+         * @param url 标准材质地址。
+         */
+        static load(url: string): TrailMaterial;
+        /**
+         * 获取颜色。
+         * @return 颜色。
+         */
+        /**
+         * 设置颜色。
+         * @param value 颜色。
+         */
+        tintColor: Vector4;
+        /**
+         * 获取贴图。
+         * @return 贴图。
+         */
+        /**
+         * 设置贴图。
+         * @param value 贴图。
+         */
+        diffuseTexture: BaseTexture;
+        /**
+         * 获取纹理平铺和偏移。
+         * @return 纹理平铺和偏移。
+         */
+        /**
+         * 设置纹理平铺和偏移。
+         * @param value 纹理平铺和偏移。
+         */
+        tilingOffset: Vector4;
+        constructor();
+    }
+}
+declare module laya.d3.core.trail {
+    import IRenderable = laya.d3.core.render.IRenderable;
+    import RenderElement = laya.d3.core.render.RenderElement;
+    import RenderState = laya.d3.core.render.RenderState;
+    import IndexBuffer3D = laya.d3.graphics.IndexBuffer3D;
+    import VertexBuffer3D = laya.d3.graphics.VertexBuffer3D;
+    /**
+     * ...
+     * @author ...
+     */
+    class TrailRenderElement implements IRenderable {
+        _id: number;
+        _isDead: boolean;
+        constructor(owner: TrailFilter);
+        /**
+         * 更新VertexBuffer2数据
+         */
+        _updateVertexBuffer2(): void;
+        /**
+         * @private
+         */
+        _updateDisappear(): void;
+        /**
+         * 渲染前调用
+         * @param	state 渲染状态
+         * @return  是否渲染
+         */
+        _beforeRender(state: RenderState): boolean;
+        /**
+         * 渲染时调用
+         * @param	state 渲染状态
+         */
+        _render(state: RenderState): void;
+        /**
+         * 获取vertexBuffer
+         * @param	index vertexBuffer索引
+         * @return vertexBuffer
+         */
+        _getVertexBuffer(index?: number): VertexBuffer3D;
+        /**
+         * 获取vertexBuffer数组
+         * @return vertexBuffer数组
+         */
+        _getVertexBuffers(): Array<any>;
+        /**
+         * 获取顶点索引缓冲
+         * @return 顶点索引缓冲
+         */
+        _getIndexBuffer(): IndexBuffer3D;
+        /**
+         * 获取vertexBuffer数量
+         * @return vertexBuffer数量
+         */
+        readonly _vertexBufferCount: number;
+        /**
+         * 获取三角面数量
+         * @return 三角面数量
+         */
+        readonly triangleCount: number;
+        /**
+         * @private
+         */
+        _renderRuntime(conchGraphics3D: any, renderElement: RenderElement, state: RenderState): void;
+        /**
+         * 重新激活该renderElement
+         */
+        reActivate(): void;
+        /**
+         * @private
+         */
+        _destroy(): void;
+    }
+}
+declare module laya.d3.core.trail {
+    import BaseRender = laya.d3.core.render.BaseRender;
+    import Matrix4x4 = laya.d3.math.Matrix4x4;
+    /**
+     * ...
+     * @author ...
+     */
+    class TrailRenderer extends BaseRender {
+        constructor(owner: TrailSprite3D);
+        protected _calculateBoundingBox(): void;
+        protected _calculateBoundingSphere(): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
+    }
+}
+declare module laya.d3.core.trail {
+    import ComponentNode = laya.d3.core.ComponentNode;
+    import RenderableSprite3D = laya.d3.core.RenderableSprite3D;
+    import BaseMaterial = laya.d3.core.material.BaseMaterial;
+    import RenderState = laya.d3.core.render.RenderState;
+    import ShaderDefines = laya.d3.shader.ShaderDefines;
+    /**
+     * ...
+     * @author ...
+     */
+    class TrailSprite3D extends RenderableSprite3D {
+        static CURTIME: number;
+        static LIFETIME: number;
+        static WIDTHCURVE: number;
+        static WIDTHCURVEKEYLENGTH: number;
+        static GRADIENTCOLORKEY: number;
+        static GRADIENTALPHAKEY: number;
+        static SHADERDEFINE_GRADIENTMODE_BLEND: number;
+        static shaderDefines: ShaderDefines;
+        /**
+         * @private
+         */
+        static __init__(): void;
+        /**
+         * 获取Trail过滤器。
+         * @return  Trail过滤器。
+         */
+        readonly trailFilter: TrailFilter;
+        /**
+         * 获取Trail渲染器。
+         * @return  Trail渲染器。
+         */
+        readonly trailRender: TrailRenderer;
+        constructor();
+        _changeRenderObjectsByMaterial(sender: TrailRenderer, index: number, material: BaseMaterial): void;
+        _changeRenderObjectsByRenderElement(index: number, trailRenderElement: TrailRenderElement): void;
+        protected _clearSelfRenderObjects(): void;
+        protected _addSelfRenderObjects(): void;
+        _update(state: RenderState): void;
+        protected _parseCustomProps(rootNode: ComponentNode, innerResouMap: any, customProps: any, json: any): void;
+        /**
+         * <p>销毁此对象。</p>
+         * @param	destroyChild 是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+         */
+        destroy(destroyChild?: boolean): void;
+    }
+}
+declare module laya.d3.core.trail {
+    import IVertex = laya.d3.graphics.IVertex;
+    import VertexDeclaration = laya.d3.graphics.VertexDeclaration;
+    /**
+     * <code>VertexTrail</code> 类用于创建拖尾顶点结构。
+     */
+    class VertexTrail implements IVertex {
+        static readonly vertexDeclaration1: VertexDeclaration;
+        static readonly vertexDeclaration2: VertexDeclaration;
+        readonly vertexDeclaration: VertexDeclaration;
+        constructor();
     }
 }
 declare module laya.d3.core {
@@ -8627,6 +9086,153 @@ declare module laya.d3.core {
          * @inheritDoc
          */
         _renderCamera(gl: WebGLContext, state: RenderState, scene: Scene): void;
+    }
+}
+declare module laya.d3.extension.cartoonRender {
+    import BaseMaterial = laya.d3.core.material.BaseMaterial;
+    import Vector4 = laya.d3.math.Vector4;
+    import BaseTexture = laya.d3.resource.BaseTexture;
+    import ShaderDefines = laya.d3.shader.ShaderDefines;
+    class CartoonMaterial extends BaseMaterial {
+        static ALBEDOTEXTURE: number;
+        static SPECULARTEXTURE: number;
+        static TILINGOFFSET: number;
+        static SHADOWCOLOR: number;
+        static SHADOWRANGE: number;
+        static SHADOWINTENSITY: number;
+        static SPECULARRANGE: number;
+        static SPECULARINTENSITY: number;
+        static SHADERDEFINE_ALBEDOTEXTURE: number;
+        static SHADERDEFINE_SPECULARTEXTURE: number;
+        static SHADERDEFINE_TILINGOFFSET: number;
+        static shaderDefines: ShaderDefines;
+        /**
+         * @private
+         */
+        static __init__(): void;
+        /**
+         * 获取漫反射贴图。
+         * @return 漫反射贴图。
+         */
+        /**
+         * 设置漫反射贴图。
+         * @param value 漫反射贴图。
+         */
+        albedoTexture: BaseTexture;
+        /**
+         * 获取高光贴图。
+         * @return 高光贴图。
+         */
+        /**
+         * 设置高光贴图。
+         * @param value 高光贴图。
+         */
+        specularTexture: BaseTexture;
+        /**
+         * 获取阴影颜色。
+         * @return 阴影颜色。
+         */
+        /**
+         * 设置阴影颜色。
+         * @param value 阴影颜色。
+         */
+        shadowColor: Vector4;
+        /**
+         * 获取阴影范围。
+         * @return 阴影范围,范围为0到1。
+         */
+        /**
+         * 设置阴影范围。
+         * @param value 阴影范围,范围为0到1。
+         */
+        shadowRange: number;
+        /**
+         * 获取阴影强度。
+         * @return 阴影强度,范围为0到1。
+         */
+        /**
+         * 设置阴影强度。
+         * @param value 阴影强度,范围为0到1。
+         */
+        shadowIntensity: number;
+        /**
+         * 获取高光范围。
+         * @return 高光范围,范围为0.9到1。
+         */
+        /**
+         * 设置高光范围。
+         * @param value 高光范围,范围为0.9到1。
+         */
+        specularRange: number;
+        /**
+         * 获取高光强度。
+         * @return 高光强度,范围为0到1。
+         */
+        /**
+         * 设置高光强度。
+         * @param value 高光范围,范围为0到1。
+         */
+        specularIntensity: number;
+        /**
+         * 获取纹理平铺和偏移。
+         * @return 纹理平铺和偏移。
+         */
+        /**
+         * 设置纹理平铺和偏移。
+         * @param value 纹理平铺和偏移。
+         */
+        tilingOffset: Vector4;
+        static initShader(): void;
+        constructor();
+    }
+}
+declare module laya.d3.extension.cartoonRender {
+    import BaseMaterial = laya.d3.core.material.BaseMaterial;
+    import BaseTexture = laya.d3.resource.BaseTexture;
+    import ShaderDefines = laya.d3.shader.ShaderDefines;
+    /**
+     * ...
+     * @author ...
+     */
+    class OutlineMaterial extends BaseMaterial {
+        static OUTLINETEXTURE: number;
+        static OUTLINEWIDTH: number;
+        static OUTLINELIGHTNESS: number;
+        static SHADERDEFINE_OUTLINETEXTURE: number;
+        static shaderDefines: ShaderDefines;
+        /**
+         * @private
+         */
+        static __init__(): void;
+        /**
+         * 获取漫轮廓贴图。
+         * @return 轮廓贴图。
+         */
+        /**
+         * 设置轮廓贴图。
+         * @param value 轮廓贴图。
+         */
+        outlineTexture: BaseTexture;
+        /**
+         * 获取轮廓宽度。
+         * @return 轮廓宽度,范围为0到0.05。
+         */
+        /**
+         * 设置轮廓宽度。
+         * @param value 轮廓宽度,范围为0到0.05。
+         */
+        outlineWidth: number;
+        /**
+         * 获取轮廓亮度。
+         * @return 轮廓亮度,范围为0到1。
+         */
+        /**
+         * 设置轮廓亮度。
+         * @param value 轮廓亮度,范围为0到1。
+         */
+        outlineLightness: number;
+        static initShader(): void;
+        constructor();
     }
 }
 declare module laya.d3.graphics {
@@ -9138,6 +9744,7 @@ declare module laya.d3.graphics {
         static SIMULATIONWORLDROTATION: number;
         static TEXTURECOORDINATE0X: number;
         static TEXTURECOORDINATE0Y: number;
+        static OFFSETVECTOR: number;
     }
 }
 declare module laya.d3.graphics {
@@ -13281,7 +13888,7 @@ declare module laya.d3.terrain {
         /**
          * @private
          */
-        _renderUpdate(projectionView: Matrix4x4): void;
+        _renderUpdate(projectionView: Matrix4x4): boolean;
         /**
          * @private
          */
@@ -16621,6 +17228,8 @@ declare module laya.display {
          */
         strokeColor: string;
         protected isChanged: boolean;
+        protected _isPassWordMode(): boolean;
+        protected _getPassWordTxt(txt: string): string;
         protected renderText(begin: number, visibleLineCount: number): void;
         /**
          * <p>排版文本。</p>
@@ -18193,6 +18802,7 @@ declare module laya.map {
         mAniIdArray: Array<any>;
         mDurationTimeArray: Array<any>;
         mTileTexSetArr: Array<any>;
+        image: any;
     }
     class TileSet {
         firstgid: number;
@@ -19627,14 +20237,22 @@ declare module laya.net {
      * <p>调用 <code>enable</code> 启用资源版本管理。</p>
      */
     class ResourceVersion {
+        /**基于文件夹的资源管理方式（老版本IDE默认类型）*/
+        static FOLDER_VERSION: number;
+        /**基于文件名映射管理方式（新版本IDE默认类型）*/
+        static FILENAME_VERSION: number;
+        /**版本清单*/
         static manifest: any;
+        /**当前使用的版本管理类型*/
+        static type: number;
         /**
          * <p>启用资源版本管理。</p>
          * <p>由于只有发布版本需要资源管理。因此没有资源管理文件时，可以设置manifestFile为null或者不存在的路径。</p>
          * @param	manifestFile	清单（json）文件的路径。
          * @param   callback		清单（json）文件加载完成后执行。
+         * @param   type			FOLDER_VERSION为基于文件夹管理方式（老版本IDE默认类型），FILENAME_VERSION为基于文件名映射管理（新版本IDE默认类型
          */
-        static enable(manifestFile: string, callback: Handler): void;
+        static enable(manifestFile: string, callback: Handler, type?: number): void;
         /**
          * 为加载路径添加版本前缀。
          * @param	originURL	源路径。
@@ -19756,6 +20374,7 @@ declare module laya.net {
         constructor();
         fontName: string;
         complete: Handler;
+        err: Handler;
         load(fontPath: string): void;
     }
 }
@@ -20677,7 +21296,7 @@ declare module laya.resource {
          * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。请不要直接使用 new HTMLCanvas！
          * @param	type 类型。2D、3D。
          */
-        constructor(type: string);
+        constructor(type: string, canvas?: any);
         /**
          * 清空画布内容。
          */
@@ -25829,6 +26448,8 @@ declare module laya.utils {
         static userAgent: string;
         /** 表示是否在 ios 设备。*/
         static onIOS: boolean;
+        /** 表示是否在 Mac 设备。*/
+        static onMac: boolean;
         /** 表示是否在移动设备。*/
         static onMobile: boolean;
         /** 表示是否在 iphone设备。*/
@@ -28404,18 +29025,23 @@ declare module laya.webgl.resource {
     import Context = laya.resource.Context;
     class WebGLCanvas extends Bitmap {
         static _createContext: Function;
+        flipY: boolean;
+        premulAlpha: boolean;
         /**HTML Canvas*/
         _canvas: any;
         _imgData: any;
         iscpuSource: boolean;
+        alwaysChange: boolean;
         getCanvas(): any;
         clear(): void;
         destroy(): void;
         readonly context: Context;
         _setContext(context: Context): void;
         getContext(contextID: string, other?: any): Context;
+        readonly source: any;
         size(w: number, h: number): void;
         asBitmap: boolean;
+        activeResource(force?: boolean): void;
         protected recreateResource(): void;
         protected disposeResource(): void;
         texSubImage2D(webglCanvas: WebGLCanvas, xoffset: number, yoffset: number): void;
@@ -30012,6 +30638,569 @@ declare module laya.webgl {
         compressedTexImage2D(...args: any[]): void;
     }
 }
+
+declare module PathFinding.core {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class DiagonalMovement {
+        static Always: number;
+        static Never: number;
+        static IfAtMostOneObstacle: number;
+        static OnlyWhenNoObstacles: number;
+        constructor();
+    }
+}
+declare module PathFinding.core {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class Grid {
+        width: number;
+        height: number;
+        nodes: Array<any>;
+        /**
+         * The Grid class, which serves as the encapsulation of the layout of the nodes.
+         * @constructor
+         * @param
+         * @param
+         * @param
+         *     representing the walkable status of the nodes(0 or false for walkable).
+         *     If the matrix is not supplied, all the nodes will be walkable.  */
+        constructor(width_or_matrix: any, height: number, matrix?: Array<any>);
+        /**
+         * 从图片生成AStar图。
+         * @param texture AStar图资源。
+         */
+        static createGridFromAStarMap(texture: any): Grid;
+        /**
+         * Build and return the nodes.
+         * @private
+         * @param
+         * @param
+         * @param
+         *     the walkable status of the nodes.
+         * @see Grid
+         */
+        _buildNodes(width: number, height: number, matrix?: Array<any>): Array<any>;
+        getNodeAt(x: number, y: number): Node;
+        /**
+         * Determine whether the node at the given position is walkable.
+         * (Also returns false if the position is outside the grid.)
+         * @param
+         * @param
+         * @return
+         */
+        isWalkableAt(x: number, y: number): boolean;
+        /**
+         * Determine whether the position is inside the grid.
+         * XXX: `grid.isInside(x, y)` is wierd to read.
+         * It should be `(x, y) is inside grid`, but I failed to find a better
+         * name for this method.
+         * @param
+         * @param
+         * @return
+         */
+        isInside(x: number, y: number): boolean;
+        /**
+         * Set whether the node on the given position is walkable.
+         * NOTE: throws exception if the coordinate is not inside the grid.
+         * @param
+         * @param
+         * @param
+         */
+        setWalkableAt(x: number, y: number, walkable: boolean): void;
+        /**
+         * Get the neighbors of the given node.
+         *
+         *     offsets      diagonalOffsets:
+         *  +---+---+---+    +---+---+---+
+         *  |   | 0 |   |    | 0 |   | 1 |
+         *  +---+---+---+    +---+---+---+
+         *  | 3 |   | 1 |    |   |   |   |
+         *  +---+---+---+    +---+---+---+
+         *  |   | 2 |   |    | 3 |   | 2 |
+         *  +---+---+---+    +---+---+---+
+         *
+         *  When allowDiagonal is true, if offsets[i] is valid, then
+         *  diagonalOffsets[i] and
+         *  diagonalOffsets[(i + 1) % 4] is valid.
+         * @param
+         * @param
+         */
+        getNeighbors(node: Node, diagonalMovement: number): Array<any>;
+        /**
+         * Get a clone of this grid.
+         * @return
+         */
+        clone(): Grid;
+        reset(): void;
+    }
+}
+declare module PathFinding.core {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class Heuristic {
+        constructor();
+        static manhattan(dx: number, dy: number): number;
+        static euclidean(dx: number, dy: number): number;
+        static octile(dx: number, dy: number): number;
+        static chebyshev(dx: number, dy: number): number;
+    }
+}
+declare module PathFinding.core {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class Node {
+        x: number;
+        y: number;
+        g: number;
+        f: number;
+        h: number;
+        by: number;
+        parent: Node;
+        opened: any;
+        closed: any;
+        tested: any;
+        retainCount: any;
+        walkable: boolean;
+        constructor(x: number, y: number, walkable?: boolean);
+    }
+}
+declare module PathFinding.core {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class Util {
+        constructor();
+        static backtrace(node: Node): Array<any>;
+        static biBacktrace(nodeA: Node, nodeB: Node): Array<any>;
+        static pathLength(path: Array<any>): number;
+        static interpolate(x0: number, y0: number, x1: number, y1: number): Array<any>;
+        static expandPath(path: Array<any>): Array<any>;
+        static smoothenPath(grid: Grid, path: Array<any>): Array<any>;
+        static compressPath(path: Array<any>): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    /**
+     * ...
+     * @author dongketao
+     */
+    class AStarFinder {
+        allowDiagonal: boolean;
+        dontCrossCorners: boolean;
+        heuristic: Function;
+        weight: number;
+        diagonalMovement: number;
+        /**
+         * A* path-finder. Based upon https://github.com/bgrins/javascript-astar
+         * @constructor
+         * @param {Object} opt
+         * @param {boolean} opt.allowDiagonal Whether diagonal movement is allowed.
+         *     Deprecated, use diagonalMovement instead.
+         * @param {boolean} opt.dontCrossCorners Disallow diagonal movement touching
+         *     block corners. Deprecated, use diagonalMovement instead.
+         * @param {DiagonalMovement} opt.diagonalMovement Allowed diagonal movement.
+         * @param {function} opt.heuristic Heuristic function to estimate the distance
+         *     (defaults to manhattan).
+         * @param {number} opt.weight Weight to apply to the heuristic to allow for
+         *     suboptimal paths, in order to speed up the search.
+         */
+        constructor(opt: any);
+        /**
+         * Find and return the the path.
+         * @return
+         *     end positions.
+         */
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    /**
+     * ...
+     * @author ...
+     */
+    class BestFirstFinder extends AStarFinder {
+        constructor(opt: any);
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    /**
+     * ...
+     * @author ...
+     */
+    class BiAStarFinder {
+        allowDiagonal: boolean;
+        dontCrossCorners: boolean;
+        diagonalMovement: number;
+        heuristic: Function;
+        weight: number;
+        /**
+         * A* path-finder.
+         * based upon https://github.com/bgrins/javascript-astar
+         * @constructor
+         * @param {Object} opt
+         * @param {boolean} opt.allowDiagonal Whether diagonal movement is allowed.
+         *     Deprecated, use diagonalMovement instead.
+         * @param {boolean} opt.dontCrossCorners Disallow diagonal movement touching
+         *     block corners. Deprecated, use diagonalMovement instead.
+         * @param {DiagonalMovement} opt.diagonalMovement Allowed diagonal movement.
+         * @param {function} opt.heuristic Heuristic function to estimate the distance
+         *     (defaults to manhattan).
+         * @param {number} opt.weight Weight to apply to the heuristic to allow for
+         *     suboptimal paths, in order to speed up the search.
+         */
+        constructor(opt: any);
+        /**
+         * Find and return the the path.
+         * @return
+         *     end positions.
+         */
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    /**
+     * ...
+     * @author ...
+     */
+    class BiBestFirstFinder extends BiAStarFinder {
+        constructor(opt: any);
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    /**
+     * ...
+     * @author dongketao
+     */
+    class BiBreadthFirstFinder {
+        /**
+         * Bi-directional Breadth-First-Search path finder.
+         * @constructor
+         * @param
+         * @param
+         *     Deprecated, use diagonalMovement instead.
+         * @param
+         *     block corners. Deprecated, use diagonalMovement instead.
+         * @param
+         */
+        constructor(opt: any);
+        /**
+         * Find and return the the path.
+         * @return
+         *     end positions.
+         */
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    /**
+     * ...
+     * @author ...
+     */
+    class BiDijkstraFinder extends BiAStarFinder {
+        constructor(opt: any);
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    /**
+     * ...
+     * @author dongketao
+     */
+    class BreadthFirstFinder {
+        /**
+         * Breadth-First-Search path finder.
+         * @constructor
+         * @param
+         * @param
+         *     Deprecated, use diagonalMovement instead.
+         * @param
+         *     block corners. Deprecated, use diagonalMovement instead.
+         * @param
+         */
+        constructor(opt: any);
+        /**
+         * Find and return the the path.
+         * @return
+         *     end positions.
+         */
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    /**
+     * ...
+     * @author ...
+     */
+    class DijkstraFinder extends AStarFinder {
+        constructor(opt: any);
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    /**
+     * ...
+     * @author dongketao
+     */
+    class IDAStarFinder {
+        /**
+         * Iterative Deeping A Star (IDA*) path-finder.
+         *
+         * Recursion based on:
+         *   http://www.apl.jhu.edu/~hall/AI-Programming/IDA-Star.html
+         *
+         * Path retracing based on:
+         *  V. Nageshwara Rao, Vipin Kumar and K. Ramesh
+         *  "A Parallel Implementation of Iterative-Deeping-A*", January 1987.
+         *  ftp://ftp.cs.utexas.edu/.snapshot/hourly.1/pub/AI-Lab/tech-reports/UT-AI-TR-87-46.pdf
+         *
+         * @author Gerard Meier (www.gerardmeier.com)
+         *
+         * @constructor
+         * @param {Object} opt
+         * @param {boolean} opt.allowDiagonal Whether diagonal movement is allowed.
+         *     Deprecated, use diagonalMovement instead.
+         * @param {boolean} opt.dontCrossCorners Disallow diagonal movement touching
+         *     block corners. Deprecated, use diagonalMovement instead.
+         * @param {DiagonalMovement} opt.diagonalMovement Allowed diagonal movement.
+         * @param {function} opt.heuristic Heuristic function to estimate the distance
+         *     (defaults to manhattan).
+         * @param {number} opt.weight Weight to apply to the heuristic to allow for
+         *     suboptimal paths, in order to speed up the search.
+         * @param {boolean} opt.trackRecursion Whether to track recursion for
+         *     statistical purposes.
+         * @param {number} opt.timeLimit Maximum execution time. Use <= 0 for infinite.
+         */
+        constructor(opt: any);
+        /**
+         * Find and return the the path. When an empty array is returned, either
+         * no path is possible, or the maximum execution time is reached.
+         *
+         * @return
+         *     end positions.
+         */
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    import Node = PathFinding.core.Node;
+    /**
+     * ...
+     * @author ...
+     */
+    class JPFAlwaysMoveDiagonally extends JumpPointFinderBase {
+        constructor(opt: any);
+        /**
+         * Search recursively in the direction (parent -> child), stopping only when a
+         * jump point is found.
+         * @protected
+         * @return
+         *     found, or null if not found
+         */
+        _jump(x: number, y: number, px: number, py: number): Array<any>;
+        /**
+         * Find the neighbors for the given node. If the node has a parent,
+         * prune the neighbors based on the jump point search algorithm, otherwise
+         * return all available neighbors.
+         * @return
+         */
+        _findNeighbors(node: Node): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    import Node = PathFinding.core.Node;
+    /**
+     * ...
+     * @author ...
+     */
+    class JPFMoveDiagonallyIfAtMostOneObstacle extends JumpPointFinderBase {
+        constructor(opt: any);
+        /**
+         * Search recursively in the direction (parent -> child), stopping only when a
+         * jump point is found.
+         * @protected
+         * @return
+         *     found, or null if not found
+         */
+        _jump(x: number, y: number, px: number, py: number): Array<any>;
+        /**
+         * Find the neighbors for the given node. If the node has a parent,
+         * prune the neighbors based on the jump point search algorithm, otherwise
+         * return all available neighbors.
+         * @return
+         */
+        _findNeighbors(node: Node): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    import Node = PathFinding.core.Node;
+    /**
+     * ...
+     * @author ...
+     */
+    class JPFMoveDiagonallyIfNoObstacles extends JumpPointFinderBase {
+        constructor(opt: any);
+        /**
+         * Search recursively in the direction (parent -> child), stopping only when a
+         * jump point is found.
+         * @protected
+         * @return
+         *     found, or null if not found
+         */
+        _jump(x: number, y: number, px: number, py: number): Array<any>;
+        /**
+         * Find the neighbors for the given node. If the node has a parent,
+         * prune the neighbors based on the jump point search algorithm, otherwise
+         * return all available neighbors.
+         * @return
+         */
+        _findNeighbors(node: Node): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    import Node = PathFinding.core.Node;
+    /**
+     * ...
+     * @author ...
+     */
+    class JPFNeverMoveDiagonally extends JumpPointFinderBase {
+        constructor(opt: any);
+        /**
+         * Search recursively in the direction (parent -> child), stopping only when a
+         * jump point is found.
+         * @protected
+         * @return
+         *     found, or null if not found
+         */
+        _jump(x: number, y: number, px: number, py: number): Array<any>;
+        /**
+         * Find the neighbors for the given node. If the node has a parent,
+         * prune the neighbors based on the jump point search algorithm, otherwise
+         * return all available neighbors.
+         * @return
+         */
+        _findNeighbors(node: Node): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    /**
+     * ...
+     * @author ...
+     */
+    class JumpPointFinder {
+        /**
+         * Path finder using the Jump Point Search algorithm
+         * @param {Object} opt
+         * @param {function} opt.heuristic Heuristic function to estimate the distance
+         *     (defaults to manhattan).
+         * @param {DiagonalMovement} opt.diagonalMovement Condition under which diagonal
+         *      movement will be allowed.
+         */
+        constructor(opt: any);
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    import Node = PathFinding.core.Node;
+    import Heap = PathFinding.libs.Heap;
+    /**
+     * ...
+     * @author ...
+     */
+    class JumpPointFinderBase {
+        grid: Grid;
+        openList: Heap;
+        startNode: Node;
+        endNode: Node;
+        heuristic: Function;
+        trackJumpRecursion: boolean;
+        /**
+         * Base class for the Jump Point Search algorithm
+         * @param {object} opt
+         * @param {function} opt.heuristic Heuristic function to estimate the distance
+         *     (defaults to manhattan).
+         */
+        constructor(opt: any);
+        /**
+         * Find and return the path.
+         * @return
+         *     end positions.
+         */
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): any;
+        _jump(x: number, y: number, px: number, py: number): Array<any>;
+        _findNeighbors(node: Node): Array<any>;
+    }
+}
+declare module PathFinding.finders {
+    import Grid = PathFinding.core.Grid;
+    /**
+     * ...
+     * @author dongketao
+     */
+    class TraceFinder {
+        constructor(opt: any);
+        findPath(startX: number, startY: number, endX: number, endY: number, grid: Grid): Array<any>;
+    }
+}
+declare module PathFinding.libs {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class Heap {
+        heapFunction: HeapFunction;
+        cmp: Function;
+        nodes: Array<any>;
+        constructor(cmp?: Function);
+        push(x: any): any;
+        pop(): any;
+        peek(): any;
+        contains(x: any): boolean;
+        replace(x: any): any;
+        pushpop(x: any): any;
+        heapify(): any;
+        updateItem(x: any): any;
+        clear(): any;
+        empty(): boolean;
+        size(): number;
+        clone(): Heap;
+        toArray(): any;
+    }
+}
+declare module PathFinding.libs {
+    /**
+     * ...
+     * @author dongketao
+     */
+    class HeapFunction {
+        constructor();
+        defaultCmp: Function;
+        insort(a: any, x: any, lo?: any, hi?: any, cmp?: any): any;
+        heappush(array: any, item: any, cmp: any): any;
+        heappop(array: any, cmp: any): any;
+        heapreplace(array: any, item: any, cmp: any): any;
+        heappushpop(array: any, item: any, cmp: any): any;
+        heapify(array: any, cmp: any): any;
+        updateItem(array: any, item: any, cmp: any): any;
+        nlargest(array: any, n: number, cmp: any): any;
+        nsmallest(array: any, n: number, cmp: any): any;
+        _siftdown(array: any, startpos: number, pos: number, cmp: any): any;
+        _siftup(array: any, pos: number, cmp: any): any;
+    }
+}
+
 declare module Laya {
     class AnimationContent extends laya.ani.AnimationContent {
     }
@@ -30279,11 +31468,39 @@ declare module Laya {
     }
     class Sprite3D extends laya.d3.core.Sprite3D {
     }
+    class Gradient extends laya.d3.core.trail.module.Gradient {
+    }
+    class GradientAlphaKey extends laya.d3.core.trail.module.GradientAlphaKey {
+    }
+    class GradientColorKey extends laya.d3.core.trail.module.GradientColorKey {
+    }
+    class GradientMode extends laya.d3.core.trail.module.GradientMode {
+    }
+    class TextureMode extends laya.d3.core.trail.module.TextureMode {
+    }
+    class TrailKeyFrame extends laya.d3.core.trail.module.TrailKeyFrame {
+    }
+    class TrailFilter extends laya.d3.core.trail.TrailFilter {
+    }
+    class TrailMaterial extends laya.d3.core.trail.TrailMaterial {
+    }
+    class TrailRenderElement extends laya.d3.core.trail.TrailRenderElement {
+    }
+    class TrailRenderer extends laya.d3.core.trail.TrailRenderer {
+    }
+    class TrailSprite3D extends laya.d3.core.trail.TrailSprite3D {
+    }
+    class VertexTrail extends laya.d3.core.trail.VertexTrail {
+    }
     class Transform3D extends laya.d3.core.Transform3D {
     }
     class TransformUV extends laya.d3.core.TransformUV {
     }
     class VRCamera extends laya.d3.core.VRCamera {
+    }
+    class CartoonMaterial extends laya.d3.extension.cartoonRender.CartoonMaterial {
+    }
+    class OutlineMaterial extends laya.d3.extension.cartoonRender.OutlineMaterial {
     }
     class DynamicBatch extends laya.d3.graphics.DynamicBatch {
     }
@@ -31081,6 +32298,52 @@ declare module Laya {
     }
     class WebGLContext extends laya.webgl.WebGLContext {
     }
+    class DiagonalMovement extends PathFinding.core.DiagonalMovement {
+    }
+    class Grid extends PathFinding.core.Grid {
+    }
+    class Heuristic extends PathFinding.core.Heuristic {
+    }
+    // class Node extends PathFinding.core.Node {
+    // }
+    class Util extends PathFinding.core.Util {
+    }
+    class AStarFinder extends PathFinding.finders.AStarFinder {
+    }
+    class BestFirstFinder extends PathFinding.finders.BestFirstFinder {
+    }
+    class BiAStarFinder extends PathFinding.finders.BiAStarFinder {
+    }
+    class BiBestFirstFinder extends PathFinding.finders.BiBestFirstFinder {
+    }
+    class BiBreadthFirstFinder extends PathFinding.finders.BiBreadthFirstFinder {
+    }
+    class BiDijkstraFinder extends PathFinding.finders.BiDijkstraFinder {
+    }
+    class BreadthFirstFinder extends PathFinding.finders.BreadthFirstFinder {
+    }
+    class DijkstraFinder extends PathFinding.finders.DijkstraFinder {
+    }
+    class IDAStarFinder extends PathFinding.finders.IDAStarFinder {
+    }
+    class JPFAlwaysMoveDiagonally extends PathFinding.finders.JPFAlwaysMoveDiagonally {
+    }
+    class JPFMoveDiagonallyIfAtMostOneObstacle extends PathFinding.finders.JPFMoveDiagonallyIfAtMostOneObstacle {
+    }
+    class JPFMoveDiagonallyIfNoObstacles extends PathFinding.finders.JPFMoveDiagonallyIfNoObstacles {
+    }
+    class JPFNeverMoveDiagonally extends PathFinding.finders.JPFNeverMoveDiagonally {
+    }
+    class JumpPointFinder extends PathFinding.finders.JumpPointFinder {
+    }
+    class JumpPointFinderBase extends PathFinding.finders.JumpPointFinderBase {
+    }
+    class TraceFinder extends PathFinding.finders.TraceFinder {
+    }
+    class Heap extends PathFinding.libs.Heap {
+    }
+    class HeapFunction extends PathFinding.libs.HeapFunction {
+    }
     class DebugPanel extends laya.debug.DebugPanel {
     }
     class DebugTool extends laya.debug.DebugTool {
@@ -31162,9 +32425,9 @@ declare class Laya {
      */
     static interface(name:String, superClass:Function):void;
 
-    static superSet(clas,o,prop,value);
+    static superSet(clas:any,o:any,prop:any,value:any);
 
-    static superGet(clas,o,prop);
+    static superGet(clas:any,o:any,prop:any);
 }
 /**全局配置*/
 declare class UIConfig {
@@ -31252,7 +32515,7 @@ declare module laya.wx.mini {
          * @param isPosMsg 是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false
          * @param isSon 是否是子域，默认为false
          */
-        static init(isPosMsg?:boolean,isSon?:string): void;
+        static init(isPosMsg?:boolean,isSon?:boolean): void;
     }
 }
 

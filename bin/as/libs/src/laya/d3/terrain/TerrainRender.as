@@ -59,10 +59,11 @@ package laya.d3.terrain {
 		/**
 		 * @private
 		 */
-		override public function _renderUpdate(projectionView:Matrix4x4):void {
+		override public function _renderUpdate(projectionView:Matrix4x4):Boolean {
 			_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, _owner.transform.worldMatrix);
 			var projViewWorld:Matrix4x4 = _owner.getProjectionViewWorldMatrix(projectionView);
 			_setShaderValueMatrix4x4(Sprite3D.MVPMATRIX, projViewWorld);
+			return true;
 		}
 		
 		/**

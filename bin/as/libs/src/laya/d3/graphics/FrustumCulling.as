@@ -1,6 +1,7 @@
 package laya.d3.graphics {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Layer;
+	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
@@ -103,20 +104,22 @@ package laya.d3.graphics {
 			for (i = 0, n = scene._cullingRendersLength; i < n; i++) {
 				var baseRender:BaseRender = frustumCullingObjects[i];
 				if (Layer.isVisible(baseRender._owner.layer.mask) && baseRender.enable && (boundFrustum.containsBoundSphere(baseRender.boundingSphere) !== ContainmentType.Disjoint)) {
-					baseRender._renderUpdate(projectionView);//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
-					baseRender._distanceForSort = Vector3.distance(baseRender.boundingSphere.center, cameraPosition) + baseRender.sortingFudge;
-					var renderElements:Vector.<RenderElement> = baseRender._renderElements;
-					for (j = 0, m = renderElements.length; j < m; j++) {
-						var renderElement:RenderElement = renderElements[j];
-						var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
-						if (staticBatch && /*(staticBatch._vertexDeclaration===renderElement.element.getVertexBuffer().vertexDeclaration)&&*/ (staticBatch._material === renderElement._material)) {
-							staticBatch._addBatchRenderElement(renderElement);
-						} else {//TODO:暂时取消动态合并，sprite3D也需判断合并，例如阴影receiveShadow问题。
-							var renderObj:IRenderable = renderElement.renderObj;
-							if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!baseRender._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
-								dynamicBatchManager._addPrepareRenderElement(renderElement);
-							else
-								scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
+					if (baseRender._renderUpdate(projectionView))//TODO:静态合并或者动态合并造成浪费,多摄像机也会部分浪费
+					{
+						baseRender._distanceForSort = Vector3.distance(baseRender.boundingSphere.center, cameraPosition) + baseRender.sortingFudge;
+						var renderElements:Vector.<RenderElement> = baseRender._renderElements;
+						for (j = 0, m = renderElements.length; j < m; j++) {
+							var renderElement:RenderElement = renderElements[j];
+							var staticBatch:StaticBatch = renderElement._staticBatch;//TODO:换vertexBuffer后应该取消合并,修改顶点数据后，从动态列表移除，暂时忽略，不允许直接修改Buffer。
+							if (staticBatch && /*(staticBatch._vertexDeclaration===renderElement.element.getVertexBuffer().vertexDeclaration)&&*/ (staticBatch._material === renderElement._material)) {
+								staticBatch._addBatchRenderElement(renderElement);
+							} else {//TODO:暂时取消动态合并，sprite3D也需判断合并，例如阴影receiveShadow问题。
+								var renderObj:IRenderable = renderElement.renderObj;
+								if ((renderObj.triangleCount < DynamicBatch.maxCombineTriangleCount) && (renderObj._vertexBufferCount === 1) && (renderObj._getIndexBuffer()) && (renderElement._material.renderQueue < 2) && renderElement._canDynamicBatch && (!baseRender._owner.isStatic))//TODO:是否可兼容无IB渲染,例如闪光//TODO:临时取消透明队列动态合并//TODO:加色法可以合并//TODO:静态物体如果没合并走动态合并现在会出BUG,lightmapUV问题。
+									dynamicBatchManager._addPrepareRenderElement(renderElement);
+								else
+									scene.getRenderQueue(renderElement._material.renderQueue)._addRenderElement(renderElement);
+							}
 						}
 					}
 				}

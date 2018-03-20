@@ -14,8 +14,20 @@ package laya.wx.mini {
 		
 		public function MiniSoundChannel(audio:*) {
 			this._audio = audio;
-			_onEnd = Utils.bind(this.__onEnd, this);
+			_onEnd = bindToThis(this.__onEnd, this);
 			audio.onEnded(_onEnd);
+		}
+		
+		/**
+		 * 给传入的函数绑定作用域，返回绑定后的函数。
+		 * @param	fun 函数对象。
+		 * @param	scope 函数作用域。
+		 * @return 绑定后的函数。
+		 */
+		public static function bindToThis(fun:Function, scope:*):Function {
+			var rst:Function = fun;
+			__JS__("rst=fun.bind(scope);");
+			return rst;
 		}
 		
 		private function __onEnd():void {
@@ -74,10 +86,13 @@ package laya.wx.mini {
 			completeHandler = null;
 			if (!_audio)
 				return;
-			_audio.stop();
-			_audio.onEnded(null);
-			_audio = null;
+			_audio.pause();//停止播放
+			_audio.onStop(bindToThis(onStopEndEd,this));
+			_audio.onEnded(bindToThis(onStopEndEd,this));
+			_audio = null;//xiaosong
+		}
 		
+		public function onStopEndEd():void{
 		}
 		
 		override public function pause():void {
@@ -99,17 +114,15 @@ package laya.wx.mini {
 		 *
 		 */
 		override public function set volume(v:Number):void {
-		
+			
 		}
 		
 		/**
 		 * 获取音量
 		 * @return
-		 *
 		 */
 		override public function get volume():Number {
 			return 1;
 		}
-	}
-
+	}	
 }

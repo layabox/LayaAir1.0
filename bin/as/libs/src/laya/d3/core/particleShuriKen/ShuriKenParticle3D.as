@@ -209,7 +209,7 @@ package laya.d3.core.particleShuriKen {
 				var valueData:Object = startLifetimesData[i];
 				gradient.add(valueData.key, valueData.value);
 			}
-			return gradient
+			return gradient;
 		}
 		
 		/**
@@ -646,7 +646,9 @@ package laya.d3.core.particleShuriKen {
 					break;
 				case 2: 
 					if (angularVelocityData.separateAxes) {
-						//TODO:待补充
+						var minSep:Array = angularVelocityData.constantMinSeparate;//TODO:Y是否要取负数
+						var maxSep:Array = angularVelocityData.constantMaxSeparate;//TODO:Y是否要取负数
+						angularVelocity = GradientAngularVelocity.createByRandomTwoConstantSeparate(new Vector3(minSep[0]*anglelToRad,minSep[1]*anglelToRad,minSep[2]*anglelToRad),new Vector3(maxSep[0]*anglelToRad,maxSep[1]*anglelToRad,maxSep[2]*anglelToRad));
 					} else {
 						angularVelocity = GradientAngularVelocity.createByRandomTwoConstant(angularVelocityData.constantMin * anglelToRad, angularVelocityData.constantMax * anglelToRad);
 					}
