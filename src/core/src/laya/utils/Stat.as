@@ -77,11 +77,11 @@ package laya.utils {
 		 * @param	y Y轴显示位置。
 		 */
 		public static function show(x:Number = 0, y:Number = 0):void {
-			if (Render.isConchApp) {
+			if (Render.isConchApp && !Render.isConchWebGL) {
 				Browser.window.conch.showFPS && Browser.window.conch.showFPS(x, y);
 				return;
 			}
-			if (!Browser.onMiniGame) _useCanvas = true;
+			if (!Render.isConchWebGL && !Browser.onMiniGame &&! Browser.onLimixiu) _useCanvas = true;
 			
 			_show = true;
 			_fpsData.length = 60;

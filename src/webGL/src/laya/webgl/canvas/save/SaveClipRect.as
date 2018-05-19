@@ -7,7 +7,7 @@ package laya.webgl.canvas.save {
 	public class SaveClipRect implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
-		private static var _cache:* =SaveBase._createArray();
+		private static var _cache:* = SaveBase._createArray();
 		
 		public var _clipSaveRect:Rectangle;
 		public var _clipRect:Rectangle = new Rectangle();

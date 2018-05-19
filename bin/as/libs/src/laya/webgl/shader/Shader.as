@@ -91,8 +91,6 @@ package laya.webgl.shader {
 			_preCompileShader[id] = new ShaderCompile(id, vs, ps, nameMap);
 		}
 		
-		private var customCompile:Boolean = false;
-		
 		private var _nameMap:*; //shader参数别名，语义
 		private var _vs:String
 		private var _ps:String;
@@ -120,10 +118,6 @@ package laya.webgl.shader {
 		public function Shader(vs:String, ps:String, saveName:* = null, nameMap:* = null) {
 			super();
 			if ((!vs) || (!ps)) throw "Shader Error";
-			
-			if (Render.isConchApp || Render.isFlash) {
-				customCompile = true;
-			}
 			_id = ++_count;
 			_vs = vs;
 			_ps = ps;
@@ -157,8 +151,6 @@ package laya.webgl.shader {
 			
 			var text:Array = [_vs, _ps];
 			var result:Object;
-			if (customCompile)
-				result =ShaderCompile.preGetParams(_vs, _ps);
 			var gl:WebGLContext = WebGL.mainContext;
 			_program = gl.createProgram();
 			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
@@ -167,25 +159,60 @@ package laya.webgl.shader {
 			gl.attachShader(_program, _vshader);
 			gl.attachShader(_program, _pshader);
 			gl.linkProgram(_program);
-			if (!customCompile && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
+			if (!Render.isConchApp && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
 				throw gl.getProgramInfoLog(_program);
 			}
 			//trace(_vs);
 			//trace(_ps);
 			
 			var one:*, i:int, j:int, n:int, location:*;
-			var attribNum:int = customCompile ? result.attributes.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
+			var attribNum:int = 0;
+			
+			if (Render.isConchApp)
+			{
+				attribNum = gl.getProgramParameterEx(_vs,_ps,"", WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
+			}
+			else
+			{
+				attribNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
+			}
 			
 			for (i = 0; i < attribNum; i++) {
-				var attrib:* = customCompile ? result.attributes[i] : gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
+				var attrib:* = null;
+				if (Render.isConchApp)
+				{
+					attrib = gl.getActiveAttribEx(_vs,_ps,"", i); //attrib对象，{name,size,type}
+				}
+				else
+				{
+					attrib = gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
+				}
 				location = gl.getAttribLocation(_program, attrib.name); //用名字来得到location	
 				one = {vartype: "attribute", glfun:null, ivartype: 0, attrib: attrib, location: location, name: attrib.name, type: attrib.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				_params.push(one);
 			}
-			var nUniformNum:int = customCompile ? result.uniforms.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
+			var nUniformNum:int = 0;
+			if (Render.isConchApp)
+			{
+				nUniformNum = gl.getProgramParameterEx(_vs,_ps,"", WebGLContext.ACTIVE_UNIFORMS); //个数
+			}
+			else
+			{
+				nUniformNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
+			}
+			
 			
 			for (i = 0; i < nUniformNum; i++) {
-				var uniform:* = customCompile ? result.uniforms[i] : gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}
+				var uniform:* = null;
+				if (Render.isConchApp)
+				{
+					uniform = gl.getActiveUniformEx(_vs,_ps,"", i);//得到uniform对象，包括名字等信息 {name,type,size}	
+				}
+				else 
+				{
+					uniform = gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}	
+				}
+				
 				location = gl.getUniformLocation(_program, uniform.name); //用名字来得到location
 				one = {vartype: "uniform",glfun:null,ivartype: 1, attrib: attrib, location: location, name: uniform.name, type: uniform.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				if (one.name.indexOf('[0]') > 0) {

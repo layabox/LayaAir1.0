@@ -74,6 +74,7 @@ package laya.d3.core.scene {
 		public static const SHADOWMAPTEXTURE3:int = 20;
 		
 		public static const AMBIENTCOLOR:int = 21;
+		public static const TIME:int = 22;
 		
 		/**
 		 * @private
@@ -96,6 +97,8 @@ package laya.d3.core.scene {
 		public static function load(url:String):Scene {
 			return Laya.loader.create(url, null, null, Scene);
 		}
+		
+		private var _time:Number = 0;
 		
 		/**@private */
 		private var __loaded:Boolean;
@@ -463,14 +466,6 @@ package laya.d3.core.scene {
 		/**
 		 * @private
 		 */
-		protected function _updateChildsConch(state:RenderState):void {//NATIVE
-			for (var i:int = 0, n:int = _childs.length; i < n; ++i)
-				_childs[i]._updateConch(state);
-		}
-		
-		/**
-		 * @private
-		 */
 		public function _preRenderScene(gl:WebGLContext, state:RenderState, boundFrustum:BoundFrustum):void {
 			var view:Matrix4x4 = state._viewMatrix;
 			var projection:Matrix4x4 = state._projectionMatrix;
@@ -632,12 +627,13 @@ package laya.d3.core.scene {
 		 *@private
 		 */
 		protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, nodeData:Object):void {
+			
 			var lightMapsData:Array = nodeData.customProps.lightmaps;
 			var lightMapCount:int = lightMapsData.length;
 			var lightmaps:Vector.<Texture2D> = _lightmaps;
 			lightmaps.length = lightMapCount;
 			for (var i:int = 0; i < lightMapCount; i++)
-				lightmaps[i] = Loader.getRes(innerResouMap[lightMapsData[i].replace("exr", "png")]);
+				lightmaps[i] = Loader.getRes(innerResouMap[lightMapsData[i].replace(".exr", ".png")]);
 			
 			setlightmaps(lightmaps);
 			
@@ -672,6 +668,9 @@ package laya.d3.core.scene {
 			_updateComponents(renderState);
 			_updateChilds(renderState);
 			_lateUpdateComponents(renderState);
+			
+			_time += renderState.elapsedTime / 1000;
+			_shaderValues.setValue(Scene.TIME, _time);
 		}
 		
 		/**
@@ -681,7 +680,6 @@ package laya.d3.core.scene {
 			var renderState:RenderState = _renderState;
 			_prepareUpdateToRenderState(WebGL.mainContext, renderState);
 			_updateComponents(renderState);
-			_updateChildsConch(renderState);
 			_lateUpdateComponents(renderState);
 			
 			_prepareSceneToRender(renderState);
@@ -1088,6 +1086,7 @@ package laya.d3.core.scene {
 			_typeComponentsIndices = null;
 			_components = null;
 			Loader.clearRes(url);
+			(loaded)||(Laya3D._cancelLoadByUrl(url));
 		}
 		
 		/**
@@ -1101,16 +1100,6 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function releaseRender():void {
-		}
-		
-		/**
-		 * @private
-		 */
-		override public function createConchModel():* { //NATIVE
-			var pScene:* = __JS__("new ConchScene()");
-			//TODO:wyw
-			pScene.init(512, 512, 512, 4);
-			return pScene;
 		}
 		
 		//----------------------------兼容代码------------------------------------

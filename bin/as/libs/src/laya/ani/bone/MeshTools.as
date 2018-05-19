@@ -2,6 +2,7 @@ package laya.ani.bone
 {
 	import laya.ani.bone.canvasmesh.MeshData;
 	import laya.maths.Point;
+	import laya.resource.Texture;
 	
 	/**
 	 * @private
@@ -98,14 +99,62 @@ package laya.ani.bone
 			index0 = indexs[0];
 			index1 = indexs[1];
 			index2 = indexs[2];
-			_absArr.length=0;
-			uvAbs = solvePoints(mesh.texture.uv, mUv[index0], mUv[index0+1], mUv[index1]-mUv[index0], mUv[index1+1]-mUv[index0+1], mUv[index2]-mUv[index0], mUv[index2+1]-mUv[index0+1],_absArr);
+			_absArr.length = 0;
 			var newVerticles:Array;
+			
+			if (isNormalUV(mesh.texture.uv))
+			{
+				adptTexture(mesh);
+			}
+
+			uvAbs = solvePoints(mesh.texture.uv, mUv[index0], mUv[index0+1], mUv[index1]-mUv[index0], mUv[index1+1]-mUv[index0+1], mUv[index2]-mUv[index0], mUv[index2+1]-mUv[index0+1],_absArr);
+			
 			newVerticles = transPoints(uvAbs, mVer[index0], mVer[index0+1], mVer[index1]- mVer[index0], mVer[index1+1]-mVer[index0+1], mVer[index2]- mVer[index0], mVer[index2+1]-mVer[index0+1],rst);
 			
 			return newVerticles;
 		}
 		
+				public static function findWrapRect(verticles:Array):Array
+		{
+			var topI:int;
+			topI = findEdge(verticles,1,true);
+			var bottomI:int;
+			bottomI = findEdge(verticles,1,false);
+			
+			var leftI:int;
+			leftI = findEdge(verticles, 0, true);
+			var rightI:int;
+			rightI = findEdge(verticles, 0, false);
+			
+			var left:Number;
+			left = verticles[leftI];
+			var right:Number;
+			right = verticles[rightI];
+			var top:Number;
+			top = verticles[topI + 1];
+			var bottom:Number;
+			bottom = verticles[bottomI+ 1];
+			
+			var rst:Array;
+			return [right,bottom,left-right,top-bottom];
+		}
+		private static function adptTexture(mesh:MeshData):void
+		{
+			var rec:Array;
+			rec = findWrapRect(mesh.uvs);
+			var oTex:Texture;
+			var nTex:Texture;
+			oTex = mesh.texture;
+			var oWidth:Number = oTex.width;
+			var oHeight:Number = oTex.height;
+			nTex = Texture.create(oTex, rec[0] * oWidth, rec[1] * oHeight, rec[2] * oWidth, rec[3] * oHeight);
+			mesh.texture = nTex;
+		}
+		
+		public static function isNormalUV(uv:Array):Boolean
+		{
+			return uv[0] == 0 && uv[1] == 0 && uv[4] == 1 && uv[5] == 1;
+		}
 		/**
 		 * 计算ab列表，pointC=point0+a*v1+b*v2
 		 * @param pointList pointC列表

@@ -313,13 +313,13 @@ package laya.d3.core {
 			Matrix4x4.multiply(_projectionMatrix, _viewMatrix, _projectionViewMatrix);
 			viewport.project(position, _projectionViewMatrix, out);
 			var outE:Float32Array = out.elements;
-			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
-			{
-				outE[0] = outE[1] = outE[2] = NaN;
-			} else {
+			//if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
+			//{
+				//outE[0] = outE[1] = outE[2] = NaN;
+			//} else {
 				outE[0] = outE[0] / Laya.stage.clientScaleX;
 				outE[1] = outE[1] / Laya.stage.clientScaleY;
-			}
+			//}
 		}
 		
 		/**
@@ -331,13 +331,13 @@ package laya.d3.core {
 			Matrix4x4.multiply(_projectionMatrix, _viewMatrix, _projectionViewMatrix);
 			normalizedViewport.project(position, _projectionViewMatrix, out);
 			var outE:Float32Array = out.elements;
-			if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
-			{
-				outE[0] = outE[1] = outE[2] = NaN;
-			} else {
+			//if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
+			//{
+				//outE[0] = outE[1] = outE[2] = NaN;
+			//} else {
 				outE[0] = outE[0] / Laya.stage.clientScaleX;
 				outE[1] = outE[1] / Laya.stage.clientScaleY;
-			}
+			//}
 		}
 		
 		/**

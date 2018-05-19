@@ -40,6 +40,7 @@ package laya.d3.utils {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.core.trail.TrailSprite3D;
+//	import laya.d3.extension.lineRender.LineSprite3D;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -70,19 +71,19 @@ package laya.d3.utils {
 		private static const _typeToFunO:Object = {"INT16": "writeInt16", "SHORT": "writeInt16", "UINT16": "writeUint16", "UINT32": "writeUint32", "FLOAT32": "writeFloat32", "INT": "writeInt32", "UINT": "writeUint32", "BYTE": "writeByte", "STRING": "writeUTFString"};
 		
 		/** @private */
-		private static var _tempVector3_0:Vector3 =  new Vector3();
+		private static var _tempVector3_0:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		/** @private */
-		private static var _tempVector3_1:Vector3 =  new Vector3();
+		private static var _tempVector3_1:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		/** @private */
-		private static var _tempVector3_2:Vector3 =  new Vector3();
+		private static var _tempVector3_2:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		/** @private */
-		private static var _tempVector3_3:Vector3 =  new Vector3();
+		private static var _tempVector3_3:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		/** @private */
-		private static var _tempVector3_4:Vector3 =  new Vector3();
+		private static var _tempVector3_4:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		/** @private */
-		private static var _tempVector3_5:Vector3 =  new Vector3();
+		private static var _tempVector3_5:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		/** @private */
-		private static var _tempVector3_6:Vector3 =  new Vector3();
+		private static var _tempVector3_6:Vector3 = /*[STATIC SAFE]*/ new Vector3();
 		
 		/** @private */
 		private static var _tempArray4_0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(4);
@@ -200,6 +201,9 @@ package laya.d3.utils {
 					break;
 				case "TrailSprite3D":
 					node = new TrailSprite3D();
+					break;
+				case "LineSprite3D":
+//					node = new LineSprite3D();
 					break;
 				case "Terrain": 
 					node = new Terrain();

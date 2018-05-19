@@ -2,6 +2,7 @@ package laya.d3.resource {
 	import laya.d3.utils.Size;
 	import laya.events.Event;
 	import laya.maths.Arith;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.Byte;
 	import laya.webgl.WebGL;
@@ -146,11 +147,19 @@ package laya.d3.resource {
 				_height = h;
 				_size = new Size(w, h);
 				if (_canRead) {
-					Browser.canvas.size(w, h);
-					Browser.canvas.clear();
-					Browser.context.drawImage(data, 0, 0, w, h);
-					_pixels = new Uint8Array(Browser.context.getImageData(0, 0, w, h).data.buffer);//TODO:如果为RGB,会错误
+					if (Render.isConchApp) {
+						if (__JS__("data instanceof window.HTMLElement") ) {
+							_pixels = new Uint8Array(data.getImageData(0, 0, w, h));
+						}
+					}
+					else {
+						Browser.canvas.size(w, h);
+						Browser.canvas.clear();
+						Browser.context.drawImage(data, 0, 0, w, h);
+						_pixels = new Uint8Array(Browser.context.getImageData(0, 0, w, h).data.buffer);//TODO:如果为RGB,会错误
+					}
 				}
+				
 				break;
 			case WebGL.compressEtc1.COMPRESSED_RGB_ETC1_WEBGL: 
 				var readData:Byte = new Byte(data);

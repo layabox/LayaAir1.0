@@ -181,20 +181,22 @@ package laya.d3.core {
 		 * @param	value 蒙版。
 		 */
 		public function set layer(value:Layer):void {
-			if (value) {
-				if (displayedInStage) {
-					var i:int, n:int = _colliders.length;
-					if (_layer) {
+			if (_layer !== value) {
+				if (value) {
+					if (_activeInHierarchy) {
+						var i:int, n:int = _colliders.length;
+						if (_layer) {
+							for (i = 0; i < n; i++)
+								_layer._removeCollider(_colliders[i]);
+						}
 						for (i = 0; i < n; i++)
-							_layer._removeCollider(_colliders[i]);
+							value._addCollider(_colliders[i]);
 					}
-					for (i = 0; i < n; i++)
-						value._addCollider(_colliders[i]);
+					_layer = value;
+					this.event(Event.LAYER_CHANGED, value);
+				} else {
+					throw new Error("Layer value can be null.");
 				}
-				_layer = value;
-				this.event(Event.LAYER_CHANGED, value);
-			} else {
-				throw new Error("Layer value can be null.");
 			}
 		}
 		
@@ -553,7 +555,7 @@ package laya.d3.core {
 			if (component is Collider) {
 				var rigidbody:Rigidbody = getComponentByType(Rigidbody) as Rigidbody;
 				(rigidbody) && ((component as Collider)._isRigidbody = true);
-				(displayedInStage) && (_layer._addCollider(component as Collider));
+				(_activeInHierarchy) && (_layer._addCollider(component as Collider));
 				_colliders.push(component);
 			} else if (component is Animator) {
 				var animator:Animator = component as Animator;
@@ -580,7 +582,7 @@ package laya.d3.core {
 			
 			if (component is Collider) {
 				var colliderComponent:Collider = component as Collider;
-				(displayedInStage) && (_layer._removeCollider(colliderComponent));
+				(_activeInHierarchy) && (_layer._removeCollider(colliderComponent));
 				_colliders.splice(_colliders.indexOf(colliderComponent), 1);
 			} else if (component is Animator) {
 				var animator:Animator = component as Animator;
@@ -617,13 +619,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * @private
-		 */
-		override public function createConchModel():* {
-			return __JS__("null");
-		}
-		
-		/**
 		 * 清理自身渲染物体，请重载此函数。
 		 */
 		protected function _clearSelfRenderObjects():void {
@@ -654,17 +649,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 更新子节点。
-		 * @param	state 渲染相关状态。
-		 */
-		protected function _updateChildsConch(state:RenderState):void {//NATIVE
-			var n:int = _childs.length;
-			if (n === 0) return;
-			for (var i:int = 0; i < n; ++i)
-				_childs[i]._update((state));
-		}
-		
-		/**
 		 * 排序函数。
 		 * @param	state 渲染相关状态。
 		 */
@@ -677,21 +661,6 @@ package laya.d3.core {
 		 * @param	state 渲染相关状态
 		 */
 		public function _update(state:RenderState):void {
-			state.owner = this;
-			if (_activeInHierarchy) {
-				_updateComponents(state);
-				_lateUpdateComponents(state);
-				
-				Stat.spriteCount++;
-				_childs.length && _updateChilds(state);
-			}
-		}
-		
-		/**
-		 * 更新
-		 * @param	state 渲染相关状态
-		 */
-		public function _updateConch(state:RenderState):void {//NATIVE
 			state.owner = this;
 			if (_activeInHierarchy) {
 				_updateComponents(state);
@@ -853,8 +822,11 @@ package laya.d3.core {
 			destSprite3D.active = _active;
 			
 			var destLocalPosition:Vector3 = destSprite3D.transform.localPosition;
+			var destPosition:Vector3 = destSprite3D.transform.position;
 			transform.localPosition.cloneTo(destLocalPosition);
+			transform.position.cloneTo(destPosition);
 			destSprite3D.transform.localPosition = destLocalPosition;
+			destSprite3D.transform.position = destPosition;
 			
 			var destLocalRotation:Quaternion = destSprite3D.transform.localRotation;
 			transform.localRotation.cloneTo(destLocalRotation);
@@ -901,6 +873,7 @@ package laya.d3.core {
 			_transform = null;
 			_colliders = null;
 			Loader.clearRes(url);
+			(loaded) || (Laya3D._cancelLoadByUrl(url));
 		}
 		
 		//兼容代码

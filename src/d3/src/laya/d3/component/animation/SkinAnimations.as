@@ -320,12 +320,6 @@ package laya.d3.component.animation {
 			}
 			
 			_lastFrameIndex = frameIndex;
-			//if (Render.isConchNode) {//NATIVE
-			//for (i = 0, n = mesh.getSubMeshCount(); i < n; i++) {
-			//_ownerMesh.meshRender.sharedMaterials[i]._addShaderDefine(SkinnedMeshSprite3D.SHADERDEFINE_BONE);
-			//_ownerMesh.meshRender._renderElements[i]._conchSubmesh.setShaderValue(SkinnedMeshSprite3D.BONES, _curAnimationDatas[i], 0);
-			//}
-			//}
 		}
 		
 		/**

@@ -49,7 +49,7 @@ package laya.resource {
 					var ctx:* = _ctx = _source.getContext(contextID, other);
 					if (ctx) {
 						ctx._canvas = o;
-						if(!Render.isFlash) ctx.size = function(w:Number, h:Number):void {
+						if(!Render.isFlash&&!Browser.onLimixiu) ctx.size = function(w:Number, h:Number):void {
 						};
 					}
 					return ctx;

@@ -115,7 +115,7 @@ package laya.ui {
 				var temp:String = "\"" + value + "\"";
 				temp = temp.replace(/^"\${|}"$/g, "").replace(/\${/g, "\"+").replace(/}/g, "+\"");
 				var str:String = "(function(data){if(data==null)return;with(data){try{\nreturn " + temp + "\n}catch(e){}}})";
-				fun = Browser.window.eval(str);
+				fun = Laya._runScript(str);
 				_funMap.set(value, fun);
 			}
 			return fun;

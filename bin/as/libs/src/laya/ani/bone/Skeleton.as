@@ -454,12 +454,12 @@ package laya.ani.bone {
 			//要用的graphics
 			var tGraphics:GraphicsAni;
 			if (_aniMode == 0 || _aniMode == 1) {
-				this.graphics = new GraphicsAni();
+				this.graphics = GraphicsAni.create();// new GraphicsAni();
 			} else {
 				if (this.graphics is GraphicsAni) {
 					this.graphics.clear();
 				} else {
-					this.graphics = new GraphicsAni();
+					this.graphics = GraphicsAni.create(); //new GraphicsAni();
 				}
 			}
 			tGraphics = this.graphics as GraphicsAni;
@@ -866,6 +866,14 @@ package laya.ani.bone {
 		private function _clearCache():void {
 			if (_aniMode == 1) {
 				for (var i:int = 0, n:int = _graphicsCache.length; i < n; i++) {
+					for (var j:int = 0, len:int = _graphicsCache[i].length; j < len; j++)
+					{
+						var gp:GraphicsAni = _graphicsCache[i][j];
+						if (gp != graphics)
+						{
+							GraphicsAni.recycle(gp);
+						}
+					}
 					_graphicsCache[i].length = 0;
 				}
 			}

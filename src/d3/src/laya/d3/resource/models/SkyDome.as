@@ -141,12 +141,6 @@ package laya.d3.resource.models {
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _numberIndices, WebGLContext.STATIC_DRAW);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(indices);
-			if (_conchSky) {//NATIVE
-				_conchSky.setVBIB(_vertexDeclaration._conchVertexDeclaration, vertices, indices);
-				_sharderNameID = Shader3D.nameKey.getID("SkyDome");
-				var shaderCompile:ShaderCompile3D = ShaderCompile3D._preCompileShader[_sharderNameID];
-				_conchSky.setShader(shaderCompile._conchShader);
-			}
 		}
 		
 		/**

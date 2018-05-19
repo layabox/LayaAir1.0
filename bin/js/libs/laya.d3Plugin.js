@@ -2,7 +2,7 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Component3D=laya.d3.component.Component3D,MeshTerrainSprite3D=laya.d3.core.MeshTerrainSprite3D;
+	var Component3D=laya.d3.component.Component3D,ComponentNode=laya.d3.core.ComponentNode,MeshTerrainSprite3D=laya.d3.core.MeshTerrainSprite3D;
 	var Sprite3D=laya.d3.core.Sprite3D;
 /**
 *<code>PathFinding</code> 类用于创建寻路。

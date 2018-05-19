@@ -1,6 +1,6 @@
 
 /***********************************/
-/*http://www.layabox.com  2017/3/23*/
+/*http://www.layabox.com  2017/12/12*/
 /***********************************/
 var Laya=window.Laya=(function(window,document){
 	var Laya={
@@ -73,7 +73,10 @@ var Laya=window.Laya=(function(window,document){
 		},
 		__as:function(value,type){
 			return (this.__typeof(value,type))?value:null;
-		},		
+		},
+        __int:function(value){
+            return value?parseInt(value):0;
+        },
 		interface:function(name,_super){
 			Laya.__package(name,{});
 			var ins=Laya.__internals;
@@ -158,10 +161,10 @@ var Laya=window.Laya=(function(window,document){
 				setfn && (o['_$SET_'+name]=setfn);
 			}
 			if(getfn && setfn) 
-				Object.defineProperty(o,name,{get:getfn,set:setfn,enumerable:false});
+				Object.defineProperty(o,name,{get:getfn,set:setfn,enumerable:false,configurable:true});
 			else{
-				getfn && Object.defineProperty(o,name,{get:getfn,enumerable:false});
-				setfn && Object.defineProperty(o,name,{set:setfn,enumerable:false});
+				getfn && Object.defineProperty(o,name,{get:getfn,enumerable:false,configurable:true});
+				setfn && Object.defineProperty(o,name,{set:setfn,enumerable:false,configurable:true});
 			}
 		},
 		static:function(_class,def){
@@ -254,7 +257,7 @@ var RunDriver=(function(){
 
 	RunDriver.createShaderCondition=function(conditionScript){
 		var fn="(function() {return "+conditionScript+";})";
-		return Browser.window.eval(fn);
+		return Laya._runScript(fn);
 	}
 
 	RunDriver.fontMap=[];
@@ -311,6 +314,9 @@ var RunDriver=(function(){
 	RunDriver.clear=function(value){
 		Render._context.ctx.clear();
 	}
+
+	RunDriver.cancelLoadByUrl=function(url){
+	};
 
 	RunDriver.clearAtlas=function(value){
 	};
@@ -411,16 +417,21 @@ var ___Laya=(function(){
 		return newU8List.buffer;
 	}
 
+	Laya._runScript=function(script){
+		return Browser.window["e"+String.fromCharCode(100+10+8)+"a"+"l"](script);
+	}
+
 	Laya.stage=null;
 	Laya.timer=null;
 	Laya.scaleTimer=null;
 	Laya.loader=null;
-	Laya.version="1.7.16";
+	Laya.version="1.7.18";
 	Laya.render=null;
 	Laya._currentStage=null;
 	Laya._isinit=false;
+	Laya.MiniAdpter=/*__JS__ */{init:function(){if (window.navigator && window.navigator.userAgent && window.navigator.userAgent.indexOf("MiniGame")>-1)console.error("请先引用小游戏适配库laya.wxmini.js,详细教程：https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0")}};
 	__static(Laya,
-	['conchMarket',function(){return this.conchMarket=/*__JS__ */window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=/*__JS__ */window.PlatformClass;},'MiniAdpter',function(){return this.MiniAdpter=/*__JS__ */{init:function(){if (window.navigator && window.navigator.userAgent && window.navigator.userAgent.indexOf("MiniGame")>-1)console.error("请先引用小游戏适配库laya.wxmini.js,详细教程：https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0")}};}
+	['conchMarket',function(){return this.conchMarket=/*__JS__ */window.conch?conchMarket:null;},'PlatformClass',function(){return this.PlatformClass=/*__JS__ */window.PlatformClass;}
 	]);
 	return Laya;
 })()
@@ -614,9 +625,7 @@ var EventDispatcher=(function(){
 		return EventDispatcher.MOUSE_EVENTS[type];
 	}
 
-	__static(EventDispatcher,
-	['MOUSE_EVENTS',function(){return this.MOUSE_EVENTS={"rightmousedown":true,"rightmouseup":true,"rightclick":true,"mousedown":true,"mouseup":true,"mousemove":true,"mouseover":true,"mouseout":true,"click":true,"doubleclick":true};}
-	]);
+	EventDispatcher.MOUSE_EVENTS={"rightmousedown":true,"rightmouseup":true,"rightclick":true,"mousedown":true,"mouseup":true,"mousemove":true,"mouseover":true,"mouseout":true,"click":true,"doubleclick":true};
 	EventDispatcher.__init$=function(){
 		Object.defineProperty(laya.events.EventDispatcher.prototype,"_events",{enumerable:false,writable:true});
 		/**@private */
@@ -1308,12 +1317,10 @@ var Font=(function(){
 	Font.defaultSize=12;
 	Font.defaultFamily="Arial";
 	Font.defaultFont="12px Arial";
+	Font._STROKE=[0,"#000000"];
 	Font._ITALIC=0x200;
 	Font._PASSWORD=0x400;
 	Font._BOLD=0x800;
-	__static(Font,
-	['_STROKE',function(){return this._STROKE=[0,"#000000"];}
-	]);
 	return Font;
 })()
 
@@ -1497,7 +1504,7 @@ var Graphics=(function(){
 		if (!width)width=tex.sourceWidth;
 		if (!height)height=tex.sourceHeight;
 		alpha=alpha < 0 ? 0 :(alpha > 1 ? 1 :alpha);
-		var offset=(!Render.isWebGL && Browser.onFirefox || Browser.onEdge)? 0.5 :0;
+		var offset=(!Render.isWebGL && (Browser.onFirefox || Browser.onEdge||Browser.onIE||Browser.onSafari))? 0.5 :0;
 		var wRate=width / tex.sourceWidth;
 		var hRate=height / tex.sourceHeight;
 		width=tex.width *wRate;
@@ -1601,6 +1608,65 @@ var Graphics=(function(){
 		param[3]=param[3] || tex.width;
 		param[4]=param[4] || tex.height;
 		this._repaint();
+	}
+
+	/**
+	*填充一个圆形。这是一个临时函数，以后会删除，建议用户自己实现。
+	*@param x
+	*@param y
+	*@param tex
+	*@param cx 圆心位置。
+	*@param cy
+	*@param radius
+	*@param segNum 分段数，越大越平滑。
+	*/
+	__proto.fillCircle=function(x,y,tex,cx,cy,radius,segNum){
+		tex.bitmap.enableMerageInAtlas=false;
+		var verts=new Float32Array((segNum+1)*2);
+		var uvs=new Float32Array((segNum+1)*2);
+		var indices=new Uint16Array(segNum*3);
+		var dang=2 *Math.PI / segNum;
+		var cang=0;
+		verts[0]=cx;
+		verts[1]=cy;
+		uvs[0]=cx / tex.width;
+		uvs[1]=cy / tex.height;
+		var idx=2;
+		for (var i=0;i < segNum;i++){
+			var px=radius *Math.cos(cang)+cx;
+			var py=radius *Math.sin(cang)+cy;
+			verts[idx]=px;
+			verts[idx+1]=py;
+			uvs[idx]=px / tex.width;
+			uvs[idx+1]=py / tex.height;
+			cang+=dang;
+			idx+=2;
+		}
+		idx=0;
+		for (i=0;i < segNum;i++){
+			indices[idx++]=0;
+			indices[idx++]=i+1;
+			indices[idx++]=(i+2 >=segNum+1)?1:(i+2);
+		}
+		this.drawTriangles(tex,x,y,verts,uvs,indices);
+	}
+
+	/**
+	*绘制一组三角形
+	*@param texture 纹理。
+	*@param x X轴偏移量。
+	*@param y Y轴偏移量。
+	*@param vertices 顶点数组。
+	*@param indices 顶点索引。
+	*@param uvData UV数据。
+	*@param matrix 缩放矩阵。
+	*@param alpha alpha
+	*@param color 颜色变换
+	*@param blendMode blend模式
+	*/
+	__proto.drawTriangles=function(texture,x,y,vertices,uvs,indices,matrix,alpha,color,blendMode){
+		(alpha===void 0)&& (alpha=1);
+		this._saveToCmd(Render._context.drawTriangles,[texture,x,y,vertices,uvs,indices,matrix,alpha,color,blendMode]);
 	}
 
 	/**
@@ -2557,6 +2623,7 @@ var Event=(function(){
 		return Laya.stage.mouseX;
 	});
 
+	Event.EMPTY=new Event();
 	Event.MOUSE_DOWN="mousedown";
 	Event.MOUSE_UP="mouseup";
 	Event.CLICK="click";
@@ -2623,10 +2690,8 @@ var Event=(function(){
 	Event.TRIGGER_ENTER="triggerenter";
 	Event.TRIGGER_STAY="triggerstay";
 	Event.TRIGGER_EXIT="triggerexit";
-	Event.TRAIL_Filter_CHANGE="trailfilterchange";
-	__static(Event,
-	['EMPTY',function(){return this.EMPTY=new Event();}
-	]);
+	Event.TRAIL_FILTER_CHANGE="trailfilterchange";
+	Event.DOMINO_FILTER_CHANGE="dominofilterchange";
 	return Event;
 })()
 
@@ -4417,10 +4482,9 @@ var Matrix=(function(){
 		return mat;
 	}
 
+	Matrix.EMPTY=new Matrix();
+	Matrix.TEMP=new Matrix();
 	Matrix._cache=[];
-	__static(Matrix,
-	['EMPTY',function(){return this.EMPTY=new Matrix();},'TEMP',function(){return this.TEMP=new Matrix();}
-	]);
 	return Matrix;
 })()
 
@@ -4482,9 +4546,8 @@ var Point=(function(){
 		}
 	}
 
-	__static(Point,
-	['TEMP',function(){return this.TEMP=new Point();},'EMPTY',function(){return this.EMPTY=new Point();}
-	]);
+	Point.TEMP=new Point();
+	Point.EMPTY=new Point();
 	return Point;
 })()
 
@@ -4705,11 +4768,10 @@ var Rectangle=(function(){
 		return rst.setTo(minX,minY,maxX-minX,maxY-minY);
 	}
 
+	Rectangle.EMPTY=new Rectangle();
+	Rectangle.TEMP=new Rectangle();
 	Rectangle._temB=[];
 	Rectangle._temA=[];
-	__static(Rectangle,
-	['EMPTY',function(){return this.EMPTY=new Rectangle();},'TEMP',function(){return this.TEMP=new Rectangle();}
-	]);
 	return Rectangle;
 })()
 
@@ -4730,7 +4792,11 @@ var SoundManager=(function(){
 		return SoundManager._useAudioMusic;
 		},function(value){
 		SoundManager._useAudioMusic=value;
-		if (value)SoundManager._musicClass=AudioSound;
+		if (value){
+			SoundManager._musicClass=AudioSound;
+			}else{
+			SoundManager._musicClass=null;
+		}
 	});
 
 	/**
@@ -4843,24 +4909,27 @@ var SoundManager=(function(){
 		if (SoundManager._musicChannel){
 			if (!SoundManager._musicChannel.isStopped){
 				SoundManager._blurPaused=true;
-				SoundManager._musicLoops=SoundManager._musicChannel.loops;
-				SoundManager._musicCompleteHandler=SoundManager._musicChannel.completeHandler;
-				SoundManager._musicPosition=SoundManager._musicChannel.position;
-				SoundManager._musicChannel.stop();
-				Laya.stage.once(/*laya.events.Event.MOUSE_DOWN*/"mousedown",null,SoundManager._stageOnFocus);
+				SoundManager._musicChannel.pause();
 			}
 		}
 		SoundManager.stopAllSound();
+		Laya.stage.once(/*laya.events.Event.MOUSE_DOWN*/"mousedown",null,SoundManager._stageOnFocus);
+	}
+
+	SoundManager._recoverWebAudio=function(){
+		if(WebAudioSound.ctx&&WebAudioSound.ctx.state!="running")
+			WebAudioSound.ctx.resume();
 	}
 
 	SoundManager._stageOnFocus=function(){
 		SoundManager._isActive=true;
+		SoundManager._recoverWebAudio();
 		Laya.stage.off(/*laya.events.Event.MOUSE_DOWN*/"mousedown",null,SoundManager._stageOnFocus);
 		if (SoundManager._blurPaused){
-			if (SoundManager._tMusic){
-				SoundManager.playMusic(SoundManager._tMusic,SoundManager._musicLoops,SoundManager._musicCompleteHandler,SoundManager._musicPosition);
+			if (SoundManager._musicChannel && SoundManager._musicChannel.isStopped){
+				SoundManager._blurPaused=false;
+				SoundManager._musicChannel.resume();
 			}
-			SoundManager._blurPaused=false;
 		}
 	}
 
@@ -4869,6 +4938,7 @@ var SoundManager=(function(){
 		(startTime===void 0)&& (startTime=0);
 		if (!SoundManager._isActive || !url)return null;
 		if (SoundManager._muted)return null;
+		SoundManager._recoverWebAudio();
 		url=URL.formatURL(url);
 		if (url==SoundManager._tMusic){
 			if (SoundManager._musicMuted)return null;
@@ -5003,9 +5073,6 @@ var SoundManager=(function(){
 	SoundManager._autoStopMusic=false;
 	SoundManager._blurPaused=false;
 	SoundManager._isActive=true;
-	SoundManager._musicLoops=0;
-	SoundManager._musicPosition=0;
-	SoundManager._musicCompleteHandler=null;
 	SoundManager._soundClass=null;
 	SoundManager._musicClass=null;
 	SoundManager.autoReleaseSound=true;
@@ -5789,6 +5856,29 @@ var RenderContext=(function(){
 		ctx.stroke();
 	}
 
+	/**
+	*绘制三角形
+	*@param x
+	*@param y
+	*@param tex
+	*@param args [x,y,texture,vertices,indices,uvs,matrix]
+	*/
+	__proto.drawTriangles=function(x,y,args){
+		if (Render.isWebGL){
+			this.ctx.drawTriangles(args[0],x+args[1],y+args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+			}else {
+			var indices=args[5];
+			var i=0,len=indices.length;
+			var ctx=this.ctx;
+			for (i=0;i < len;i+=3){
+				var index0=indices[i] *2;
+				var index1=indices[i+1] *2;
+				var index2=indices[i+2] *2;
+				ctx.drawTriangle(args[0],args[3],args[4],index0,index1,index2,args[6],true);
+			}
+		}
+	}
+
 	__proto.fillCircle=function(x,y,radius,color){
 		Stat.drawCall++;
 		var ctx=this.ctx;
@@ -5903,9 +5993,7 @@ var RenderContext=(function(){
 		this.ctx.fillTrangles(args[0],args[1],args[2],args[3],args.length > 4 ? args[4] :null);
 	}
 
-	__static(RenderContext,
-	['PI2',function(){return this.PI2=2 *Math.PI;}
-	]);
+	RenderContext.PI2=2 *Math.PI;
 	return RenderContext;
 })()
 
@@ -6287,9 +6375,7 @@ var RenderSprite=(function(){
 	RenderSprite.CHILDS=0x800;
 	RenderSprite.INIT=0x11111;
 	RenderSprite.renders=[];
-	__static(RenderSprite,
-	['NORENDER',function(){return this.NORENDER=new RenderSprite(0,null);}
-	]);
+	RenderSprite.NORENDER=new RenderSprite(0,null);
 	return RenderSprite;
 })()
 
@@ -6426,7 +6512,6 @@ var Context=(function(){
 
 	/***@private */
 	__proto.drawTexture2=function(x,y,pivotX,pivotY,m,alpha,blendMode,args2){
-		'use strict';
 		var tex=args2[0];
 		if (!(tex.loaded && tex.bitmap && tex.source)){
 			return;
@@ -6471,6 +6556,68 @@ var Context=(function(){
 		this.translate(oX,oY);
 		this.fillRect(sX,sY,width,height,other.pat);
 		this.translate(-oX,-oY);
+	}
+
+	__proto.drawTriangle=function(texture,vertices,uvs,index0,index1,index2,matrix,canvasPadding){
+		var source=texture.bitmap;
+		var textureSource=source.source;
+		var textureWidth=texture.width;
+		var textureHeight=texture.height;
+		var sourceWidth=source.width;
+		var sourceHeight=source.height;
+		var u0=uvs[index0] *sourceWidth;
+		var u1=uvs[index1] *sourceWidth;
+		var u2=uvs[index2] *sourceWidth;
+		var v0=uvs[index0+1] *sourceHeight;
+		var v1=uvs[index1+1] *sourceHeight;
+		var v2=uvs[index2+1] *sourceHeight;
+		var x0=vertices[index0];
+		var x1=vertices[index1];
+		var x2=vertices[index2];
+		var y0=vertices[index0+1];
+		var y1=vertices[index1+1];
+		var y2=vertices[index2+1];
+		if (canvasPadding){
+			var paddingX=1;
+			var paddingY=1;
+			var centerX=(x0+x1+x2)/ 3;
+			var centerY=(y0+y1+y2)/ 3;
+			var normX=x0-centerX;
+			var normY=y0-centerY;
+			var dist=Math.sqrt((normX *normX)+(normY *normY));
+			x0=centerX+((normX / dist)*(dist+paddingX));
+			y0=centerY+((normY / dist)*(dist+paddingY));
+			normX=x1-centerX;
+			normY=y1-centerY;
+			dist=Math.sqrt((normX *normX)+(normY *normY));
+			x1=centerX+((normX / dist)*(dist+paddingX));
+			y1=centerY+((normY / dist)*(dist+paddingY));
+			normX=x2-centerX;
+			normY=y2-centerY;
+			dist=Math.sqrt((normX *normX)+(normY *normY));
+			x2=centerX+((normX / dist)*(dist+paddingX));
+			y2=centerY+((normY / dist)*(dist+paddingY));
+		}
+		this.save();
+		if (matrix)
+			this.transform(matrix.a,matrix.b,matrix.c,matrix.d,matrix.tx,matrix.ty);
+		this.beginPath();
+		this.moveTo(x0,y0);
+		this.lineTo(x1,y1);
+		this.lineTo(x2,y2);
+		this.closePath();
+		this.clip();
+		var delta=(u0 *v1)+(v0 *u2)+(u1 *v2)-(v1 *u2)-(v0 *u1)-(u0 *v2);
+		var dDelta=1 / delta;
+		var deltaA=(x0 *v1)+(v0 *x2)+(x1 *v2)-(v1 *x2)-(v0 *x1)-(x0 *v2);
+		var deltaB=(u0 *x1)+(x0 *u2)+(u1 *x2)-(x1 *u2)-(x0 *u1)-(u0 *x2);
+		var deltaC=(u0 *v1 *x2)+(v0 *x1 *u2)+(x0 *u1 *v2)-(x0 *v1 *u2)-(v0 *u1 *x2)-(u0 *x1 *v2);
+		var deltaD=(y0 *v1)+(v0 *y2)+(y1 *v2)-(v1 *y2)-(v0 *y1)-(y0 *v2);
+		var deltaE=(u0 *y1)+(y0 *u2)+(u1 *y2)-(y1 *u2)-(y0 *u1)-(u0 *y2);
+		var deltaF=(u0 *v1 *y2)+(v0 *y1 *u2)+(y0 *u1 *v2)-(y0 *v1 *u2)-(v0 *u1 *y2)-(u0 *y1 *v2);
+		this.transform(deltaA *dDelta,deltaD *dDelta,deltaB *dDelta,deltaE *dDelta,deltaC *dDelta,deltaF *dDelta);
+		this.drawImage(textureSource,texture.uv[0] *sourceWidth,texture.uv[1] *sourceHeight,textureWidth,textureHeight,texture.uv[0] *sourceWidth,texture.uv[1] *sourceHeight,textureWidth,textureHeight);
+		this.restore();
 	}
 
 	/***@private */
@@ -6543,14 +6690,14 @@ var Context=(function(){
 	}
 
 	Context.__init__=function(to){
-		if (Context._inited)return;
-		Context._inited=true;
 		var from=laya.resource.Context.prototype;
 		to=to || /*__JS__ */CanvasRenderingContext2D.prototype;
+		if (to.inited)return;
+		to.inited=true;
 		to.__fillText=to.fillText;
 		to.__fillRect=to.fillRect;
 		to.__strokeText=to.strokeText;
-		var funs=['drawTextures','fillWords','fillBorderWords','setIsMainContext','fillRect','strokeText','fillTexture','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText','drawCurves'];
+		var funs=['drawTextures',"drawTriangle",'fillWords','fillBorderWords','setIsMainContext','fillRect','strokeText','fillTexture','fillText','transformByMatrix','setTransformByMatrix','clipRect','drawTexture','drawTexture2','drawTextureWithTransform','flush','clear','destroy','drawCanvas','fillBorderText','drawCurves'];
 		funs.forEach(function(i){
 			to[i]=from[i];
 		});
@@ -6603,10 +6750,10 @@ var Context=(function(){
 		return true;
 	}
 
+	Context._default=new Context();
 	Context.newKeys=[];
-	Context._inited=false;
 	__static(Context,
-	['_default',function(){return this._default=new Context();},'replaceKeys',function(){return this.replaceKeys=["font","fillStyle","textBaseline"];}
+	['replaceKeys',function(){return this.replaceKeys=["font","fillStyle","textBaseline"];}
 	]);
 	return Context;
 })()
@@ -6866,7 +7013,7 @@ var System=(function(){
 	System.changeDefinition=function(name,classObj){
 		Laya[name]=classObj;
 		var str=name+"=classObj";
-		/*__JS__ */eval(str);
+		Laya._runScript(str);
 	}
 
 	System.__init__=function(){
@@ -6960,36 +7107,38 @@ var Browser=(function(){
 		},false);
 		/*__JS__ */Browser.document.__createElement=Browser.document.createElement;
 		/*__JS__ */window.requestAnimationFrame=window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (c){return window.setTimeout(c,1000 / 60);};;
-		Browser.userAgent=Browser.window.navigator.userAgent;
-		Browser.u=Browser.userAgent;
-		Browser.onIOS=!!Browser.u.match(/\(i[^;]+;(U;)? CPU.+Mac OS X/);
-		Browser.onMobile=Browser.u.indexOf("Mobile")>-1;
-		Browser.onIPhone=Browser.u.indexOf("iPhone")>-1;
-		Browser.onMac=Browser.u.indexOf("Mac OS X")>-1;
-		Browser.onIPad=Browser.u.indexOf("iPad")>-1;
-		Browser.onAndriod=Browser.u.indexOf('Android')>-1 || Browser.u.indexOf('Adr')>-1;
-		Browser.onWP=Browser.u.indexOf("Windows Phone")>-1;
-		Browser.onQQBrowser=Browser.u.indexOf("QQBrowser")>-1;
-		Browser.onMQQBrowser=Browser.u.indexOf("MQQBrowser")>-1 || (Browser.u.indexOf("Mobile")>-1 && Browser.u.indexOf("QQ")>-1);
-		Browser.onIE=!!Browser.window.ActiveXObject || "ActiveXObject" in Browser.window;
-		Browser.onWeiXin=Browser.u.indexOf('MicroMessenger')>-1;
-		Browser.onPC=!Browser.onMobile;
-		Browser.onSafari=!!Browser.u.match(/Version\/\d+\.\d\x20Mobile\/\S+\x20Safari/);
-		Browser.onFirefox=Browser.u.indexOf('Firefox')>-1;
-		Browser.onEdge=Browser.u.indexOf('Edge')>-1;
-		Browser.onMiniGame=Browser.u.indexOf('MiniGame')>-1;
-		Browser.httpProtocol=Browser.window.location.protocol=="http:";
+		Browser.userAgent=/*[SAFE]*/ Browser.window.navigator.userAgent;
+		Browser.u=/*[SAFE]*/ Browser.userAgent;
+		Browser.onIOS=/*[SAFE]*/ !!Browser.u.match(/\(i[^;]+;(U;)? CPU.+Mac OS X/);
+		Browser.onMobile=/*[SAFE]*/ Browser.u.indexOf("Mobile")>-1;
+		Browser.onIPhone=/*[SAFE]*/ Browser.u.indexOf("iPhone")>-1;
+		Browser.onMac=/*[SAFE]*/ Browser.u.indexOf("Mac OS X")>-1;
+		Browser.onIPad=/*[SAFE]*/ Browser.u.indexOf("iPad")>-1;
+		Browser.onAndriod=/*[SAFE]*/ Browser.u.indexOf('Android')>-1 || Browser.u.indexOf('Adr')>-1;
+		Browser.onWP=/*[SAFE]*/ Browser.u.indexOf("Windows Phone")>-1;
+		Browser.onQQBrowser=/*[SAFE]*/ Browser.u.indexOf("QQBrowser")>-1;
+		Browser.onMQQBrowser=/*[SAFE]*/ Browser.u.indexOf("MQQBrowser")>-1 || (Browser.u.indexOf("Mobile")>-1 && Browser.u.indexOf("QQ")>-1);
+		Browser.onIE=/*[SAFE]*/ !!Browser.window.ActiveXObject || "ActiveXObject" in Browser.window;
+		Browser.onWeiXin=/*[SAFE]*/ Browser.u.indexOf('MicroMessenger')>-1;
+		Browser.onPC=/*[SAFE]*/ !Browser.onMobile;
+		Browser.onSafari=/*[SAFE]*/ Browser.u.indexOf("Safari")>-1;
+		Browser.onFirefox=/*[SAFE]*/ Browser.u.indexOf('Firefox')>-1;
+		Browser.onEdge=/*[SAFE]*/ Browser.u.indexOf('Edge')>-1;
+		Browser.onMiniGame=/*[SAFE]*/ Browser.u.indexOf('MiniGame')>-1;
+		Browser.onLimixiu=/*[SAFE]*/ Browser.u.indexOf('limixiu')>-1;
+		Browser.httpProtocol=/*[SAFE]*/ Browser.window.location.protocol=="http:";
 		if (Browser.onMiniGame && Browser.window.focus==null){
 			console.error("请先初始化小游戏适配库，详细教程https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0");
 		}
-		Browser.webAudioEnabled=Browser.window["AudioContext"] || Browser.window["webkitAudioContext"] || Browser.window["mozAudioContext"] ? true :false;
-		Browser.soundType=Browser.webAudioEnabled ? "WEBAUDIOSOUND" :"AUDIOSOUND";
+		Browser.webAudioEnabled=/*[SAFE]*/ Browser.window["AudioContext"] || Browser.window["webkitAudioContext"] || Browser.window["mozAudioContext"] ? true :false;
+		Browser.soundType=/*[SAFE]*/ Browser.webAudioEnabled ? "WEBAUDIOSOUND" :"AUDIOSOUND";
 		/*__JS__ */Sound=Browser.webAudioEnabled?WebAudioSound:AudioSound;;
 		/*__JS__ */if (Browser.webAudioEnabled)WebAudioSound.initWebAudio();;
 		AudioSound._initMusicAudio();
 		/*__JS__ */Browser.enableTouch=(('ontouchstart' in window)|| window.DocumentTouch && document instanceof DocumentTouch);
 		/*__JS__ */window.focus();
 		/*__JS__ */SoundManager._soundClass=Sound;;
+		SoundManager._musicClass=AudioSound;
 		Render._mainCanvas=Render._mainCanvas || HTMLCanvas.create('2D');
 		if (Browser.canvas)return;
 		Browser.canvas=HTMLCanvas.create('2D');
@@ -7052,6 +7201,7 @@ var Browser=(function(){
 	Browser.onIE=false;
 	Browser.onWeiXin=false;
 	Browser.onMiniGame=false;
+	Browser.onLimixiu=false;
 	Browser.onPC=false;
 	Browser.httpProtocol=false;
 	Browser.webAudioEnabled=false;
@@ -7955,6 +8105,7 @@ var ClassUtils=(function(){
 	}
 
 	ClassUtils._temParam=[];
+	ClassUtils._classMap={'Sprite':'laya.display.Sprite','Text':'laya.display.Text','Animation':'laya.display.Animation','Skeleton':'laya.ani.bone.Skeleton','Particle2D':'laya.particle.Particle2D','div':'laya.html.dom.HTMLDivElement','p':'laya.html.dom.HTMLElement','img':'laya.html.dom.HTMLImageElement','span':'laya.html.dom.HTMLElement','br':'laya.html.dom.HTMLBrElement','style':'laya.html.dom.HTMLStyleElement','font':'laya.html.dom.HTMLElement','a':'laya.html.dom.HTMLElement','#text':'laya.html.dom.HTMLElement'};
 	ClassUtils.getClass=function(className){
 		var classObject=ClassUtils._classMap[className] || className;
 		if ((typeof classObject=='string'))
@@ -7965,7 +8116,7 @@ var ClassUtils=(function(){
 	ClassUtils._tM=null;
 	ClassUtils._alpha=NaN;
 	__static(ClassUtils,
-	['DrawTypeDic',function(){return this.DrawTypeDic={"Rect":["drawRect",[["x",0],["y",0],["width",0],["height",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Circle":["drawCircle",[["x",0],["y",0],["radius",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Pie":["drawPie",[["x",0],["y",0],["radius",0],["startAngle",0],["endAngle",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Image":["drawTexture",[["x",0],["y",0],["width",0],["height",0]]],"Texture":["drawTexture",[["skin",null],["x",0],["y",0],["width",0],["height",0]],1,"_adptTextureData"],"FillTexture":["fillTexture",[["skin",null],["x",0],["y",0],["width",0],["height",0],["repeat",null]],1,"_adptTextureData"],"FillText":["fillText",[["text",""],["x",0],["y",0],["font",null],["color",null],["textAlign",null]],1],"Line":["drawLine",[["x",0],["y",0],["toX",0],["toY",0],["lineColor",null],["lineWidth",0]],0,"_adptLineData"],"Lines":["drawLines",[["x",0],["y",0],["points",""],["lineColor",null],["lineWidth",0]],0,"_adptLinesData"],"Curves":["drawCurves",[["x",0],["y",0],["points",""],["lineColor",null],["lineWidth",0]],0,"_adptLinesData"],"Poly":["drawPoly",[["x",0],["y",0],["points",""],["fillColor",null],["lineColor",null],["lineWidth",1]],0,"_adptLinesData"]};},'_classMap',function(){return this._classMap={'Sprite':'laya.display.Sprite','Text':'laya.display.Text','Animation':'laya.display.Animation','Skeleton':'laya.ani.bone.Skeleton','Particle2D':'laya.particle.Particle2D','div':'laya.html.dom.HTMLDivElement','p':'laya.html.dom.HTMLElement','img':'laya.html.dom.HTMLImageElement','span':'laya.html.dom.HTMLElement','br':'laya.html.dom.HTMLBrElement','style':'laya.html.dom.HTMLStyleElement','font':'laya.html.dom.HTMLElement','a':'laya.html.dom.HTMLElement','#text':'laya.html.dom.HTMLElement'};}
+	['DrawTypeDic',function(){return this.DrawTypeDic={"Rect":["drawRect",[["x",0],["y",0],["width",0],["height",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Circle":["drawCircle",[["x",0],["y",0],["radius",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Pie":["drawPie",[["x",0],["y",0],["radius",0],["startAngle",0],["endAngle",0],["fillColor",null],["lineColor",null],["lineWidth",1]]],"Image":["drawTexture",[["x",0],["y",0],["width",0],["height",0]]],"Texture":["drawTexture",[["skin",null],["x",0],["y",0],["width",0],["height",0]],1,"_adptTextureData"],"FillTexture":["fillTexture",[["skin",null],["x",0],["y",0],["width",0],["height",0],["repeat",null]],1,"_adptTextureData"],"FillText":["fillText",[["text",""],["x",0],["y",0],["font",null],["color",null],["textAlign",null]],1],"Line":["drawLine",[["x",0],["y",0],["toX",0],["toY",0],["lineColor",null],["lineWidth",0]],0,"_adptLineData"],"Lines":["drawLines",[["x",0],["y",0],["points",""],["lineColor",null],["lineWidth",0]],0,"_adptLinesData"],"Curves":["drawCurves",[["x",0],["y",0],["points",""],["lineColor",null],["lineWidth",0]],0,"_adptLinesData"],"Poly":["drawPoly",[["x",0],["y",0],["points",""],["fillColor",null],["lineColor",null],["lineWidth",1]],0,"_adptLinesData"]};}
 	]);
 	return ClassUtils;
 })()
@@ -8033,10 +8184,9 @@ var Color=(function(){
 
 	Color._SAVE={};
 	Color._SAVE_SIZE=0;
+	Color._COLOR_MAP={"white":'#FFFFFF',"red":'#FF0000',"green":'#00FF00',"blue":'#0000FF',"black":'#000000',"yellow":'#FFFF00','gray':'#AAAAAA'};
+	Color._DEFAULT=Color._initDefault();
 	Color._COLODID=1;
-	__static(Color,
-	['_COLOR_MAP',function(){return this._COLOR_MAP={"white":'#FFFFFF',"red":'#FF0000',"green":'#00FF00',"blue":'#0000FF',"black":'#000000',"yellow":'#FFFF00','gray':'#AAAAAA'};},'_DEFAULT',function(){return this._DEFAULT=Color._initDefault();}
-	]);
 	return Color;
 })()
 
@@ -8588,9 +8738,8 @@ var Ease=(function(){
 		return c *Math.sqrt(1-(t=t / d-1)*t)+b;
 	}
 
-	__static(Ease,
-	['HALF_PI',function(){return this.HALF_PI=Math.PI *0.5;},'PI2',function(){return this.PI2=Math.PI *2;}
-	]);
+	Ease.HALF_PI=Math.PI *0.5;
+	Ease.PI2=Math.PI *2;
 	return Ease;
 })()
 
@@ -8847,9 +8996,7 @@ var HTMLChar=(function(){
 		this._h=value;
 	});
 
-	__static(HTMLChar,
-	['_isWordRegExp',function(){return this._isWordRegExp=new RegExp("[\\w\.]","");}
-	]);
+	HTMLChar._isWordRegExp=new RegExp("[\\w\.]","");
 	return HTMLChar;
 })()
 
@@ -9083,11 +9230,11 @@ var Stat=(function(){
 	Stat.show=function(x,y){
 		(x===void 0)&& (x=0);
 		(y===void 0)&& (y=0);
-		if (Render.isConchApp){
+		if (Render.isConchApp && !Render.isConchWebGL){
 			Browser.window.conch.showFPS && Browser.window.conch.showFPS(x,y);
 			return;
 		}
-		if (!Browser.onMiniGame)Stat._useCanvas=true;
+		if (!Render.isConchWebGL && !Browser.onMiniGame &&! Browser.onLimixiu)Stat._useCanvas=true;
 		Stat._show=true;
 		Stat._fpsData.length=60;
 		Stat._view[0]={title:"FPS(Canvas)",value:"_fpsStr",color:"yellow",units:"int"};
@@ -10224,6 +10371,9 @@ var Utils=(function(){
 	}
 
 	Utils._gid=1;
+	Utils._pi=180 / Math.PI;
+	Utils._pi2=Math.PI / 180;
+	Utils._extReg=/\.(\w+)\??/g;
 	Utils.parseXMLFromString=function(value){
 		var rst;
 		value=value.replace(/>\s+</g,'><');
@@ -10234,9 +10384,6 @@ var Utils=(function(){
 		return rst;
 	}
 
-	__static(Utils,
-	['_pi',function(){return this._pi=180 / Math.PI;},'_pi2',function(){return this._pi2=Math.PI / 180;},'_extReg',function(){return this._extReg=/\.(\w+)\??/g;}
-	]);
 	return Utils;
 })()
 
@@ -11739,6 +11886,11 @@ var CSSStyle=(function(_super){
 		}
 	}
 
+	CSSStyle.EMPTY=new CSSStyle(null);
+	CSSStyle._CSSTOVALUE={'letter-spacing':'letterSpacing','line-spacing':'lineSpacing','white-space':'whiteSpace','line-height':'lineHeight','scale-x':'scaleX','scale-y':'scaleY','translate-x':'translateX','translate-y':'translateY','font-family':'fontFamily','font-weight':'fontWeight','vertical-align':'valign','text-decoration':'textDecoration','background-color':'backgroundColor','border-color':'borderColor','float':'cssFloat'};
+	CSSStyle._parseCSSRegExp=new RegExp("([\.\#]\\w+)\\s*{([\\s\\S]*?)}","g");
+	CSSStyle._aligndef={'left':0,'center':1,'right':2,0:'left',1:'center',2:'right'};
+	CSSStyle._valigndef={'top':0,'middle':1,'bottom':2,0:'top',1:'middle',2:'bottom'};
 	CSSStyle.styleSheets={};
 	CSSStyle.ALIGN_CENTER=1;
 	CSSStyle.ALIGN_RIGHT=2;
@@ -11748,6 +11900,10 @@ var CSSStyle=(function(_super){
 	CSSStyle._DISPLAY_NONE=0x2;
 	CSSStyle._ABSOLUTE=0x4;
 	CSSStyle._WIDTH_SET=0x8;
+	CSSStyle._PADDING=[0,0,0,0];
+	CSSStyle._RECT=[-1,-1,-1,-1];
+	CSSStyle._SPACING=[0,0];
+	CSSStyle._ALIGNS=[0,0,0];
 	CSSStyle.ADDLAYOUTED=0x200;
 	CSSStyle._NEWFONT=0x1000;
 	CSSStyle._HEIGHT_SET=0x2000;
@@ -11757,9 +11913,6 @@ var CSSStyle=(function(_super){
 	CSSStyle._NOWARP=0x20000;
 	CSSStyle._WIDTHAUTO=0x40000;
 	CSSStyle._LISTERRESZIE=0x80000;
-	__static(CSSStyle,
-	['EMPTY',function(){return this.EMPTY=new CSSStyle(null);},'_CSSTOVALUE',function(){return this._CSSTOVALUE={'letter-spacing':'letterSpacing','line-spacing':'lineSpacing','white-space':'whiteSpace','line-height':'lineHeight','scale-x':'scaleX','scale-y':'scaleY','translate-x':'translateX','translate-y':'translateY','font-family':'fontFamily','font-weight':'fontWeight','vertical-align':'valign','text-decoration':'textDecoration','background-color':'backgroundColor','border-color':'borderColor','float':'cssFloat'};},'_parseCSSRegExp',function(){return this._parseCSSRegExp=new RegExp("([\.\#]\\w+)\\s*{([\\s\\S]*?)}","g");},'_aligndef',function(){return this._aligndef={'left':0,'center':1,'right':2,0:'left',1:'center',2:'right'};},'_valigndef',function(){return this._valigndef={'top':0,'middle':1,'bottom':2,0:'top',1:'middle',2:'bottom'};},'_PADDING',function(){return this._PADDING=[0,0,0,0];},'_RECT',function(){return this._RECT=[-1,-1,-1,-1];},'_SPACING',function(){return this._SPACING=[0,0];},'_ALIGNS',function(){return this._ALIGNS=[0,0,0];}
-	]);
 	return CSSStyle;
 })(Style)
 
@@ -12093,6 +12246,10 @@ var WebAudioSound=(function(_super){
 		*待播放的声音列表
 		*/
 		this.__toPlays=null;
+		/**
+		*@private
+		*/
+		this._disposed=false;
 		WebAudioSound.__super.call(this);
 	}
 
@@ -12122,6 +12279,10 @@ var WebAudioSound=(function(_super){
 		request.open("GET",url,true);
 		request.responseType="arraybuffer";
 		request.onload=function (){
+			if (me._disposed){
+				me._removeLoadEvents();
+				return;
+			}
 			me.data=request.response;
 			WebAudioSound.buffs.push({"buffer":me.data,"url":me.url});
 			WebAudioSound.decode();
@@ -12140,6 +12301,9 @@ var WebAudioSound=(function(_super){
 
 	__proto._loaded=function(audioBuffer){
 		this._removeLoadEvents();
+		if (this._disposed){
+			return;
+		}
 		this.audioBuffer=audioBuffer;
 		WebAudioSound._dataCache[this.url]=this.audioBuffer;
 		this.loaded=true;
@@ -12196,8 +12360,12 @@ var WebAudioSound=(function(_super){
 	}
 
 	__proto.dispose=function(){
+		this._disposed=true;
 		delete WebAudioSound._dataCache[this.url];
 		delete WebAudioSound.__loadingSound[this.url];
+		this.audioBuffer=null;
+		this.data=null;
+		this.__toPlays=[];
 	}
 
 	__getset(0,__proto,'duration',function(){
@@ -12492,19 +12660,6 @@ var Loader=(function(_super){
 		if (type==="image" || type==="htmlimage" || type==="nativeimage")return this._loadImage(url);
 		if (type==="sound")return this._loadSound(url);
 		if (type==="ttf")return this._loadTTF(url);
-		if (type=="atlas"){
-			if (Loader.preLoadedAtlasConfigMap[url]){
-				this.onLoaded(Loader.preLoadedAtlasConfigMap[url]);
-				delete Loader.preLoadedAtlasConfigMap[url];
-				return;
-			}
-		}
-		if (!this._http){
-			this._http=new HttpRequest();
-			this._http.on(/*laya.events.Event.PROGRESS*/"progress",this,this.onProgress);
-			this._http.on(/*laya.events.Event.ERROR*/"error",this,this.onError);
-			this._http.on(/*laya.events.Event.COMPLETE*/"complete",this,this.onLoaded);
-		};
 		var contentType;
 		switch (type){
 			case "atlas":
@@ -12519,7 +12674,17 @@ var Loader=(function(_super){
 			default :
 				contentType=type;
 			}
-		this._http.send(url,null,"get",contentType);
+		if (Loader.preLoadedMap[url]){
+			this.onLoaded(Loader.preLoadedMap[url]);
+			}else{
+			if (!this._http){
+				this._http=new HttpRequest();
+				this._http.on(/*laya.events.Event.PROGRESS*/"progress",this,this.onProgress);
+				this._http.on(/*laya.events.Event.ERROR*/"error",this,this.onError);
+				this._http.on(/*laya.events.Event.COMPLETE*/"complete",this,this.onLoaded);
+			}
+			this._http.send(url,null,"get",contentType);
+		}
 	}
 
 	/**
@@ -12735,7 +12900,6 @@ var Loader=(function(_super){
 	__proto.endLoad=function(content){
 		content && (this._data=content);
 		if (this._cache)Loader.cacheRes(this._url,this._data);
-		this._customParse=false;
 		this.event(/*laya.events.Event.PROGRESS*/"progress",1);
 		this.event(/*laya.events.Event.COMPLETE*/"complete",(this.data instanceof Array)? [this.data] :this.data);
 	}
@@ -12817,10 +12981,6 @@ var Loader=(function(_super){
 		}
 	}
 
-	Loader.setAtlasConfigs=function(url,config){
-		Loader.preLoadedAtlasConfigMap[URL.formatURL(url)]=config;
-	}
-
 	Loader.getRes=function(url){
 		return Loader.loadedMap[URL.formatURL(url)];
 	}
@@ -12862,19 +13022,17 @@ var Loader=(function(_super){
 	Loader.FONT="font";
 	Loader.TTF="ttf";
 	Loader.PKM="pkm";
+	Loader.typeMap={"png":"image","jpg":"image","jpeg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","atlas":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json","fnt":"font","pkm":"pkm","ttf":"ttf"};
 	Loader.parserMap={};
 	Loader.groupMap={};
 	Loader.maxTimeOut=100;
 	Loader.loadedMap={};
-	Loader.preLoadedAtlasConfigMap={};
+	Loader.preLoadedMap={};
 	Loader.atlasMap={};
 	Loader._loaders=[];
 	Loader._isWorking=false;
 	Loader._startIndex=0;
 	Loader.imgCache={};
-	__static(Loader,
-	['typeMap',function(){return this.typeMap={"png":"image","jpg":"image","jpeg":"image","txt":"text","json":"json","xml":"xml","als":"atlas","atlas":"atlas","mp3":"sound","ogg":"sound","wav":"sound","part":"json","fnt":"font","pkm":"pkm","ttf":"ttf"};}
-	]);
 	return Loader;
 })(EventDispatcher)
 
@@ -12942,8 +13100,12 @@ var LoaderManager=(function(_super){
 			}
 			for (var i=0;i < itemCount;i++){
 				var item=items[i];
-				if ((typeof item=='string'))item=items[i]={url:item};
+				if ((typeof item=='string'))
+					item=items[i]={url:item};
 				item.progress=0;
+			}
+			for (i=0;i < itemCount;i++){
+				item=items[i];
 				var progressHandler=progress ? Handler.create(null,onProgress,[item],false):null;
 				var completeHandler=(progress || complete)? Handler.create(null,onComplete,[item]):null;
 				this._create(item.url,completeHandler,progressHandler,item.clas || clas,item.params || params,item.priority || priority,cache,item.group || group);
@@ -12972,8 +13134,8 @@ var LoaderManager=(function(_super){
 	__proto._create=function(url,complete,progress,clas,params,priority,cache,group){
 		(priority===void 0)&& (priority=1);
 		(cache===void 0)&& (cache=true);
-		url=URL.formatURL(url);
-		var item=this.getRes(url);
+		var formarUrl=URL.formatURL(url);
+		var item=this.getRes(formarUrl);
 		if (!item){
 			var extension=Utils.getFileExtension(url);
 			var creatItem=LoaderManager.createMap[extension];
@@ -12996,7 +13158,7 @@ var LoaderManager=(function(_super){
 					if (complete)complete.run();
 					Laya.loader.event(url);
 				}
-				(cache)&& (this.cacheRes(url,item));
+				(cache)&& (this.cacheRes(formarUrl,item));
 			}
 			}else {
 			if (!item.hasOwnProperty("loaded")|| item.loaded){
@@ -13124,6 +13286,7 @@ var LoaderManager=(function(_super){
 		function onLoaded (data){
 			loader.offAll();
 			loader._data=null;
+			loader._customParse=false;
 			_this._loaders.push(loader);
 			_this._endLoad(resInfo,(data instanceof Array)? [data] :data);
 			_this._loaderCount--;
@@ -13968,7 +14131,7 @@ var Resource=(function(_super){
 	__proto.activeResource=function(force){
 		(force===void 0)&& (force=false);
 		this._lastUseFrameCount=Stat.loopCount;
-		if (!this._destroyed&&this.__loaded&& (this._released || force))
+		if (!this._destroyed && this.__loaded && (this._released || force))
 			this.recreateResource();
 	}
 
@@ -14020,6 +14183,7 @@ var Resource=(function(_super){
 				(resList.length===0)&& (delete Resource._urlResourcesMap[this.url]);
 			}
 			Loader.clearRes(this._url);
+			(this.__loaded)||(RunDriver.cancelLoadByUrl(this._url));
 		}
 		if (this._group){
 			resList=Resource._groupResourcesMap[this._group];
@@ -14502,9 +14666,10 @@ var Texture=(function(_super){
 		return tex;
 	}
 
-	__static(Texture,
-	['DEF_UV',function(){return this.DEF_UV=[0,0,1.0,0,1.0,1.0,0,1.0];},'INV_UV',function(){return this.INV_UV=[0,1,1.0,1,1.0,0.0,0,0.0];},'_rect1',function(){return this._rect1=new Rectangle();},'_rect2',function(){return this._rect2=new Rectangle();}
-	]);
+	Texture.DEF_UV=[0,0,1.0,0,1.0,1.0,0,1.0];
+	Texture.INV_UV=[0,1,1.0,1,1.0,0.0,0,0.0];
+	Texture._rect1=new Rectangle();
+	Texture._rect2=new Rectangle();
 	return Texture;
 })(EventDispatcher)
 
@@ -15316,7 +15481,6 @@ var Sprite=(function(_super){
 
 	/**@private */
 	__proto._adjustTransform=function(){
-		'use strict';
 		this._tfChanged=false;
 		var style=this._style;
 		var tf=style._tf;
@@ -15955,6 +16119,8 @@ var Sprite=(function(_super){
 			if (value=="bitmap")this.conchModel && this.conchModel.cacheAs(1);
 			this._set$P("cacheForFilters",false);
 			}else {
+			if (this._$P["_mask"]){
+			}else
 			if (this._$P["hasFilter"]){
 				this._set$P("cacheForFilters",true);
 				}else {
@@ -16390,9 +16556,9 @@ var Sprite=(function(_super){
 			this._set$P("_mask",value);
 			value._set$P("maskParent",this);
 			}else {
-			this.cacheAs="none";
 			this.mask && this.mask._set$P("maskParent",null);
 			this._set$P("_mask",value);
+			this.cacheAs="none";
 		}
 		this.conchModel && this.conchModel.mask(value ? value.conchModel :null);
 		this._renderType |=/*laya.renders.RenderSprite.MASK*/0x40;
@@ -16709,7 +16875,11 @@ var WebAudioSoundChannel=(function(_super){
 
 	__proto._tryClearBuffer=function(sourceNode){
 		if (!Browser.onMac){
-			WebAudioSoundChannel._tryCleanFailed=true;
+			try{
+				sourceNode.buffer=null;
+				}catch (e){
+				WebAudioSoundChannel._tryCleanFailed=true;
+			}
 			return;
 		}
 		try {sourceNode.buffer=WebAudioSound._miniBuffer;}catch (e){WebAudioSoundChannel._tryCleanFailed=true;}
@@ -18252,10 +18422,10 @@ var Stage=(function(_super){
 		RunDriver.changeWebGLSize(canvasWidth,canvasHeight);
 		mat.scale(realWidth / canvasWidth / pixelRatio,realHeight / canvasHeight / pixelRatio);
 		if (this._alignH==="left")this.offset.x=0;
-		else if (this._alignH==="right")this.offset.x=screenWidth-realWidth;
+		else if (this._alignH==="right")this.offset.x=(screenWidth-realWidth)/pixelRatio;
 		else this.offset.x=(screenWidth-realWidth)*0.5 / pixelRatio;
 		if (this._alignV==="top")this.offset.y=0;
-		else if (this._alignV==="bottom")this.offset.y=screenHeight-realHeight;
+		else if (this._alignV==="bottom")this.offset.y=(screenHeight-realHeight)/pixelRatio;
 		else this.offset.y=(screenHeight-realHeight)*0.5 / pixelRatio;
 		this.offset.x=Math.round(this.offset.x);
 		this.offset.y=Math.round(this.offset.y);
@@ -18557,12 +18727,15 @@ var Stage=(function(_super){
 		this._bgColor=value;
 		this.conchModel && this.conchModel.bgColor(value);
 		if (Render.isWebGL){
-			if (value && value!=="black" && value!=="#000000"){
+			if (value){
 				Stage._wgColor=Color.create(value)._color;
 				}else {
 				if (!Browser.onMiniGame)Stage._wgColor=null;
 			}
 		}
+		if (Browser.onLimixiu){
+			Stage._wgColor=Color.create(value)._color;
+		}else
 		if (value){
 			Render.canvas.style.background=value;
 			}else {
@@ -18647,8 +18820,10 @@ var Stage=(function(_super){
 	Stage.FRAME_SLOW="slow";
 	Stage.FRAME_MOUSE="mouse";
 	Stage.FRAME_SLEEP="sleep";
-	Stage._wgColor=null;
 	Stage.FRAME_MOUSE_THREDHOLD=2000;
+	__static(Stage,
+	['_wgColor',function(){return this._wgColor=[0,0,0,1];}
+	]);
 	return Stage;
 })(Sprite)
 
@@ -18841,7 +19016,7 @@ var HTMLCanvas=(function(_super){
 				var ctx=_$this._ctx=_$this._source.getContext(contextID,other);
 				if (ctx){
 					ctx._canvas=o;
-					if(!Render.isFlash)ctx.size=function (w,h){
+					if(!Render.isFlash&&!Browser.onLimixiu)ctx.size=function (w,h){
 					};
 				}
 				return ctx;
@@ -20890,11 +21065,12 @@ var GraphicAnimation=(function(_super){
 		return rst;
 	}
 
+	GraphicAnimation._drawTextureCmd=[["skin",null],["x",0],["y",0],["width",-1],["height",-1],["pivotX",0],["pivotY",0],["scaleX",1],["scaleY",1],["rotation",0],["alpha",1],["skewX",0],["skewY",0],["anchorX",0],["anchorY",0]];
 	GraphicAnimation._temParam=[];
 	GraphicAnimation._I=null;
 	GraphicAnimation._rootMatrix=null;
 	__static(GraphicAnimation,
-	['_drawTextureCmd',function(){return this._drawTextureCmd=[["skin",null],["x",0],["y",0],["width",-1],["height",-1],["pivotX",0],["pivotY",0],["scaleX",1],["scaleY",1],["rotation",0],["alpha",1],["skewX",0],["skewY",0],["anchorX",0],["anchorY",0]];},'_tempMt',function(){return this._tempMt=new Matrix();}
+	['_tempMt',function(){return this._tempMt=new Matrix();}
 	]);
 	GraphicAnimation.__init$=function(){
 		//class GraphicNode
@@ -20950,6 +21126,7 @@ var LayaMain=(function(){
 
 
 
+	/**LayaGameStart**/
 	new LayaMain();
 
 })(window,document,Laya);

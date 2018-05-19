@@ -13,7 +13,7 @@ package laya.system {
 		public static function changeDefinition(name:String, classObj:*):void {
 			Laya[name] = classObj;
 			var str:String = name + "=classObj";
-			__JS__("eval(str)");
+			Laya._runScript(str);
 		}
 		
 		/**

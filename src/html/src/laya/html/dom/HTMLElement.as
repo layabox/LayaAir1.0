@@ -241,7 +241,7 @@ package laya.html.dom
 		public function set onClick(value:String):void
 		{
 			var fn:Function;
-			__JS__('eval("fn=function(event){" + value+";}")');
+			Laya._runScript("fn=function(event){" + value+";}");
 			on(Event.CLICK, this, fn);
 		}
 		

@@ -54,9 +54,12 @@ package laya.webgl.utils {
 			super.disposeResource();
 			//if (_glBuffer) {
 			var enableAtributes:Array = Buffer._enableAtributes;
-			for (var i:int = 0; i < 10; i++) {
-				WebGL.mainContext.disableVertexAttribArray(i);//临时修复警告和闪屏
-				enableAtributes[i] = null;
+			if (!Render.isConchWebGL)
+			{
+				for (var i:int = 0; i < 10; i++) {
+					WebGL.mainContext.disableVertexAttribArray(i);//临时修复警告和闪屏
+					enableAtributes[i] = null;
+				}
 			}
 		
 			//}

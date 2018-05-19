@@ -14,13 +14,13 @@ package laya.webgl.canvas {
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.VectorGraphManager;
-	import laya.webgl.canvas.save.SaveClipRectStencil;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.atlas.AtlasResourceManager;
 	import laya.webgl.canvas.save.ISaveData;
 	import laya.webgl.canvas.save.SaveBase;
 	import laya.webgl.canvas.save.SaveClipRect;
+	import laya.webgl.canvas.save.SaveClipRectStencil;
 	import laya.webgl.canvas.save.SaveMark;
 	import laya.webgl.canvas.save.SaveTransform;
 	import laya.webgl.canvas.save.SaveTranslate;
@@ -48,6 +48,8 @@ package laya.webgl.canvas {
 	import laya.webgl.utils.Buffer2D;
 	import laya.webgl.utils.GlUtils;
 	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.Mesh2D;
+	import laya.webgl.utils.MeshTexture;
 	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.VertexBuffer2D;
 	
@@ -105,6 +107,8 @@ package laya.webgl.canvas {
 		
 		public var _saveMark:SaveMark = null;
 		public var _shader2D:Shader2D = null;
+		private var _triangleMesh:MeshTexture;	//drawTriangles专用mesh。由于ib不固定，所以不能与_mesh通用
+		public var meshlist:Array = [];	//本context用到的mesh
 		
 		/**所cacheAs精灵*/
 		public var sprite:Sprite;
@@ -195,6 +199,8 @@ private function _releaseMem():void
 				_save = [SaveMark.Create(this)];
 				_save.length = 10;
 				_shader2D = new Shader2D();				
+				_triangleMesh = MeshTexture.getAMesh();	
+				
 			}
 			
 			_vb.clear();
@@ -938,6 +944,57 @@ private function _releaseMem():void
 			}
 		}
 		
+		/**
+		 * 把颜色跟当前设置的alpha混合
+		 * @return
+		 */
+		public function mixRGBandAlpha(color:uint):uint {
+			return _mixRGBandAlpha(color, _shader2D.ALPHA);
+		}
+		public function _mixRGBandAlpha(color:uint, alpha:Number):uint {
+			var a:* = ((color & 0xff000000) >>> 24);
+			if (a != 0) {
+				a*= alpha;
+			}else {
+				a=alpha*255;
+			}
+			return (color & 0x00ffffff) | (a << 24);	
+		}			
+		
+		public function drawTriangles(tex:Texture, x:Number, y:Number, vertices:Float32Array, uvs:Float32Array, indices:Uint16Array, matrix:Matrix, alpha:Number, color:String, blendMode:String):Boolean {
+			if (!(tex.loaded && tex.source)) //source内调用tex.active();
+			{
+				if (sprite) {
+					Laya.timer.callLater(this, _repaintSprite);
+				}
+				return false;
+			}
+			_drawCount++;
+			var webGLImg:Bitmap = tex.bitmap as Bitmap;
+			
+			var rgba:int = _mixRGBandAlpha( 0xffffffff, alpha);
+			var vertNum:int = vertices.length / 2;
+			var eleNum:int = indices.length;
+			//添加一个新的submit
+			_renderKey = -1;
+			var submit:SubmitTexture = _curSubmit = SubmitTexture.create(this, _triangleMesh.getIBR(),_triangleMesh.getVBR(), _triangleMesh.indexNum, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+			submit.shaderValue.textureHost = tex;
+			submit._renderType = Submit.TYPE_TEXTURE;
+			_submits[_submits._length++] = submit;
+			
+			if(matrix){
+				_tmpMatrix.a = matrix.a;_tmpMatrix.b = matrix.b;_tmpMatrix.c = matrix.c;_tmpMatrix.d = matrix.d;_tmpMatrix.tx = matrix.tx+x;_tmpMatrix.ty = matrix.ty+y;
+				Matrix.mul(_tmpMatrix,_curMat, _tmpMatrix);
+			}else {
+				_tmpMatrix.a = _curMat.a;_tmpMatrix.b = _curMat.b;_tmpMatrix.c = _curMat.c;_tmpMatrix.d = _curMat.d;_tmpMatrix.tx = _curMat.tx+x;_tmpMatrix.ty = _curMat.ty+y;
+			}
+			_triangleMesh.addData(vertices, uvs, indices, _tmpMatrix, rgba, this);
+			_curSubmit._numEle += eleNum;
+			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);				
+			return true;
+		}
+		
+		
 		override public function transform(a:Number, b:Number, c:Number, d:Number, tx:Number, ty:Number):void {
 			SaveTransform.save(this);
 			Matrix.mul(Matrix.TEMP.setTo(a, b, c, d, tx, ty), _curMat, _curMat);
@@ -1121,9 +1178,17 @@ private function _releaseMem():void
 			
 			_path && _path.reset();
 			SkinMeshBuffer.instance && SkinMeshBuffer.getInstance().reset();
+			var sz:int=0;
+			for (  i = 0, sz = meshlist.length; i < sz; i++) {
+				var curm:Mesh2D = meshlist[i];
+				curm.canReuse?(curm.releaseMesh()):(curm.destroy());
+			}
+			meshlist.length = 0;
 			
 			_curSubmit = Submit.RENDERBASE;
 			_renderKey = 0;
+			_triangleMesh = MeshTexture.getAMesh();
+			meshlist.push(_triangleMesh);
 			return _submits._length;
 		}
 		
@@ -1199,6 +1264,7 @@ private function _releaseMem():void
 				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
 				tempSubmit.shaderValue.u_mmat2 = RenderState2D.TEMPMAT4_ARRAY;
 				_submits[_submits._length++] = tempSubmit;
+				_renderKey = -1;
 			}
 		}
 		

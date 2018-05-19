@@ -30,6 +30,21 @@ package laya.webgl.utils {
 			_byteLength = value;
 		}
 		
+		/**
+		 * 在当前的基础上需要多大空间，单位是byte
+		 * @param	sz
+		 * @return  增加大小之前的写位置。单位是byte
+		 */
+		public function needSize(sz:int):int {
+			var old:int = _byteLength;
+			if (sz) {
+				var needsz:int = _byteLength + sz;
+				needsz <= _buffer.byteLength || (_resizeBuffer(needsz << 1, true));
+				_byteLength = needsz;
+			}
+			return old;
+		}		
+		
 		public function Buffer2D() {
 			super();
 			lock = true;
@@ -138,6 +153,23 @@ package laya.webgl.utils {
 			_byteLength += byteLen;
 			_checkArrayUse();
 		}
+		
+		/**
+		 * 附加Uint16Array的数据。数据长度是len。byte的话要*2
+		 * @param	data
+		 * @param	len
+		 */
+		public function appendU16Array(data:Uint16Array, len:int):void {
+			_resizeBuffer(_byteLength + len*2, true);
+			//(new Uint16Array(_buffer, _byteLength, len)).set(data.slice(0, len));
+			//下面这种写法比上面的快多了
+			var u:Uint16Array = new Uint16Array(_buffer, _byteLength, len);	//TODO 怎么能不用new
+			for (var i:int = 0; i < len; i++) {
+				u[i] = data[i];
+			}
+			_byteLength += len * 2;
+			_checkArrayUse();
+		}		
 		
 		public function appendEx(data:*,type:Class):void {
 			_upload = true;

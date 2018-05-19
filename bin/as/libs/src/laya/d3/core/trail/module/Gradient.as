@@ -55,9 +55,9 @@ package laya.d3.core.trail.module {
 			for (var i:int = 0; i < values.length; i++ ){
 				var value:GradientColorKey = values[i];
 				var color:Color = value.color;
-				_colorKeyData[index ++] = color.r;
-				_colorKeyData[index ++] = color.g;
-				_colorKeyData[index ++] = color.b;
+				_colorKeyData[index ++] = color._r;
+				_colorKeyData[index ++] = color._g;
+				_colorKeyData[index ++] = color._b;
 				_colorKeyData[index ++] = value.time;
 			}
 		}
@@ -100,9 +100,9 @@ package laya.d3.core.trail.module {
 			for (var i:int = 0; i < colorKeys.length; i++ ){
 				gradientColorKey = colorKeys[i];
 				var color:Color = gradientColorKey.color;
-				_colorKeyData[index ++] = color.r;
-				_colorKeyData[index ++] = color.g;
-				_colorKeyData[index ++] = color.b;
+				_colorKeyData[index ++] = color._r;
+				_colorKeyData[index ++] = color._g;
+				_colorKeyData[index ++] = color._b;
 				_colorKeyData[index ++] = gradientColorKey.time;
 			}
 			
@@ -114,6 +114,25 @@ package laya.d3.core.trail.module {
 				_alphaKeyData[index ++] = gradientAlphaKey.alpha;
 				_alphaKeyData[index ++] = gradientAlphaKey.time;
 			}
+		}
+		
+		public function cloneTo(destObject:Gradient):void {
+			var i:int, j:int;
+			var cks:Vector.<GradientColorKey> = colorKeys;
+			var _cks:Vector.<GradientColorKey> = new Vector.<GradientColorKey>();
+			for (i = 0, j = cks.length; i < j; i++){
+				var _ck:GradientColorKey = new GradientColorKey();
+				cks[i].cloneTo(_ck);
+				_cks.push(_ck);
+			}
+			var aks:Vector.<GradientAlphaKey> = alphaKeys;
+			var _aks:Vector.<GradientAlphaKey> = new Vector.<GradientAlphaKey>();
+			for (i = 0, j = aks.length; i < j; i++){
+				var _ak:GradientAlphaKey = new GradientAlphaKey();
+				aks[i].cloneTo(_ak);
+				_aks.push(_ak);
+			}
+			destObject.setKeys(_cks,_aks);
 		}
 		
 	}

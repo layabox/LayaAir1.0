@@ -78,9 +78,9 @@ var HTMLParse=(function(){
 		}
 	}
 
-	__static(HTMLParse,
-	['char255',function(){return this.char255=String.fromCharCode(255);},'spacePattern',function(){return this.spacePattern=/&nbsp;|&#160;/g;},'char255AndOneSpacePattern',function(){return this.char255AndOneSpacePattern=new RegExp(String.fromCharCode(255)+"|(\\s+)","g");}
-	]);
+	HTMLParse.char255=String.fromCharCode(255);
+	HTMLParse.spacePattern=/&nbsp;|&#160;/g;
+	HTMLParse.char255AndOneSpacePattern=new RegExp(String.fromCharCode(255)+"|(\\s+)","g");
 	return HTMLParse;
 })()
 
@@ -660,7 +660,7 @@ var HTMLElement=(function(_super){
 
 	__getset(0,__proto,'onClick',null,function(value){
 		var fn;
-		/*__JS__ */eval("fn=function(event){"+value+";}");
+		Laya._runScript("fn=function(event){"+value+";}");
 		this.on(/*laya.events.Event.CLICK*/"click",this,fn);
 	});
 
@@ -715,9 +715,7 @@ var HTMLElement=(function(_super){
 		}
 	}
 
-	__static(HTMLElement,
-	['_EMPTYTEXT',function(){return this._EMPTYTEXT={text:null,words:null};}
-	]);
+	HTMLElement._EMPTYTEXT={text:null,words:null};
 	return HTMLElement;
 })(Sprite)
 
@@ -998,9 +996,7 @@ var HTMLLinkElement=(function(_super){
 		l.load(url,/*laya.net.Loader.TEXT*/"text");
 	});
 
-	__static(HTMLLinkElement,
-	['_cuttingStyle',function(){return this._cuttingStyle=new RegExp("((@keyframes[\\s\\t]+|)(.+))[\\t\\n\\r\\\s]*{","g");}
-	]);
+	HTMLLinkElement._cuttingStyle=new RegExp("((@keyframes[\\s\\t]+|)(.+))[\\t\\n\\r\\\s]*{","g");
 	return HTMLLinkElement;
 })(HTMLElement)
 

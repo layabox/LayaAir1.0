@@ -10,6 +10,7 @@ package laya.d3.core.trail {
 	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderDefines;
 	import laya.events.Event;
+	import laya.utils.Stat;
 	
 	/**
 	 * ...
@@ -18,7 +19,6 @@ package laya.d3.core.trail {
 	public class TrailFilter extends GeometryFilter {
 		
 		public var _owner:TrailSprite3D;
-		
 		private var _trailRenderElements:Vector.<TrailRenderElement>;
 		
 		private var _minVertexDistance:Number;
@@ -39,6 +39,7 @@ package laya.d3.core.trail {
 		public var _trailSupplementLength:Number = 0;
 		public var _trailDeadLength:Number = 0;
 		
+		public var _isStart:Boolean = false;
 		private var _trailRenderElementIndex:int;
 		
 		/**
@@ -196,8 +197,22 @@ package laya.d3.core.trail {
 			if (_curSubTrailFinished) {
 				_curSubTrailFinished = false;
 				_trailRenderElementIndex = addRenderElement();
-				event(Event.TRAIL_Filter_CHANGE, [_trailRenderElementIndex, _trailRenderElements[_trailRenderElementIndex]]);
+				event(Event.TRAIL_FILTER_CHANGE, [_trailRenderElementIndex, _trailRenderElements[_trailRenderElementIndex]]);
 			}
+		}
+		
+		public function reset():void{
+			
+			for (var i:int = 0; i < _trailRenderElements.length; i++ ){
+				_trailRenderElements[i].reActivate();
+			}
+			_isStart = false;
+			_hasLifeSubTrail = false;
+			_curSubTrailFinished = false;
+			_curSubTrailFinishCurTime = 0;
+			_trailTotalLength = 0;
+			_trailSupplementLength = 0;
+			_trailDeadLength = 0;
 		}
 		
 		/**

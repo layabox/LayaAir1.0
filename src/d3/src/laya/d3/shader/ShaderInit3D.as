@@ -84,6 +84,7 @@ package laya.d3.shader {
 				'u_ReflectTexture': [BlinnPhongMaterial.REFLECTTEXTURE, Shader3D.PERIOD_MATERIAL], 
 				'u_AlphaTestValue': [BaseMaterial.ALPHATESTVALUE, Shader3D.PERIOD_MATERIAL], 
 				'u_DiffuseColor': [BlinnPhongMaterial.ALBEDOCOLOR, Shader3D.PERIOD_MATERIAL], 
+				'u_GlowingEdgeColor': [BlinnPhongMaterial.GLOWINGEDGECOLOR, Shader3D.PERIOD_MATERIAL], 
 				'u_MaterialSpecular': [BlinnPhongMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 
 				'u_Shininess': [BlinnPhongMaterial.SHININESS, Shader3D.PERIOD_MATERIAL], 
 				'u_MaterialReflect': [BlinnPhongMaterial.MATERIALREFLECT, Shader3D.PERIOD_MATERIAL], 
@@ -124,6 +125,7 @@ package laya.d3.shader {
 			BlinnPhongMaterial.SHADERDEFINE_REFLECTMAP = shaderCompile.registerMaterialDefine("REFLECTMAP");
 			BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET = shaderCompile.registerMaterialDefine("TILINGOFFSET");
 			BlinnPhongMaterial.SHADERDEFINE_ADDTIVEFOG = shaderCompile.registerMaterialDefine("ADDTIVEFOG");
+			BlinnPhongMaterial.SHADERDEFINE_GLOWINGEDGE = shaderCompile.registerMaterialDefine("GLOWINGEDGE");
 			
 			attributeMap = {
 				'a_Position': VertexElementUsage.POSITION0, 

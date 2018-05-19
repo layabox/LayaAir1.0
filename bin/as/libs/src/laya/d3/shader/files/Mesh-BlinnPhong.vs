@@ -130,10 +130,18 @@ void main_normal()
 	#endif
 
 	#ifdef LIGHTMAP
-		#ifdef UV1
-			v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+		#ifdef SCALEOFFSETLIGHTINGMAPUV
+			#ifdef UV1
+				v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+			#else
+				v_LightMapUV=vec2(a_Texcoord0.x,a_Texcoord0.y-1.0)*u_LightmapScaleOffset.xy+u_LightmapScaleOffset.zw;
+			#endif 
 		#else
-			v_LightMapUV=vec2(a_Texcoord0.x,a_Texcoord0.y-1.0)*u_LightmapScaleOffset.xy+u_LightmapScaleOffset.zw;
+			#ifdef UV1
+				v_LightMapUV=a_Texcoord1;
+			#else
+				v_LightMapUV=a_Texcoord0;
+			#endif 
 		#endif 
 	#endif
 

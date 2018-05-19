@@ -142,7 +142,7 @@ package laya.display {
 		/**@private 3D场景*/
 		public var _scenes:Array;
 		/**@private webgl Color*/
-		public static var _wgColor:Array;
+		public static var _wgColor:Array=[0,0,0,1];
 		/**@private */
 		private var _frameRate:String = "fast";
 		/**@private */
@@ -428,12 +428,12 @@ package laya.display {
 			
 			//处理水平对齐
 			if (_alignH === ALIGN_LEFT) offset.x = 0;
-			else if (_alignH === ALIGN_RIGHT) offset.x = screenWidth - realWidth;
+			else if (_alignH === ALIGN_RIGHT) offset.x = (screenWidth - realWidth)/pixelRatio;
 			else offset.x = (screenWidth - realWidth) * 0.5 / pixelRatio;
 			
 			//处理垂直对齐
 			if (_alignV === ALIGN_TOP) offset.y = 0;
-			else if (_alignV === ALIGN_BOTTOM) offset.y = screenHeight - realHeight;
+			else if (_alignV === ALIGN_BOTTOM) offset.y = (screenHeight - realHeight)/pixelRatio;
 			else offset.y = (screenHeight - realHeight) * 0.5 / pixelRatio;
 			
 			//处理用户自行设置的画布偏移
@@ -541,13 +541,17 @@ package laya.display {
 			conchModel && conchModel.bgColor(value);
 			
 			if (Render.isWebGL) {
-				if (value && value !== "black" && value !== "#000000") {
+				if (value) {
 					_wgColor = Color.create(value)._color;
 				} else {
 					if (!Browser.onMiniGame) _wgColor = null;
 				}
 			}
 			
+			if (Browser.onLimixiu)
+			{
+				_wgColor = Color.create(value)._color;
+			}else
 			if (value) {
 				Render.canvas.style.background = value;
 			} else {

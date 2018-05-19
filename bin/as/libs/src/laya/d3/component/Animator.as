@@ -24,7 +24,8 @@ package laya.d3.component {
 	 */
 	public class Animator extends Component3D implements IDestroy {
 		/**无效矩阵,禁止修改*/
-		public static const nanData:Float32Array = new Float32Array();
+		public static const deafaultMatrix:Float32Array = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+		
 		/**@private */
 		private static var _tempMatrix4x40:Float32Array = new Float32Array(16);
 		
@@ -454,24 +455,21 @@ package laya.d3.component {
 				var nodes:Vector.<KeyframeNode> = clip._nodes;
 				var nodeCount:int = nodes.length;
 				clipCacheFullFrames.length = nodeCount;
-				var frameCount:int = Math.ceil(clip._duration / cacheInterval + 0.00001) + 1;
+				var frameCount:int = Math.ceil(clip._duration / cacheInterval - 0.00001) + 1;
 				for (var i:int = 0; i < nodeCount; i++) {
 					var node:KeyframeNode = nodes[i];
 					var nodeFullFrames:Int32Array = new Int32Array(frameCount);//使用Int32Array非UInt16Array,因为需要-1表示没到第0帧的情况
-					var lastFrameIndex:int = -1;
+					(nodeFullFrames as *).fill(-1);
 					var keyFrames:Vector.<Keyframe> = node.keyFrames;
 					for (var j:int = 0, n:int = keyFrames.length; j < n; j++) {
 						var keyFrame:Keyframe = keyFrames[j];
 						var startTime:Number = keyFrame.startTime;
 						var endTime:Number = startTime + keyFrame.duration;
-						do {
-							var frameIndex:int = Math.ceil(startTime / cacheInterval - 0.00001);
-							for (var k:int = lastFrameIndex + 1; k < frameIndex; k++)
-								nodeFullFrames[k] = -1;
+						while (startTime <= endTime) {
+							var frameIndex:Number = Math.ceil(startTime / cacheInterval - 0.00001);
 							nodeFullFrames[frameIndex] = j;
-							lastFrameIndex = frameIndex;
 							startTime += cacheInterval;
-						} while (startTime < endTime);
+						}
 					}
 					clipCacheFullFrames[i] = nodeFullFrames;
 				}
@@ -495,7 +493,7 @@ package laya.d3.component {
 				Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);//TODO:当前帧注册，下一帧执行
 				(playOnWake && clip) && (play());
 			} else {
-				(playState !== AnimationState.stopped) && (_stoped=true);//调用stop抛事件会出BUG（在删除节点操作会触发，事件内又添加节点）
+				(playState !== AnimationState.stopped) && (_stoped = true);//调用stop抛事件会出BUG（在删除节点操作会触发，事件内又添加节点）
 				Laya.timer.clear(this, _updateAnimtionPlayer);
 			}
 		}
@@ -527,7 +525,7 @@ package laya.d3.component {
 		private function _setPlayParams(time:Number, cacheFrameInterval:Number):void {
 			var lastTime:Number = _currentTime;
 			_currentTime = time;
-			_currentFrameIndex = Math.floor(currentPlayTime / cacheFrameInterval + 0.00001);
+			_currentFrameIndex = Math.max(Math.floor(currentPlayTime / cacheFrameInterval - 0.00001), 0);
 			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
 			_eventScript(lastTime, time);
 		}
@@ -538,7 +536,7 @@ package laya.d3.component {
 		private function _setPlayParamsWhenStop(aniClipPlayDuration:Number, cacheFrameInterval:Number):void {
 			var lastTime:Number = _currentTime;
 			_currentTime = aniClipPlayDuration;
-			_currentFrameIndex = Math.floor(aniClipPlayDuration / cacheFrameInterval + 0.00001);
+			_currentFrameIndex = Math.max(Math.floor(aniClipPlayDuration / cacheFrameInterval - 0.00001), 0);
 			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
 			_eventScript(lastTime, aniClipPlayDuration);
 			_currentPlayClip = null;//动画结束
@@ -548,16 +546,20 @@ package laya.d3.component {
 		 * @private
 		 */
 		private function _revertKeyframeNodes(clip:AnimationClip, clipIndex:int):void {
+			var originalValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
+			var frameNodes:Vector.<KeyframeNode> = clip._nodes;
 			if (_avatar) {
-				var originalValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
-				var frameNodes:Vector.<KeyframeNode> = clip._nodes;
-				var nodeOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[clipIndex];
-				for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-					var owner:AnimationNode = nodeOwners[i];
-					(owner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](owner, null, originalValues[i]));
+				var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[clipIndex];
+				for (var i:int = 0, n:int = avatarOwners.length; i < n; i++) {
+					var avatarOwner:AnimationNode = avatarOwners[i];
+					(avatarOwner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](avatarOwner, null, originalValues[i]));
 				}
-			} else {//TODO:补充
-				
+			} else {
+				var spriteOwners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[clipIndex];
+				for (i = 0, n = spriteOwners.length; i < n; i++) {
+					var spriteOwner:Sprite3D = spriteOwners[i];
+					(spriteOwner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](null, spriteOwner, originalValues[i]));
+				}
 			}
 		}
 		
@@ -664,7 +666,8 @@ package laya.d3.component {
 					avatarNodeDatas[i] = nodeMatrix;
 					nodeTransform._setWorldMatrixAndUpdate(nodeMatrix);
 				} else {
-					avatarNodeDatas[i] = nanData;
+					var mat:Float32Array = nodeTransform.getWorldMatrix();
+					avatarNodeDatas[i] = mat ? mat : deafaultMatrix;//如果没有动画帧必须设置其默认矩阵,根节点为空
 				}
 			}
 		}
@@ -681,7 +684,7 @@ package laya.d3.component {
 				if (transform._worldUpdate) //Avatar根节点始终为false,不会更新
 					transform._setWorldMatrixNoUpdate(avatarNodeDatas[i]);
 				else
-					avatarNodeDatas[i] = nanData;
+					avatarNodeDatas[i] = deafaultMatrix;//TODO:
 			}
 		}
 		
@@ -692,7 +695,7 @@ package laya.d3.component {
 			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
 				var nodeIndex:int = _cacheSpriteToNodesMap[i];
 				var nodeMatrix:Float32Array = avatarNodeDatas[nodeIndex];
-				if (nodeMatrix !== nanData) {
+				if (nodeMatrix !== deafaultMatrix) {//TODO:
 					var spriteTransform:Transform3D = _avatarNodes[nodeIndex].transform._entity;
 					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
 					Utils3D.matrix4x4MultiplyMFM((_owner as Sprite3D)._transform.worldMatrix, nodeMatrix, spriteWorldMatrix);
@@ -1046,9 +1049,8 @@ package laya.d3.component {
 			_currentFrameIndex = 0;
 			_startUpdateLoopCount = Stat.loopCount;
 			
-			if (_lastPlayAnimationClip) {
+			if (_lastPlayAnimationClip) 
 				(_lastPlayAnimationClip !== _currentPlayClip) && (_revertKeyframeNodes(_lastPlayAnimationClip, _lastPlayAnimationClipIndex));//TODO:还原动画节点，防止切换动作时跳帧，如果是从stop而来是否无需设置
-			}
 			
 			//TODO:此处是否直接设置一帧最接近的原始帧率,后面AnimationClip首帧可以设置为null了就
 			_updatePlayer(0);//如果分段播放,可修正帧率

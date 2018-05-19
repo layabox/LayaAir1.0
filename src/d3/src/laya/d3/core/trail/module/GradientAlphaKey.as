@@ -38,10 +38,15 @@ package laya.d3.core.trail.module
 			_time = value;
 		}
 		
-		public function GradientAlphaKey(alpha:Number, time:Number) 
+		public function GradientAlphaKey(alpha:Number = 0, time:Number = 0) 
 		{
 			_alpha = alpha;
 			_time = time;
+		}
+		
+		public function cloneTo(destObject:GradientAlphaKey):void {
+			destObject.alpha = alpha;
+			destObject.time = time;
 		}
 	}
 }

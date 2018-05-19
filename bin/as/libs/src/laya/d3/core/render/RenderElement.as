@@ -51,9 +51,6 @@ package laya.d3.core.render {
 		
 		public var _onPreRenderFunction:Function;
 		
-		/** @private */
-		public var _conchSubmesh:*;/**NATIVE*/
-		
 		/**
 		 * 获取唯一标识ID,通常用于识别。
 		 */
@@ -78,9 +75,6 @@ package laya.d3.core.render {
 			_id = ++_uniqueIDCounter;
 			_canDynamicBatch = true;
 			_shaderValue = new ValusArray();
-			if (Render.isConchNode) {//NATIVE
-				_conchSubmesh = __JS__("new ConchSubmesh()");
-			}
 		}
 		
 		/**

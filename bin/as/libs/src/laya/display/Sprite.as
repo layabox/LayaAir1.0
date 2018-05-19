@@ -357,6 +357,9 @@ package laya.display {
 				if (value == "bitmap") conchModel && conchModel.cacheAs(1);
 				_set$P("cacheForFilters", false);
 			} else {
+				if (_$P["_mask"])
+				{
+				}else
 				if (_$P["hasFilter"]) {
 					_set$P("cacheForFilters", true);
 				} else {
@@ -717,7 +720,6 @@ package laya.display {
 		
 		/**@private */
 		protected function _adjustTransform():Matrix {
-			'use strict';
 			_tfChanged = false;
 			var style:Style = this._style;
 			var tf:Object = style._tf;
@@ -1399,9 +1401,9 @@ package laya.display {
 				_set$P("_mask", value);
 				value._set$P("maskParent", this);
 			} else {
-				cacheAs = "none";
 				mask && mask._set$P("maskParent", null);
 				_set$P("_mask", value);
+				cacheAs = "none";
 			}
 			conchModel && conchModel.mask(value ? value.conchModel : null);
 			_renderType |= RenderSprite.MASK;

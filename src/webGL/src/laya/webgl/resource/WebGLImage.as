@@ -2,6 +2,7 @@ package laya.webgl.resource {
 	import laya.maths.Arith;
 	import laya.net.Loader;
 	import laya.net.URL;
+	import laya.renders.Render;
 	import laya.resource.HTMLImage;
 	import laya.utils.Browser;
 	import laya.utils.Byte;
@@ -153,16 +154,29 @@ package laya.webgl.resource {
 			var preTarget:* = WebGLContext.curBindTexTarget;
 			var preTexture:* = WebGLContext.curBindTexValue;
 			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, glTex);
-			gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-			switch (_format) {
-			case WebGLContext.RGBA: 
-				gl.texImage2D(WebGLContext.TEXTURE_2D, 0, _format, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
-				break;
-			case WebGL.compressEtc1.COMPRESSED_RGB_ETC1_WEBGL: 
-				gl.compressedTexImage2D(WebGLContext.TEXTURE_2D, 0, _format, _w, _h, 0, _image);
-				break;
+			
+			if (Render.isConchWebGL) {
+				switch (_format) {
+				case WebGLContext.RGBA: 
+					gl.texImage2DEx(true, WebGLContext.TEXTURE_2D, 0, _format, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
+					break;
+				case WebGL.compressEtc1.COMPRESSED_RGB_ETC1_WEBGL: 
+					gl.compressedTexImage2D(WebGLContext.TEXTURE_2D, 0, _format, _w, _h, 0, _image);
+					break;
+				}
 			}
-			gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			else {
+				gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+				switch (_format) {
+				case WebGLContext.RGBA: 
+					gl.texImage2D(WebGLContext.TEXTURE_2D, 0, _format, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, _image);
+					break;
+				case WebGL.compressEtc1.COMPRESSED_RGB_ETC1_WEBGL: 
+					gl.compressedTexImage2D(WebGLContext.TEXTURE_2D, 0, _format, _w, _h, 0, _image);
+					break;
+				}
+				gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			}
 			
 			var minFifter:int = this.minFifter;
 			var magFifter:int = this.magFifter;

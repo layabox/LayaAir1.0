@@ -150,7 +150,7 @@ package laya.webgl.utils {
 		}
 		
 		override public function _transform(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			'use strict';
+			
 			var transform:Matrix = sprite.transform, _next:RenderSprite = this._next;
 			if (transform && _next != NORENDER) {
 				var ctx:WebGLContext2D = context.ctx;

@@ -109,9 +109,6 @@ package laya.d3.core {
 		public function set sky(value:Sky):void {
 			_sky = value;
 			value._ownerCamera = this;
-			if (conchModel) {//NATIVE
-				conchModel.setSkyMesh(_sky._conchSky);
-			}
 		}
 		
 		/**获取位置。*/
@@ -354,10 +351,6 @@ package laya.d3.core {
 			useOcclusionCulling = true;
 			_calculateProjectionMatrix();
 			Laya.stage.on(Event.RESIZE, this, _onScreenSizeChanged);
-		}
-		
-		override public function createConchModel():* {
-			return __JS__("new ConchCamera()");
 		}
 		
 		/**

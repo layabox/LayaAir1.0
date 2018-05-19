@@ -61,7 +61,6 @@ package laya.webgl.utils {
 		}
 		
 		public static function fillQuadrangleImgVb(vb:VertexBuffer2D, x:Number, y:Number, point4:Array, uv:Array, m:Matrix, _x:Number, _y:Number):Boolean {
-			'use strict';
 			
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + WebGLContext2D._RECTVBSIZE;
 			vb.byteLength = (vpos << 2);
@@ -110,7 +109,7 @@ package laya.webgl.utils {
 		}
 		
 		public static function fillTranglesVB(vb:VertexBuffer2D, x:Number, y:Number, points:Array, m:Matrix, _x:Number, _y:Number):Boolean {
-			//'use strict';
+
 			//x |= 0; y |= 0;_x |= 0; _y |= 0;
 			
 			var vpos:int = (vb._byteLength >> 2)/*FLOAT32*/ + points.length;///    Context._RECTVBSIZE;
@@ -173,7 +172,7 @@ package laya.webgl.utils {
 		
 		public static function fillRectImgVb(vb:VertexBuffer2D, clip:Rectangle, x:Number, y:Number, width:Number, height:Number, uv:Array, m:Matrix, _x:Number, _y:Number, dx:Number, dy:Number, round:Boolean = false):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			//'use strict';
+			
 			
 			var mType:int = 1;
 			var toBx:Number, toBy:Number, toEx:Number, toEy:Number;
@@ -346,7 +345,7 @@ package laya.webgl.utils {
 		
 		public static function fillLineVb(vb:VertexBuffer2D, clip:Rectangle, fx:Number, fy:Number, tx:Number, ty:Number, width:Number, mat:Matrix):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			'use strict';
+			
 			
 			var linew:Number = width * .5;
 			

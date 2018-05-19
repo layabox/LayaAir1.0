@@ -92,10 +92,9 @@ package laya.d3.graphics {
 			byteLength = _indexTypeByteCount * indexCount;
 			
 			_byteLength = byteLength;
-			if (!Render.isConchNode) {//!NATIVE
-				_bind();
-				_gl.bufferData(_bufferType, byteLength, _bufferUsage);
-			}
+			
+			_bind();
+			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
 			
 			if (canRead) {
 				if (indexType == IndexBuffer3D.INDEXTYPE_USHORT)
@@ -128,10 +127,8 @@ package laya.d3.graphics {
 					data = new Uint8Array(data.buffer, dataStartIndex * byteCount, dataCount);
 			}
 			
-			if (!Render.isConchNode) {//!NATIVE
-				_bind();
-				_gl.bufferSubData(_bufferType, bufferOffset * byteCount, data);//offset==0情况下，某些特殊设备或情况下直接bufferData速度是否优于bufferSubData
-			}
+			_bind();
+			_gl.bufferSubData(_bufferType, bufferOffset * byteCount, data);//offset==0情况下，某些特殊设备或情况下直接bufferData速度是否优于bufferSubData
 			
 			if (_canRead) {
 				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {

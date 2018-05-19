@@ -12,7 +12,6 @@ package laya.d3.core.trail
 	 */
 	public class VertexTrail implements IVertex
 	{
-		
 		private static const _vertexDeclaration1:VertexDeclaration = new VertexDeclaration(32, 
 		[new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.POSITION0), 
 		new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.OFFSETVECTOR),

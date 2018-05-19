@@ -136,26 +136,6 @@ package laya.d3.shader {
 					
 				}
 			}
-			
-			if (Render.isConchNode) {//NATIVE
-				_conchShader = __JS__("new ConchShader()");
-				_conchShader.setSrc(_VS["sd"], _PS["sd"]);
-				delete _VS["sd"];
-				delete _PS["sd"];
-				
-				var conchAttrElements:Array = [];
-				for (key in _attributeMap) {
-					conchAttrElements.push({name: key, elementUsage: _attributeMap[key]});
-				}
-				_conchShader.setAttrDeclare(conchAttrElements);
-				
-				var conchUniformElements:Array = [];
-				for (key in uniformMap) {
-					var tempArray:Array = uniformMap[key];
-					conchUniformElements.push({name: key, elementUsage: tempArray[0], periodType: tempArray[1]});
-				}
-				_conchShader.setUniformDeclare(conchUniformElements);
-			}
 		}
 		
 		/**

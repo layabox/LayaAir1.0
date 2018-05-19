@@ -503,10 +503,5 @@ package laya.d3.resource.tempelet {
 		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
 			return null;
 		}
-		
-		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void//NATIVE
-		{
-		
-		}
 	}
 }

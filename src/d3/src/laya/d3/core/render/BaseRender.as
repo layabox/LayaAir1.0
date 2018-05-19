@@ -106,7 +106,6 @@ package laya.d3.core.render {
 		public function set lightmapIndex(value:int):void {
 			_lightmapIndex = value;
 			_applyLightMapParams();
-		
 		}
 		
 		/**

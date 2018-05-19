@@ -234,6 +234,16 @@ package laya.d3.core {
 		override protected function _calculateBoundingBox():void {
 			if (_hasIndependentBound) {
 				if (_cacheAnimator) {
+					var ownerTrans:Transform3D = _owner.transform;
+					var ownWorMat:Matrix4x4 = ownerTrans.worldMatrix;
+					if (_cacheAnimator._canCache) {
+						var curAvatarAnimationDatas:Vector.<Float32Array> = _cacheAnimator._curAvatarNodeDatas;
+						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, curAvatarAnimationDatas[_rootIndex], ownWorMat);
+					} else {
+						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, _cacheAnimator._avatarNodeMap[_rootBone].transform.getWorldMatrix(), ownWorMat);
+					}
+					ownerTrans.worldMatrix = ownWorMat;//TODO:涉及到更新顺序，必须先更新父再更新子
+					
 					var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
 					if (rootBone == null || _localBoundBox == null)
 						_boundingBox.toDefault();
@@ -251,6 +261,15 @@ package laya.d3.core {
 		override protected function _calculateBoundingSphere():void {
 			if (_hasIndependentBound) {
 				if (_cacheAnimator) {
+					var ownerTrans:Transform3D = _owner.transform;
+					var ownWorMat:Matrix4x4 = ownerTrans.worldMatrix;
+					if (_cacheAnimator._canCache) {
+						var curAvatarAnimationDatas:Vector.<Float32Array> = _cacheAnimator._curAvatarNodeDatas;
+						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, curAvatarAnimationDatas[_rootIndex], ownWorMat);
+					} else
+						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, _cacheAnimator._avatarNodeMap[_rootBone].transform.getWorldMatrix(), ownWorMat);
+					ownerTrans.worldMatrix = ownWorMat;//TODO:涉及到更新顺序，必须先更新父再更新子
+					
 					var rootBone:AnimationNode = _cacheAnimator._avatarNodeMap[_rootBone];
 					if (rootBone == null || localBoundSphere == null)
 						_boundingSphere.toDefault();
@@ -281,18 +300,9 @@ package laya.d3.core {
 			var animator:Animator = _cacheAnimator;
 			var subMeshCount:int = _cacheMesh.subMeshCount;
 			var ownerTrans:Transform3D = _owner.transform;
-			var cache:Boolean = animator._canCache;
 			if (animator) {
+				var cache:Boolean = animator._canCache;
 				var curAvatarAnimationDatas:Vector.<Float32Array> = _cacheAnimator._curAvatarNodeDatas;
-				if (_hasIndependentBound) {
-					var ownWorMat:Matrix4x4 = ownerTrans.worldMatrix;
-					if (cache)
-						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, curAvatarAnimationDatas[_rootIndex], ownWorMat);
-					else
-						Utils3D.matrix4x4MultiplyMFM((_cacheAnimator.owner as Sprite3D).transform.worldMatrix, animator._avatarNodeMap[_rootBone].transform.getWorldMatrix(), ownWorMat);
-					ownerTrans.worldMatrix = ownWorMat;//TODO:涉及到更新顺序，必须先更新父再更新子
-				}
-				//else{}//兼容性代码
 				
 				var aniOwner:Sprite3D = animator.owner as Sprite3D;//根节点不缓存
 				_setShaderValueMatrix4x4(Sprite3D.WORLDMATRIX, aniOwner._transform.worldMatrix);

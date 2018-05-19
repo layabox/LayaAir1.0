@@ -245,7 +245,6 @@ package laya.renders {
 		
 		
 		private function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			//'use strict';
 			var style:* = sprite._style;
 			var tf:*= style._tf;
 			x = x -tf.translateX + style.paddingLeft;

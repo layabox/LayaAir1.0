@@ -273,13 +273,5 @@ package laya.d3.core {
 			super.destroy(destroyChild);
 			(_geometryFilter as MeshFilter)._destroy();
 		}
-		
-		/**
-		 * @private
-		 */
-		override public function createConchModel():* {
-			return null;
-		}
-	
 	}
 }

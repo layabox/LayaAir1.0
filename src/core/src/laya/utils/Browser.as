@@ -56,6 +56,8 @@ package laya.utils {
 		public static var onWeiXin:Boolean;
 		/** @private */
 		public static var onMiniGame:Boolean;
+		/** @private */
+		public static var onLimixiu:Boolean;
 		/** 表示是否在 PC 端。*/
 		public static var onPC:Boolean;		
 		/** 表示是否是 HTTP 协议。*/
@@ -110,10 +112,11 @@ package laya.utils {
 			onIE = /*[STATIC SAFE]*/ !!window.ActiveXObject || "ActiveXObject" in window;
 			onWeiXin = /*[STATIC SAFE]*/ u.indexOf('MicroMessenger') > -1;
 			onPC = /*[STATIC SAFE]*/ !onMobile;
-			onSafari = /*[STATIC SAFE]*/ !!u.match(/Version\/\d+\.\d\x20Mobile\/\S+\x20Safari/);
+			onSafari = /*[STATIC SAFE]*/ u.indexOf("Safari") > -1;
 			onFirefox = /*[STATIC SAFE]*/ u.indexOf('Firefox') > -1;
 			onEdge = /*[STATIC SAFE]*/ u.indexOf('Edge') > -1;
 			onMiniGame = /*[STATIC SAFE]*/ u.indexOf('MiniGame') > -1;
+			onLimixiu = /*[STATIC SAFE]*/ u.indexOf('limixiu') > -1;
 			httpProtocol =/*[STATIC SAFE]*/ window.location.protocol == "http:";
 			if (onMiniGame && window.focus == null)
 			{
@@ -128,6 +131,7 @@ package laya.utils {
 			__JS__("Browser.enableTouch=(('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch)");
 			__JS__("window.focus()");
 			__JS__("SoundManager._soundClass=Sound;");
+			SoundManager._musicClass = AudioSound;
 			
 			Render._mainCanvas = Render._mainCanvas || HTMLCanvas.create('2D');
 			if (canvas) return;

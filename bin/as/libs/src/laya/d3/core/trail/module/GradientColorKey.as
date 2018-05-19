@@ -1,6 +1,7 @@
 package laya.d3.core.trail.module {
 	
 	public class GradientColorKey {
+		
 		private var _color:Color;
 		
 		private var _time:Number;
@@ -37,9 +38,15 @@ package laya.d3.core.trail.module {
 			_time = value;
 		}
 		
-		public function GradientColorKey(color:Color, time:Number) {
-			_color = color;
+		public function GradientColorKey(color:Color = null, time:Number = 0) {
+			
+			_color = color|| new Color();
 			_time = time;
+		}
+		
+		public function cloneTo(destObject:GradientColorKey):void {
+			color.cloneTo(destObject.color);
+			destObject.time = time;
 		}
 	}
 }

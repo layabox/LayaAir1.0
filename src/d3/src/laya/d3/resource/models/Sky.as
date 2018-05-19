@@ -44,9 +44,6 @@ package laya.d3.resource.models {
 		/** @private */
 		protected var _environmentSpecular:BaseTexture;
 		
-		/** @private */
-		public var _conchSky:*;
-		
 		/**
 		 * @private
 		 */
@@ -74,9 +71,6 @@ package laya.d3.resource.models {
 				_alphaBlending = 0;
 			if (_alphaBlending > 1)
 				_alphaBlending = 1;
-			if (_conchSky) {//NATIVE
-				_conchSky.setShaderValue(Sky.ALPHABLENDING, _alphaBlending, 2);
-			}
 		}
 		
 		/**
@@ -95,9 +89,6 @@ package laya.d3.resource.models {
 			_colorIntensity = value;
 			if (_colorIntensity < 0)
 				_colorIntensity = 0;
-			if (_conchSky) {//NATIVE
-				_conchSky.setShaderValue(Sky.INTENSITY, _colorIntensity, 2);
-			}
 		}
 		
 		/**
@@ -155,9 +146,6 @@ package laya.d3.resource.models {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
 			_shaderValue = new ValusArray();
-			if (Render.isConchNode) {
-				_conchSky = __JS__("new ConchSkyMesh()");
-			}
 		}
 		
 		/**

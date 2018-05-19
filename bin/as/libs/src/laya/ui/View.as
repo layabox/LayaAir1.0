@@ -4,6 +4,7 @@ package laya.ui {
 	import laya.display.Sprite;
 	import laya.display.Text;
 	import laya.events.Event;
+	import laya.events.EventDispatcher;
 	import laya.ui.Box;
 	import laya.ui.Button;
 	import laya.ui.CheckBox;
@@ -30,7 +31,9 @@ package laya.ui {
 		/**UI类映射。*/
 		public static var uiClassMap:Object = {"ViewStack": ViewStack, "LinkButton": Button, "TextArea": TextArea, "ColorPicker": ColorPicker, "Box": Box, "Button": Button, "CheckBox": CheckBox, "Clip": Clip, "ComboBox": ComboBox, "Component": Component, "HScrollBar": HScrollBar, "HSlider": HSlider, "Image": Image, "Label": Label, "List": List, "Panel": Panel, "ProgressBar": ProgressBar, "Radio": Radio, "RadioGroup": RadioGroup, "ScrollBar": ScrollBar, "Slider": Slider, "Tab": Tab, "TextInput": TextInput, "View": View, "VScrollBar": VScrollBar, "VSlider": VSlider, "Tree": Tree, "HBox": HBox, "VBox": VBox, "Sprite": Sprite, "Animation": Animation, "Text": Text, "FontClip": FontClip};
 		/**@private UI视图类映射。*/
-		protected static var viewClassMap:Object = {};
+		protected static var viewClassMap:Object = { };
+		/**@private 鼠标事件。*/
+		public static var eventDic:Object = {"mousedown":true,"mouseup":true,"mousemove":true,"mouseover":true,"mouseout":true,"click":true,"doubleclick":true,"rightmousedown":true,"rightmouseup":true,"rightclick":true  };
 		/**@private */
 		public var _idMap:Object;
 		/**@private */
@@ -94,6 +97,11 @@ package laya.ui {
 			if (_width > 0 && uiView.props.hitTestPrior == null && !mouseThrough) hitTestPrior = true;
 		}
 		
+		protected function onEvent(type:String, event:Event):void
+		{
+			
+		}
+		
 		/**
 		 * @private
 		 * 装载UI视图。用于加载模式。
@@ -155,6 +163,13 @@ package laya.ui {
 			var props:Object = uiView.props;
 			for (var prop:String in props) {
 				var value:String = props[prop];
+				if (eventDic[prop])
+				{
+					if (value&&view)
+					{
+						(comp as EventDispatcher).on(prop, view, view.onEvent, [value]);
+					}
+				}else
 				setCompValue(comp, prop, value, view, dataMap);
 			}
 			
@@ -218,7 +233,7 @@ package laya.ui {
 			if (prop === "var" && view) {
 				view[value] = comp;
 			} else if (prop == "onClick") {
-				var fun:Function = Browser.window.eval("(function(){" + value + "})");
+				var fun:Function = Laya._runScript("(function(){" + value + "})");
 				comp.on(Event.CLICK, view, fun);
 			} else {
 				comp[prop] = (value === "true" ? true : (value === "false" ? false : value));

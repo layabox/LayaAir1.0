@@ -182,6 +182,8 @@ package laya.d3.animation {
 				var lastFrameIndex:int;
 				if (realFrameIndex !== -1) {
 					var frame:Keyframe = node.keyFrames[realFrameIndex];
+					//if (!frame)
+					//	alert("next为空那个BUG: ",animator.currentFrameIndex," ",frameIndices.length," ",frameIndices[frameIndices.length]);
 					var nextKeyFrame:Keyframe = frame.next;
 					if (nextKeyFrame) {
 						if (propertyMap && !cacheProperty) {

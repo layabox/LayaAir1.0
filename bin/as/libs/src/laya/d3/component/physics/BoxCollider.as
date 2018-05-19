@@ -8,7 +8,9 @@ package laya.d3.component.physics {
 	import laya.d3.math.ContainmentType;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.OrientedBoundBox;
+	import laya.d3.math.Quaternion;
 	import laya.d3.math.Ray;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.utils.RaycastHit;
 	import laya.events.Event;
@@ -45,7 +47,7 @@ package laya.d3.component.physics {
 		 */
 		public function set size(value:Vector3):void {
 			_size = value;
-			Vector3.scale(value, 0.5, _transformOrientedBoundBox.extents);
+			_needUpdate = true;//需要重新计算OBB的extents
 		}
 		
 		/**
@@ -69,15 +71,28 @@ package laya.d3.component.physics {
 		 */
 		private function _updateCollider():void {
 			if (_needUpdate) {
+				var obbMat:Matrix4x4 = _transformOrientedBoundBox.transformation;
 				var transform:Transform3D = (_owner as Sprite3D).transform;
-				var ownerWorldMatrix:Matrix4x4 = transform.worldMatrix;
-				ownerWorldMatrix.cloneTo(_transformOrientedBoundBox.transformation);
+				var rotation:Quaternion = transform.rotation;
+				var scale:Vector3 = transform.scale;
 				
-				Vector3.multiply(transform.scale, center, _deviationV3);
-				Vector3.transformQuat(_deviationV3, transform.rotation, _deviationV3);
-				_transformOrientedBoundBox.getCenter(_obbCenterV3);
-				Vector3.add(_obbCenterV3, _deviationV3, _deviationV3);
-				_transformOrientedBoundBox.transformation.setTranslationVector(_deviationV3);
+				var centerE:Float32Array = center.elements;
+				if (centerE[0] === 0.0 && centerE[1] === 0.0 && centerE[2] === 0.0) {
+					Matrix4x4.createAffineTransformation(transform.position, rotation, Vector3.ONE, obbMat);
+				} else {
+					Vector3.multiply(center, scale, _deviationV3);
+					Vector3.transformQuat(_deviationV3, rotation, _deviationV3);
+					Vector3.add(transform.position, _deviationV3, _deviationV3);
+					Matrix4x4.createAffineTransformation(_deviationV3, rotation, Vector3.ONE, obbMat);
+				}
+				_transformOrientedBoundBox.transformation = obbMat;
+				
+				var extentsE:Float32Array = _transformOrientedBoundBox.extents.elements;
+				var sizeE:Float32Array = _size.elements;
+				var scaleE:Float32Array = scale.elements;
+				extentsE[0] = sizeE[0] * 0.5 * scaleE[0];
+				extentsE[1] = sizeE[1] * 0.5 * scaleE[1];
+				extentsE[2] = sizeE[2] * 0.5 * scaleE[2];
 				_needUpdate = false;
 			}
 		}

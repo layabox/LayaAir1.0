@@ -82,13 +82,6 @@ package laya.d3.terrain {
 		/**
 		 * @private
 		 */
-		override public function createConchModel():* {
-			return null;
-		}
-		
-		/**
-		 * @private
-		 */
 		override protected function _clearSelfRenderObjects():void {
 			scene.removeFrustumCullingObject(_render);
 		/*

@@ -126,14 +126,11 @@ void main()
 	
 	gl_Position = u_PMatrix * u_VMatrix * vec4(a_Position + a_OffsetVector * getCurWidth(normalizeTime),1.0);
 	
-	v_Texcoord0 = vec2(a_Texcoord0X, a_Texcoord0Y);
-	
 	#ifdef TILINGOFFSET
-		v_Texcoord0 = (vec2(v_Texcoord0.x, v_Texcoord0.y) * u_TilingOffset.xy) + u_TilingOffset.zw;
+		v_Texcoord0 = (vec2(a_Texcoord0X, a_Texcoord0Y) * u_TilingOffset.xy) + u_TilingOffset.zw;
+	#else
+		v_Texcoord0 = vec2(a_Texcoord0X, a_Texcoord0Y);
 	#endif
-		v_Texcoord0 = vec2(v_Texcoord0.x, v_Texcoord0.y);
-		
-	v_Texcoord0 = (vec2(v_Texcoord0.x, v_Texcoord0.y) * u_TilingOffset.xy) + u_TilingOffset.zw;
 	
 	#ifdef GRADIENTMODE_BLEND
 		v_Color = getColorFromGradientByBlend(u_GradientColorkey, u_GradientAlphakey, normalizeTime);

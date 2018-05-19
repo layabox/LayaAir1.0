@@ -321,8 +321,8 @@ package laya.d3.math {
 		
 		/**
 		 * 空间中射线和点是否相交
-		 * @param	sphere1 包围球1
-		 * @param	sphere2 包围球2
+		 * @param	ray   射线
+		 * @param	point 点
 		 */
 		public static function intersectsRayAndPoint(ray:Ray, point:Vector3):Boolean {
 			
@@ -373,17 +373,15 @@ package laya.d3.math {
 			
 			Vector3.cross(ray1d, ray2d, _tempV30);
 			var tempV3e:Float32Array = _tempV30.elements;
-			var denominator:Number = Vector3.scalarLength(_tempV30);
+			var denominator:Number = Vector3.scalarLengthSquared(_tempV30);
 			
 			if (MathUtils3D.isZero(denominator)) {
 				
 				if (MathUtils3D.nearEqual(ray2oeX, ray1oeX) && MathUtils3D.nearEqual(ray2oeY, ray1oeY) && MathUtils3D.nearEqual(ray2oeZ, ray1oeZ)) {
-					out = Vector3.ZERO;
+					Vector3.ZERO.cloneTo(out);
 					return true;
 				}
 			}
-			
-			denominator = denominator * denominator;
 			
 			var m11:Number = ray2oeX - ray1oeX;
 			var m12:Number = ray2oeY - ray1oeY;
@@ -407,7 +405,7 @@ package laya.d3.math {
 			var t:Number = dett / denominator;
 			
 			Vector3.scale(ray1d, s, _tempV30);
-			Vector3.scale(ray2d, s, _tempV31);
+			Vector3.scale(ray2d, t, _tempV31);
 			
 			Vector3.add(ray1o, _tempV30, _tempV32);
 			Vector3.add(ray2o, _tempV31, _tempV33);
@@ -416,11 +414,11 @@ package laya.d3.math {
 			var point2e:Float32Array = _tempV33.elements;
 			
 			if (!MathUtils3D.nearEqual(point2e[0], point1e[0]) || !MathUtils3D.nearEqual(point2e[1], point1e[1]) || !MathUtils3D.nearEqual(point2e[2], point1e[2])) {
-				out = Vector3.ZERO;
+				Vector3.ZERO.cloneTo(out);
 				return false;
 			}
 			
-			out = _tempV32;
+			_tempV32.cloneTo(out);
 			return true;
 		}
 		
@@ -1011,7 +1009,6 @@ package laya.d3.math {
 			
 			if (Vector3.distanceSquared(point, sphere.center) <= sphere.radius * sphere.radius)
 			    return ContainmentType.Contains;
-
 			return ContainmentType.Disjoint;
 		}
 		

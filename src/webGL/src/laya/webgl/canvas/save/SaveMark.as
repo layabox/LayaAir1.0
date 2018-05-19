@@ -3,7 +3,7 @@ package laya.webgl.canvas.save {
 	
 	public class SaveMark implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		private static var _no:* =SaveBase._createArray();
+		private static var _no:* = SaveBase._createArray();
 		public var _saveuse:int = 0;
 		public var _preSaveMark:SaveMark;
 		

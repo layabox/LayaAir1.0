@@ -3,14 +3,14 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var Animation=laya.display.Animation,Browser=laya.utils.Browser,ClassUtils=laya.utils.ClassUtils,ColorFilter=laya.filters.ColorFilter;
-	var Ease=laya.utils.Ease,Event=laya.events.Event,Font=laya.display.css.Font,FrameAnimation=laya.display.FrameAnimation;
-	var Graphics=laya.display.Graphics,Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader;
-	var Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
-	var Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture,Tween=laya.utils.Tween;
-	var Utils=laya.utils.Utils,WeakObject=laya.utils.WeakObject;
+	var Ease=laya.utils.Ease,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher,Font=laya.display.css.Font;
+	var FrameAnimation=laya.display.FrameAnimation,Graphics=laya.display.Graphics,Handler=laya.utils.Handler;
+	var Input=laya.display.Input,Loader=laya.net.Loader,Node=laya.display.Node,Point=laya.maths.Point,Rectangle=laya.maths.Rectangle;
+	var Render=laya.renders.Render,Sprite=laya.display.Sprite,Text=laya.display.Text,Texture=laya.resource.Texture;
+	var Tween=laya.utils.Tween,Utils=laya.utils.Utils,WeakObject=laya.utils.WeakObject;
 Laya.interface('laya.ui.IItem');
-Laya.interface('laya.ui.IRender');
 Laya.interface('laya.ui.ISelect');
+Laya.interface('laya.ui.IRender');
 Laya.interface('laya.ui.IComponent');
 Laya.interface('laya.ui.IBox','IComponent');
 /**
@@ -121,7 +121,7 @@ var UIUtils=(function(){
 			var temp="\""+value+"\"";
 			temp=temp.replace(/^"\${|}"$/g,"").replace(/\${/g,"\"+").replace(/}/g,"+\"");
 			var str="(function(data){if(data==null)return;with(data){try{\nreturn "+temp+"\n}catch(e){}}})";
-			fun=Browser.window.eval(str);
+			fun=Laya._runScript(str);
 			UIUtils._funMap.set(value,fun);
 		}
 		return fun;
@@ -5011,6 +5011,7 @@ var View=(function(_super){
 		if (this._width > 0 && uiView.props.hitTestPrior==null && !this.mouseThrough)this.hitTestPrior=true;
 	}
 
+	__proto.onEvent=function(type,event){}
 	/**
 	*@private
 	*装载UI视图。用于加载模式。
@@ -5093,6 +5094,11 @@ var View=(function(_super){
 		var props=uiView.props;
 		for (var prop in props){
 			var value=props[prop];
+			if (View.eventDic[prop]){
+				if (value&&view){
+					(comp).on(prop,view,view.onEvent,[value]);
+				}
+			}else
 			View.setCompValue(comp,prop,value,view,dataMap);
 		}
 		if (Laya.__typeof(comp,'laya.ui.IItem'))(comp).initItems();
@@ -5137,7 +5143,7 @@ var View=(function(_super){
 		if (prop==="var" && view){
 			view[value]=comp;
 			}else if (prop=="onClick"){
-			var fun=Browser.window.eval("(function(){"+value+"})");
+			var fun=Laya._runScript("(function(){"+value+"})");
 			comp.on(/*laya.events.Event.CLICK*/"click",view,fun);
 			}else {
 			comp[prop]=(value==="true" ? true :(value==="false" ? false :value));
@@ -5165,7 +5171,7 @@ var View=(function(_super){
 	View.viewClassMap={};
 	View._sheet=null;
 	__static(View,
-	['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text,"FontClip":FontClip};},'_parseWatchData',function(){return this._parseWatchData=/\${(.*?)}/g;},'_parseKeyWord',function(){return this._parseKeyWord=/[a-zA-Z_][a-zA-Z0-9_]*(?:(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)/g;}
+	['uiClassMap',function(){return this.uiClassMap={"ViewStack":ViewStack,"LinkButton":Button,"TextArea":TextArea,"ColorPicker":ColorPicker,"Box":Box,"Button":Button,"CheckBox":CheckBox,"Clip":Clip,"ComboBox":ComboBox,"Component":Component,"HScrollBar":HScrollBar,"HSlider":HSlider,"Image":Image,"Label":Label,"List":List,"Panel":Panel,"ProgressBar":ProgressBar,"Radio":Radio,"RadioGroup":RadioGroup,"ScrollBar":ScrollBar,"Slider":Slider,"Tab":Tab,"TextInput":TextInput,"View":View,"VScrollBar":VScrollBar,"VSlider":VSlider,"Tree":Tree,"HBox":HBox,"VBox":VBox,"Sprite":Sprite,"Animation":Animation,"Text":Text,"FontClip":FontClip};},'eventDic',function(){return this.eventDic={"mousedown":true,"mouseup":true,"mousemove":true,"mouseover":true,"mouseout":true,"click":true,"doubleclick":true,"rightmousedown":true,"rightmouseup":true,"rightclick":true };},'_parseWatchData',function(){return this._parseWatchData=/\${(.*?)}/g;},'_parseKeyWord',function(){return this._parseKeyWord=/[a-zA-Z_][a-zA-Z0-9_]*(?:(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)/g;}
 	]);
 	View.__init$=function(){
 		View._regs()

@@ -1,6 +1,4 @@
 package laya.utils {
-	/*[IF-FLASH]*/
-	import flash.ui.Mouse;
 	
 	/**
 	 * <code>Mouse</code> 类用于控制鼠标光标。
@@ -43,8 +41,6 @@ package laya.utils {
 				_preCursor = cursor;
 				cursor = "none";
 			}
-			/*[IF-FLASH]*/
-			flash.ui.Mouse.hide();
 		}
 		
 		/**
@@ -59,8 +55,6 @@ package laya.utils {
 					cursor = "auto";
 				}
 			}
-			/*[IF-FLASH]*/
-			flash.ui.Mouse.show();
 		}
 	}
 

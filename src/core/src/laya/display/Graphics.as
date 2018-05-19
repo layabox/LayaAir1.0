@@ -262,7 +262,7 @@ package laya.display {
 			if (!width) width = tex.sourceWidth;
 			if (!height) height = tex.sourceHeight;
 			alpha = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
-			var offset:Number = (!Render.isWebGL && Browser.onFirefox || Browser.onEdge) ? 0.5 : 0;
+			var offset:Number = (!Render.isWebGL && (Browser.onFirefox || Browser.onEdge||Browser.onIE||Browser.onSafari)) ? 0.5 : 0;
 			var wRate:Number = width / tex.sourceWidth;
 			var hRate:Number = height / tex.sourceHeight;
 			width = tex.width * wRate;
@@ -374,6 +374,66 @@ package laya.display {
 			param[4] = param[4] || tex.height;
 			_repaint();
 		}
+		
+		/**
+		 * 填充一个圆形。这是一个临时函数，以后会删除，建议用户自己实现。
+		 * @param	x
+		 * @param	y
+		 * @param	tex
+		 * @param	cx		圆心位置。
+		 * @param	cy
+		 * @param	radius
+		 * @param	segNum	分段数，越大越平滑。
+		 */
+		public function fillCircle(x:Number, y:Number, tex:Texture, cx:Number, cy:Number, radius:Number, segNum:int):void {
+			//由于大图集是后来的事情，现在还无法知道具体位置，所以无法计算uv，所以关掉本文件的大图集功能
+			tex.bitmap.enableMerageInAtlas = false;
+			var verts:* = new Float32Array((segNum+1) * 2);	//1是中心xy
+			var uvs:* = new Float32Array((segNum+1) * 2);
+			var indices:* = new Uint16Array(segNum*3);
+			var dang:Number = 2 * Math.PI / segNum;
+			var cang:Number = 0;
+			verts[0] = cx;
+			verts[1] = cy;
+			uvs[0] = cx / tex.width;
+			uvs[1] = cy / tex.height;
+			var idx:int = 2;
+			for ( var i:int = 0; i < segNum; i++) {
+				var px:Number = radius * Math.cos(cang)+cx;
+				var py:Number = radius * Math.sin(cang)+cy;
+				verts[idx] = px;
+				verts[idx + 1] = py;
+				uvs[idx] = px / tex.width;
+				uvs[idx + 1] = py / tex.height;
+				cang += dang;
+				idx += 2;
+			}
+			idx = 0;
+			for ( i = 0; i < segNum; i++) {
+				indices[idx++] = 0;
+				indices[idx++] = i+1;
+				indices[idx++] = (i + 2 >= segNum+1)?1:(i + 2);
+			}
+			drawTriangles(tex, x, y, verts, uvs, indices);
+		}		
+		
+		/**
+		 * 绘制一组三角形
+		 * @param texture	纹理。
+		 * @param x			X轴偏移量。
+		 * @param y			Y轴偏移量。
+		 * @param vertices  顶点数组。
+		 * @param indices	顶点索引。
+		 * @param uvData	UV数据。
+		 * @param matrix	缩放矩阵。
+		 * @param alpha		alpha
+		 * @param color		颜色变换
+		 * @param blendMode	blend模式
+		 */
+		public function drawTriangles(texture:Texture, x:Number, y:Number, vertices:Float32Array, uvs:Float32Array, indices:Uint16Array, matrix:Matrix = null, alpha:Number = 1, color:String = null, blendMode:String = null):void {
+			_saveToCmd(Render._context.drawTriangles, [texture, x, y, vertices, uvs, indices, matrix, alpha, color, blendMode]);
+		}
+		
 		
 		/**
 		 * @private

@@ -40,6 +40,7 @@ package laya.d3.utils {
 	import laya.d3.core.render.RenderState;
 	import laya.d3.core.scene.Scene;
 	import laya.d3.core.trail.TrailSprite3D;
+//	import laya.d3.extension.lineRender.LineSprite3D;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
@@ -200,6 +201,9 @@ package laya.d3.utils {
 					break;
 				case "TrailSprite3D":
 					node = new TrailSprite3D();
+					break;
+				case "LineSprite3D":
+//					node = new LineSprite3D();
 					break;
 				case "Terrain": 
 					node = new Terrain();

@@ -2,6 +2,7 @@ package laya.resource {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
+	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	
 	/**
@@ -317,7 +318,7 @@ package laya.resource {
 		 */
 		public function activeResource(force:Boolean = false):void {
 			_lastUseFrameCount = Stat.loopCount;
-			if (!_destroyed&&__loaded&& (_released || force))
+			if (!_destroyed && __loaded && (_released || force))
 				recreateResource();
 		}
 		
@@ -364,13 +365,13 @@ package laya.resource {
 			var resList:Vector.<Resource>;
 			if (_url) {
 				resList = _urlResourcesMap[_url];
-				if (resList)
-				{
+				if (resList) {
 					resList.splice(resList.indexOf(this), 1);
 					(resList.length === 0) && (delete _urlResourcesMap[url]);
 				}
 				
 				Loader.clearRes(_url);
+				(__loaded)||(RunDriver.cancelLoadByUrl(_url));
 			}
 			if (_group) {
 				resList = _groupResourcesMap[_group];

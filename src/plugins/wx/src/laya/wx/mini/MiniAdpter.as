@@ -1,32 +1,42 @@
 package laya.wx.mini {
 	import laya.display.Input;
 	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.resource.Texture;
+	import laya.net.LocalStorage;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
 	import laya.utils.Utils;
 	
 	public class MiniAdpter {
+		/**@private  包装对象**/
 		public static var EnvConfig:Object;
+		/**@private **/
+		/**全局window对象**/
 		public static var window:*;
+		/**@private **/
 		private static var _preCreateElement:Function;
+		/**@private 适配库是否初始化**/
 		private static var _inited:Boolean = false;
-		private static var wxRequest:*;
+		/**@private 获取手机系统信息**/
 		public static var systemInfo:Object;
-		public static var version:String = "0.0.1";
-		/**是否是子域，默认为false**/
+		/**@private  是否是子域，默认为false**/
 		public static var isZiYu:Boolean;
-		/**是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false**/
+		/**@private 是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false**/
 		public static var isPosMsgYu:Boolean;
+		/**是否自动缓存下载的图片跟声音文件，默认为true**/
+		public static var autoCacheFile:Boolean = true;
+		/**50M缓存容量满时每次清理容量值,默认每次清理5M**/
+		public static var minClearSize:int = (5 * 1024 * 1024); 
+		/**本地资源列表**/
+		public static var nativefiles:Array = ["layaNativeDir","wxlocal"];
+		/**@private **/
 		public static function getJson(data:String):Object {
 			return JSON.parse(data);
 		}
 		
 		/**
 		 * 初始化回调
-		 * @param isPostMessage 是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false
+		 * @param isPosMsg 是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false
 		 * @param isSon 是否是子域，默认为false
 		 */
 		public static function init(isPosMsg:Boolean = false,isSon:Boolean = false):void {
@@ -46,17 +56,15 @@ package laya.wx.mini {
 			}
 			systemInfo = __JS__('wx.getSystemInfoSync()');
 			
-			//所有原引擎中有适配代码
-			//适配Browser中的window.focus()
 			window.focus = function():void {
 			};
 			//清空路径设定
 			Laya['getUrlPath'] = function():void {
 			};
 			//add---xiaosong--snowgame
-			window.logtime = function(str):void {
+			window.logtime = function(str:String):void {
 			};
-			window.alertTimeLog = function(str):void {
+			window.alertTimeLog = function(str:String):void {
 			};
 			window.resetShareInfo = function():void {
 			};
@@ -77,72 +85,115 @@ package laya.wx.mini {
 			//适配RunDriver.createShaderCondition
 			RunDriver.createShaderCondition = createShaderCondition;
 			//适配XmlDom
-			Utils.parseXMLFromString = parseXMLFromString;
+			Utils['parseXMLFromString'] = parseXMLFromString;
 			//文本输入框
 			Input['_createInputElement'] = MiniInput['_createInputElement'];
+			
 			//修改文件加载
 			EnvConfig.load = Loader.prototype.load;
 			//文件加载处理
 			Loader.prototype.load = MiniLoader.prototype.load;
-			//文件清理处理
-			Loader['clearRes'] = clearRes;
 			//修改图片加载
 			Loader.prototype._loadImage = MiniImage.prototype._loadImage;
+			//本地缓存类
+			MiniLocalStorage.__init__();
+			LocalStorage._baseClass = MiniLocalStorage;
+		}
+		
+		/**
+		 * 获取url对应的encoding值 
+		 * @param url 文件路径
+		 * @param type 文件类型
+		 * @return 
+		 */		
+		public static  function getUrlEncode(url:String,type:String):String
+		{
+			if(url.indexOf(".fnt") != -1)
+				return "utf8";
+			else if(type == "arraybuffer")
+				return "";
+			return "ascii";
+		}
 			
-			//接收主域透传的数据
-			if(isZiYu && isPosMsg)
+		/**
+		 * 下载文件 
+		 * @param fileUrl 文件地址(全路径)
+		 * @param fileType 文件类型(image、text、json、xml、arraybuffer、sound、atlas、font)
+		 * @param callBack 文件加载回调,回调内容[errorCode码(0成功,1失败,2加载进度)
+		 * @param encoding 文件编码默认 ascill，非图片文件加载需要设置相应的编码，二进制编码为空字符串
+		 */				
+		public static function downLoadFile(fileUrl:String, fileType:String = "",callBack:Handler = null,encoding:String = "ascii"):void
+		{
+			var fileObj:Object = MiniFileMgr.getFileInfo(fileUrl);
+			if(!fileObj)
+				MiniFileMgr.downLoadFile(fileUrl,fileType,callBack,encoding);
+			else
 			{
-				__JS__('wx').onMessage(function(message:Object):void{
-					if(message['isLoad'])
-					{
-						MiniFileMgr.ziyuFileData[message.url] = message.data;
-					}
-				});
+				callBack != null && callBack.runWith([0]);
 			}
 		}
 		
 		/**
-		 * 清理文件缓存的资源 
-		 * @param url
-		 * @param forceDispose
-		 */		
-		public static function clearRes(url:String,forceDispose:Boolean = false):void
-		{
-			url = URL.formatURL(url);
-			//删除图集
-			var arr:Array = Loader.getAtlas(url);
-			if (arr) {
-				for (var i:int = 0, n:int = arr.length; i < n; i++) {
-					var resUrl:String = arr[i];
-					var tex:Texture = Loader.getRes(resUrl);
-					delete Loader.loadedMap[resUrl];
-					if (tex) tex.destroy(forceDispose);
-					
-				}
-				arr.length = 0;
-				delete Loader['atlasMap'][url];
-				delete Loader.loadedMap[url];
-				//释放文件缓存的资源
-				MiniFileMgr.remove("",url);
-			} else {
-				var res:* = Loader.loadedMap[url];
-				if (res) {
-					delete Loader.loadedMap[url];
-					if (res is Texture && res.bitmap) Texture(res).destroy(forceDispose);				
-				}
-			}
+		 * 从本地删除文件
+		 * @param fileUrl 文件地址(全路径)
+		 * @param callBack 回调处理，在存储图片时用到
+		 */
+		public static function remove(fileUrl:String, callBack:Handler = null):void {
+			MiniFileMgr.deleteFile("",fileUrl,callBack,"",0);
 		}
 		
+		/**
+		 * 清空缓存空间文件内容 
+		 */		
+		public static function removeAll():void
+		{
+			MiniFileMgr.deleteAll();
+		}
+		
+		/**
+		 * 判断是否是4M包文件
+		 * @param fileUrl 文件地址(全路径)
+		 * @return 
+		 */		
+		public static function  hasNativeFile(fileUrl:String):Boolean
+		{
+			return MiniFileMgr.isLocalNativeFile(fileUrl);
+		}
+		
+		/**
+		 * 判断缓存里是否存在文件
+		 * @param fileUrl 文件地址(全路径)
+		 * @return
+		 */
+		public static function getFileInfo(fileUrl:String):Object {
+			return MiniFileMgr.getFileInfo(fileUrl);
+		}
+		
+		/**
+		 * 获取缓存文件列表
+		 * @return
+		 */
+		public static function getFileList():Object
+		{
+			return MiniFileMgr.filesListObj;
+		}
+		
+		/**@private 退出小游戏**/
+		public static function exitMiniProgram():void
+		{
+			window["wx"].exitMiniProgram();
+		}
+		
+		/**@private **/
 		private static function onMkdirCallBack(errorCode:int, data:*):void {
 			if (!errorCode)
 				MiniFileMgr.filesListObj = JSON.parse(data.data);
 		}
 		
-		/** 设备像素比。*/
+		/**@private 设备像素比。*/
 		public static function pixelRatio():Number {
 			if (!EnvConfig.pixelRatioInt) {
 				try {
-					trace(systemInfo);
 					EnvConfig.pixelRatioInt = systemInfo.pixelRatio;
 					return systemInfo.pixelRatio;
 				} catch (error:Error) {
@@ -151,11 +202,12 @@ package laya.wx.mini {
 			return EnvConfig.pixelRatioInt;
 		}
 		/**
+		 * @private 
 		 * 将字符串解析成 XML 对象。
 		 * @param value 需要解析的字符串。
 		 * @return js原生的XML对象。
 		 */
-		public static var parseXMLFromString:Function = function(value:String):XmlDom {
+		private static var parseXMLFromString:Function = function(value:String):XmlDom {
 			var rst:*;
 			var Parser:*;
 			value = value.replace(/>\s+</g, '><');
@@ -166,8 +218,9 @@ package laya.wx.mini {
 			}
 			return rst;
 		}
+		/**@private **/
 		private static var idx:int = 1;
-		
+		/**@private **/
 		public static function createElement(type:String):* {
 			if (type == "canvas") {
 				var _source:*;
@@ -189,18 +242,18 @@ package laya.wx.mini {
 				return onCreateInput(type);
 			} else if (type == "div") {
 				var node:* = _preCreateElement(type);
-				node.contains = function(value):* {
+				node.contains = function(value:String):* {
 					return null
 				};
-				node.removeChild = function(value):void {
+				node.removeChild = function(value:String):void {
 				};
 				return node;
 			} else {
 				return _preCreateElement(type);
 			}
 		}
-		
-		private static function onCreateInput(type):Object {
+		/**@private **/
+		private static function onCreateInput(type:*):Object {
 			var node:* = _preCreateElement(type);
 			node.focus = MiniInput.wxinputFocus;
 			node.blur = MiniInput.wxinputblur;
@@ -209,22 +262,23 @@ package laya.wx.mini {
 			node.parentElement = {};
 			node.placeholder = {};
 			node.type = {};
-			node.setColor = function(value):void {
+			node.setColor = function(value:String):void {
 			};
-			node.setType = function(value):void {
+			node.setType = function(value:String):void {
 			};
-			node.setFontFace = function(value):void {
+			node.setFontFace = function(value:String):void {
 			};
-			node.addEventListener = function(value):void {
+			node.addEventListener = function(value:String):void {
 			};
-			node.contains = function(value):* {
+			node.contains = function(value:String):* {
 				return null
 			};
-			node.removeChild = function(value):void {
+			node.removeChild = function(value:String):void {
 			};
 			return node;
 		}
 		
+		/**@private **/
 		public static function createShaderCondition(conditionScript:String):Function {
 			var func:Function = function():* {
 				var abc:String = conditionScript;

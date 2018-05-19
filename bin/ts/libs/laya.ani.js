@@ -1668,10 +1668,50 @@ var MeshTools=(function(){
 		index1=indexs[1];
 		index2=indexs[2];
 		MeshTools._absArr.length=0;
-		uvAbs=MeshTools.solvePoints(mesh.texture.uv,mUv[index0],mUv[index0+1],mUv[index1]-mUv[index0],mUv[index1+1]-mUv[index0+1],mUv[index2]-mUv[index0],mUv[index2+1]-mUv[index0+1],MeshTools._absArr);
 		var newVerticles;
+		if (MeshTools.isNormalUV(mesh.texture.uv)){
+			MeshTools.adptTexture(mesh);
+		}
+		uvAbs=MeshTools.solvePoints(mesh.texture.uv,mUv[index0],mUv[index0+1],mUv[index1]-mUv[index0],mUv[index1+1]-mUv[index0+1],mUv[index2]-mUv[index0],mUv[index2+1]-mUv[index0+1],MeshTools._absArr);
 		newVerticles=MeshTools.transPoints(uvAbs,mVer[index0],mVer[index0+1],mVer[index1]-mVer[index0],mVer[index1+1]-mVer[index0+1],mVer[index2]-mVer[index0],mVer[index2+1]-mVer[index0+1],rst);
 		return newVerticles;
+	}
+
+	MeshTools.findWrapRect=function(verticles){
+		var topI=0;
+		topI=MeshTools.findEdge(verticles,1,true);
+		var bottomI=0;
+		bottomI=MeshTools.findEdge(verticles,1,false);
+		var leftI=0;
+		leftI=MeshTools.findEdge(verticles,0,true);
+		var rightI=0;
+		rightI=MeshTools.findEdge(verticles,0,false);
+		var left=NaN;
+		left=verticles[leftI];
+		var right=NaN;
+		right=verticles[rightI];
+		var top=NaN;
+		top=verticles[topI+1];
+		var bottom=NaN;
+		bottom=verticles[bottomI+1];
+		var rst;
+		return [right,bottom,left-right,top-bottom];
+	}
+
+	MeshTools.adptTexture=function(mesh){
+		var rec;
+		rec=MeshTools.findWrapRect(mesh.uvs);
+		var oTex;
+		var nTex;
+		oTex=mesh.texture;
+		var oWidth=oTex.width;
+		var oHeight=oTex.height;
+		nTex=Texture.create(oTex,rec[0] *oWidth,rec[1] *oHeight,rec[2] *oWidth,rec[3] *oHeight);
+		mesh.texture=nTex;
+	}
+
+	MeshTools.isNormalUV=function(uv){
+		return uv[0]==0 && uv[1]==0 && uv[4]==1 && uv[5]==1;
 	}
 
 	MeshTools.solvePoints=function(pointList,oX,oY,v1x,v1y,v2x,v2y,rst){
@@ -3175,6 +3215,7 @@ var GraphicsAni=(function(_super){
 		if (Render.isConchNode){
 			this["drawSkin"]=function (skin){
 				skin.transform || (skin.transform=Matrix.EMPTY);
+				/*__JS__ */this._addCmd([skin]);
 				this.setSkinMesh&&this.setSkinMesh(skin._ps,skin.mVBData,skin.mEleNum,0,skin.mTexture,skin.transform);
 			};
 		}
@@ -3192,6 +3233,17 @@ var GraphicsAni=(function(_super){
 		this._saveToCmd(Render._context._drawSkin,arr);
 	}
 
+	GraphicsAni.create=function(){
+		var rs=GraphicsAni._caches.pop();
+		return rs||new GraphicsAni();
+	}
+
+	GraphicsAni.recycle=function(graphics){
+		graphics.clear();
+		GraphicsAni._caches.push(graphics);
+	}
+
+	GraphicsAni._caches=[];
 	return GraphicsAni;
 })(Graphics)
 
@@ -3562,9 +3614,7 @@ var AnimationTemplet=(function(_super){
 		return Laya.loader.create(url,null,null,AnimationTemplet);
 	}
 
-	__static(AnimationTemplet,
-	['interpolation',function(){return this.interpolation=[AnimationTemplet._LinearInterpolation_0,AnimationTemplet._QuaternionInterpolation_1,AnimationTemplet._AngleInterpolation_2,AnimationTemplet._RadiansInterpolation_3,AnimationTemplet._Matrix4x4Interpolation_4,AnimationTemplet._NoInterpolation_5,AnimationTemplet._BezierInterpolation_6,AnimationTemplet._BezierInterpolation_7];}
-	]);
+	AnimationTemplet.interpolation=[AnimationTemplet._LinearInterpolation_0,AnimationTemplet._QuaternionInterpolation_1,AnimationTemplet._AngleInterpolation_2,AnimationTemplet._RadiansInterpolation_3,AnimationTemplet._Matrix4x4Interpolation_4,AnimationTemplet._NoInterpolation_5,AnimationTemplet._BezierInterpolation_6,AnimationTemplet._BezierInterpolation_7];
 	return AnimationTemplet;
 })(Resource)
 
@@ -4215,12 +4265,12 @@ var Skeleton=(function(_super){
 		};
 		var tGraphics;
 		if (this._aniMode==0 || this._aniMode==1){
-			this.graphics=new GraphicsAni();
+			this.graphics=GraphicsAni.create();
 			}else {
 			if ((this.graphics instanceof laya.ani.GraphicsAni )){
 				this.graphics.clear();
 				}else {
-				this.graphics=new GraphicsAni();
+				this.graphics=GraphicsAni.create();
 			}
 		}
 		tGraphics=this.graphics;
@@ -4605,6 +4655,12 @@ var Skeleton=(function(_super){
 	__proto._clearCache=function(){
 		if (this._aniMode==1){
 			for (var i=0,n=this._graphicsCache.length;i < n;i++){
+				for (var j=0,len=this._graphicsCache[i].length;j < len;j++){
+					var gp=this._graphicsCache[i][j];
+					if (gp !=this.graphics){
+						GraphicsAni.recycle(gp);
+					}
+				}
 				this._graphicsCache[i].length=0;
 			}
 		}
@@ -5269,9 +5325,7 @@ var MovieClip=(function(_super){
 		this.load(path);
 	});
 
-	__static(MovieClip,
-	['_ValueList',function(){return this._ValueList=["x","y","width","height","scaleX","scaleY","rotation","alpha"];}
-	]);
+	MovieClip._ValueList=["x","y","width","height","scaleX","scaleY","rotation","alpha"];
 	return MovieClip;
 })(Sprite)
 
@@ -5858,6 +5912,9 @@ var Templet=(function(_super){
 	*/
 	__proto.getTexture=function(name){
 		var tTexture=this.subTextureDic[name];
+		if (!tTexture){
+			tTexture=this.subTextureDic[name.substr(0,name.length-1)];
+		}
 		if (tTexture==null){
 			return this._mainTexture;
 		}

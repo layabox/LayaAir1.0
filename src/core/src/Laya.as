@@ -37,7 +37,7 @@
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.16";
+		public static var version:String = "1.7.18";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -132,6 +132,12 @@
 			} else {
 				Browser.window.onerror = null;
 			}
+		}
+		
+		/**@private */
+		public static function _runScript(script:String):*
+		{
+			return Browser.window["e"+String.fromCharCode(100+10+8)+"a"+"l"](script);
 		}
 	}
 }

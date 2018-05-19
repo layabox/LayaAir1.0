@@ -188,6 +188,30 @@ package laya.renders {
 			this._fillAndStroke(args[3], args[4], args[5], true);
 		}
 		
+		/**
+		 * 绘制三角形
+		 * @param	x
+		 * @param	y
+		 * @param	tex
+		 * @param	args [x, y, texture,vertices,indices,uvs,matrix]
+		 */
+		public function drawTriangles(x:Number, y:Number, args:Array):void {
+			if (Render.isWebGL) {
+				this.ctx.drawTriangles(args[0],x+args[1],y+args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+			}else {
+				var indices:Uint16Array = args[5];
+				var i:int, len:int = indices.length;
+				var ctx:Context = this.ctx;
+				
+				for (i = 0; i < len; i += 3) {
+					var index0:int = indices[i] * 2;
+					var index1:int = indices[i + 1] * 2;
+					var index2:int = indices[i + 2] * 2;
+					ctx.drawTriangle(args[0], args[3], args[4], index0, index1, index2, args[6], true);
+				}
+			}
+		}		
+		
 		public function fillCircle(x:Number, y:Number, radius:Number, color:String):void {
 			Stat.drawCall++;
 			var ctx:* = this.ctx;

@@ -13,7 +13,7 @@ package laya.d3.core.trail {
 			super(owner);
 		}
 		
-		override protected function _calculateBoundingBox():void {//TODO:更具粒子参数计算
+		override protected function _calculateBoundingBox():void {
 			var minE:Float32Array = _boundingBox.min.elements;
 			minE[0] = -Number.MAX_VALUE;
 			minE[1] = -Number.MAX_VALUE;
@@ -24,7 +24,7 @@ package laya.d3.core.trail {
 			maxE[2] = Number.MAX_VALUE;
 		}
 		
-		override protected function _calculateBoundingSphere():void {//TODO:更具粒子参数计算
+		override protected function _calculateBoundingSphere():void {
 			var centerE:Float32Array = _boundingSphere.center.elements;
 			centerE[0] = 0;
 			centerE[1] = 0;

@@ -78,6 +78,11 @@ package laya.media.webaudio {
 		private var __toPlays:Array;
 		
 		/**
+		 * @private
+		 */
+		private var _disposed:Boolean = false;
+		
+		/**
 		 * 解码声音文件
 		 *
 		 */
@@ -177,6 +182,11 @@ package laya.media.webaudio {
 			request.open("GET", url, true);
 			request.responseType = "arraybuffer";
 			request.onload = function():void {
+				if (me._disposed)
+				{
+					me._removeLoadEvents();
+					return;
+				} 
 				me.data = request.response;
 				buffs.push({"buffer": me.data, "url": me.url});
 				decode();
@@ -195,6 +205,10 @@ package laya.media.webaudio {
 		
 		private function _loaded(audioBuffer:*):void {
 			_removeLoadEvents();
+			if (_disposed)
+			{
+				return;
+			}
 			this.audioBuffer = audioBuffer;
 			_dataCache[url] = this.audioBuffer;
 			this.loaded = true;
@@ -258,8 +272,12 @@ package laya.media.webaudio {
 		}
 		
 		public function dispose():void {
+			this._disposed = true;
 			delete _dataCache[url];
 			delete __loadingSound[url];
+			this.audioBuffer = null;
+			this.data = null;
+			this.__toPlays = [];
 		}
 	}
 

@@ -200,14 +200,7 @@ package laya.d3.graphics {
 		 */
 		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
 			return null;
-		}
-		
-		/**NATIVE*/
-		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
-		
-		}
-		//..................临时.................................
-	
+		}	
 	}
 
 }

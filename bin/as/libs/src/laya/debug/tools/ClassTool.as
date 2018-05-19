@@ -115,7 +115,7 @@ package laya.debug.tools
 		public static function getClassByName(className:String):Class
 		{
 			var rst:Class;
-			rst=__JS__("eval(className)");
+			rst = Laya._runScript(className);
 			return rst;
 		}
 		public static function createObjByName(className:String):*

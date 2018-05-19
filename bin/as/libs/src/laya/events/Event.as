@@ -144,7 +144,9 @@ package laya.events {
 		/**退出触发器时触发。*/
 		public static const TRIGGER_EXIT:String = "triggerexit";
 		/**拖尾渲染节点改变时触发。*/
-		public static const TRAIL_Filter_CHANGE:String = "trailfilterchange";
+		public static const TRAIL_FILTER_CHANGE:String = "trailfilterchange";
+		/**多米诺渲染节点改变时触发。*/
+		public static const DOMINO_FILTER_CHANGE:String = "dominofilterchange";
 		
 		/** 事件类型。*/
 		public var type:String;

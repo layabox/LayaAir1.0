@@ -94,26 +94,6 @@ package laya.d3.core {
 			_render._destroy();
 			_render = null;
 		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _updateConch(state:RenderState):void {//NATIVE
-			state.owner = this;
-			if (_activeInHierarchy) {
-				_updateComponents(state);
-				_render._updateOctreeNode();//TODO:
-				//if (transform.worldNeedUpdate)
-				//_render.renderObject._conchRenderObject.matrix(transform.worldMatrix.elements);
-				//_render.renderObject._renderRuntime(state);
-				
-				_lateUpdateComponents(state);
-				
-				Stat.spriteCount++;
-				_childs.length && _updateChildsConch(state);
-			}
-		}
-	
 	}
 
 }

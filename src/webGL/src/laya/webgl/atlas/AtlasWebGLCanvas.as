@@ -69,13 +69,22 @@ package laya.webgl.atlas {
 				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, _source);
 				//由于HTML5中Image不能直接获取像素素数,只能先画到Canvas上再取出像素数据，再分别texSubImage2D四个边缘（包含一次行列转换），性能可能低于直接texSubImage2D整张image，
 				//实测76*59的image此函数耗时1.2毫秒
-				gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-				(xoffset - 1 >= 0) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset - 1, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
-				(xoffset + 1 <= _w) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset + 1, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
-				(yoffset - 1 >= 0) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset - 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
-				(yoffset + 1 <= _h) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset + 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
-				gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap);
-				gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+				if (Render.isConchWebGL) {
+					(xoffset - 1 >= 0) && (gl.texSubImage2DEx(true, WebGLContext.TEXTURE_2D, 0, xoffset - 1, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					(xoffset + 1 <= _w) && (gl.texSubImage2DEx(true, WebGLContext.TEXTURE_2D, 0, xoffset + 1, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					(yoffset - 1 >= 0) && (gl.texSubImage2DEx(true, WebGLContext.TEXTURE_2D, 0, xoffset, yoffset - 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					(yoffset + 1 <= _h) && (gl.texSubImage2DEx(true, WebGLContext.TEXTURE_2D, 0, xoffset, yoffset + 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					gl.texSubImage2DEx(true, WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap);
+				}
+				else {
+					gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+					(xoffset - 1 >= 0) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset - 1, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					(xoffset + 1 <= _w) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset + 1, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					(yoffset - 1 >= 0) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset - 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					(yoffset + 1 <= _h) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset + 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
+					gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap);
+					gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+				}
 				(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			} else {
 				if (!_flashCacheImage) {
@@ -106,9 +115,14 @@ package laya.webgl.atlas {
 			//(yoffset - 1 >= 0) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset - 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
 			//(yoffset + 1 <= _h) && (gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset + 1, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, bitmap));
 			var pixels:Uint8Array = new Uint8Array(pixel.data);
-			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-			gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, pixels);
-			gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			if (Render.isConchWebGL) {
+				gl.texSubImage2DEx(true, WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, pixels);
+			}
+			else {
+				gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+				gl.texSubImage2D(WebGLContext.TEXTURE_2D, 0, xoffset, yoffset, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, pixels);
+				gl.pixelStorei( WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+			}
 			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 		}
 	}

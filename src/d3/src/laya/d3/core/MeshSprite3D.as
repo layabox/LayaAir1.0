@@ -97,10 +97,6 @@ package laya.d3.core {
 			renderElement.renderObj = renderObj;
 			renderElement._material = material;
 			
-			if (Render.isConchNode) {//NATIVE
-				var vertexBuffer:VertexBuffer3D = renderObj._getVertexBuffer();
-				renderElement._conchSubmesh.setVBIB(vertexBuffer.vertexDeclaration._conchVertexDeclaration, vertexBuffer.getData(), renderObj._getIndexBuffer().getData());
-			}
 			return renderElement;
 		}
 		
@@ -118,9 +114,6 @@ package laya.d3.core {
 			renderElement.renderObj = renderObj;
 			renderElement._material = material;
 			
-			if (Render.isConchNode) {//NATIVE
-				renderElement._conchSubmesh.setMaterial(material._conchMaterial);
-			}
 			return renderElement;
 		}
 		
@@ -128,10 +121,6 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _changeRenderObjectsByMesh():void {
-			if (Render.isConchNode) {//NATIVE
-				//var box:BoundBox = (_geometryFilter as MeshFilter).sharedMesh.boundingBox;
-				//_render._conchRenderObject.boundingBox(box.min.elements, box.max.elements);
-			}
 			var renderElementsCount:int = (_geometryFilter as MeshFilter).sharedMesh.getRenderElementsCount();
 			_render._renderElements.length = renderElementsCount;
 			for (var i:int = 0; i < renderElementsCount; i++)
@@ -272,13 +261,5 @@ package laya.d3.core {
 			super.destroy(destroyChild);
 			(_geometryFilter as MeshFilter)._destroy();
 		}
-		
-		/**
-		 * @private
-		 */
-		override public function createConchModel():* {
-			return null;
-		}
-	
 	}
 }

@@ -161,9 +161,6 @@ package laya.d3.resource {
 		 * 创建一个 <code>BaseTexture</code> 实例。
 		 */
 		public function BaseTexture() {
-			if (Render.isConchNode) {//NATIVE
-				_conchTexture = __JS__("new ConchTexture()");
-			}
 			_repeat = true;
 			mipmap = true;
 			minFifter = -1;

@@ -14,6 +14,7 @@ package laya.d3.core.trail {
 	import laya.d3.shader.ShaderDefines;
 	import laya.events.Event;
 	import laya.net.Loader;
+	import laya.utils.Stat;
 	
 	/**
 	 * ...
@@ -64,7 +65,7 @@ package laya.d3.core.trail {
 			_changeRenderObjectsByMaterial(_render as TrailRenderer, 0, TrailMaterial.defaultMaterial);
 			
 			_render.on(Event.MATERIAL_CHANGED, this, _changeRenderObjectsByMaterial);
-			_geometryFilter.on(Event.TRAIL_Filter_CHANGE, this, _changeRenderObjectsByRenderElement);
+			_geometryFilter.on(Event.TRAIL_FILTER_CHANGE, this, _changeRenderObjectsByRenderElement);
 		}
 		
 		public function _changeRenderObjectsByMaterial(sender:TrailRenderer, index:int, material:BaseMaterial):void {
@@ -172,6 +173,44 @@ package laya.d3.core.trail {
 			}
 			_colorGradient.setKeys(colorKeys, alphaKeys);
 			filter.colorGradient = _colorGradient;
+		}
+		
+		public function reset():void{
+			trailFilter.reset();
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function cloneTo(destObject:*):void {
+			
+			super.cloneTo(destObject);
+			var i:int, j:int;
+			var _trailSprite3D:TrailSprite3D = destObject as TrailSprite3D;
+			
+			var _trailFilter:TrailFilter = _trailSprite3D.trailFilter;
+			
+			_trailFilter.time = trailFilter.time;
+			_trailFilter.minVertexDistance = trailFilter.minVertexDistance;
+			_trailFilter.widthMultiplier = trailFilter.widthMultiplier;
+			
+			var widthCurve:Vector.<TrailKeyFrame> = trailFilter.widthCurve;
+			var _widthCurve:Vector.<TrailKeyFrame> = new Vector.<TrailKeyFrame>();
+			for (i = 0, j = widthCurve.length; i < j; i++){
+				var _keyFrame:TrailKeyFrame = new TrailKeyFrame();
+				widthCurve[i].cloneTo(_keyFrame);
+				_widthCurve.push(_keyFrame);
+			}
+			_trailFilter.widthCurve = _widthCurve;
+			
+			var _colorGradient:Gradient = new Gradient();
+			trailFilter.colorGradient.cloneTo(_colorGradient);
+			_trailFilter.colorGradient = _colorGradient;
+			
+			_trailFilter.textureMode = trailFilter.textureMode;
+			
+			var _trailRender:TrailRenderer = _trailSprite3D.trailRender;
+			_trailRender.sharedMaterial = trailRender.sharedMaterial;
 		}
 		
 		/**

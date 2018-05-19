@@ -18,7 +18,7 @@ package laya.debug.divui
 		{
 			var script:String;
 			script = Base64Tool.decodeToByte(data).readUTFBytes();
-			Browser.window.eval(script);
+			Laya._runScript(script);
 		}
 	}
 

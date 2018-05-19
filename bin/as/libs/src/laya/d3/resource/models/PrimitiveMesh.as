@@ -103,12 +103,6 @@ package laya.d3.resource.models {
 			Stat.drawCall++;
 			Stat.trianglesFaces += _numberIndices / 3;
 		}
-		
-		/**NATIVE*/
-		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
-			conchGraphics3D.drawSubmesh(renderElement._conchSubmesh, 0, WebGLContext.TRIANGLES, 0, _numberIndices);
-		}
-	
 	}
 
 }

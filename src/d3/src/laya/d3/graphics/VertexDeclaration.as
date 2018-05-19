@@ -65,8 +65,6 @@ package laya.d3.graphics {
 		private var _vertexElements:Array;
 		private var _vertexElementsDic:Object;
 		
-		public var _conchVertexDeclaration:*;//NATIVE
-		
 		/**
 		 * 获取唯一标识ID(通常用于优化或识别)。
 		 * @return 唯一标识ID
@@ -95,10 +93,6 @@ package laya.d3.graphics {
 		 */
 		public function _addShaderDefine(value:int):void {
 			_shaderDefineValue |= value;
-			
-			if (_conchVertexDeclaration) {//NATIVE
-				_conchVertexDeclaration.addShaderDefine(value);
-			}
 		}
 		
 		/**
@@ -107,9 +101,6 @@ package laya.d3.graphics {
 		 */
 		protected function _removeShaderDefine(value:int):void {
 			_shaderDefineValue &= ~value;
-			if (_conchVertexDeclaration) {//NATIVE
-				_conchVertexDeclaration.removeShaderDefine(value)
-			}
 		}
 		
 		public function VertexDeclaration(vertexStride:int, vertexElements:Array) {
@@ -121,9 +112,6 @@ package laya.d3.graphics {
 			_vertexElementsDic = {};
 			_vertexStride = vertexStride;
 			_vertexElements = vertexElements;
-			if (Render.isConchNode) {//NATIVE
-				_conchVertexDeclaration = __JS__("new ConchVertexDeclare()");
-			}
 			
 			for (var i:int = 0; i < vertexElements.length; i++) {
 				var vertexElement:VertexElement = vertexElements[i];
@@ -143,26 +131,6 @@ package laya.d3.graphics {
 					_addShaderDefine(ShaderCompile3D.SHADERDEFINE_UV1);
 					break;
 				}
-			}
-			if (Render.isConchNode) {//NATIVE
-				var conchVertexElements:Array = [];
-				
-				for (var ci:int = 0, cn:int = vertexElements.length; ci < cn; ci++) {
-					var cVertexElement:VertexElement = vertexElements[ci];
-					switch (cVertexElement.elementFormat) {
-					case VertexElementFormat.Vector2: 
-						conchVertexElements.push({offset: cVertexElement.offset, elementFormat: WebGLContext.FLOAT_VEC2, elementUsage: cVertexElement.elementUsage});
-						break;
-					case VertexElementFormat.Vector3: 
-						conchVertexElements.push({offset: cVertexElement.offset, elementFormat: WebGLContext.FLOAT_VEC3, elementUsage: cVertexElement.elementUsage});
-						break;
-					case VertexElementFormat.Vector4: 
-						conchVertexElements.push({offset: cVertexElement.offset, elementFormat: WebGLContext.FLOAT_VEC4, elementUsage: cVertexElement.elementUsage});
-						break;
-						
-					}
-				}
-				_conchVertexDeclaration.setDelcare(conchVertexElements);
 			}
 		}
 		

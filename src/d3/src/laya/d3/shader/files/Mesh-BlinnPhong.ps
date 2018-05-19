@@ -12,7 +12,7 @@ uniform vec4 u_DiffuseColor;
 	varying vec4 v_Color;
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)||defined(GLOWINGEDGE)
 	varying vec3 v_ViewDir; 
 #endif
 
@@ -56,7 +56,7 @@ uniform vec4 u_DiffuseColor;
 #endif
 
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)||defined(GLOWINGEDGE)
 	varying vec3 v_Normal;
 #endif
 
@@ -66,7 +66,7 @@ uniform vec4 u_DiffuseColor;
 	varying vec3 v_Binormal;
 #endif
 
-#ifdef DIRECTIONLIGHT
+#if defined(DIRECTIONLIGHT)||defined(GLOWINGEDGE)
 	uniform DirectionLight u_DirectionLight;
 #endif
 
@@ -94,6 +94,10 @@ varying float v_posViewZ;
 	#ifdef SHADOWMAP_PSSM1 
 		varying vec4 v_lightMVPPos;
 	#endif
+#endif
+
+#ifdef GLOWINGEDGE
+	uniform vec4 u_GlowingEdgeColor;
 #endif
 
 void main_castShadow()
@@ -124,7 +128,7 @@ void main_normal()
 			discard;
 	#endif
   
-	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
+	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)||defined(GLOWINGEDGE)
 		vec3 normal;
 		#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
 			vec3 normalMapSample = texture2D(u_NormalTexture, v_Texcoord0).rgb;
@@ -134,7 +138,7 @@ void main_normal()
 		#endif
 	#endif
 	
-	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
+	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(GLOWINGEDGE)
 		vec3 viewDir= normalize(v_ViewDir);
 		vec3 diffuse = vec3(0.0);
 		vec3 specular= vec3(0.0);
@@ -201,7 +205,6 @@ void main_normal()
 	#else
 		gl_FragColor =vec4(mainColor.rgb*(u_AmbientColor + finalDiffuse),mainColor.a);
 	#endif
-	
 
 	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
 		#ifdef RECEIVESHADOW
@@ -210,7 +213,12 @@ void main_normal()
 			gl_FragColor.rgb+=specular;
 		#endif
 	#endif
-
+	
+	#ifdef GLOWINGEDGE
+		float Rim = 1.0 - max(0.0,dot(viewDir, normal));
+		vec3 Emissive = 2.0 * u_DirectionLight.Color * u_GlowingEdgeColor.rgb * pow(Rim,5.0);
+		gl_FragColor.rgb += Emissive;
+	#endif
 
 	#ifdef REFLECTMAP
 		vec3 incident = -viewDir;

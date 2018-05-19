@@ -294,9 +294,5 @@ package laya.d3.terrain {
 			Stat.trianglesFaces += _numberTriangle;
 			Stat.drawCall++;
 		}
-		
-		public function _renderRuntime(conchGraphics3D:*, renderElement:RenderElement, state:RenderState):void {
-			//TODO
-		}
 	}
 }

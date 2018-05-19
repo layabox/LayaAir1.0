@@ -4,8 +4,8 @@
 
 	var Browser=laya.utils.Browser,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
 	var HTMLImage=laya.resource.HTMLImage,Handler=laya.utils.Handler,Input=laya.display.Input,Loader=laya.net.Loader;
-	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RunDriver=laya.utils.RunDriver,SoundChannel=laya.media.SoundChannel;
-	var SoundManager=laya.media.SoundManager,Texture=laya.resource.Texture,URL=laya.net.URL,Utils=laya.utils.Utils;
+	var LocalStorage=laya.net.LocalStorage,Matrix=laya.maths.Matrix,Render=laya.renders.Render,RunDriver=laya.utils.RunDriver;
+	var SoundChannel=laya.media.SoundChannel,SoundManager=laya.media.SoundManager,URL=laya.net.URL,Utils=laya.utils.Utils;
 //class laya.wx.mini.MiniAdpter
 var MiniAdpter=(function(){
 	function MiniAdpter(){}
@@ -49,43 +49,56 @@ var MiniAdpter=(function(){
 		MiniAdpter._preCreateElement=Browser.createElement;
 		Browser["createElement"]=MiniAdpter.createElement;
 		RunDriver.createShaderCondition=MiniAdpter.createShaderCondition;
-		Utils.parseXMLFromString=MiniAdpter.parseXMLFromString;
+		Utils['parseXMLFromString']=MiniAdpter.parseXMLFromString;
 		Input['_createInputElement']=MiniInput['_createInputElement'];
 		MiniAdpter.EnvConfig.load=Loader.prototype.load;
 		Loader.prototype.load=MiniLoader.prototype.load;
-		Loader['clearRes']=MiniAdpter.clearRes;
 		Loader.prototype._loadImage=MiniImage.prototype._loadImage;
-		if(MiniAdpter.isZiYu && isPosMsg){
-			/*__JS__ */wx.onMessage(function(message){
-				if(message['isLoad']){
-					MiniFileMgr.ziyuFileData[message.url]=message.data;
-				}
-			});
+		MiniLocalStorage.__init__();
+		LocalStorage._baseClass=MiniLocalStorage;
+	}
+
+	MiniAdpter.getUrlEncode=function(url,type){
+		if(url.indexOf(".fnt")!=-1)
+			return "utf8";
+		else if(type=="arraybuffer")
+		return "";
+		return "ascii";
+	}
+
+	MiniAdpter.downLoadFile=function(fileUrl,fileType,callBack,encoding){
+		(fileType===void 0)&& (fileType="");
+		(encoding===void 0)&& (encoding="ascii");
+		var fileObj=MiniFileMgr.getFileInfo(fileUrl);
+		if(!fileObj)
+			MiniFileMgr.downLoadFile(fileUrl,fileType,callBack,encoding);
+		else{
+			callBack !=null && callBack.runWith([0]);
 		}
 	}
 
-	MiniAdpter.clearRes=function(url,forceDispose){
-		(forceDispose===void 0)&& (forceDispose=false);
-		url=URL.formatURL(url);
-		var arr=Loader.getAtlas(url);
-		if (arr){
-			for (var i=0,n=arr.length;i < n;i++){
-				var resUrl=arr[i];
-				var tex=Loader.getRes(resUrl);
-				delete Loader.loadedMap[resUrl];
-				if (tex)tex.destroy(forceDispose);
-			}
-			arr.length=0;
-			delete Loader['atlasMap'][url];
-			delete Loader.loadedMap[url];
-			MiniFileMgr.remove("",url);
-			}else {
-			var res=Loader.loadedMap[url];
-			if (res){
-				delete Loader.loadedMap[url];
-				if ((res instanceof laya.resource.Texture )&& res.bitmap)(res).destroy(forceDispose);
-			}
-		}
+	MiniAdpter.remove=function(fileUrl,callBack){
+		MiniFileMgr.deleteFile("",fileUrl,callBack,"",0);
+	}
+
+	MiniAdpter.removeAll=function(){
+		MiniFileMgr.deleteAll();
+	}
+
+	MiniAdpter.hasNativeFile=function(fileUrl){
+		return MiniFileMgr.isLocalNativeFile(fileUrl);
+	}
+
+	MiniAdpter.getFileInfo=function(fileUrl){
+		return MiniFileMgr.getFileInfo(fileUrl);
+	}
+
+	MiniAdpter.getFileList=function(){
+		return MiniFileMgr.filesListObj;
+	}
+
+	MiniAdpter.exitMiniProgram=function(){
+		MiniAdpter.window["wx"].exitMiniProgram();
 	}
 
 	MiniAdpter.onMkdirCallBack=function(errorCode,data){
@@ -96,7 +109,6 @@ var MiniAdpter=(function(){
 	MiniAdpter.pixelRatio=function(){
 		if (!MiniAdpter.EnvConfig.pixelRatioInt){
 			try {
-				console.log(MiniAdpter.systemInfo);
 				MiniAdpter.EnvConfig.pixelRatioInt=MiniAdpter.systemInfo.pixelRatio;
 				return MiniAdpter.systemInfo.pixelRatio;
 			}catch (error){}
@@ -172,11 +184,11 @@ var MiniAdpter=(function(){
 	MiniAdpter.window=null;
 	MiniAdpter._preCreateElement=null;
 	MiniAdpter._inited=false;
-	MiniAdpter.wxRequest=null;
 	MiniAdpter.systemInfo=null;
-	MiniAdpter.version="0.0.1";
 	MiniAdpter.isZiYu=false;
 	MiniAdpter.isPosMsgYu=false;
+	MiniAdpter.autoCacheFile=true;
+	MiniAdpter.minClearSize=(5 *1024 *1024);
 	MiniAdpter.parseXMLFromString=function(value){
 		var rst;
 		var Parser;
@@ -190,25 +202,347 @@ var MiniAdpter=(function(){
 	}
 
 	MiniAdpter.idx=1;
+	__static(MiniAdpter,
+	['nativefiles',function(){return this.nativefiles=["layaNativeDir","wxlocal"];}
+	]);
 	return MiniAdpter;
 })()
 
 
+/**@private **/
+//class laya.wx.mini.MiniFileMgr
+var MiniFileMgr=(function(){
+	function MiniFileMgr(){}
+	__class(MiniFileMgr,'laya.wx.mini.MiniFileMgr');
+	MiniFileMgr.isLocalNativeFile=function(url){
+		for(var i=0,sz=MiniAdpter.nativefiles.length;i<sz;i++){
+			if(url.indexOf(MiniAdpter.nativefiles[i])!=-1)
+				return true;
+		}
+		return false;
+	}
+
+	MiniFileMgr.getFileInfo=function(fileUrl){
+		var fileNativePath=fileUrl.split("?")[0];
+		var fileObj=MiniFileMgr.filesListObj[fileNativePath];
+		if (fileObj==null)
+			return null;
+		else
+		return fileObj;
+		return null;
+	}
+
+	MiniFileMgr.read=function(filePath,encoding,callBack,readyUrl,isSaveFile,fileType){
+		(encoding===void 0)&& (encoding="ascill");
+		(readyUrl===void 0)&& (readyUrl="");
+		(isSaveFile===void 0)&& (isSaveFile=false);
+		(fileType===void 0)&& (fileType="");
+		var fileUrl;
+		if(readyUrl!="" && (readyUrl.indexOf("http://")!=-1 || readyUrl.indexOf("https://")!=-1)){
+			fileUrl=MiniFileMgr.getFileNativePath(filePath)
+			}else{
+			fileUrl=filePath;
+		}
+		MiniFileMgr.fs.readFile({filePath:fileUrl,encoding:encoding,success:function (data){
+				callBack !=null && callBack.runWith([0,data]);
+				},fail:function (data){
+				if (data && readyUrl !="")
+					MiniFileMgr.downFiles(readyUrl,encoding,callBack,readyUrl,isSaveFile,fileType);
+				else
+				callBack !=null && callBack.runWith([1]);
+		}});
+	}
+
+	MiniFileMgr.downFiles=function(fileUrl,encoding,callBack,readyUrl,isSaveFile,fileType){
+		(encoding===void 0)&& (encoding="ascii");
+		(readyUrl===void 0)&& (readyUrl="");
+		(isSaveFile===void 0)&& (isSaveFile=false);
+		(fileType===void 0)&& (fileType="");
+		var downloadTask=MiniFileMgr.wxdown({url:fileUrl,success:function (data){
+				if (data.statusCode===200)
+					MiniFileMgr.readFile(data.tempFilePath,encoding,callBack,readyUrl,isSaveFile,fileType);
+				},fail:function (data){
+				callBack !=null && callBack.runWith([1,data]);
+		}});
+		downloadTask.onProgressUpdate(function(data){
+			callBack !=null && callBack.runWith([2,data.progress]);
+		});
+	}
+
+	MiniFileMgr.readFile=function(filePath,encoding,callBack,readyUrl,isSaveFile,fileType){
+		(encoding===void 0)&& (encoding="ascill");
+		(readyUrl===void 0)&& (readyUrl="");
+		(isSaveFile===void 0)&& (isSaveFile=false);
+		(fileType===void 0)&& (fileType="");
+		MiniFileMgr.fs.readFile({filePath:filePath,encoding:encoding,success:function (data){
+				if (filePath.indexOf("http://")!=-1 || filePath.indexOf("https://")!=-1){
+					if(MiniAdpter.autoCacheFile || isSaveFile){
+						MiniFileMgr.copyFile(filePath,readyUrl,callBack,encoding);
+					}
+				}
+				else
+				callBack !=null && callBack.runWith([0,data]);
+				},fail:function (data){
+				if (data)
+					callBack !=null && callBack.runWith([1,data]);
+		}});
+	}
+
+	MiniFileMgr.downOtherFiles=function(fileUrl,callBack,readyUrl,isSaveFile){
+		(readyUrl===void 0)&& (readyUrl="");
+		(isSaveFile===void 0)&& (isSaveFile=false);
+		MiniFileMgr.wxdown({url:fileUrl,success:function (data){
+				if (data.statusCode===200){
+					if((MiniAdpter.autoCacheFile || isSaveFile)&& readyUrl.indexOf("wx.qlogo.cn")==-1)
+						MiniFileMgr.copyFile(data.tempFilePath,readyUrl,callBack);
+					else
+					callBack !=null && callBack.runWith([0,data.tempFilePath]);
+				}
+				},fail:function (data){
+				callBack !=null && callBack.runWith([1,data]);
+		}});
+	}
+
+	MiniFileMgr.downLoadFile=function(fileUrl,fileType,callBack,encoding){
+		(fileType===void 0)&& (fileType="");
+		(encoding===void 0)&& (encoding="ascii");
+		if(fileType==/*laya.net.Loader.IMAGE*/"image" || fileType==/*laya.net.Loader.SOUND*/"sound")
+			MiniFileMgr.downOtherFiles(fileUrl,callBack,fileUrl,true);
+		else
+		MiniFileMgr.downFiles(fileUrl,encoding,callBack,fileUrl,true,fileType);
+	}
+
+	MiniFileMgr.copyFile=function(tempFilePath,readyUrl,callBack,encoding){
+		(encoding===void 0)&& (encoding="");
+		var temp=tempFilePath.split("/");
+		var tempFileName=temp[temp.length-1];
+		var fileurlkey=readyUrl.split("?")[0];
+		var fileObj=MiniFileMgr.getFileInfo(readyUrl);
+		var saveFilePath=MiniFileMgr.getFileNativePath(tempFileName);
+		var totalSize=50 *1024 *1024;
+		var chaSize=4 *1024 *1024;
+		var fileUseSize=MiniFileMgr.getCacheUseSize();
+		if (fileObj){
+			if (fileObj.readyUrl !=readyUrl){
+				MiniFileMgr.fs.getFileInfo({
+					filePath:tempFilePath,
+					success:function (data){
+						if((fileUseSize+chaSize+data.size)>=totalSize){
+							if(data.size > MiniAdpter.minClearSize)
+								MiniAdpter.minClearSize=data.size;
+							MiniFileMgr.onClearCacheRes();
+						}
+						MiniFileMgr.deleteFile(tempFileName,readyUrl,callBack,encoding,data.size);
+					},
+					fail:function (data){
+						callBack !=null && callBack.runWith([1,data]);
+					}
+				});
+			}
+			else
+			callBack !=null && callBack.runWith([0]);
+			}else{
+			MiniFileMgr.fs.getFileInfo({
+				filePath:tempFilePath,
+				success:function (data){
+					if((fileUseSize+chaSize+data.size)>=totalSize){
+						if(data.size > MiniAdpter.minClearSize)
+							MiniAdpter.minClearSize=data.size;
+						MiniFileMgr.onClearCacheRes();
+					}
+					MiniFileMgr.fs.copyFile({srcPath:tempFilePath,destPath:saveFilePath,success:function (data2){
+							MiniFileMgr.onSaveFile(readyUrl,tempFileName,true,encoding,callBack,data.size);
+							},fail:function (data){
+							callBack !=null && callBack.runWith([1,data]);
+					}});
+				},
+				fail:function (data){
+					callBack !=null && callBack.runWith([1,data]);
+				}
+			});
+		}
+	}
+
+	MiniFileMgr.onClearCacheRes=function(){
+		var memSize=MiniAdpter.minClearSize;
+		var tempFileListArr=[];
+		for(var key in MiniFileMgr.filesListObj){
+			tempFileListArr.push(MiniFileMgr.filesListObj[key]);
+		}
+		MiniFileMgr.sortOn(tempFileListArr,"time",16);
+		var clearSize=0;
+		for(var i=1,sz=tempFileListArr.length;i<sz;i++){
+			var fileObj=tempFileListArr[i];
+			if(clearSize >=memSize)
+				break ;
+			clearSize+=fileObj.size;
+			MiniFileMgr.deleteFile("",fileObj.readyUrl);
+		}
+	}
+
+	MiniFileMgr.sortOn=function(array,name,options){
+		(options===void 0)&& (options=0);
+		if (options==16)return array.sort(function(a,b){return a[name]-b[name];});
+		if (options==(16 | 2))return array.sort(function(a,b){return b[name]-a[name];});
+		return array.sort(function(a,b){return a[name]-b[name] });
+	}
+
+	MiniFileMgr.getFileNativePath=function(fileName){
+		return laya.wx.mini.MiniFileMgr.fileNativeDir+"/"+fileName;
+	}
+
+	MiniFileMgr.deleteFile=function(tempFileName,readyUrl,callBack,encoding,fileSize){
+		(readyUrl===void 0)&& (readyUrl="");
+		(encoding===void 0)&& (encoding="");
+		(fileSize===void 0)&& (fileSize=0);
+		var fileObj=MiniFileMgr.getFileInfo(readyUrl);
+		var deleteFileUrl=MiniFileMgr.getFileNativePath(fileObj.md5);
+		MiniFileMgr.fs.unlink({filePath:deleteFileUrl,success:function (data){
+				var isAdd=tempFileName !="" ? true :false;
+				if(tempFileName !=""){
+					var saveFilePath=MiniFileMgr.getFileNativePath(tempFileName);
+					MiniFileMgr.fs.copyFile({srcPath:tempFileName,destPath:saveFilePath,success:function (data){
+							MiniFileMgr.onSaveFile(readyUrl,tempFileName,isAdd,encoding,callBack,data.size);
+							},fail:function (data){
+							callBack !=null && callBack.runWith([1,data]);
+					}});
+					}else{
+					MiniFileMgr.onSaveFile(readyUrl,tempFileName,isAdd,encoding,callBack,fileSize);
+				}
+				},fail:function (data){
+		}});
+	}
+
+	MiniFileMgr.deleteAll=function(){
+		var tempFileListArr=[];
+		for(var key in MiniFileMgr.filesListObj){
+			tempFileListArr.push(MiniFileMgr.filesListObj[key]);
+		}
+		for(var i=1,sz=tempFileListArr.length;i<sz;i++){
+			var fileObj=tempFileListArr[i];
+			MiniFileMgr.deleteFile("",fileObj.readyUrl);
+		}
+	}
+
+	MiniFileMgr.onSaveFile=function(readyUrl,md5Name,isAdd,encoding,callBack,fileSize){
+		(isAdd===void 0)&& (isAdd=true);
+		(encoding===void 0)&& (encoding="");
+		(fileSize===void 0)&& (fileSize=0);
+		var fileurlkey=readyUrl.split("?")[0];
+		if(MiniFileMgr.filesListObj['fileUsedSize']==null)
+			MiniFileMgr.filesListObj['fileUsedSize']=0;
+		if(isAdd){
+			var fileNativeName=MiniFileMgr.getFileNativePath(md5Name);
+			MiniFileMgr.filesListObj[fileurlkey]={md5:md5Name,readyUrl:readyUrl,size:fileSize,times:Browser.now(),encoding:encoding};
+			MiniFileMgr.filesListObj['fileUsedSize']=parseInt(MiniFileMgr.filesListObj['fileUsedSize'])+fileSize;
+			MiniFileMgr.writeFilesList(fileurlkey,JSON.stringify(MiniFileMgr.filesListObj),true);
+			callBack !=null && callBack.runWith([0]);
+			}else{
+			if(MiniFileMgr.filesListObj[fileurlkey]){
+				var deletefileSize=parseInt(MiniFileMgr.filesListObj[fileurlkey].size);
+				MiniFileMgr.filesListObj['fileUsedSize']=parseInt(MiniFileMgr.filesListObj['fileUsedSize'])-deletefileSize;
+				delete MiniFileMgr.filesListObj[fileurlkey];
+				MiniFileMgr.writeFilesList(fileurlkey,JSON.stringify(MiniFileMgr.filesListObj),false);
+				callBack !=null && callBack.runWith([0]);
+			}
+		}
+	}
+
+	MiniFileMgr.writeFilesList=function(fileurlkey,filesListStr,isAdd){
+		var listFilesPath=MiniFileMgr.fileNativeDir+"/"+MiniFileMgr.fileListName;
+		MiniFileMgr.fs.writeFile({filePath:listFilesPath,encoding:'utf8',data:filesListStr,success:function (data){
+				},fail:function (data){
+		}});
+		if(!MiniAdpter.isZiYu &&MiniAdpter.isPosMsgYu){
+			/*__JS__ */wx.postMessage({url:fileurlkey,data:MiniFileMgr.filesListObj[fileurlkey],isLoad:"filenative",isAdd:isAdd});
+		}
+	}
+
+	MiniFileMgr.getCacheUseSize=function(){
+		if(MiniFileMgr.filesListObj && MiniFileMgr.filesListObj['fileUsedSize'])
+			return MiniFileMgr.filesListObj['fileUsedSize'];
+		return 0;
+	}
+
+	MiniFileMgr.existDir=function(dirPath,callBack){
+		MiniFileMgr.fs.mkdir({dirPath:dirPath,success:function (data){
+				callBack !=null && callBack.runWith([0,{data:JSON.stringify({})}]);
+				},fail:function (data){
+				if (data.errMsg.indexOf("file already exists")!=-1)
+					MiniFileMgr.readSync(MiniFileMgr.fileListName,"utf8",callBack);
+				else
+				callBack !=null && callBack.runWith([1,data]);
+		}});
+	}
+
+	MiniFileMgr.readSync=function(filePath,encoding,callBack,readyUrl){
+		(encoding===void 0)&& (encoding="ascill");
+		(readyUrl===void 0)&& (readyUrl="");
+		var fileUrl=MiniFileMgr.getFileNativePath(filePath);
+		var filesListStr
+		try{
+			filesListStr=MiniFileMgr.fs.readFileSync(fileUrl,encoding);
+			callBack !=null && callBack.runWith([0,{data:filesListStr}]);
+		}
+		catch(error){
+			callBack !=null && callBack.runWith([1]);
+		}
+	}
+
+	MiniFileMgr.setNativeFileDir=function(value){
+		MiniFileMgr.fileNativeDir=/*__JS__ */wx.env.USER_DATA_PATH+value;
+	}
+
+	MiniFileMgr.filesListObj={};
+	MiniFileMgr.fileNativeDir=null;
+	MiniFileMgr.fileListName="layaairfiles.txt";
+	MiniFileMgr.ziyuFileData={};
+	MiniFileMgr.loadPath="";
+	MiniFileMgr.DESCENDING=2;
+	MiniFileMgr.NUMERIC=16;
+	__static(MiniFileMgr,
+	['fs',function(){return this.fs=/*__JS__ */wx.getFileSystemManager();},'wxdown',function(){return this.wxdown=/*__JS__ */wx.downloadFile;}
+	]);
+	return MiniFileMgr;
+})()
+
+
+/**@private **/
 //class laya.wx.mini.MiniImage
 var MiniImage=(function(){
 	function MiniImage(){}
 	__class(MiniImage,'laya.wx.mini.MiniImage');
 	var __proto=MiniImage.prototype;
+	/**@private **/
 	__proto._loadImage=function(url){
 		var thisLoader=this;
+		if (MiniAdpter.isZiYu){
+			MiniImage.onCreateImage(url,thisLoader,true);
+			return;
+		};
 		var isTransformUrl=false;
-		if (url.indexOf("layaNativeDir/")==-1){
+		if (!MiniFileMgr.isLocalNativeFile(url)){
 			isTransformUrl=true;
 			url=URL.formatURL(url);
+			}else{
+			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+				if(MiniFileMgr.loadPath !=""){
+					url=url.split(MiniFileMgr.loadPath)[1];
+					}else{
+					var tempStr=URL.rootPath !="" ? URL.rootPath :URL.basePath;
+					if(tempStr !="")
+						url=url.split(tempStr)[1];
+				}
+			}
 		}
 		if (!MiniFileMgr.getFileInfo(url)){
-			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)
-				MiniFileMgr.downImg(url,new Handler(MiniImage,MiniImage.onDownImgCallBack,[url,thisLoader]),url);
+			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+				if(MiniAdpter.isZiYu){
+					MiniImage.onCreateImage(url,thisLoader,true);
+					}else{
+					MiniFileMgr.downOtherFiles(url,new Handler(MiniImage,MiniImage.onDownImgCallBack,[url,thisLoader]),url);
+				}
+			}
 			else
 			MiniImage.onCreateImage(url,thisLoader,true);
 			}else {
@@ -216,22 +550,34 @@ var MiniImage=(function(){
 		}
 	}
 
-	MiniImage.onDownImgCallBack=function(sourceUrl,thisLoader,errorCode){
+	MiniImage.onDownImgCallBack=function(sourceUrl,thisLoader,errorCode,tempFilePath){
+		(tempFilePath===void 0)&& (tempFilePath="");
 		if (!errorCode)
-			MiniImage.onCreateImage(sourceUrl,thisLoader);
+			MiniImage.onCreateImage(sourceUrl,thisLoader,false,tempFilePath);
 		else {
 			thisLoader.onError(null);
 		}
 	}
 
-	MiniImage.onCreateImage=function(sourceUrl,thisLoader,isLocal){
+	MiniImage.onCreateImage=function(sourceUrl,thisLoader,isLocal,tempFilePath){
 		(isLocal===void 0)&& (isLocal=false);
+		(tempFilePath===void 0)&& (tempFilePath="");
 		var fileNativeUrl;
-		if (!isLocal){
-			var fileObj=MiniFileMgr.getFileInfo(sourceUrl);
-			var fileMd5Name=fileObj.md5;
-			fileNativeUrl=MiniFileMgr.getFileNativePath(fileMd5Name);
-			}else {
+		if(MiniAdpter.autoCacheFile){
+			if (!isLocal){
+				if(tempFilePath !=""){
+					fileNativeUrl=tempFilePath;
+					}else{
+					var fileObj=MiniFileMgr.getFileInfo(sourceUrl);
+					var fileMd5Name=fileObj.md5;
+					fileNativeUrl=MiniFileMgr.getFileNativePath(fileMd5Name);
+				}
+			}else
+			fileNativeUrl=sourceUrl;
+			}else{
+			if(!isLocal)
+				fileNativeUrl=tempFilePath;
+			else
 			fileNativeUrl=sourceUrl;
 		}
 		if (thisLoader.imgCache==null)
@@ -244,6 +590,7 @@ var MiniImage=(function(){
 		};
 		var onload=function (){
 			clear();
+			thisLoader._url=URL.formatURL(thisLoader._url);
 			thisLoader.onLoaded(image);
 		};
 		var onerror=function (){
@@ -269,6 +616,7 @@ var MiniImage=(function(){
 })()
 
 
+/**@private **/
 //class laya.wx.mini.MiniInput
 var MiniInput=(function(){
 	function MiniInput(){}
@@ -291,9 +639,15 @@ var MiniInput=(function(){
 		var system=MiniAdpter.systemInfo.system;
 		if(model.indexOf("iPhone")!=-1){
 			Browser.onIPhone=true;
+			Browser.onIOS=true;
+			Browser.onIPad=true;
+			Browser.onAndriod=false;
 		}
 		if(system.indexOf("Android")!=-1 || system.indexOf("Adr")!=-1){
 			Browser.onAndriod=true;
+			Browser.onIPhone=false;
+			Browser.onIOS=false;
+			Browser.onIPad=false;
 		}
 	}
 
@@ -353,96 +707,57 @@ var MiniInput=(function(){
 })()
 
 
-//class laya.wx.mini.MiniLoader
-var MiniLoader=(function(){
-	function MiniLoader(){}
-	__class(MiniLoader,'laya.wx.mini.MiniLoader');
-	var __proto=MiniLoader.prototype;
-	/**
-	*
-	*@param url
-	*@param type
-	*@param cache
-	*@param group
-	*@param ignoreCache
-	*/
-	__proto.load=function(url,type,cache,group,ignoreCache){
-		(cache===void 0)&& (cache=true);
-		(ignoreCache===void 0)&& (ignoreCache=false);
-		var thisLoader=this;
-		thisLoader._url=url;
-		if (url.indexOf("data:image")===0)thisLoader._type=type=/*laya.net.Loader.IMAGE*/"image";
-		else {
-			thisLoader._type=type || (type=thisLoader.getTypeFromUrl(url));
-		}
-		thisLoader._cache=cache;
-		thisLoader._data=null;
-		var encoding="ascii";
-		if (url.indexOf(".fnt")!=-1){
-			encoding="utf8";
-			}else if (type=="arraybuffer"){
-			encoding="";
-		};
-		var urlType=Utils.getFileExtension(url);
-		if ((MiniLoader._fileTypeArr.indexOf(urlType)!=-1)){
-			MiniAdpter.EnvConfig.load.call(this,url,type,cache,group,ignoreCache);
-			}else {
-			if (!MiniFileMgr.getFileInfo(url)){
-				if (url.indexOf("layaNativeDir/")!=-1){
-					if(MiniAdpter.isZiYu){
-						var fileData=MiniFileMgr.ziyuFileData[url];
-						thisLoader.onLoaded(fileData);
-						return;
-						}else{
-						MiniFileMgr.read(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]));
-						return;
-					}
-				}
-				url=URL.formatURL(url);
-				if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
-					MiniAdpter.EnvConfig.load.call(thisLoader,url,type,cache,group,ignoreCache);
-					}else {
-					MiniFileMgr.readFile(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]),url);
-				}
-				}else {
-				MiniAdpter.EnvConfig.load.call(this,url,type,cache,group,ignoreCache);
-			}
-		}
+/**@private **/
+//class laya.wx.mini.MiniLocalStorage
+var MiniLocalStorage=(function(){
+	function MiniLocalStorage(){}
+	__class(MiniLocalStorage,'laya.wx.mini.MiniLocalStorage');
+	MiniLocalStorage.__init__=function(){
+		MiniLocalStorage.items=MiniLocalStorage;
 	}
 
-	MiniLoader.onReadNativeCallBack=function(encoding,url,type,cache,group,ignoreCache,thisLoader,errorCode,data){
-		(cache===void 0)&& (cache=true);
-		(ignoreCache===void 0)&& (ignoreCache=false);
-		(errorCode===void 0)&& (errorCode=0);
-		if (!errorCode){
-			var tempData;
-			if (type==/*laya.net.Loader.JSON*/"json" || type==/*laya.net.Loader.ATLAS*/"atlas"){
-				tempData=MiniAdpter.getJson(data.data);
-				}else if (type==/*laya.net.Loader.XML*/"xml"){
-				tempData=Utils.parseXMLFromString(data.data);
-				}else {
-				tempData=data.data;
-			}
-			thisLoader.onLoaded(tempData);
-			if(!MiniAdpter.isZiYu &&MiniAdpter.isPosMsgYu && type !=/*laya.net.Loader.BUFFER*/"arraybuffer"){
-				/*__JS__ */wx.postMessage({url:url,data:tempData,isLoad:true});
-			}
-			}else if (errorCode==1){
-			MiniAdpter.EnvConfig.load.call(thisLoader,url,type,cache,group,ignoreCache);
-		}
+	MiniLocalStorage.setItem=function(key,value){
+		/*__JS__ */wx.setStorageSync(key,value);
 	}
 
-	__static(MiniLoader,
-	['_fileTypeArr',function(){return this._fileTypeArr=['png','jpg','bmp','jpeg','gif'];}
-	]);
-	return MiniLoader;
+	MiniLocalStorage.getItem=function(key){
+		return /*__JS__ */wx.getStorageSync(key);
+	}
+
+	MiniLocalStorage.setJSON=function(key,value){
+		MiniLocalStorage.setItem(key,value);
+	}
+
+	MiniLocalStorage.getJSON=function(key){
+		return MiniLocalStorage.getItem(key);
+	}
+
+	MiniLocalStorage.removeItem=function(key){
+		/*__JS__ */wx.removeStorageSync(key);
+	}
+
+	MiniLocalStorage.clear=function(){
+		/*__JS__ */wx.clearStorageSync();
+	}
+
+	MiniLocalStorage.getStorageInfoSync=function(){
+		try {
+			var res=/*__JS__ */wx.getStorageInfoSync()
+			console.log(res.keys)
+			console.log(res.currentSize)
+			console.log(res.limitSize)
+			return res;
+		}catch (e){}
+		return null;
+	}
+
+	MiniLocalStorage.support=true;
+	MiniLocalStorage.items=null;
+	return MiniLocalStorage;
 })()
 
 
-/**
-*...
-*@author ww
-*/
+/**@private **/
 //class laya.wx.mini.MiniLocation
 var MiniLocation=(function(){
 	function MiniLocation(){}
@@ -454,14 +769,16 @@ var MiniLocation=(function(){
 	}
 
 	MiniLocation.getCurrentPosition=function(success,error,options){
-		MiniAdpter.window.wx.getLocation(getSuccess=function(res){
-			var rst={};
-			rst.coords=res;
-			rst.timestamp=Browser.now();
+		var paramO;
+		paramO={};
+		paramO.success=getSuccess;
+		paramO.fail=error;
+		MiniAdpter.window.wx.getLocation(paramO);
+		function getSuccess (res){
 			if (success !=null){
-				success(rst);
+				success(res);
 			}
-		},error);
+		}
 	}
 
 	MiniLocation.watchPosition=function(success,error,options){
@@ -521,307 +838,272 @@ var MiniLocation=(function(){
 })()
 
 
-//class laya.wx.mini.MiniFileMgr extends laya.events.EventDispatcher
-var MiniFileMgr=(function(_super){
-	function MiniFileMgr(){
-		MiniFileMgr.__super.call(this);;
+/**@private **/
+//class laya.wx.mini.MiniAccelerator extends laya.events.EventDispatcher
+var MiniAccelerator=(function(_super){
+	function MiniAccelerator(){
+		MiniAccelerator.__super.call(this);
 	}
 
-	__class(MiniFileMgr,'laya.wx.mini.MiniFileMgr',_super);
-	MiniFileMgr.isLoadFile=function(type){
-		return MiniFileMgr._fileTypeArr.indexOf(type)!=-1 ? true :false;
+	__class(MiniAccelerator,'laya.wx.mini.MiniAccelerator',_super);
+	var __proto=MiniAccelerator.prototype;
+	/**
+	*侦听加速器运动。
+	*@param observer 回调函数接受4个参数，见类说明。
+	*/
+	__proto.on=function(type,caller,listener,args){
+		_super.prototype.on.call(this,type,caller,listener,args);
+		MiniAccelerator.startListen(this["onDeviceOrientationChange"]);
+		return this;
 	}
 
-	MiniFileMgr.getFileInfo=function(fileUrl){
-		var fileNativePath=fileUrl.split("?")[0];
-		var fileObj=MiniFileMgr.filesListObj[fileNativePath];
-		if (fileObj==null)
-			return null;
-		else
-		return fileObj;
-		return null;
+	/**
+	*取消侦听加速器。
+	*@param handle 侦听加速器所用处理器。
+	*/
+	__proto.off=function(type,caller,listener,onceOnly){
+		(onceOnly===void 0)&& (onceOnly=false);
+		if (!this.hasListener(type))
+			MiniAccelerator.stopListen();
+		return _super.prototype.off.call(this,type,caller,listener,onceOnly);
 	}
 
-	MiniFileMgr.onFileUpdate=function(tempFilePath,readyUrl){
-		var temp=tempFilePath.split("/");
-		var tempFileName=temp[temp.length-1];
-		var fileObj=MiniFileMgr.getFileInfo(readyUrl);
-		if (fileObj==null)
-			MiniFileMgr.onSaveFile(readyUrl,tempFileName);
+	MiniAccelerator.__init__=function(){
+		try{
+			var Acc;
+			Acc=/*__JS__ */laya.device.motion.Accelerator;
+			if (!Acc)return;
+			Acc["prototype"]["on"]=MiniAccelerator["prototype"]["on"];
+			Acc["prototype"]["off"]=MiniAccelerator["prototype"]["off"];
+			}catch (e){
+		}
+	}
+
+	MiniAccelerator.startListen=function(callBack){
+		MiniAccelerator._callBack=callBack;
+		if (MiniAccelerator._isListening)return;
+		MiniAccelerator._isListening=true;
+		try{
+			/*__JS__ */wx.onAccelerometerChange(MiniAccelerator.onAccelerometerChange);
+		}catch(e){}
+	}
+
+	MiniAccelerator.stopListen=function(){
+		MiniAccelerator._isListening=false;
+		try{
+			/*__JS__ */wx.stopAccelerometer({});
+		}catch(e){}
+	}
+
+	MiniAccelerator.onAccelerometerChange=function(res){
+		var e;
+		e={};
+		e.acceleration=res;
+		e.accelerationIncludingGravity=res;
+		e.rotationRate={};
+		if (MiniAccelerator._callBack !=null){
+			MiniAccelerator._callBack(e);
+		}
+	}
+
+	MiniAccelerator._isListening=false;
+	MiniAccelerator._callBack=null;
+	return MiniAccelerator;
+})(EventDispatcher)
+
+
+/**@private **/
+//class laya.wx.mini.MiniLoader extends laya.events.EventDispatcher
+var MiniLoader=(function(_super){
+	function MiniLoader(){
+		MiniLoader.__super.call(this);
+	}
+
+	__class(MiniLoader,'laya.wx.mini.MiniLoader',_super);
+	var __proto=MiniLoader.prototype;
+	/**
+	*@private
+	*@param url
+	*@param type
+	*@param cache
+	*@param group
+	*@param ignoreCache
+	*/
+	__proto.load=function(url,type,cache,group,ignoreCache){
+		(cache===void 0)&& (cache=true);
+		(ignoreCache===void 0)&& (ignoreCache=false);
+		var thisLoader=this;
+		thisLoader._url=url;
+		if (url.indexOf("data:image")===0)thisLoader._type=type=/*laya.net.Loader.IMAGE*/"image";
 		else {
-			if (fileObj.readyUrl !=readyUrl)
-				MiniFileMgr.remove(tempFileName,readyUrl);
+			thisLoader._type=type || (type=thisLoader.getTypeFromUrl(url));
 		}
-	}
-
-	MiniFileMgr.exits=function(fileName,callBack){
-		var nativeFileName=MiniFileMgr.getFileNativePath(fileName);
-		MiniFileMgr.fs.getFileInfo({filePath:nativeFileName,success:function (data){
-				callBack !=null && callBack.runWith([0,data]);
-				},fail:function (data){
-				callBack !=null && callBack.runWith([1,data]);
-		}});
-	}
-
-	MiniFileMgr.read=function(filePath,encoding,callBack,readyUrl){
-		(encoding===void 0)&& (encoding="ascill");
-		(readyUrl===void 0)&& (readyUrl="");
-		var fileUrl;
-		if(readyUrl!=""){
-			fileUrl=MiniFileMgr.getFileNativePath(filePath)
-			}else{
-			fileUrl=filePath;
+		thisLoader._cache=cache;
+		thisLoader._data=null;
+		if (!ignoreCache && Loader.loadedMap[URL.formatURL(url)]){
+			thisLoader._data=Loader.loadedMap[URL.formatURL(url)];
+			this.event(/*laya.events.Event.PROGRESS*/"progress",1);
+			this.event(/*laya.events.Event.COMPLETE*/"complete",thisLoader._data);
+			return;
 		}
-		MiniFileMgr.fs.readFile({filePath:fileUrl,encoding:encoding,success:function (data){
-				callBack !=null && callBack.runWith([0,data]);
-				},fail:function (data){
-				if (data && readyUrl !="")
-					MiniFileMgr.down(readyUrl,encoding,callBack,readyUrl);
-				else
-				callBack !=null && callBack.runWith([1]);
-		}});
-	}
-
-	MiniFileMgr.readNativeFile=function(filePath,callBack){
-		MiniFileMgr.fs.readFile({filePath:filePath,encoding:"",success:function (data){
-				callBack !=null && callBack.runWith([0]);
-				},fail:function (data){
-				callBack !=null && callBack.runWith([1]);
-		}});
-	}
-
-	MiniFileMgr.down=function(fileUrl,encoding,callBack,readyUrl){
-		(encoding===void 0)&& (encoding="ascill");
-		(readyUrl===void 0)&& (readyUrl="");
-		var savePath=MiniFileMgr.getFileNativePath(readyUrl);
-		var downloadTask=MiniFileMgr.wxdown({url:fileUrl,filePath:savePath,success:function (data){
-				if (data.statusCode===200)
-					MiniFileMgr.readFile(data.filePath,encoding,callBack,readyUrl);
-				},fail:function (data){
-				callBack !=null && callBack.runWith([1,data]);
-		}});
-		downloadTask.onProgressUpdate(function(data){
-			callBack !=null && callBack.runWith([2,data.progress]);
-		});
-	}
-
-	MiniFileMgr.readFile=function(filePath,encoding,callBack,readyUrl){
-		(encoding===void 0)&& (encoding="ascill");
-		(readyUrl===void 0)&& (readyUrl="");
-		MiniFileMgr.fs.readFile({filePath:filePath,encoding:encoding,success:function (data){
-				if (filePath.indexOf("http://")!=-1 || filePath.indexOf("https://")!=-1)
-					MiniFileMgr.onFileUpdate(filePath,readyUrl);
-				callBack !=null && callBack.runWith([0,data]);
-				},fail:function (data){
-				if (data)
-					callBack !=null && callBack.runWith([1,data]);
-		}});
-	}
-
-	MiniFileMgr.downImg=function(fileUrl,callBack,readyUrl){
-		(readyUrl===void 0)&& (readyUrl="");
-		var downloadTask=MiniFileMgr.wxdown({url:fileUrl,success:function (data){
-				if (data.statusCode===200){
-					MiniFileMgr.copyFile(data.tempFilePath,readyUrl,callBack);
-				}
-				},fail:function (data){
-				callBack !=null && callBack.runWith([1,data]);
-		}});
-	}
-
-	MiniFileMgr.copyFile=function(tempFilePath,readyUrl,callBack){
-		var temp=tempFilePath.split("/");
-		var tempFileName=temp[temp.length-1];
-		var fileurlkey=readyUrl.split("?")[0];
-		var fileObj=MiniFileMgr.getFileInfo(readyUrl);
-		var saveFilePath=MiniFileMgr.getFileNativePath(tempFileName);
-		var totalSize=50 *1024 *1024;
-		var chaSize=5 *1024 *1024;
-		var fileUseSize=MiniFileMgr.getCacheUseSize();
-		if((fileUseSize+chaSize)>=totalSize)
-			MiniFileMgr.onClearCacheRes(5 *1024 *1024);
-		MiniFileMgr.fs.copyFile({srcPath:tempFilePath,destPath:saveFilePath,success:function (data){
-				if (!fileObj){
-					MiniFileMgr.onSaveFile(readyUrl,tempFileName);
-					callBack !=null && callBack.runWith([0]);
+		if (Loader.parserMap[type] !=null){
+			thisLoader._customParse=true;
+			if (((Loader.parserMap[type])instanceof laya.utils.Handler ))Loader.parserMap[type].runWith(this);
+			else Loader.parserMap[type].call(null,this);
+			return;
+		};
+		var encoding=MiniAdpter.getUrlEncode(url,type);
+		var urlType=Utils.getFileExtension(url);
+		if ((MiniLoader._fileTypeArr.indexOf(urlType)!=-1)){
+			MiniAdpter.EnvConfig.load.call(this,url,type,cache,group,ignoreCache);
+			}else {
+			if(MiniAdpter.isZiYu && MiniFileMgr.ziyuFileData[url]){
+				var tempData=MiniFileMgr.ziyuFileData[url];
+				thisLoader.onLoaded(tempData);
+				return;
+			}
+			if (!MiniFileMgr.getFileInfo(url)){
+				if (MiniFileMgr.isLocalNativeFile(url)){
+					MiniFileMgr.read(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]));
+					return;
+				};
+				var tempUrl=url;
+				url=URL.formatURL(url);
+				if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+					MiniAdpter.EnvConfig.load.call(thisLoader,tempUrl,type,cache,group,ignoreCache);
 					}else {
-					if (fileObj.readyUrl !=readyUrl)
-						MiniFileMgr.remove(tempFileName,readyUrl,callBack);
-					else
-					callBack !=null && callBack.runWith([0]);
+					MiniFileMgr.readFile(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]),url);
 				}
-				},fail:function (data){
-				callBack !=null && callBack.runWith([1,data]);
-		}});
-	}
-
-	MiniFileMgr.onClearCacheRes=function(memSize){
-		var clearFileSize=0;
-		for(var key in MiniFileMgr.filesListObj){
-			var fileObj=MiniFileMgr.filesListObj[key];
-			if(key !="fileUsedSize"){
-				if(clearFileSize >=memSize)
-					break ;
-				var texture=Loader.getRes(fileObj.readyUrl);
-				if(texture && texture.bitmap.useNum==0){
-					clearFileSize+=fileObj.size;
-					MiniFileMgr.remove("",fileObj.readyUrl);
-					}else if(texture==null){
-					clearFileSize+=fileObj.size;
-					MiniFileMgr.remove("",fileObj.readyUrl);
-				}
+				}else {
+				var fileObj=MiniFileMgr.getFileInfo(url);
+				fileObj.encoding=fileObj.encoding==null ? "ascii" :fileObj.encoding;
+				MiniFileMgr.readFile(url,fileObj.encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]),url);
 			}
 		}
 	}
 
-	MiniFileMgr.getFileNativePath=function(fileName){
-		return laya.wx.mini.MiniFileMgr.fileNativeDir+"/"+fileName;
-	}
-
-	MiniFileMgr.remove=function(tempFileName,readyUrl,callBack){
-		(readyUrl===void 0)&& (readyUrl="");
-		var fileObj=MiniFileMgr.getFileInfo(readyUrl);
-		var deleteFileUrl=MiniFileMgr.getFileNativePath(fileObj.md5);
-		MiniFileMgr.fs.unlink({filePath:deleteFileUrl,success:function (data){
-				var isAdd=tempFileName !="" ? true :false;
-				MiniFileMgr.onSaveFile(readyUrl,tempFileName,isAdd);
-				callBack !=null && callBack.runWith([0]);
-				},fail:function (data){
-		}});
-	}
-
-	MiniFileMgr.onSaveFile=function(readyUrl,md5Name,isAdd){
-		(isAdd===void 0)&& (isAdd=true);
-		var fileurlkey=readyUrl.split("?")[0];
-		if(MiniFileMgr.filesListObj['fileUsedSize']==null)
-			MiniFileMgr.filesListObj['fileUsedSize']=0;
-		if(isAdd){
-			MiniFileMgr.filesListObj[fileurlkey]={md5:md5Name,readyUrl:readyUrl};
-			var fileNativeName=MiniFileMgr.getFileNativePath(md5Name);
-			MiniFileMgr.fs.getFileInfo({
-				filePath:fileNativeName,
-				success:function (data){
-					MiniFileMgr.filesListObj[fileurlkey]={md5:md5Name,readyUrl:readyUrl,size:data.size};
-					MiniFileMgr.filesListObj['fileUsedSize']=parseInt(MiniFileMgr.filesListObj['fileUsedSize'])+data.size;
-					MiniFileMgr.fs.writeFile({filePath:MiniFileMgr.fileNativeDir+"/"+MiniFileMgr.fileListName,encoding:'utf8',data:JSON.stringify(MiniFileMgr.filesListObj),success:function (data){
-							},fail:function (data){
-					}});
-				},
-				fail:function (data){
-					console.log("fail");
-					console.log(data);
-				},
-				complete:function (data){}
-			});
-			}else{
-			var fileSize=parseInt(MiniFileMgr.filesListObj[fileurlkey].size);
-			MiniFileMgr.filesListObj['fileUsedSize']=parseInt(MiniFileMgr.filesListObj['fileUsedSize'])-fileSize;
-			delete MiniFileMgr.filesListObj[fileurlkey];
-			MiniFileMgr.fs.writeFile({filePath:MiniFileMgr.fileNativeDir+"/"+MiniFileMgr.fileListName,encoding:'utf8',data:JSON.stringify(MiniFileMgr.filesListObj),success:function (data){
-					},fail:function (data){
-			}});
+	MiniLoader.onReadNativeCallBack=function(encoding,url,type,cache,group,ignoreCache,thisLoader,errorCode,data){
+		(cache===void 0)&& (cache=true);
+		(ignoreCache===void 0)&& (ignoreCache=false);
+		(errorCode===void 0)&& (errorCode=0);
+		if (!errorCode){
+			var tempData;
+			if (type==/*laya.net.Loader.JSON*/"json" || type==/*laya.net.Loader.ATLAS*/"atlas"){
+				tempData=MiniAdpter.getJson(data.data);
+				}else if (type==/*laya.net.Loader.XML*/"xml"){
+				tempData=Utils.parseXMLFromString(data.data);
+				}else {
+				tempData=data.data;
+			}
+			if(!MiniAdpter.isZiYu &&MiniAdpter.isPosMsgYu && type !=/*laya.net.Loader.BUFFER*/"arraybuffer"){
+				/*__JS__ */wx.postMessage({url:url,data:tempData,isLoad:"filedata"});
+			}
+			thisLoader.onLoaded(tempData);
+			}else if (errorCode==1){
+			MiniAdpter.EnvConfig.load.call(thisLoader,url,type,cache,group,ignoreCache);
 		}
 	}
 
-	MiniFileMgr.getCacheUseSize=function(){
-		if(MiniFileMgr.filesListObj && MiniFileMgr.filesListObj['fileUsedSize'])
-			return MiniFileMgr.filesListObj['fileUsedSize'];
-		return 0;
-	}
-
-	MiniFileMgr.existDir=function(dirPath,callBack){
-		MiniFileMgr.fs.mkdir({dirPath:dirPath,success:function (data){
-				callBack !=null && callBack.runWith([0,{data:JSON.stringify({})}]);
-				},fail:function (data){
-				if (data.errMsg.indexOf("file already exists")!=-1)
-					MiniFileMgr.readSync(MiniFileMgr.fileListName,"utf8",callBack);
-				else
-				callBack !=null && callBack.runWith([1,data]);
-		}});
-	}
-
-	MiniFileMgr.readSync=function(filePath,encoding,callBack,readyUrl){
-		(encoding===void 0)&& (encoding="ascill");
-		(readyUrl===void 0)&& (readyUrl="");
-		var fileUrl=MiniFileMgr.getFileNativePath(filePath);
-		var filesListStr
-		try{
-			filesListStr=MiniFileMgr.fs.readFileSync(fileUrl,encoding);
-			callBack !=null && callBack.runWith([0,{data:filesListStr}]);
-		}
-		catch(error){
-			callBack !=null && callBack.runWith([1]);
-		}
-	}
-
-	MiniFileMgr.setNativeFileDir=function(value){
-		MiniFileMgr.fileNativeDir=/*__JS__ */wx.env.USER_DATA_PATH+value;
-	}
-
-	MiniFileMgr.filesListObj={};
-	MiniFileMgr.fileNativeDir=null;
-	MiniFileMgr.fileListName="layaairfiles.txt";
-	MiniFileMgr.ziyuFileData={};
-	__static(MiniFileMgr,
-	['_fileTypeArr',function(){return this._fileTypeArr=['json','ani','xml','sk','txt','atlas','swf','part','fnt','proto','lh','lav','lani','lmat','lm','ltc'];},'fs',function(){return this.fs=/*__JS__ */wx.getFileSystemManager();},'wxdown',function(){return this.wxdown=/*__JS__ */wx.downloadFile;}
+	__static(MiniLoader,
+	['_fileTypeArr',function(){return this._fileTypeArr=['png','jpg','bmp','jpeg','gif'];}
 	]);
-	return MiniFileMgr;
+	return MiniLoader;
 })(EventDispatcher)
 
 
+/**@private **/
 //class laya.wx.mini.MiniSound extends laya.events.EventDispatcher
 var MiniSound=(function(_super){
 	function MiniSound(){
+		/**@private **/
 		this._sound=null;
 		/**
+		*@private
 		*声音URL
 		*/
 		this.url=null;
 		/**
+		*@private
 		*是否已加载完成
 		*/
 		this.loaded=false;
+		/**@private **/
+		this.readyUrl=null;
 		MiniSound.__super.call(this);
-		this._sound=MiniSound._createSound();
 	}
 
 	__class(MiniSound,'laya.wx.mini.MiniSound',_super);
 	var __proto=MiniSound.prototype;
 	/**
+	*@private
 	*加载声音。
 	*@param url 地址。
 	*
 	*/
 	__proto.load=function(url){
-		var _$this=this;
 		url=URL.formatURL(url);
 		this.url=url;
-		if (MiniSound._audioCache[url]){
+		this.readyUrl=url;
+		if (MiniSound._audioCache[this.readyUrl]){
 			this.event(/*laya.events.Event.COMPLETE*/"complete");
 			return;
 		}
-		this._sound.src=url;
-		this._sound.onCanplay(onCanPlay);
-		var me=this;
-		function onCanPlay (){
-			_clearSound();
-			me.loaded=true;
-			me.event(/*laya.events.Event.COMPLETE*/"complete");
-			MiniSound._audioCache[me.url]=me;
-		}
-		this._sound.onError(onError);
-		function onError (){
-			_clearSound();
-			me.event(/*laya.events.Event.ERROR*/"error");
-		}
-		function _clearSound (){
-			_$this._sound.onCanplay(MiniSound.bindToThis(_$this.onCanPlayCallBack,_$this));
-			_$this._sound.onError(MiniSound.bindToThis(_$this.onCanPlayCallBack,_$this));
+		if(MiniAdpter.autoCacheFile&&MiniFileMgr.getFileInfo(url)){
+			this.onDownLoadCallBack(url,0);
+			}else{
+			if(!MiniAdpter.autoCacheFile){
+				this.onDownLoadCallBack(url,0);
+				}else{
+				MiniFileMgr.downOtherFiles(url,Handler.create(this,this.onDownLoadCallBack,[url]),url);
+			}
 		}
 	}
 
-	__proto.onCanPlayCallBack=function(){}
+	/**@private **/
+	__proto.onDownLoadCallBack=function(sourceUrl,errorCode){
+		if (!errorCode){
+			var fileNativeUrl;
+			if(MiniAdpter.autoCacheFile){
+				var fileObj=MiniFileMgr.getFileInfo(sourceUrl);
+				var fileMd5Name=fileObj.md5;
+				fileNativeUrl=MiniFileMgr.getFileNativePath(fileMd5Name);
+				this._sound=MiniSound._createSound();
+				this._sound.src=this.url=fileNativeUrl;
+				}else{
+				this._sound=MiniSound._createSound();
+				this._sound.src=sourceUrl;
+			}
+			this._sound.onCanplay(MiniSound.bindToThis(this.onCanPlay,this));
+			this._sound.onError(MiniSound.bindToThis(this.onError,this));
+			}else{
+			this.event(/*laya.events.Event.ERROR*/"error");
+		}
+	}
+
+	/**@private **/
+	__proto.onError=function(error){
+		try{
+			console.log("-----1---------------minisound-----id:"+MiniSound._id);
+			console.log(error);
+		}
+		catch(error){
+			console.log("-----2---------------minisound-----id:"+MiniSound._id);
+			console.log(error);
+		}
+		this.event(/*laya.events.Event.ERROR*/"error");
+		this._sound.offError(null);
+	}
+
+	/**@private **/
+	__proto.onCanPlay=function(){
+		this.loaded=true;
+		this.event(/*laya.events.Event.COMPLETE*/"complete");
+		MiniSound._audioCache[this.readyUrl]=this;
+		this._sound.offCanplay(null);
+	}
+
 	/**
+	*@private
 	*播放声音。
 	*@param startTime 开始时间,单位秒
 	*@param loops 循环次数,0表示一直循环
@@ -836,12 +1118,24 @@ var MiniSound=(function(_super){
 			if (!MiniSound._musicAudio)MiniSound._musicAudio=MiniSound._createSound();
 			tSound=MiniSound._musicAudio;
 			}else {
-			tSound=MiniSound._createSound();
+			if(MiniSound._audioCache[this.readyUrl]){
+				tSound=MiniSound._audioCache[this.readyUrl]._sound;
+				}else{
+				tSound=MiniSound._createSound();
+			}
 		}
-		tSound.src=this.url;
-		var channel=new MiniSoundChannel(tSound);
+		if(MiniAdpter.autoCacheFile&&MiniFileMgr.getFileInfo(this.url)){
+			var fileNativeUrl;
+			var fileObj=MiniFileMgr.getFileInfo(this.url);
+			var fileMd5Name=fileObj.md5;
+			tSound.src=this.url=MiniFileMgr.getFileNativePath(fileMd5Name);
+			}else{
+			tSound.src=this.url;
+		};
+		var channel=new MiniSoundChannel(tSound,this);
 		channel.url=this.url;
 		channel.loops=loops;
+		channel.loop=(loops===0 ? true :false);
 		channel.startTime=startTime;
 		channel.play();
 		SoundManager.addChannel(channel);
@@ -849,18 +1143,25 @@ var MiniSound=(function(_super){
 	}
 
 	/**
+	*@private
 	*释放声音资源。
 	*
 	*/
 	__proto.dispose=function(){
-		var ad=MiniSound._audioCache[this.url];
+		var ad=MiniSound._audioCache[this.readyUrl];
 		if (ad){
 			ad.src="";
-			delete MiniSound._audioCache[this.url];
+			if(ad._sound){
+				ad._sound.destroy();
+				ad._sound=null;
+				ad=null;
+			}
+			delete MiniSound._audioCache[this.readyUrl];
 		}
 	}
 
 	/**
+	*@private
 	*获取总时间。
 	*/
 	__getset(0,__proto,'duration',function(){
@@ -885,23 +1186,26 @@ var MiniSound=(function(_super){
 })(EventDispatcher)
 
 
-/**
-*@private
-*wxaudio 方式播放声音的音轨控制
-*/
+/**@private **/
 //class laya.wx.mini.MiniSoundChannel extends laya.media.SoundChannel
 var MiniSoundChannel=(function(_super){
-	function MiniSoundChannel(audio){
+	function MiniSoundChannel(audio,miniSound){
+		/**@private **/
 		this._audio=null;
+		/**@private **/
 		this._onEnd=null;
+		/**@private **/
+		this._miniSound=null;
 		MiniSoundChannel.__super.call(this);
 		this._audio=audio;
+		this._miniSound=miniSound;
 		this._onEnd=MiniSoundChannel.bindToThis(this.__onEnd,this);
 		audio.onEnded(this._onEnd);
 	}
 
 	__class(MiniSoundChannel,'laya.wx.mini.MiniSoundChannel',_super);
 	var __proto=MiniSoundChannel.prototype;
+	/**@private **/
 	__proto.__onEnd=function(){
 		if (this.loops==1){
 			if (this.completeHandler){
@@ -920,6 +1224,7 @@ var MiniSoundChannel=(function(_super){
 	}
 
 	/**
+	*@private
 	*播放
 	*/
 	__proto.play=function(){
@@ -929,6 +1234,7 @@ var MiniSoundChannel=(function(_super){
 	}
 
 	/**
+	*@private
 	*停止播放
 	*
 	*/
@@ -939,18 +1245,19 @@ var MiniSoundChannel=(function(_super){
 		if (!this._audio)
 			return;
 		this._audio.pause();
-		this._audio.onStop(MiniSoundChannel.bindToThis(this.onStopEndEd,this));
-		this._audio.onEnded(MiniSoundChannel.bindToThis(this.onStopEndEd,this));
+		this._audio.offEnded(null);
 		this._audio=null;
+		this._miniSound=null;
+		this._onEnd=null;
 	}
 
-	//xiaosong
-	__proto.onStopEndEd=function(){}
+	/**@private **/
 	__proto.pause=function(){
 		this.isStopped=true;
 		this._audio.pause();
 	}
 
+	/**@private **/
 	__proto.resume=function(){
 		if (!this._audio)
 			return;
@@ -959,7 +1266,20 @@ var MiniSoundChannel=(function(_super){
 		this._audio.play();
 	}
 
+	/**@private **/
 	/**
+	*@private
+	*自动播放
+	*@param value
+	*/
+	__getset(0,__proto,'autoplay',function(){
+		return this._audio.autoplay;
+		},function(value){
+		this._audio.autoplay=value;
+	});
+
+	/**
+	*@private
 	*当前播放到的位置
 	*@return
 	*
@@ -971,6 +1291,7 @@ var MiniSoundChannel=(function(_super){
 	});
 
 	/**
+	*@private
 	*获取总时间。
 	*/
 	__getset(0,__proto,'duration',function(){
@@ -979,18 +1300,31 @@ var MiniSoundChannel=(function(_super){
 		return this._audio.duration;
 	});
 
+	/**@private **/
+	/**@private **/
+	__getset(0,__proto,'loop',function(){
+		return this._audio.loop;
+		},function(value){
+		this._audio.loop=value;
+	});
+
 	/**
+	*@private
 	*设置音量
 	*@param v
 	*
 	*/
 	/**
+	*@private
 	*获取音量
 	*@return
 	*/
 	__getset(0,__proto,'volume',function(){
-		return 1;
+		if (!this._audio)return 1;
+		return this._audio.volume;
 		},function(v){
+		if (!this._audio)return;
+		this._audio.volume=v;
 	});
 
 	MiniSoundChannel.bindToThis=function(fun,scope){

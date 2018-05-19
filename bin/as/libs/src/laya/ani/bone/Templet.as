@@ -637,6 +637,10 @@ package laya.ani.bone {
 		 */
 		public function getTexture(name:String):Texture {
 			var tTexture:Texture = subTextureDic[name];
+			if (!tTexture)
+			{
+				tTexture = subTextureDic[name.substr(0,name.length-1)];
+			}
 			if (tTexture == null) {
 				return _mainTexture;
 			}

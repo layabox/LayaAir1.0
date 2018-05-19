@@ -303,7 +303,7 @@ package laya.d3.math {
 				
 				if (MathUtils3D.nearEqual(_tempV30ex, extentsex) && MathUtils3D.nearEqual(_tempV30ey, extentsey) && MathUtils3D.nearEqual(_tempV30ez, extentsez))
 					containsAny = true;
-				if (_tempV30ex < extentsex && _tempV30ey < extentsey && extentsez < _tempV30ez)
+				if (_tempV30ex < extentsex && _tempV30ey < extentsey && _tempV30ez < extentsez)
 					containsAny = true;
 				else
 					containsAll = false;
@@ -393,6 +393,8 @@ package laya.d3.math {
 		}
 		
 		/**
+		 *  For accuracy, The transformation matrix for both <see cref="OrientedBoundingBox"/> must not have any scaling applied to it.
+		 *  Anyway, scaling using Scale method will keep this method accurate.
 		 * 该包围盒是否包含空间中另一OBB包围盒
 		 * @param	obb OBB包围盒
 		 * @return  返回位置关系
@@ -475,8 +477,8 @@ package laya.d3.math {
 					
 					var i1:Number = (i + 1) % 3, i2:Number = (i + 2) % 3;
 					var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
-					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeBe[i2] * _tempM1.getElementByRowColumn(i1, k);
-					extentB = sizeAe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
+					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeAe[i2] * _tempM1.getElementByRowColumn(i1, k);
+					extentB = sizeBe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
 					separation = Math.abs(vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
 					if (separation > extentA + extentB)
 						return ContainmentType.Disjoint;
