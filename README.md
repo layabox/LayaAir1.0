@@ -55,11 +55,11 @@ our official Layabox Github with complete engine source version, free of charge,
 ```js
     Laya.init(550, 400);
     Laya.stage.scaleMode = "showall";
-    
-    var ape = new laya.Sprite();
+
+    var ape = new Laya.Sprite();
     //Loading our monkey
     ape.loadImage("res/apes/monkey2.png");
-    
+
     Laya.stage.addChild(ape);
 ```
 
@@ -69,18 +69,18 @@ our official Layabox Github with complete engine source version, free of charge,
     {
         import laya.display.Sprite;
         import laya.display.Stage;
-    	
+
         public class Sprite_DisplayImage
         {
             public function Sprite_DisplayImage()
             {
                 Laya.init(550, 400);
       		    Laya.stage.scaleMode = "showall";
-                   
+
                 var ape:Sprite = new Sprite();
                 //Loading our monkey
                 ape.loadImage("res/apes/monkey2.png");
-                   
+
                 Laya.stage.addChild(ape);
             }
         }
@@ -91,15 +91,15 @@ our official Layabox Github with complete engine source version, free of charge,
 ```ts
     /// <reference path="../../libs/LayaAir.d.ts" />
     class Sprite_DisplayImage{
-    
+
         constructor(){
             Laya.init(550, 400);
             Laya.stage.scaleMode = "showall";
-    
+
             var ape = new Laya.Sprite();
             //Loading our monkey
             ape.loadImage("res/apes/monkey2.png");
-    
+
             Laya.stage.addChild(ape);
         }
     }
@@ -194,11 +194,11 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 #### JS版本
     Laya.init(550, 400);
     Laya.stage.scaleMode = "showall";
-    
+
     var ape = new laya.Sprite();
     //加载猩猩图片
     ape.loadImage("res/apes/monkey2.png");
-    
+
     Laya.stage.addChild(ape);
 
 #### AS版本
@@ -206,18 +206,18 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
     {
         import laya.display.Sprite;
         import laya.display.Stage;
-    	
+
         public class Sprite_DisplayImage
         {
             public function Sprite_DisplayImage()
             {
                 Laya.init(550, 400);
       		    Laya.stage.scaleMode = "showall";
-                   
+
                 var ape:Sprite = new Sprite();
                 //加载猩猩图片
                 ape.loadImage("res/apes/monkey2.png");
-                   
+
                 Laya.stage.addChild(ape);
             }
         }
@@ -225,15 +225,15 @@ LayaAirIDE提供代码开发工具及可视化编辑器，清晰的工作流，�
 #### TS版本
     /// <reference path="../../libs/LayaAir.d.ts" />
     class Sprite_DisplayImage{
-    
+
         constructor(){
             Laya.init(550, 400);
             Laya.stage.scaleMode = "showall";
-    
+
             var ape = new Laya.Sprite();
             //加载猩猩图片
             ape.loadImage("res/apes/monkey2.png");
-    
+
             Laya.stage.addChild(ape);
         }
     }
