@@ -51,7 +51,8 @@
 				showVertexNumbers: false,
 				showConvexHulls: false,
 				showInternalEdges: false,
-				showMousePosition: false
+				showMousePosition: false,
+				createBodyPrimitiveMethod:"polygon"
 			}
 		};
 		var render = Common.extend(defaults, options);
@@ -299,6 +300,7 @@
 	{
 		var bodyRender = body.render,
 			options = render.options,
+			showInternalEdges = options.showInternalEdges || !options.wireframes,
 			sprite = new Laya.Sprite(),
 			fillStyle, strokeStyle, lineWidth,
 			part, points = [];
@@ -311,11 +313,10 @@
 		{
 			part = body.parts[k];
 
-			if (!options.wireframes)
-			{
-				fillStyle = bodyRender.fillStyle;
-				strokeStyle = bodyRender.strokeStyle;
-				lineWidth = bodyRender.lineWidth;
+			if (!options.wireframes) {
+				fillStyle = options.fillStyle || bodyRender.fillStyle;
+				strokeStyle = options.strokeStyle || bodyRender.strokeStyle;
+				lineWidth = options.lineWidth || bodyRender.lineWidth || 1;
 			}
 			else
 			{
@@ -324,16 +325,39 @@
 				lineWidth = 1;
 			}
 
-			points.push(part.vertices[0].x - body.position.x, part.vertices[0].y - body.position.y);
+			if (options.createBodyPrimitiveMethod == "polygon"){
+				points.push(part.vertices[0].x - body.position.x, part.vertices[0].y - body.position.y);
 
-			for (var j = 1; j < part.vertices.length; j++)
-			{
-				points.push(part.vertices[j].x - body.position.x, part.vertices[j].y - body.position.y);
+				for (var j = 1; j < part.vertices.length; j++)
+				{
+					points.push(part.vertices[j].x - body.position.x, part.vertices[j].y - body.position.y);
+				}
+
+				points.push(part.vertices[0].x - body.position.x, part.vertices[0].y - body.position.y);
+
+				primitive.drawPoly(0, 0, points, fillStyle, strokeStyle, lineWidth);
+			} else if (options.createBodyPrimitiveMethod == "line") {
+				var paths = []
+				paths.push(["moveTo", part.vertices[0].x - body.position.x, part.vertices[0].y - body.position.y])
+				for (j = 1; j < part.vertices.length; j++) {
+					var vert = new Laya.Vector2(part.vertices[j].x - body.position.x, part.vertices[j].y - body.position.y)
+					if (!part.vertices[j - 1].isInternal || showInternalEdges) {
+						paths.push(["lineTo", vert.x, vert.y])
+					}
+	
+					if (part.vertices[j].isInternal && !showInternalEdges) {
+						var index = (j + 1) % part.vertices.length
+						paths.push(["moveTo", part.vertices[index].x - body.position.x, part.vertices[index].y - body.position.y])
+					} else {
+						paths.push(["moveTo", vert.x, vert.y])
+					}
+				}
+				paths.push(["lineTo", part.vertices[0].x - body.position.x, part.vertices[0].y - body.position.y])
+				if (!options.wireframes) {
+					paths.push(["closePath"])
+				}
+				primitive.drawPath(0, 0, paths, { fillStyle: fillStyle }, { strokeStyle: strokeStyle, lineWidth: lineWidth });
 			}
-
-			points.push(part.vertices[0].x - body.position.x, part.vertices[0].y - body.position.y);
-
-			primitive.drawPoly(0, 0, points, fillStyle, strokeStyle, lineWidth);
 
 			// 角度指示器
 			if (options.showAngleIndicator || options.showAxes)
