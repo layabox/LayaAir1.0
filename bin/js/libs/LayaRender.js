@@ -246,6 +246,8 @@
 			sprite.rotation = body.angle * 180 / Math.PI;
 			sprite.scaleX = bodyRender.sprite.xScale || 1;
 			sprite.scaleY = bodyRender.sprite.yScale || 1;
+			sprite.pivotX = bodyRender.sprite.xOffset * sprite.width;
+			sprite.pivotY = bodyRender.sprite.yOffset * sprite.height;
 		}
 		else // 没有纹理的body
 		{
@@ -283,8 +285,6 @@
 			sprite = new Laya.Sprite();
 
 		sprite.loadImage(texturePath);
-		sprite.pivotX = body.render.sprite.xOffset;
-		sprite.pivotY = body.render.sprite.yOffset;
 
 		return sprite;
 	};
