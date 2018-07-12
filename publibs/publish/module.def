@@ -1,38 +1,38 @@
 mainmodule:"laya.core"
-path:"../../../../core/src"
+path:"../../src/core/src"
 
 module:"laya.ui"
-path:"../../../../ui/src"
+path:"../../src/ui/src"
 
 module:"laya.html"
-path:"../../../../html/src"
+path:"../../src/html/src"
 
 module:"laya.particle"
-path:"../../../../particle/src"
+path:"../../src/particle/src"
 
 module:"laya.webgl"
-path:"../../../../webGL/src"
+path:"../../src/webGL/src"
 
 module:"laya.ani"
-path:"../../../../ani/src"
+path:"../../src/ani/src"
 
 module:"laya.filter"
-path:"../../../../filter/src"
+path:"../../src/filter/src"
 
 module:"laya.d3"
-path:"../../../../d3/src"
+path:"../../src/d3/src"
 
 module:"laya.tiledmap"
-path:"../../../../plugins/tiledmap/src"
+path:"../../src/plugins/tiledmap/src"
 
 module:"laya.debugtool"
-path:"../../../../plugins/debugtool/src"
+path:"../../src/plugins/debugtool/src"
 
 module:"laya.device"
-path:"../../../../plugins/device/src"
+path:"../../src/plugins/device/src"
 
 module:"laya.wxmini"
-path:"../../../../plugins/wx/src"
+path:"../../src/plugins/wx/src"
 
 module:"laya.d3Plugin"
-path:"../../../../d3Plugin/src"
+path:"../../src/d3Plugin/src"
