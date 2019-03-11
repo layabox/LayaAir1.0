@@ -5,6 +5,5 @@ package laya.filters {
 	 */
 	public interface IFilter {
 		function get type():int;
-		function get action():IFilterAction;
 	}
 }

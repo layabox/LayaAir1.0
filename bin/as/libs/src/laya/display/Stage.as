@@ -1,13 +1,15 @@
 package laya.display {
+	import laya.Const;
 	import laya.events.Event;
 	import laya.events.MouseManager;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.renders.Render;
-	import laya.renders.RenderContext;
+	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
-	import laya.utils.Color;
+	import laya.utils.CallLater;
+	import laya.utils.ColorUtils;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
 	import laya.utils.VectorGraphManager;
@@ -49,15 +51,15 @@ package laya.display {
 	 * <p>Stage提供不同的帧率模式，帧率越高，渲染压力越大，越费电，合理使用帧率甚至动态更改帧率有利于改进手机耗电。</p>
 	 */
 	public class Stage extends Sprite {
-		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于设计宽高。*/
+		/**应用保持设计宽高不变，不缩放不变形，stage的宽高等于设计宽高。*/
 		public static const SCALE_NOSCALE:String = "noscale";
-		/**应用根据屏幕大小铺满全屏，非等比缩放会变型，stage的宽高等于设计宽高。*/
+		/**应用根据屏幕大小铺满全屏，非等比缩放会变形，stage的宽高等于设计宽高。*/
 		public static const SCALE_EXACTFIT:String = "exactfit";
-		/**应用显示全部内容，按照最小比率缩放，等比缩放不变型，一边可能会留空白，stage的宽高等于设计宽高。*/
+		/**应用显示全部内容，按照最小比率缩放，等比缩放不变形，一边可能会留空白，stage的宽高等于设计宽高。*/
 		public static const SCALE_SHOWALL:String = "showall";
-		/**应用按照最大比率缩放显示，宽或高方向会显示一部分，等比缩放不变型，stage的宽高等于设计宽高。*/
+		/**应用按照最大比率缩放显示，宽或高方向会显示一部分，等比缩放不变形，stage的宽高等于设计宽高。*/
 		public static const SCALE_NOBORDER:String = "noborder";
-		/**应用保持设计宽高不变，不缩放不变型，stage的宽高等于屏幕宽高。*/
+		/**应用保持设计宽高不变，不缩放不变形，stage的宽高等于屏幕宽高。*/
 		public static const SCALE_FULL:String = "full";
 		/**应用保持设计宽度不变，高度根据屏幕比缩放，stage的宽度等于设计高度，高度根据屏幕比率大小而变化*/
 		public static const SCALE_FIXED_WIDTH:String = "fixedwidth";
@@ -99,6 +101,8 @@ package laya.display {
 		public var focus:Node;
 		/**@private 相对浏览器左上角的偏移，弃用，请使用_canvasTransform。*/
 		public var offset:Point = new Point();
+		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
+		private var _frameRate:String = "fast";
 		/**设计宽度（初始化时设置的宽度Laya.init(width,height)）*/
 		public var designWidth:Number = 0;
 		/**设计高度（初始化时设置的高度Laya.init(width,height)）*/
@@ -109,10 +113,10 @@ package laya.display {
 		public var canvasDegree:int = 0;
 		/**
 		 * <p>设置是否渲染，设置为false，可以停止渲染，画面会停留到最后一次渲染上，减少cpu消耗，此设置不影响时钟。</p>
-		 * <p>比如非激活状态，可以设置renderingEnabled=true以节省消耗。</p>
+		 * <p>比如非激活状态，可以设置renderingEnabled=false以节省消耗。</p>
 		 * */
 		public var renderingEnabled:Boolean = true;
-		/**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕以外改变*/
+		/**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕意外改变*/
 		public var screenAdaptationEnabled:Boolean = true;
 		
 		/**@private */
@@ -132,46 +136,59 @@ package laya.display {
 		/**@private */
 		private var _renderCount:int = 0;
 		/**@private */
-		private var _frameStartTime:Number;
+		private var _safariOffsetY:Number = 0;
+		/**@private */
+		private var _frameStartTime:Number = 0;
 		/**@private */
 		private var _previousOrientation:int = Browser.window.orientation;
 		/**@private */
 		private var _isFocused:Boolean;
 		/**@private */
 		private var _isVisibility:Boolean;
-		/**@private 3D场景*/
-		public var _scenes:Array;
 		/**@private webgl Color*/
-		public static var _wgColor:Array=[0,0,0,1];
+		public var _wgColor:Array = [0, 0, 0, 1];
 		/**@private */
-		private var _frameRate:String = "fast";
+		public var _scene3Ds:Array=[];
+		
 		/**@private */
-		public static const FRAME_MOUSE_THREDHOLD:Number = 2000;
+		private var _globalRepaintSet:Boolean = false;		// 设置全局重画标志。这个是给IDE用的。IDE的Image无法在onload的时候通知对应的sprite重画。
+		/**@private */
+		private var _globalRepaintGet:Boolean = false;		// 一个get一个set是为了把标志延迟到下一帧的开始，防止部分对象接收不到。
+		/**@private */
+		public static var _dbgSprite:Sprite = new Sprite();
+		
+		/**@private */
+		public var _3dUI:Vector.<Sprite> = new Vector.<Sprite>();
+		/**@private */
+		public var _curUIBase:Sprite = null; 		// 给鼠标事件capture用的。用来找到自己的根。因为3d界面的根不是stage（界面链会被3d对象打断）
+		
 		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
 			transform = Matrix.create();
-			_scenes = [];
 			//重置默认值，请不要修改
 			this.mouseEnabled = true;
 			this.hitTestPrior = true;
 			this.autoSize = false;
-			this._displayedInStage = true;
+			this._setBit(Const.DISPLAYED_INSTAGE, true);
+			this._setBit(Const.ACTIVE_INHIERARCHY, true);
 			this._isFocused = true;
 			this._isVisibility = true;
 			
+			//this.drawCallOptimize=true;
+			
 			var window:* = Browser.window;
-			var _this:Stage = this;
+			var _me:Stage = this;	//for TS 。 TS的_this是有特殊用途的
 			
 			window.addEventListener("focus", function():void {
 				_isFocused = true;
-				_this.event(Event.FOCUS);
-				_this.event(Event.FOCUS_CHANGE);
+				_me.event(Event.FOCUS);
+				_me.event(Event.FOCUS_CHANGE);
 			});
 			window.addEventListener("blur", function():void {
 				_isFocused = false;
-				_this.event(Event.BLUR);
-				_this.event(Event.FOCUS_CHANGE);
-				if (_this._isInputting()) Input["inputElement"].target.focus = false;
+				_me.event(Event.BLUR);
+				_me.event(Event.FOCUS_CHANGE);
+				if (_me._isInputting()) Input["inputElement"].target.focus = false;
 			});
 			
 			// 各种浏览器兼容
@@ -194,45 +211,39 @@ package laya.display {
 			window.document.addEventListener(visibilityChange, visibleChangeFun);
 			function visibleChangeFun():void {
 				if (Browser.document[state] == "hidden") {
-					_this._setStageVisible(false);
+					_isVisibility = false;
+					if (_me._isInputting()) Input["inputElement"].target.focus = false;
 				} else {
-					_this._setStageVisible(true);
+					_isVisibility = true;
 				}
-			}
-			
-			window.document.addEventListener("qbrowserVisibilityChange", qbroserVisibleChangeFun);
-			function qbroserVisibleChangeFun(e:*):void {
-				_this._setStageVisible(!e.hidden);
+				renderingEnabled = _isVisibility;
+				_me.event(Event.VISIBILITY_CHANGE);
 			}
 			window.addEventListener("resize", function():void {
 				// 处理屏幕旋转。旋转后收起输入法。
 				var orientation:* = Browser.window.orientation;
-				if (orientation != null && orientation != _previousOrientation && _this._isInputting()) {
+				if (orientation != null && orientation != _previousOrientation && _me._isInputting()) {
 					Input["inputElement"].target.focus = false;
 				}
 				_previousOrientation = orientation;
 				
 				// 弹出输入法不应对画布进行resize。
-				if (_this._isInputting()) return;
+				if (_me._isInputting()) return;
 				
-				_this._resetCanvas();
+				// Safari横屏工具栏偏移
+				if (Browser.onSafari)
+					_me._safariOffsetY = (Browser.window.__innerHeight || Browser.document.body.clientHeight || Browser.document.documentElement.clientHeight) - Browser.window.innerHeight;
+				
+				_me._resetCanvas();
 			});
 			
 			// 微信的iframe不触发orientationchange。
 			window.addEventListener("orientationchange", function(e:*):void {
-				_this._resetCanvas();
+				_me._resetCanvas();
 			});
 			
 			on(Event.MOUSE_MOVE, this, _onmouseMove);
 			if (Browser.onMobile) on(Event.MOUSE_DOWN, this, _onmouseMove);
-		}
-		
-		private function _setStageVisible(value:Boolean):void
-		{
-			if (_isVisibility == value) return;
-			_isVisibility = value;
-			if (!_isVisibility) if (_isInputting()) Input["inputElement"].target.focus = false;
-			this.event(Event.VISIBILITY_CHANGE);
 		}
 		
 		/**
@@ -242,63 +253,25 @@ package laya.display {
 		private function _isInputting():Boolean {
 			return (Browser.onMobile && Input.isInputting);
 		}
-		/**帧率类型，支持三种模式：fast-60帧(默认)，slow-30帧，mouse-30帧（鼠标活动后会自动加速到60，鼠标不动2秒后降低为30帧，以节省消耗），sleep-1帧。*/
-		public function set frameRate(value:String):void {
-			_frameRate = value;
-			if (Render.isConchApp) {
-				switch (_frameRate) {
-					case FRAME_SLOW: 
-						Browser.window.conch && Browser.window.conchConfig.setSlowFrame && Browser.window.conchConfig.setSlowFrame(true);
-						break;
-					case FRAME_FAST:
-						Browser.window.conch && Browser.window.conchConfig.setSlowFrame && Browser.window.conchConfig.setSlowFrame(false);
-						break;
-					case FRAME_MOUSE:
-						Browser.window.conch && Browser.window.conchConfig.setMouseFrame && Browser.window.conchConfig.setMouseFrame(FRAME_MOUSE_THREDHOLD);
-						break;
-					case FRAME_SLEEP:
-						Browser.window.conch && Browser.window.conchConfig.setLimitFPS && Browser.window.conchConfig.setLimitFPS(1);
-						break;
-					default: 
-						throw new Error("Stage:frameRate invalid.");
-						break;
-				}
-			}
-		}
 		
-		public function get frameRate():String {
-			return _frameRate;
-		}
-		
+		/**@inheritDoc */
 		override public function set width(value:Number):void {
 			this.designWidth = value;
 			super.width = value;
-			Laya.timer.callLater(this, _changeCanvasSize);
+			Laya.systemTimer.callLater(this, _changeCanvasSize);
 		}
 		
+		/**@inheritDoc */
 		override public function set height(value:Number):void {
 			this.designHeight = value;
 			super.height = value;
-			Laya.timer.callLater(this, _changeCanvasSize);
+			Laya.systemTimer.callLater(this, _changeCanvasSize);
 		}
 		
+		/**@inheritDoc */
 		override public function get transform():Matrix {
 			if (_tfChanged) _adjustTransform();
-			return _transform ||= Matrix.create();
-		}
-		
-		/**@private 已经弃用，请使用designWidth代替*/
-		//[Deprecated]
-		public function get desginWidth():Number {
-			console.debug("desginWidth已经弃用，请使用designWidth代替");
-			return designWidth;
-		}
-		
-		/**@private 已经弃用，请使用designHeight代替*/
-		//[Deprecated]
-		public function get desginHeight():Number {
-			console.debug("desginHeight已经弃用，请使用designHeight代替");
-			return designHeight;
+			return _transform ||= _createTransform();
 		}
 		
 		/**
@@ -323,13 +296,13 @@ package laya.display {
 		/**@private */
 		protected function _resetCanvas():void {
 			if (!screenAdaptationEnabled) return;
-			var canvas:HTMLCanvas = Render._mainCanvas;
-			var canvasStyle:* = canvas.source.style;
-			canvas.size(1, 1);
+			//var canvas:HTMLCanvas = Render._mainCanvas;
+			//var canvasStyle:* = canvas.source.style;
+			//canvas.size(1, 1);
 			//canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "";
 			//visible = false;
-			Laya.timer.once(100, this, this._changeCanvasSize);
-			//_changeCanvasSize();
+			//Laya.timer.once(100, this, this._changeCanvasSize);
+			_changeCanvasSize();
 		}
 		
 		/**
@@ -343,8 +316,6 @@ package laya.display {
 			if (_screenMode !== SCREEN_NONE) {
 				var screenType:String = screenWidth / screenHeight < 1 ? SCREEN_VERTICAL : SCREEN_HORIZONTAL;
 				rotation = screenType !== _screenMode;
-				/*[IF-FLASH]*/
-				rotation = false;
 				if (rotation) {
 					//宽高互换
 					var temp:Number = screenHeight;
@@ -408,7 +379,6 @@ package laya.display {
 				}
 				break;
 			}
-			if (conchModel) conchModel.size(_width, _height);
 			
 			//根据不同尺寸缩放stage画面
 			scaleX *= this.scaleX;
@@ -418,9 +388,13 @@ package laya.display {
 			} else {
 				transform.a = _formatData(scaleX / (realWidth / canvasWidth));
 				transform.d = _formatData(scaleY / (realHeight / canvasHeight));
-				conchModel && conchModel.scale(transform.a, transform.d);//由于上面的两句通知不到微端
 			}
 			
+			if (Render.isConchApp) {
+				this._conchData._float32Data[SpriteConst.POSSCALEX] = _formatData(scaleX / (realWidth / canvasWidth));
+				this._conchData._float32Data[SpriteConst.POSSCALEY] = _formatData(scaleY / (realHeight / canvasHeight));
+				this._conchData._float32Data[SpriteConst.POSTRANSFORM_FLAG] = 1;
+			}
 			//处理canvas大小			
 			canvas.size(canvasWidth, canvasHeight);
 			RunDriver.changeWebGLSize(canvasWidth, canvasHeight);
@@ -428,18 +402,19 @@ package laya.display {
 			
 			//处理水平对齐
 			if (_alignH === ALIGN_LEFT) offset.x = 0;
-			else if (_alignH === ALIGN_RIGHT) offset.x = (screenWidth - realWidth)/pixelRatio;
+			else if (_alignH === ALIGN_RIGHT) offset.x = screenWidth - realWidth;
 			else offset.x = (screenWidth - realWidth) * 0.5 / pixelRatio;
 			
 			//处理垂直对齐
 			if (_alignV === ALIGN_TOP) offset.y = 0;
-			else if (_alignV === ALIGN_BOTTOM) offset.y = (screenHeight - realHeight)/pixelRatio;
+			else if (_alignV === ALIGN_BOTTOM) offset.y = screenHeight - realHeight;
 			else offset.y = (screenHeight - realHeight) * 0.5 / pixelRatio;
 			
 			//处理用户自行设置的画布偏移
 			offset.x = Math.round(offset.x);
 			offset.y = Math.round(offset.y);
 			mat.translate(offset.x, offset.y);
+			if (_safariOffsetY) mat.translate(0, _safariOffsetY);
 			
 			//处理横竖屏
 			canvasDegree = 0;
@@ -459,12 +434,15 @@ package laya.display {
 			mat.d = _formatData(mat.d);
 			mat.tx = _formatData(mat.tx);
 			mat.ty = _formatData(mat.ty);
+			
+			this.transform = this.transform;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
 			//修正用户自行设置的偏移
+			if (_safariOffsetY) mat.translate(0, -_safariOffsetY);
 			mat.translate(parseInt(canvasStyle.left) || 0, parseInt(canvasStyle.top) || 0);
 			visible = true;
-			_repaint = 1;
+			_repaint |= SpriteConst.REPAINT_CACHE;
 			event(Event.RESIZE);
 		}
 		
@@ -494,7 +472,7 @@ package laya.display {
 		
 		public function set scaleMode(value:String):void {
 			_scaleMode = value;
-			Laya.timer.callLater(this, _changeCanvasSize);
+			Laya.systemTimer.callLater(this, _changeCanvasSize);
 		}
 		
 		/**
@@ -511,7 +489,7 @@ package laya.display {
 		
 		public function set alignH(value:String):void {
 			_alignH = value;
-			Laya.timer.callLater(this, _changeCanvasSize);
+			Laya.systemTimer.callLater(this, _changeCanvasSize);
 		}
 		
 		/**
@@ -528,7 +506,7 @@ package laya.display {
 		
 		public function set alignV(value:String):void {
 			_alignV = value;
-			Laya.timer.callLater(this, _changeCanvasSize);
+			Laya.systemTimer.callLater(this, _changeCanvasSize);
 		}
 		
 		/**舞台的背景颜色，默认为黑色，null为透明。*/
@@ -538,36 +516,34 @@ package laya.display {
 		
 		public function set bgColor(value:String):void {
 			_bgColor = value;
-			conchModel && conchModel.bgColor(value);
-			
 			if (Render.isWebGL) {
-				if (value) {
-					_wgColor = Color.create(value)._color;
-				} else {
-					if (!Browser.onMiniGame) _wgColor = null;
-				}
+				if (value)
+					_wgColor = ColorUtils.create(value).arrColor;
+				else
+					_wgColor = null;
 			}
 			
-			if (Browser.onLimixiu)
-			{
-				_wgColor = Color.create(value)._color;
-			}else
-			if (value) {
+			if (Browser.onLimixiu) {
+				_wgColor = ColorUtils.create(value).arrColor;
+			} else if (value) {
 				Render.canvas.style.background = value;
 			} else {
 				Render.canvas.style.background = "none";
+			}
+			if (Render.isConchApp) {
+				this._renderType |= SpriteConst.STYLE;
+				this._setBgStyleColor(0, 0, this.width, this.height, value);
+				this._setRenderType(this._renderType);
 			}
 		}
 		
 		/**鼠标在 Stage 上的 X 轴坐标。*/
 		override public function get mouseX():Number {
-			// River: 加入了round.
 			return Math.round(MouseManager.instance.mouseX / clientScaleX);
 		}
 		
 		/**鼠标在 Stage 上的 Y 轴坐标。*/
 		override public function get mouseY():Number {
-			// River:加入了round.
 			return Math.round(MouseManager.instance.mouseY / clientScaleY);
 		}
 		
@@ -603,18 +579,30 @@ package laya.display {
 		}
 		
 		/**@inheritDoc */
-		override public function repaint():void {
-			_repaint = 1;
+		override public function repaint(type:int = SpriteConst.REPAINT_CACHE):void {
+			_repaint |= type;
 		}
 		
 		/**@inheritDoc */
-		override public function parentRepaint():void {
+		public function repaintForNative(type:int = SpriteConst.REPAINT_CACHE):void {
+			this._conchData._int32Data[SpriteConst.POSREPAINT] |= type;
+		}
+		
+		/**@inheritDoc */
+		override public function parentRepaint(type:int = SpriteConst.REPAINT_CACHE):void {
 		}
 		
 		/**@private */
 		public function _loop():Boolean {
-			render(Render.context, 0, 0);
+			_globalRepaintGet = _globalRepaintSet;
+			_globalRepaintSet = false;
+			render(Render._context, 0, 0);
 			return true;
+		}
+		
+		/**@private */
+		public function getFrameTm():Number {
+			return _frameStartTime;
 		}
 		
 		/**@private */
@@ -630,6 +618,7 @@ package laya.display {
 			return Browser.now() - _frameStartTime;
 		}
 		
+		/**@inheritDoc */
 		override public function set visible(value:Boolean):void {
 			if (this.visible !== value) {
 				super.visible = value;
@@ -639,83 +628,103 @@ package laya.display {
 		}
 		
 		/**@inheritDoc */
-		override public function render(context:RenderContext, x:Number, y:Number):void {
-			if (_frameRate === FRAME_SLEEP && !Render.isConchApp) {
+		override public function render(context:Context, x:Number, y:Number):void {
+			//临时
+			_dbgSprite.graphics.clear();
+			
+			if (_frameRate === FRAME_SLEEP) {
 				var now:Number = Browser.now();
 				if (now - _frameStartTime >= 1000) _frameStartTime = now;
 				else return;
+			} else {
+				if (!this._visible) {
+					_renderCount++;
+					if (_renderCount % 5 === 0) {
+						CallLater.I._update();
+						Stat.loopCount++;
+						_updateTimers();
+					}
+					return;
+				}
+				_frameStartTime = Browser.now();
 			}
 			
 			_renderCount++;
-			Render.isFlash && repaint();
-			
-			if (!this._style.visible) {
-				if (_renderCount % 5 === 0) {
-					Stat.loopCount++;
-					MouseManager.instance.runEvent();
-					Laya.timer._update();
-				}
-				return;
-			}
-			
-			_frameStartTime = Browser.now();
-			var frameMode:String = _frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < FRAME_MOUSE_THREDHOLD) ? FRAME_FAST : FRAME_SLOW) : _frameRate;
+			var frameMode:String = _frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : _frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
 			
 			Stat.renderSlow = !isFastMode;
 			
-			if (isFastMode || isDoubleLoop || Render.isConchApp) {
+			if (isFastMode || isDoubleLoop) {
+				CallLater.I._update();
 				Stat.loopCount++;
-				MouseManager.instance.runEvent();
-				Laya.timer._update();
 				
-				RunDriver.update3DLoop();
-				var scene:*;
-				var i:int, n:int;
-				if (Render.isConchNode) {
-					for (i = 0, n = _scenes.length; i < n; i++) {
-						scene = _scenes[i];
-						(scene) && (scene._updateSceneConch());
-					}
-				} else {
-					for (i = 0, n = _scenes.length; i < n; i++) {
-						scene = _scenes[i];
-						(scene) && (scene._updateScene());
+				if (!Render.isConchApp) {
+					if (Render.isWebGL && renderingEnabled) {
+						for (var i:int = 0, n:int = _scene3Ds.length; i < n;i++)//更新3D场景,必须提出来,否则在脚本中移除节点会导致BUG
+							_scene3Ds[i]._update();
+						context.clear();
+						super.render(context, x, y);
+						Stat._show && Stat._sp && Stat._sp.render(context, x, y);
 					}
 				}
-				
-				if (Render.isConchNode) {//NATIVE
-					var customList:Array = Sprite["CustomList"];
-					for (i = 0, n = customList.length; i < n; i++) {
-						var customItem:* = customList[i];
-						customItem.customRender(customItem.customContext, 0, 0);
-					}
-					return;
-				}
-					//if (Render.isWebGL && renderingEnabled) {
-					//context.clear();
-					//super.render(context, x, y);
-					//Stat._show && Stat._sp.render(context, x, y);
-					//}
 			}
-			if (Render.isConchNode) return;//NATIVE
-			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
-				if (Render.isWebGL) {
-					context.clear();
-					super.render(context, x, y);
-					Stat._show&& Stat._sp && Stat._sp.render(context, x, y);
-					
-					RunDriver.clear(_bgColor);
-					RunDriver.beginFlush();
-					context.flush();
-					RunDriver.endFinish();
-					VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
-				} else {
-					RunDriver.clear(_bgColor);
-					super.render(context, x, y);
-					Stat._show&& Stat._sp && Stat._sp.render(context, x, y);
+			
+			_dbgSprite.render(context, 0, 0);
+			
+			if (isFastMode || !isDoubleLoop) {
+				if (renderingEnabled) {
+					if (Render.isWebGL) {
+						RunDriver.clear(_bgColor);
+						context.flush();
+						VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
+					} else {
+						RunDriver.clear(_bgColor);
+						super.render(context, x, y);
+						Stat._show && Stat._sp && Stat._sp.render(context, x, y);
+						if (Render.isConchApp) context.gl.commit();
+					}
 				}
+				_updateTimers();
+			}
+		}
+		
+		private function _updateTimers():void {
+			Laya.systemTimer._update();
+			Laya.startTimer._update();
+			Laya.physicsTimer._update();
+			Laya.updateTimer._update();
+			Laya.lateTimer._update();
+			Laya.timer._update();
+		}
+		
+		public function renderToNative(context:Context, x:Number, y:Number):void {
+			_renderCount++;
+			Stat.loopCount++;
+			if (!this._visible) {
+				if (_renderCount % 5 === 0) {
+					CallLater.I._update();
+					Stat.loopCount++;
+					_updateTimers();
+					CallLater.I._update();
+				}
+				return;
+			}
+			//update
+			/*
+			调用两次 CallLater.I._update();是有原因的，是因为在updateTimers中，可能又设置了CallLater
+			为了渲染同步所以调用两次
+			*/
+			CallLater.I._update();
+			_updateTimers();
+			CallLater.I._update();
+			//render
+			if (renderingEnabled) {
+				RunDriver.clear(_bgColor);
+				super.render(context, x, y);
+				Stat._show && Stat._sp && Stat._sp.render(context, x, y);
+				context.gl.commit();
 			}
 		}
 		
@@ -740,6 +749,36 @@ package laya.display {
 				document.removeEventListener("mozfullscreenchange", _fullScreenChanged);
 				document.removeEventListener("webkitfullscreenchange", _fullScreenChanged);
 				document.removeEventListener("msfullscreenchange", _fullScreenChanged);
+			}
+		}
+		
+		public function get frameRate():String {
+			if (!Render.isConchApp) {
+				return _frameRate;
+			} else {
+				return __JS__("this._frameRateNative");
+			}
+		}
+		
+		public function set frameRate(value:String):void {
+			if (!Render.isConchApp) {
+				_frameRate = value;
+			} else {
+				switch (value) {
+				case FRAME_FAST: 
+					window.conch.config.setLimitFPS(60);
+					break;
+				case FRAME_MOUSE: 
+					window.conch.config.setMouseFrame(2000);
+					break;
+				case FRAME_SLOW: 
+					window.conch.config.setSlowFrame(true);
+					break;
+				case FRAME_SLEEP: 
+					window.conch.config.setLimitFPS(1);
+					break;
+				}
+				__JS__("this._frameRateNative=value");
 			}
 		}
 		
@@ -772,6 +811,34 @@ package laya.display {
 			} else if (document.webkitExitFullscreen) {
 				document.webkitExitFullscreen();
 			}
+		}
+		
+		/**@private */
+		public function isGlobalRepaint():Boolean {
+			return _globalRepaintGet;
+		}
+		
+		/**@private */
+		public function setGlobalRepaint():void {
+			_globalRepaintSet = true;
+		}
+		
+		/**@private */
+		public function add3DUI(uibase:Sprite):void {
+			var uiroot:Sprite = __JS__('uibase.rootView');
+			if (_3dUI.indexOf(uiroot) >= 0) return;
+			_3dUI.push(uiroot);
+		}
+		
+		/**@private */
+		public function remove3DUI(uibase:Sprite):Boolean {
+			var uiroot:Sprite = __JS__('uibase.rootView');
+			var p:int = _3dUI.indexOf(uiroot);
+			if (p >= 0) {
+				_3dUI.splice(p, 1);
+				return true;
+			}
+			return false;
 		}
 	}
 }

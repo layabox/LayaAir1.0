@@ -9,6 +9,7 @@ package laya.webgl.utils {
 		 * @param	b 4*4矩阵数组。
 		 * @param	o 4*4矩阵数组。
 		 */
+		//TODO:coverage
 		public static function ArrayMul(a:Array, b:Array, o:Array):void {
 			if (!a) {
 				copyArray(b, o);
@@ -33,6 +34,7 @@ package laya.webgl.utils {
 			}
 		}
 		
+		//TODO:coverage
 		public static function copyArray(f:Array, t:Array):void {
 			if (!f) return;
 			if (!t) return;

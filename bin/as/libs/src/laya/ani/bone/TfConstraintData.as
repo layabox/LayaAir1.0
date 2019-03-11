@@ -3,6 +3,7 @@ package laya.ani.bone {
 	/**
 	 * @private
 	 */
+	//TODO:coverage
 	public class TfConstraintData {
 		
 		public var name:String;

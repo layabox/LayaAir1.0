@@ -24,6 +24,8 @@ package laya.ui {
 		protected var _isChanged:Boolean;
 		/**@private */
 		public var _offset:Array;
+		///**@private */
+		//private var _key:String;
 		
 		/**@inheritDoc */
 		override public function destroy():void {
@@ -144,15 +146,16 @@ package laya.ui {
 			
 			//如果没有设置9宫格，或大小未改变，则直接用原图绘制
 			if (!sizeGrid || (sw === width && sh === height)) {
-				cleanByTexture(source, _offset ? _offset[0] : 0, _offset ? _offset[1] : 0, width, height);
+				clear();
+				drawTexture(source, _offset ? _offset[0] : 0, _offset ? _offset[1] : 0, width, height);
 			} else {
-				//从缓存中读取渲染命令
-				source.$_GID || (source.$_GID = Utils.getGID());
-				var key:String = source.$_GID + "." + width + "." + height + "." + sizeGrid.join(".");
-				if (Utils.isOKCmdList(WeakObject.I.get(key))) {
-					this.cmds = WeakObject.I.get(key);
-					return;
-				}
+				//从缓存中读取渲染命令(和回收冲突，暂时去掉)
+				//source.$_GID || (source.$_GID = Utils.getGID());
+				//_key = source.$_GID + "." + width + "." + height + "." + sizeGrid.join(".");
+				//if (Utils.isOKCmdList(WeakObject.I.get(_key))) {
+					//this.cmds = WeakObject.I.get(_key);
+					//return;
+				//}
 				
 				clear();
 				var top:Number = sizeGrid[0];
@@ -177,10 +180,10 @@ package laya.ui {
 				}
 				
 				//绘制四个角
-				left && top && drawTexture(getTexture(source, 0, 0, left, top), 0, 0, left, top);
-				right && top && drawTexture(getTexture(source, sw - right, 0, right, top), width - right, 0, right, top);
-				left && bottom && drawTexture(getTexture(source, 0, sh - bottom, left, bottom), 0, height - bottom, left, bottom);
-				right && bottom && drawTexture(getTexture(source, sw - right, sh - bottom, right, bottom), width - right, height - bottom, right, bottom);
+				left && top && drawImage(getTexture(source, 0, 0, left, top), 0, 0, left, top);
+				right && top && drawImage(getTexture(source, sw - right, 0, right, top), width - right, 0, right, top);
+				left && bottom && drawImage(getTexture(source, 0, sh - bottom, left, bottom), 0, height - bottom, left, bottom);
+				right && bottom && drawImage(getTexture(source, sw - right, sh - bottom, right, bottom), width - right, height - bottom, right, bottom);
 				//绘制上下两个边
 				top && drawBitmap(repeat, getTexture(source, left, 0, sw - left - right, top), left, 0, width - left - right, top);
 				bottom && drawBitmap(repeat, getTexture(source, left, sh - bottom, sw - left - right, bottom), left, height - bottom, width - left - right, bottom);
@@ -193,7 +196,7 @@ package laya.ui {
 				if (needClip) restore();
 				
 				//缓存命令
-				if (autoCacheCmd && !Render.isConchApp) WeakObject.I.set(key, this.cmds);
+				//if (autoCacheCmd && !Render.isConchApp) WeakObject.I.set(_key, this.cmds);
 			}
 			_repaint();
 		}
@@ -201,25 +204,27 @@ package laya.ui {
 		private function drawBitmap(repeat:Boolean, tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0):void {
 			if (width < 0.1 || height < 0.1) return;
 			if (repeat && (tex.width != width || tex.height != height)) fillTexture(tex, x, y, width, height);
-			else drawTexture(tex, x, y, width, height);
+			else drawImage(tex, x, y, width, height);
 		}
 		
 		private static function getTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):Texture {
 			if (width <= 0) width = 1;
 			if (height <= 0) height = 1;
 			tex.$_GID || (tex.$_GID = Utils.getGID())
-			var key:String = tex.$_GID + "." + x + "." + y + "." + width + "." + height;
-			var texture:Texture = WeakObject.I.get(key);
-			if (!texture||!texture.source) {
+			//var key:String = tex.$_GID + "." + x + "." + y + "." + width + "." + height;
+			//var texture:Texture = WeakObject.I.get(key);
+			var texture:Texture;
+			if (!texture || !texture._getSource()) {
 				texture = Texture.createFromTexture(tex, x, y, width, height);
-				WeakObject.I.set(key, texture);
+				//WeakObject.I.set(key, texture);
 			}
 			return texture;
 		}
 		
-		override public function clear(recoverCmds:Boolean = true):void {
-			//重写clear，防止缓存被清理
-			super.clear(false);
-		}
+		//override public function clear(recoverCmds:Boolean = true):void {
+			////重写clear，防止缓存被清理
+			//super.clear(recoverCmds);
+			//_key && WeakObject.I.del(_key);
+		//}
 	}
 }

@@ -1,4 +1,5 @@
 package laya.ui {
+	import laya.Const;
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.resource.Texture;
@@ -114,7 +115,7 @@ package laya.ui {
 	 * }
 	 *
 	 */
-	public class Clip extends Component {
+	public class Clip extends UIComponent {
 		/**@private */
 		protected var _sources:Array;
 		/**@private */
@@ -182,7 +183,7 @@ package laya.ui {
 		/**@private	 */
 		protected function _onDisplay(e:Event = null):void {
 			if (_isPlaying) {
-				if (_displayedInStage) play();
+				if (_getBit(Const.DISPLAYED_INSTAGE)) play();
 				else stop();
 			} else if (_autoPlay) {
 				play();
@@ -200,11 +201,24 @@ package laya.ui {
 			if (_skin != value) {
 				_skin = value;
 				if (value) {
-					_setClipChanged()
+					if(!Loader.getRes(value))
+					{
+						Laya.loader.load(_skin, Handler.create(this, _skinLoaded), null, Loader.IMAGE,1);
+					}else
+					{
+						_skinLoaded();
+					}
 				} else {
 					_bitmap.source = null;
 				}
 			}
+		}
+		
+		protected function _skinLoaded():void
+		{
+			_setClipChanged();
+			_sizeChanged();
+			event(Event.LOADED);
 		}
 		
 		/**X轴（横向）切片数量。*/
@@ -338,13 +352,13 @@ package laya.ui {
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			runCallLater(changeClip);
 			return _bitmap.width;
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			runCallLater(changeClip);
 			return _bitmap.height;
 		}
@@ -446,7 +460,7 @@ package laya.ui {
 		 * @private
 		 */
 		protected function _loop():void {
-			if (_style.visible && this._sources) {
+			if (_visible && this._sources) {
 				_index++;			
 				if (_toIndex > -1 && _index >= _toIndex) stop();
 				else if (this._index >= this._sources.length) this._index = 0;

@@ -1,16 +1,16 @@
 package laya.particle
 {
-	
 	import laya.particle.shader.value.ParticleShaderValue;
+	import laya.renders.Render;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.canvas.BlendMode;
-	import laya.webgl.resource.WebGLImage;
+	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.submit.ISubmit;
-	import laya.webgl.utils.IndexBuffer2D;
+	import laya.webgl.utils.MeshParticle2D;
 	import laya.webgl.utils.VertexBuffer2D;
 
 	/**
@@ -18,8 +18,8 @@ package laya.particle
 	 */
 	public class ParticleTemplate2D extends ParticleTemplateWebGL implements ISubmit
 	{
-		private var _vertexBuffer2D:VertexBuffer2D;
-		private var _indexBuffer2D:IndexBuffer2D;
+		//private var _vertexBuffer2D:VertexBuffer2D;
+		//private var _indexBuffer2D:IndexBuffer2D;
 		
 		public static var activeBlendType:int = -1;
 		public var x:Number=0;
@@ -29,15 +29,13 @@ package laya.particle
 		public var sv:ParticleShaderValue = new ParticleShaderValue();
 		
 		private var _startTime:int;
-		
+		public var _key:* = {};
 
-		
 		public function ParticleTemplate2D(parSetting:ParticleSetting)
 		{
 			super(parSetting);
 			var _this:ParticleTemplate2D = this;
 			Laya.loader.load(settings.textureName, Handler.create(null, function(texture:Texture):void{
-				(texture.bitmap as  WebGLImage).enableMerageInAtlas = false;
 		       _this.texture = texture;
 			}));
 			sv.u_Duration=settings.duration;
@@ -45,11 +43,21 @@ package laya.particle
 			sv.u_EndVelocity = settings.endVelocity;
 			
 			_blendFn = BlendMode.fns[parSetting.blendState]; //context._targets?BlendMode.targetFns[blendType]:BlendMode.fns[blendType];
+			if (Render.isConchApp)
+			{
+				var nSize:int = MeshParticle2D.const_stride * settings.maxPartices * 4 * 4;
+				_conchMesh = __JS__("new ParamData(nSize, true)");
+			}
+			else
+			{
+				_mesh = MeshParticle2D.getAMesh(settings.maxPartices);
+			}
+			
 			initialize();
 			
-			_vertexBuffer =_vertexBuffer2D= VertexBuffer2D.create( -1, WebGLContext.DYNAMIC_DRAW);
-			_indexBuffer = _indexBuffer2D=IndexBuffer2D.create(WebGLContext.STATIC_DRAW );
-			loadContent();
+			//_vertexBuffer =_vertexBuffer2D= VertexBuffer2D.create( -1, WebGLContext.DYNAMIC_DRAW);
+			//_indexBuffer = _indexBuffer2D=IndexBuffer2D.create(WebGLContext.STATIC_DRAW );
+			//loadContent();
 		}
 		
 		public function getRenderType():int{return -111}
@@ -64,6 +72,7 @@ package laya.particle
 			super.addParticleArray(position, velocity);
 		}
 		
+		/*
 		override protected function loadContent():void 
 		{
 			var indexes:Uint16Array = new Uint16Array(settings.maxPartices * 6);
@@ -82,9 +91,10 @@ package laya.particle
 			_indexBuffer2D.append(indexes);
 			_indexBuffer2D.upload();
 		}
+		*/
 		
-		override public function addNewParticlesToVertexBuffer():void 
-		{
+		override public function addNewParticlesToVertexBuffer():void {
+			var _vertexBuffer2D:VertexBuffer2D = _mesh._vb;
 			_vertexBuffer2D.clear();
 			_vertexBuffer2D.append(_vertices);
 			
@@ -109,9 +119,9 @@ package laya.particle
 		
 		public function renderSubmit():int
 		{
-			if (texture&&texture.loaded)
+			if (texture&&texture.getIsReady())
 			{
-				update(Laya.timer.delta);
+				update(Laya.timer._delta);
 				sv.u_CurrentTime=_currentTime;
 				if (_firstNewElement != _firstFreeElement)
 				{
@@ -123,8 +133,10 @@ package laya.particle
 				if (_firstActiveElement != _firstFreeElement)
 				{
 					var gl:WebGLContext = WebGL.mainContext;
-					_vertexBuffer2D.bind(_indexBuffer2D);
-					sv.u_texture = texture.source;
+					_mesh.useMesh(gl);
+					//_vertexBuffer2D.bind();
+					//_indexBuffer2D.bind();
+					sv.u_texture = texture._getSource();
 					sv.upload();
 					
 						
@@ -139,11 +151,59 @@ package laya.particle
 							WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _firstFreeElement * 6, WebGLContext.UNSIGNED_SHORT, 0);
 					}
 					
-					Stat.drawCall++;
+					Stat.renderBatch++;
 				}
 				_drawCounter++;
 			}
 			return 1;
+		}
+		
+		public function updateParticleForNative():void{
+			if (texture&&texture.getIsReady())
+			{
+				update(Laya.timer._delta);
+				sv.u_CurrentTime = _currentTime;
+				if (_firstNewElement != _firstFreeElement) {
+					_firstNewElement = _firstFreeElement;
+				}
+			}
+		}
+		
+		public function getMesh():MeshParticle2D {
+			return _mesh;
+		}
+		
+		public function getConchMesh():*
+		{
+			return _conchMesh;
+		}
+		
+		public function getFirstNewElement():int {
+			return _firstNewElement;
+		}
+		
+		public function getFirstFreeElement():int {
+			return _firstFreeElement;
+		}
+		
+		public function getFirstActiveElement():int {
+			return _firstActiveElement;
+		}
+		
+		public function getFirstRetiredElement():int {
+			return _firstRetiredElement;
+		}
+		
+		public function setFirstFreeElement(_value:int):void {
+			_firstFreeElement = _value;
+		}
+		
+		public function setFirstNewElement(_value:int):void {
+			_firstNewElement = _value;
+		}
+		
+		public function addDrawCounter():void {
+			_drawCounter++;
 		}
 		
 		public function blend():void
@@ -159,8 +219,12 @@ package laya.particle
 		
 		public function dispose():void
 		{
-			_vertexBuffer2D.dispose();
-			_indexBuffer2D.dispose();
+			//_vertexBuffer2D.dispose();
+			//_indexBuffer2D.dispose();
+			if (!Render.isConchApp)
+			{
+				_mesh.releaseMesh();//TODO 什么时候调用。
+			}
 		}
 	}
 }

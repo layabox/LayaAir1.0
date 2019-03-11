@@ -65,11 +65,7 @@ package laya.utils {
 			this._disableMouseEvent = disableMouseEvent;
 			this.ratio = ratio;
 			
-			if (target.globalScaleX != 1 || target.globalScaleY != 1) {
-				_parent = target.parent as Sprite;
-			} else {
-				_parent = Laya.stage;
-			}
+			_parent = target.parent as Sprite;
 			
 			_clickOnly = true;
 			_dragging = true;
@@ -80,15 +76,15 @@ package laya.utils {
 			Laya.stage.on(Event.MOUSE_UP, this, onStageMouseUp);
 			Laya.stage.on(Event.MOUSE_OUT, this, onStageMouseUp);
 			//Laya.stage.on(Event.MOUSE_MOVE, this, onStageMouseMove);
-			Laya.timer.frameLoop(1, this, loop);
+			Laya.systemTimer.frameLoop(1, this, loop);
 		}
 		
 		/**
 		 * 清除计时器。
 		 */
 		private function clearTimer():void {
-			Laya.timer.clear(this, loop);
-			Laya.timer.clear(this, tweenMove);
+			Laya.systemTimer.clear(this, loop);
+			Laya.systemTimer.clear(this, tweenMove);
 			if (_tween) {
 				_tween.recover();
 				_tween = null;
@@ -126,7 +122,8 @@ package laya.utils {
 					_offsets.length = 0;
 					target.event(Event.DRAG_START, data);
 					MouseManager.instance.disableMouseEvent = _disableMouseEvent;
-					target._set$P("$_MOUSEDOWN", false);
+					//TODO:
+					//target._set$P("$_MOUSEDOWN", false);
 				} else return;
 			} else {
 				_offsets.push(offsetX, offsetY);
@@ -150,19 +147,19 @@ package laya.utils {
 			if (elasticDistance <= 0) {
 				backToArea();
 			} else {
-				if (target.x < area.x) {
-					var offsetX:Number = area.x - target.x;
-				} else if (target.x > area.x + area.width) {
-					offsetX = target.x - area.x - area.width;
+				if (target._x < area.x) {
+					var offsetX:Number = area.x - target._x;
+				} else if (target._x > area.x + area.width) {
+					offsetX = target._x - area.x - area.width;
 				} else {
 					offsetX = 0;
 				}
 				_elasticRateX = Math.max(0, 1 - (offsetX / elasticDistance));
 				
-				if (target.y < area.y) {
+				if (target._y < area.y) {
 					var offsetY:Number = area.y - target.y;
-				} else if (target.y > area.y + area.height) {
-					offsetY = target.y - area.y - area.height;
+				} else if (target._y > area.y + area.height) {
+					offsetY = target._y - area.y - area.height;
 				} else {
 					offsetY = 0;
 				}
@@ -174,8 +171,8 @@ package laya.utils {
 		 * 移动至设定的拖拽区域。
 		 */
 		private function backToArea():void {
-			target.x = Math.min(Math.max(target.x, area.x), area.x + area.width);
-			target.y = Math.min(Math.max(target.y, area.y), area.y + area.height);
+			target.x = Math.min(Math.max(target._x, area.x), area.x + area.width);
+			target.y = Math.min(Math.max(target._y, area.y), area.y + area.height);
 		}
 		
 		/**
@@ -187,7 +184,7 @@ package laya.utils {
 			Laya.stage.off(Event.MOUSE_UP, this, onStageMouseUp);
 			Laya.stage.off(Event.MOUSE_OUT, this, onStageMouseUp);
 			//Laya.stage.off(Event.MOUSE_MOVE, this, onStageMouseMove);
-			Laya.timer.clear(this, loop);
+			Laya.systemTimer.clear(this, loop);
 			
 			if (_clickOnly || !target) return;
 			//target.mouseEnabled = true;
@@ -212,7 +209,7 @@ package laya.utils {
 				
 				if (Math.abs(_offsetX) > maxOffset) _offsetX = _offsetX > 0 ? maxOffset : -maxOffset;
 				if (Math.abs(_offsetY) > maxOffset) _offsetY = _offsetY > 0 ? maxOffset : -maxOffset;
-				Laya.timer.frameLoop(1, this, tweenMove);
+				Laya.systemTimer.frameLoop(1, this, tweenMove);
 			} else if (elasticDistance > 0) {
 				checkElastic();
 			} else {
@@ -227,10 +224,10 @@ package laya.utils {
 			var tx:Number = NaN;
 			var ty:Number = NaN;
 			if (target.x < area.x) tx = area.x;
-			else if (target.x > area.x + area.width) tx = area.x + area.width;
+			else if (target._x > area.x + area.width) tx = area.x + area.width;
 			
 			if (target.y < area.y) ty = area.y;
-			else if (target.y > area.y + area.height) ty = area.y + area.height;
+			else if (target._y > area.y + area.height) ty = area.y + area.height;
 			
 			if (!isNaN(tx) || !isNaN(ty)) {
 				var obj:Object = {};
@@ -257,7 +254,7 @@ package laya.utils {
 			target.event(Event.DRAG_MOVE, data);
 			
 			if ((Math.abs(_offsetX) < 1 && Math.abs(_offsetY) < 1) || _elasticRateX < 0.5 || _elasticRateY < 0.5) {
-				Laya.timer.clear(this, tweenMove);
+				Laya.systemTimer.clear(this, tweenMove);
 				if (elasticDistance > 0) checkElastic();
 				else clear();
 			}

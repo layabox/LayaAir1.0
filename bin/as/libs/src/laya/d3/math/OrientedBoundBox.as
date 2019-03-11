@@ -393,7 +393,7 @@ package laya.d3.math {
 		}
 		
 		/**
-		 *  For accuracy, The transformation matrix for both <see cref="OrientedBoundingBox"/> must not have any scaling applied to it.
+		 * 	For accuracy, The transformation matrix for both <see cref="OrientedBoundingBox"/> must not have any scaling applied to it.
 		 *  Anyway, scaling using Scale method will keep this method accurate.
 		 * 该包围盒是否包含空间中另一OBB包围盒
 		 * @param	obb OBB包围盒
@@ -666,7 +666,7 @@ package laya.d3.math {
 			_boxBound1.min = _tempV30;
 			_boxBound1.max = extents;
 			
-			var intersects:Number = Collision.intersectsRayAndBoxRP(_ray, _boxBound1, out);
+			var intersects:Number = CollisionUtils.intersectsRayAndBoxRP(_ray, _boxBound1, out);
 			
 			if (intersects !== -1)
 				Vector3.transformCoordinate(out, transformation, out);

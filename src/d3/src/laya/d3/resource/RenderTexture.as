@@ -1,46 +1,29 @@
 package laya.d3.resource {
-	import laya.d3.utils.Size;
-	import laya.maths.Arith;
-	import laya.webgl.WebGL;
+	import laya.layagl.LayaGL;
 	import laya.webgl.WebGLContext;
+	import laya.webgl.resource.BaseTexture;
+	import laya.webgl.resource.Texture2D;
 	
 	/**
-	 * <code>RenderTarget</code> 类用于创建渲染目标。
+	 //* <code>RenderTexture</code> 类用于创建渲染目标。
 	 */
 	public class RenderTexture extends BaseTexture {
 		/** @private */
-		private static var _currentRenderTarget:RenderTexture;
+		private static var _currentActive:RenderTexture;
 		
-		/** @private */
-		private var _alreadyResolved:Boolean;
-		
-		/** @private */
-		private var _surfaceFormat:int;
-		/** @private */
-		private var _surfaceType:int;
-		/** @private */
-		private var _depthStencilFormat:int;
+		/**
+		 * 获取当前激活的Rendertexture
+		 */
+		public static function get currentActive():RenderTexture {
+			return _currentActive;
+		}
 		
 		/** @private */
 		private var _frameBuffer:*;
 		/** @private */
 		private var _depthStencilBuffer:*;
-		
-		/**
-		 * 获取表面格式。
-		 *@return 表面格式。
-		 */
-		public function get surfaceFormat():int {
-			return _surfaceFormat;
-		}
-		
-		/**
-		 * 获取表面类型。
-		 *@return 表面类型。
-		 */
-		public function get surfaceType():int {
-			return _surfaceType;
-		}
+		/** @private */
+		private var _depthStencilFormat:int;
 		
 		/**
 		 * 获取深度格式。
@@ -50,136 +33,106 @@ package laya.d3.resource {
 			return _depthStencilFormat;
 		}
 		
-		public function get frameBuffer():* {
-			return _frameBuffer;
-		}
-		
-		public function get depthStencilBuffer():* {
-			return _depthStencilBuffer;
+		/**
+		 * @inheritDoc
+		 */
+		override public function get defaulteTexture():BaseTexture {
+			return Texture2D.grayTexture;
 		}
 		
 		/**
-		 * 获取RenderTarget数据源,如果alreadyResolved等于false，则返回null。
-		 * @return RenderTarget数据源。
+		 * @param width  宽度。
+		 * @param height 高度。
+		 * @param format 纹理格式。
+		 * @param depthStencilFormat 深度格式。
+		 * 创建一个 <code>RenderTexture</code> 实例。
 		 */
-		override public function get source():* {
-			if (_alreadyResolved)
-				return super.source;
-			else
-				return null;
-		}
-		
-		/**
-		 * 创建一个 <code>RenderTarget</code> 实例。
-		 * @param	width  宽度。
-		 * @param	height  高度。
-		 * @param	mipMap  是否生成mipMap。
-		 * @param	surfaceFormat  表面格式。
-		 *   @param	surfaceType  表面类型。
-		 *   @param	depthFormat  深度格式。
-		 */
-		public function RenderTexture(width:Number, height:Number, surfaceFormat:int = WebGLContext.RGBA, surfaceType:int = WebGLContext.UNSIGNED_BYTE, depthStencilFormat:int = WebGLContext.DEPTH_COMPONENT16, mipMap:Boolean = false, repeat:Boolean = false, minFifter:int = -1, magFifter:int = -1) {
-			super();
-			_type = WebGLContext.TEXTURE_2D;
+		public function RenderTexture(width:Number, height:Number, format:int = FORMAT_R8G8B8, depthStencilFormat:int = BaseTexture.FORMAT_DEPTH_16) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			super(format, false);
+			_glTextureType = WebGLContext.TEXTURE_2D;
 			_width = width;
 			_height = height;
-			_size = new Size(width, height);
-			_surfaceFormat = surfaceFormat;
-			_surfaceType = surfaceType;
 			_depthStencilFormat = depthStencilFormat;
-			_mipmap = mipMap;
-			_repeat = repeat;
-			_minFifter = minFifter;
-			_magFifter = magFifter;
-			
-			activeResource();
-			_alreadyResolved = true;
+			_create(width, height);
 		}
 		
-		override protected function recreateResource():void {
-			var gl:WebGLContext = WebGL.mainContext;
+		/**
+		 * @private
+		 */
+		private function _create(width:int, height:int):void {
+			var gl:WebGLContext = LayaGL.instance;
 			_frameBuffer = gl.createFramebuffer();
-			//var ext = gl.getExtension('OES_texture_float');
-			_source = gl.createTexture();
-			var preTarget:* = WebGLContext.curBindTexTarget;
-			var preTexture:* = WebGLContext.curBindTexValue;
-			WebGLContext.bindTexture(gl, _type, _source);
-			gl.texImage2D(_type, 0, WebGLContext.RGBA, _width, _height, 0, _surfaceFormat, _surfaceType, null);
-			//gl.texImage2D(WebGLContext.TEXTURE_2D, 0, WebGLContext.RGBA, _width, _height, 0, WebGLContext.RGBA, WebGLContext.FLOAT, null);
-			var minFifter:int = this._minFifter;
-			var magFifter:int = this._magFifter;
-			var repeat:int = this._repeat ? WebGLContext.REPEAT : WebGLContext.CLAMP_TO_EDGE;
-			
-			var isPot:Boolean = Arith.isPOT(_width, _height);
-			if (isPot) {
-				if (this._mipmap)
-					(minFifter !== -1) || (minFifter = WebGLContext.LINEAR_MIPMAP_LINEAR);
-				else
-					(minFifter !== -1) || (minFifter = WebGLContext.LINEAR);
-				
-				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
-				
-				gl.texParameteri(_type, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, repeat);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, repeat);
-				this._mipmap && gl.generateMipmap(_type);//TODO:这里生成有问题，要渲染结束再生成
-			} else {
-				(minFifter !== -1) || (minFifter = WebGLContext.LINEAR);
-				(magFifter !== -1) || (magFifter = WebGLContext.LINEAR);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_MIN_FILTER, minFifter);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_MAG_FILTER, magFifter);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_S, WebGLContext.CLAMP_TO_EDGE);
-				gl.texParameteri(_type, WebGLContext.TEXTURE_WRAP_T, WebGLContext.CLAMP_TO_EDGE);
-			}
-			
+			WebGLContext.bindTexture(gl, _glTextureType, _glTexture);
+			var glFormat:int = _getGLFormat();
+			gl.texImage2D(_glTextureType, 0, glFormat, width, height, 0, glFormat, WebGLContext.UNSIGNED_BYTE, null);
+			_setGPUMemory(width * height * 4);
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
-			gl.framebufferTexture2D(WebGLContext.FRAMEBUFFER, WebGLContext.COLOR_ATTACHMENT0, WebGLContext.TEXTURE_2D, _source, 0);
-			
-			if (_depthStencilFormat)//depthFormat为空时不创建深度缓冲
-			{
+			gl.framebufferTexture2D(WebGLContext.FRAMEBUFFER, WebGLContext.COLOR_ATTACHMENT0, WebGLContext.TEXTURE_2D, _glTexture, 0);
+			if (_depthStencilFormat !== BaseTexture.FORMAT_DEPTHSTENCIL_NONE) {
 				_depthStencilBuffer = gl.createRenderbuffer();
 				gl.bindRenderbuffer(WebGLContext.RENDERBUFFER, _depthStencilBuffer);
-				gl.renderbufferStorage(WebGLContext.RENDERBUFFER, _depthStencilFormat, _width, _height);
-				
 				switch (_depthStencilFormat) {
-				//case WebGLContext.DEPTH_COMPONENT: 
-				case WebGLContext.DEPTH_COMPONENT16: 
+				case BaseTexture.FORMAT_DEPTH_16: 
+					gl.renderbufferStorage(WebGLContext.RENDERBUFFER, WebGLContext.DEPTH_COMPONENT16, width, height);
 					gl.framebufferRenderbuffer(WebGLContext.FRAMEBUFFER, WebGLContext.DEPTH_ATTACHMENT, WebGLContext.RENDERBUFFER, _depthStencilBuffer);
 					break;
-				//case WebGLContext.STENCIL_INDEX:
-				case WebGLContext.STENCIL_INDEX8: 
+				case BaseTexture.FORMAT_STENCIL_8: 
+					gl.renderbufferStorage(WebGLContext.RENDERBUFFER, WebGLContext.STENCIL_INDEX8, width, height);
 					gl.framebufferRenderbuffer(WebGLContext.FRAMEBUFFER, WebGLContext.STENCIL_ATTACHMENT, WebGLContext.RENDERBUFFER, _depthStencilBuffer);
 					break;
-				case WebGLContext.DEPTH_STENCIL: 
+				case BaseTexture.FORMAT_DEPTHSTENCIL_16_8: 
+					gl.renderbufferStorage(WebGLContext.RENDERBUFFER, WebGLContext.DEPTH_STENCIL, width, height);
 					gl.framebufferRenderbuffer(WebGLContext.FRAMEBUFFER, WebGLContext.DEPTH_STENCIL_ATTACHMENT, WebGLContext.RENDERBUFFER, _depthStencilBuffer);
 					break;
+				default: 
+					throw "RenderTexture: unkonw depth format.";
 				}
 			}
 			
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
-			(preTarget && preTexture) && (WebGLContext.bindTexture(gl, preTarget, preTexture));
 			gl.bindRenderbuffer(WebGLContext.RENDERBUFFER, null);
-			memorySize = _width * _height * 4;
-			completeCreate();
+			
+			_setWarpMode(WebGLContext.TEXTURE_WRAP_S, _wrapModeU);
+			_setWarpMode(WebGLContext.TEXTURE_WRAP_T, _wrapModeV);
+			_setFilterMode(_filterMode);
+			_setAnisotropy(_anisoLevel);
+			
+			_readyed = true;
+			_activeResource();
+		}
+		
+		/**
+		 * 生成mipMap。
+		 */
+		public function generateMipmap():void {
+			if (_isPot(width) && _isPot(height)) {
+				_mipmap = true;
+				LayaGL.instance.generateMipmap(_glTextureType);
+				_setFilterMode(_filterMode);
+				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
+			} else {
+				_mipmap = false;
+				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
+			}
 		}
 		
 		/**
 		 * 开始绑定。
 		 */
 		public function start():void {
-			WebGL.mainContext.bindFramebuffer(WebGLContext.FRAMEBUFFER, frameBuffer);
-			_currentRenderTarget = this;
-			_alreadyResolved = false;
+			LayaGL.instance.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
+			_currentActive = this;
+			_readyed = false;
 		}
 		
 		/**
 		 * 结束绑定。
 		 */
 		public function end():void {
-			WebGL.mainContext.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
-			_currentRenderTarget = null;
-			_alreadyResolved = true;
+			LayaGL.instance.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
+			_currentActive = null;
+			_readyed = true;
 		}
 		
 		/**
@@ -190,8 +143,8 @@ package laya.d3.resource {
 		 * @param height 高度。
 		 * @return 像素数据。
 		 */
-		public function getData(x:Number, y:Number, width:Number, height:Number):Uint8Array {
-			var gl:WebGLContext = WebGL.mainContext;
+		public function getData(x:Number, y:Number, width:Number, height:Number,out:Uint8Array):Uint8Array {//TODO:检查长度
+			var gl:WebGLContext = LayaGL.instance;
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
 			var canRead:Boolean = (gl.checkFramebufferStatus(WebGLContext.FRAMEBUFFER) === WebGLContext.FRAMEBUFFER_COMPLETE);
 			
@@ -199,26 +152,24 @@ package laya.d3.resource {
 				gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
 				return null;
 			}
-			
-			var pixels:Uint8Array = new Uint8Array(_width * _height * 4);
-			gl.readPixels(x, y, width, height, _surfaceFormat, _surfaceType, pixels);
+			gl.readPixels(x, y, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, out);
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
-			return pixels;
+			return out;
 		}
 		
 		/**
-		 * 销毁资源。
+		 * @inheritDoc
 		 */
-		override protected function disposeResource():void {
+		override protected function _disposeResource():void {
 			if (_frameBuffer) {
-				var gl:WebGLContext = WebGL.mainContext;
-				gl.deleteTexture(_source);
+				var gl:WebGLContext = LayaGL.instance;
+				gl.deleteTexture(_glTexture);
 				gl.deleteFramebuffer(_frameBuffer);
 				gl.deleteRenderbuffer(_depthStencilBuffer);
-				_source = null;
+				_glTexture = null;
 				_frameBuffer = null;
 				_depthStencilBuffer = null;
-				memorySize = 0;
+				_setGPUMemory(0);
 			}
 		}
 	

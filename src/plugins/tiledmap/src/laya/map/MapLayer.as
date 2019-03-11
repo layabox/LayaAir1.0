@@ -3,7 +3,6 @@ package laya.map {
 	import laya.map.GridSprite;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
-	import laya.renders.RenderContext;
 	import laya.resource.Texture;
 	
 	/**
@@ -37,16 +36,6 @@ package laya.map {
 		
 		/**当前Layer的名称*/
 		public var layerName:String = null;
-		
-		/**
-		 * 当前需要更新的gridSprite列表 
-		 */		
-		private var _showGridList:Array = [];
-		
-		/**
-		 * 活动对象列表,活动对象不管是否显示都需要更新 
-		 */		
-		private var _aloneObjs:Array = [];
 		
 		/**
 		 * 解析LAYER数据，以及初始化一些数据
@@ -123,15 +112,7 @@ package laya.map {
 								break;
 							}
 							this.addChild(tSprite);
-			
 							_gridSpriteArray.push(tSprite);
-							if (tSprite.isAloneObject)
-							{
-								_showGridList.push(tSprite);
-								_aloneObjs.push(tSprite);
-							}
-							
-							
 							_objDic[tObjectData.name] = tSprite;
 						}
 					}
@@ -333,50 +314,8 @@ package laya.map {
 			tSprite.relativeX = gridX * _map.gridWidth;
 			tSprite.relativeY = gridY * _map.gridHeight;
 			tSprite.initData(_map);
-			tSprite.updatePos();
 			_gridSpriteArray.push(tSprite);
 			return tSprite;
-		}
-		
-		/**
-		 * 将gridSprite设为显示状态 
-		 * @param gridSprite 
-		 */		
-		public function showGridSprite(gridSprite:GridSprite):void
-		{
-			var gridList:Array=_showGridList;
-			var i:int, len:int;
-			len = gridList.length;
-			var ok_i:int = -1;//查找一个可替换的位置
-			var tGridSprite:GridSprite;
-			for (i = 0; i < len; i++)
-			{
-				tGridSprite = gridList[i];
-				if (tGridSprite == gridSprite) return;
-				if (!tGridSprite.isAloneObject && !tGridSprite.visible)
-				{
-					ok_i = i;
-				}
-				
-			}
-			if (ok_i >= 0)
-			{
-				gridList[ok_i] = gridSprite;
-			}else
-			{
-				gridList.push(gridSprite);
-			}
-			
-		}
-		
-		/**
-		 * 将gridSprite设为隐藏状态 
-		 * @param gridSprite
-		 * 
-		 */		
-		public function hideGridSprite(gridSprite:GridSprite):void
-		{
-			gridSprite.visible = false;
 		}
 		
 		/**
@@ -385,49 +324,12 @@ package laya.map {
 		 */
 		public function updateGridPos():void {
 			var tSprite:GridSprite;
-			var tList:Array;
-			tList = _showGridList;
-			var len:int;
-			len = tList.length;
-			for (var i:int = 0; i < len; i++) {
-				tSprite = tList[i];
-				if ((tSprite._style.visible || tSprite.isAloneObject) && tSprite.drawImageNum > 0) {
+			for (var i:int = 0; i < this._gridSpriteArray.length; i++) {
+				tSprite = this._gridSpriteArray[i];
+				if ((tSprite._visible || tSprite.isAloneObject) && tSprite.drawImageNum > 0) {
 					tSprite.updatePos();
 				}
 			}
-		}
-		
-		/**
-		 * 更新此层中的活动对象
-		 */
-		public function updateAloneObject():void
-		{
-			var tSprite:GridSprite;
-			var tList:Array;
-			tList = _aloneObjs;
-			var len:int;
-			len = tList.length;
-			for (var i:int = 0; i < len; i++) {
-				tSprite = tList[i];
-				if (tSprite.drawImageNum > 0) {
-					tSprite.updatePos();
-				}
-			}
-		}
-		
-		/**
-		 * 渲染时使用需要更新的列表进行渲染，减少遍历 
-		 * @param context
-		 * @param x
-		 * @param y
-		 * 
-		 */		
-		override public function render(context:RenderContext, x:Number, y:Number):void 
-		{
-			var childs:Array = this._childs;
-			this._childs = _showGridList;
-			super.render(context, x, y);
-			this._childs = childs;
 		}
 		
 		/**
@@ -477,8 +379,8 @@ package laya.map {
 								gridSprite.addChild(tAnimationSprite);
 								gridSprite.isHaveAnimation = true;
 							} else {
-								//gridSprite.graphics.drawTexture(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY, tTexture.width, tTexture.height);
-								gridSprite.graphics.drawTexture(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY);
+								//gridSprite.graphics.drawImage(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY, tTexture.width, tTexture.height);
+								gridSprite.graphics.drawImage(tTileTexSet.texture, tX + tTileTexSet.offX, tY + tTileTexSet.offY);
 							}
 							return true;
 						}
@@ -508,7 +410,7 @@ package laya.map {
 				_objDic = null;
 			}
 			if (_dataDic) {
-				for (p in _dataDic) {
+				for ( p in _dataDic) {
 					delete _dataDic[p];
 				}
 				_dataDic = null;

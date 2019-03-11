@@ -1,16 +1,43 @@
 package laya.display {
-	import laya.display.css.Font;
+	import laya.display.cmd.AlphaCmd;
+	import laya.display.cmd.ClipRectCmd;
+	import laya.display.cmd.DrawCircleCmd;
+	import laya.display.cmd.DrawCurvesCmd;
+	import laya.display.cmd.DrawImageCmd;
+	import laya.display.cmd.DrawLineCmd;
+	import laya.display.cmd.DrawLinesCmd;
+	import laya.display.cmd.DrawPathCmd;
+	import laya.display.cmd.DrawPieCmd;
+	import laya.display.cmd.DrawPolyCmd;
+	import laya.display.cmd.DrawRectCmd;
+	import laya.display.cmd.DrawTextureCmd;
+	import laya.display.cmd.DrawTexturesCmd;
+	import laya.display.cmd.DrawTrianglesCmd;
+	import laya.display.cmd.FillBorderTextCmd;
+	import laya.display.cmd.FillBorderWordsCmd;
+	import laya.display.cmd.FillTextCmd;
+	import laya.display.cmd.FillTextureCmd;
+	import laya.display.cmd.FillWordsCmd;
+	import laya.display.cmd.RestoreCmd;
+	import laya.display.cmd.RotateCmd;
+	import laya.display.cmd.SaveCmd;
+	import laya.display.cmd.ScaleCmd;
+	import laya.display.cmd.StrokeTextCmd;
+	import laya.display.cmd.TransformCmd;
+	import laya.display.cmd.TranslateCmd;
 	import laya.events.Event;
+	import laya.filters.ColorFilter;
+	import laya.filters.ColorFilterAction;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.net.Loader;
 	import laya.renders.Render;
-	import laya.renders.RenderContext;
-	import laya.renders.RenderSprite;
+	import laya.resource.Context;
+	import laya.resource.HTMLCanvas;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
-	import laya.utils.Handler;
+	import laya.utils.ColorUtils;
 	import laya.utils.Utils;
 	import laya.utils.VectorGraphManager;
 	
@@ -21,140 +48,74 @@ package laya.display {
 	 */
 	public class Graphics {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		
 		/**@private */
 		public var _sp:Sprite;
 		/**@private */
-		public var _one:Array = null;
+		public var _one:* = null;
 		/**@private */
 		public var _render:Function = _renderEmpty;
 		/**@private */
 		private var _cmds:Array = null;
 		/**@private */
-		private var _vectorgraphArray:Array;
+		protected var _vectorgraphArray:Array;
 		/**@private */
 		private var _graphicBounds:GraphicsBounds;
-		private static var _cache:Array = [];
-		
 		/**@private */
-		public static function __init__():void {
-			if (Render.isConchNode) {
-				var from:* = Graphics.prototype;
-				var to:* =Browser.window.ConchGraphics.prototype;
-				var list:Array = ["clear", "destroy", "alpha", "rotate", "transform", "scale", "translate", "save", "restore", "clipRect", "blendMode", "fillText", "fillBorderText", "_fands", "drawRect", "drawCircle", "drawPie", "drawPoly", "drawPath", "drawImageM", "drawLine", "drawLines", "_drawPs", "drawCurves", "replaceText", "replaceTextColor", "_fillImage", "fillTexture", "setSkinMesh", "drawParticle", "drawImageS"];
-				for (var i:int = 0, len:int = list.length; i <= len; i++) {
-					var temp:String = list[i];
-					from[temp] = to[temp];
-				}
-				from._saveToCmd = null;
-				if (to.drawImageS) {
-					from.drawTextures = function(tex:Texture, pos:Array):void {
-						if (!tex) return;
-						if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
-						{
-							return;
-						}
-						//处理透明区域裁剪
-						var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
-						this.drawImageS(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, tex.offsetX, tex.offsetY, tex.width, tex.height, pos);
-					}
-				}
-				from.drawTexture = function(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):void {
-					if (!tex) return;
-					if (!tex.loaded) {
-						tex.once(Event.LOADED, this, function():void {
-							this.drawTexture(tex, x, y, width, height, m);
-						});
-						return;
-					}
-					if (!(tex.loaded && tex.bitmap && tex.source))//source内调用tex.active();
-					{
-						return;
-					}
-					if (!width) width = tex.sourceWidth;
-					if (!height) height = tex.sourceHeight;
-					alpha = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
-					
-					width = width - tex.sourceWidth + tex.width;
-					height = height - tex.sourceHeight + tex.height;
-					if (width <= 0 || height <= 0) return;
-					
-					//处理透明区域裁剪
-					x += tex.offsetX;
-					y += tex.offsetY;
-					var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
-					this.drawImageM(tex.bitmap.source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height, m, alpha);
-					this._repaint();
-				}
-				from.fillTexture = function(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
-					if (!tex) return;
-					if (tex.loaded) {
-						var ctxi:* = Render._context.ctx;
-						var w:Number = tex.bitmap.width, h:Number = tex.bitmap.height, uv:Array = tex.uv;
-						var pat:*;
-						if (tex.uv != Texture.DEF_UV) {
-							pat = ctxi.createPattern(tex.bitmap.source, type, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h);
-						} else {
-							pat = ctxi.createPattern(tex.bitmap.source, type);
-						}
-						var sX:Number = 0, sY:Number = 0;
-						if (offset) {
-							x += offset.x % tex.width;
-							y += offset.y % tex.height;
-							sX -= offset.x % tex.width;
-							sY -= offset.y % tex.height;
-						}
-						this._fillImage(pat, x, y, sX, sY, width, height);
-					}
-				}
-			}
+		public var autoDestroy:Boolean = false;
+		
+		public function Graphics() {
+			_createData();
 		}
 		
-		/**
-		 * 创建一个新的 <code>Graphics</code> 类实例。
-		 */
-		public function Graphics() {
-			if (Render.isConchNode) {
-				//[IF-JS] var _this_:any=this;
-				//[IF-JS] _this_._nativeObj=new (window as Object)._conchGraphics();
-				//[IF-JS] _this_.id=_this_._nativeObj.conchID;
-			}
+		/**@private */
+		public function _createData():void {
+		
+		}
+		
+		/**@private */
+		public function _clearData():void {
+		
+		}
+		
+		/**@private */
+		public function _destroyData():void {
+		
 		}
 		
 		/**
 		 * <p>销毁此对象。</p>
 		 */
 		public function destroy():void {
-			clear();
+			clear(true);
 			if (_graphicBounds) _graphicBounds.destroy();
 			_graphicBounds = null;
 			_vectorgraphArray = null;
-			_sp && (_sp._renderType = 0);
-			_sp = null;
+			if (_sp) {
+				_sp._renderType = 0;
+				_sp._setRenderType(0);
+				_sp = null;
+			}
+			_destroyData();
 		}
 		
 		/**
 		 * <p>清空绘制命令。</p>
-		 * @param recoverCmds 是否回收绘图指令
-		 */	
-		public function clear(recoverCmds:Boolean = false):void {
-			var i:int, len:int;
+		 * @param recoverCmds 是否回收绘图指令数组，设置为true，则对指令数组进行回收以节省内存开销，建议设置为true进行回收，但如果手动引用了数组，不建议回收
+		 */
+		public function clear(recoverCmds:Boolean = true):void {
+			//TODO:内存回收all
 			if (recoverCmds) {
 				var tCmd:* = _one;
 				if (_cmds) {
-					len = _cmds.length;
+					var i:int, len:int = _cmds.length;
 					for (i = 0; i < len; i++) {
 						tCmd = _cmds[i];
-						if (tCmd && (tCmd.callee === Render._context._drawTexture || tCmd.callee === Render._context._drawTextureWithTransform)) {
-							tCmd[0] = null;
-							_cache.push(tCmd);
-						}
+						tCmd.recover();
 					}
 					_cmds.length = 0;
 				} else if (tCmd) {
-					if (tCmd && (tCmd.callee === Render._context._drawTexture || tCmd.callee === Render._context._drawTextureWithTransform)) {
-						tCmd[0] = null;
-						_cache.push(tCmd);
-					}
+					tCmd.recover();
 				}
 			} else {
 				_cmds = null;
@@ -162,8 +123,12 @@ package laya.display {
 			
 			_one = null;
 			_render = _renderEmpty;
-			
-			_sp && (_sp._renderType &= ~RenderSprite.IMAGE & ~RenderSprite.GRAPHICS);
+			_clearData();
+			//_sp && (_sp._renderType &= ~SpriteConst.IMAGE);
+			if (_sp) {
+				_sp._renderType &= ~SpriteConst.GRAPHICS;
+				_sp._setRenderType(_sp._renderType);
+			}
 			_repaint();
 			if (_vectorgraphArray) {
 				for (i = 0, len = _vectorgraphArray.length; i < len; i++) {
@@ -181,7 +146,7 @@ package laya.display {
 		/**@private */
 		private function _initGraphicBounds():void {
 			if (!_graphicBounds) {
-				_graphicBounds = new GraphicsBounds();
+				_graphicBounds = GraphicsBounds.create();
 				_graphicBounds._graphics = this;
 			}
 		}
@@ -196,6 +161,7 @@ package laya.display {
 		}
 		
 		/**@private */
+		//TODO:coverage
 		public function _isOnlyOne():Boolean {
 			return !_cmds || _cmds.length === 0;
 		}
@@ -205,11 +171,15 @@ package laya.display {
 		 * 命令流。存储了所有绘制命令。
 		 */
 		public function get cmds():Array {
+			//TODO:单命令不对
 			return _cmds;
 		}
 		
 		public function set cmds(value:Array):void {
-			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
+			if (_sp) {
+				_sp._renderType |= SpriteConst.GRAPHICS;
+				_sp._setRenderType(_sp._renderType);
+			}
 			_cmds = value;
 			_render = _renderAll;
 			_repaint();
@@ -235,187 +205,120 @@ package laya.display {
 			return _graphicBounds.getBoundPoints(realSize);
 		}
 		
-		private function _addCmd(a:Array):void {
-			this._cmds = this._cmds || [];
-			a.callee = a.shift();
-			this._cmds.push(a);
-		}
-		
-		public function setFilters(fs:Array):void
-		{
-			_saveToCmd(Render._context._setFilters, fs);
-		}
-		
-		
 		/**
-		 * 绘制纹理。
-		 * @param tex		纹理。
+		 * 绘制单独图片
+		 * @param texture		纹理。
 		 * @param x 		（可选）X轴偏移量。
 		 * @param y 		（可选）Y轴偏移量。
 		 * @param width		（可选）宽度。
 		 * @param height	（可选）高度。
-		 * @param m			（可选）矩阵信息。
-		 * @param alpha		（可选）透明度。
 		 */
-		public function drawTexture(tex:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, m:Matrix = null, alpha:Number = 1):Array {
-			if (!tex || alpha < 0.01) return null;
-			if (!width) width = tex.sourceWidth;
-			if (!height) height = tex.sourceHeight;
-			alpha = alpha < 0 ? 0 : (alpha > 1 ? 1 : alpha);
-			var offset:Number = (!Render.isWebGL && (Browser.onFirefox || Browser.onEdge||Browser.onIE||Browser.onSafari)) ? 0.5 : 0;
-			var wRate:Number = width / tex.sourceWidth;
-			var hRate:Number = height / tex.sourceHeight;
-			width = tex.width * wRate;
-			height = tex.height * hRate;
-
-			if (tex.loaded && (width <= 0 || height <= 0)) return null;
-			
-			x += tex.offsetX * wRate;
-			y += tex.offsetY * hRate;
-			
-			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
-			
-			var args:Array;
-			x -= offset;
-			y -= offset;
-			width += 2 * offset;
-			height += 2 * offset;
-			if (_cache.length) {
-				args = _cache.pop();
-				args[0] = tex;
-				args[1] = x;
-				args[2] = y;
-				args[3] = width;
-				args[4] = height;
-				args[5] = m;
-				args[6] = alpha;
-			} else {
-				args = [tex, x, y, width, height, m, alpha];
+		public function drawImage(texture:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0):DrawImageCmd {
+			if (!texture) return null;
+			if (!width) width = texture.sourceWidth;
+			if (!height) height = texture.sourceHeight;
+			if (texture.getIsReady()) {
+				var wRate:Number = width / texture.sourceWidth;
+				var hRate:Number = height / texture.sourceHeight;
+				width = texture.width * wRate;
+				height = texture.height * hRate;
+				if (width <= 0 || height <= 0) return null;
+				
+				x += texture.offsetX * wRate;
+				y += texture.offsetY * hRate;
 			}
 			
-			args.callee = (m || alpha != 1) ? Render._context._drawTextureWithTransform : Render._context._drawTexture;
-			if (_one == null && !m && alpha == 1) {
+			if (_sp) {
+				_sp._renderType |= SpriteConst.GRAPHICS;
+				_sp._setRenderType(_sp._renderType);
+			}
+			
+			var args:DrawImageCmd = DrawImageCmd.create.call(this, texture, x, y, width, height);
+			
+			if (_one == null) {
 				_one = args;
 				_render = _renderOneImg;
+					//if(_sp)_sp._renderType |= SpriteConst.IMAGE;
 			} else {
-				_saveToCmd(args.callee, args);
+				_saveToCmd(null, args);
 			}
-			if (!tex.loaded) {
-				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
-			}
+			//if (!tex.loaded) {
+			//tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
+			//}
 			_repaint();
 			return args;
 		}
 		
 		/**
-		 * @private 清理贴图并替换为最新的
-		 * @param tex
+		 * 绘制纹理，相比drawImage功能更强大，性能会差一些
+		 * @param texture		纹理。
+		 * @param x 		（可选）X轴偏移量。
+		 * @param y 		（可选）Y轴偏移量。
+		 * @param width		（可选）宽度。
+		 * @param height	（可选）高度。
+		 * @param matrix	（可选）矩阵信息。
+		 * @param alpha		（可选）透明度。
+		 * @param color		（可选）颜色滤镜。
+		 * @param blendMode （可选）混合模式。
 		 */
-		public function cleanByTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0):void {
-			if (!tex) return clear();
-			if (_one && _render === _renderOneImg) {
-				if (!width) width = tex.sourceWidth;
-				if (!height) height = tex.sourceHeight;
-				//				width = width - tex.sourceWidth + tex.width;
-				//				height = height - tex.sourceHeight + tex.height;
-				var wRate:Number = width / tex.sourceWidth;
-				var hRate:Number = height / tex.sourceHeight;
-				width = tex.width * wRate;
-				height = tex.height * hRate;
+		public function drawTexture(texture:Texture, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, matrix:Matrix = null, alpha:Number = 1, color:String = null, blendMode:String = null):DrawTextureCmd {
+			if (!texture || alpha < 0.01) return null;
+			if (!texture.getIsReady()) return null;
+			if (!width) width = texture.sourceWidth;
+			if (!height) height = texture.sourceHeight;
+			if (texture.getIsReady()) {
+				var offset:Number = (!Render.isWebGL && (Browser.onFirefox || Browser.onEdge || Browser.onIE || Browser.onSafari)) ? 0.5 : 0;
+				var wRate:Number = width / texture.sourceWidth;
+				var hRate:Number = height / texture.sourceHeight;
+				width = texture.width * wRate;
+				height = texture.height * hRate;
+				if (width <= 0 || height <= 0) return null;
 				
-				//				x += tex.offsetX;
-				//				y += tex.offsetY;
-				
-				x += tex.offsetX * wRate;
-				y += tex.offsetY * hRate;
-				
-				_one[0] = tex;
-				_one[1] = x;
-				_one[2] = y;
-				_one[3] = width;
-				_one[4] = height;
-			} else {
-				clear();
-				tex && drawTexture(tex, x, y, width, height);
+				x += texture.offsetX * wRate;
+				y += texture.offsetY * hRate;
+				x -= offset;
+				y -= offset;
+				width += 2 * offset;
+				height += 2 * offset;
 			}
+			
+			if (_sp) {
+				_sp._renderType |= SpriteConst.GRAPHICS;
+				_sp._setRenderType(_sp._renderType);
+			}
+			
+			if (!Render.isConchApp && !Render.isWebGL && (blendMode || color)) {
+				var canvas:HTMLCanvas = new HTMLCanvas();
+				canvas.size(width, height);
+				var ctx:Context = canvas.getContext('2d');
+				ctx.drawTexture(texture, 0, 0, width, height);
+				texture = new Texture(canvas);
+				
+				if (color) {
+					var filter:ColorFilterAction = new ColorFilterAction();
+					var colorArr:Array = ColorUtils.create(color).arrColor;
+					//TODO:
+					filter.data = new ColorFilter().color(colorArr[0] * 255, colorArr[1] * 255, colorArr[2] * 255);
+					//TODO:
+					filter.apply({canvas: canvas});
+				}
+			}
+			
+			var args:DrawTextureCmd = DrawTextureCmd.create.call(this, texture, x, y, width, height, matrix, alpha, color, blendMode);
+			_repaint();
+			
+			return _saveToCmd(null, args);
 		}
 		
 		/**
 		 * 批量绘制同样纹理。
-		 * @param tex 纹理。
-		 * @param pos 绘制坐标。
+		 * @param texture 纹理。
+		 * @param pos 绘制次数和坐标。
 		 */
-		public function drawTextures(tex:Texture, pos:Array):void {
-			if (!tex) return;
-			_saveToCmd(Render._context._drawTextures, [tex, pos]);
+		public function drawTextures(texture:Texture, pos:Array):DrawTexturesCmd {
+			if (!texture) return null;
+			return _saveToCmd(Render._context._drawTextures, DrawTexturesCmd.create.call(this, texture, pos));
 		}
-		
-		/**
-		 * 用texture填充。
-		 * @param tex		纹理。
-		 * @param x			X轴偏移量。
-		 * @param y			Y轴偏移量。
-		 * @param width		（可选）宽度。
-		 * @param height	（可选）高度。
-		 * @param type		（可选）填充类型 repeat|repeat-x|repeat-y|no-repeat
-		 * @param offset	（可选）贴图纹理偏移
-		 */
-		public function fillTexture(tex:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):void {
-			if (!tex) return;
-			var args:* = [tex, x, y, width, height, type, offset || Point.EMPTY, {}];
-			if (!tex.loaded) {
-				tex.once(Event.LOADED, this, _textureLoaded, [tex, args]);
-			}
-			_saveToCmd(Render._context._fillTexture, args);
-		}
-		
-		private function _textureLoaded(tex:Texture, param:Array):void {
-			param[3] = param[3] || tex.width;
-			param[4] = param[4] || tex.height;
-			_repaint();
-		}
-		
-		/**
-		 * 填充一个圆形。这是一个临时函数，以后会删除，建议用户自己实现。
-		 * @param	x
-		 * @param	y
-		 * @param	tex
-		 * @param	cx		圆心位置。
-		 * @param	cy
-		 * @param	radius
-		 * @param	segNum	分段数，越大越平滑。
-		 */
-		public function fillCircle(x:Number, y:Number, tex:Texture, cx:Number, cy:Number, radius:Number, segNum:int):void {
-			//由于大图集是后来的事情，现在还无法知道具体位置，所以无法计算uv，所以关掉本文件的大图集功能
-			tex.bitmap.enableMerageInAtlas = false;
-			var verts:* = new Float32Array((segNum+1) * 2);	//1是中心xy
-			var uvs:* = new Float32Array((segNum+1) * 2);
-			var indices:* = new Uint16Array(segNum*3);
-			var dang:Number = 2 * Math.PI / segNum;
-			var cang:Number = 0;
-			verts[0] = cx;
-			verts[1] = cy;
-			uvs[0] = cx / tex.width;
-			uvs[1] = cy / tex.height;
-			var idx:int = 2;
-			for ( var i:int = 0; i < segNum; i++) {
-				var px:Number = radius * Math.cos(cang)+cx;
-				var py:Number = radius * Math.sin(cang)+cy;
-				verts[idx] = px;
-				verts[idx + 1] = py;
-				uvs[idx] = px / tex.width;
-				uvs[idx + 1] = py / tex.height;
-				cang += dang;
-				idx += 2;
-			}
-			idx = 0;
-			for ( i = 0; i < segNum; i++) {
-				indices[idx++] = 0;
-				indices[idx++] = i+1;
-				indices[idx++] = (i + 2 >= segNum+1)?1:(i + 2);
-			}
-			drawTriangles(tex, x, y, verts, uvs, indices);
-		}		
 		
 		/**
 		 * 绘制一组三角形
@@ -430,27 +333,46 @@ package laya.display {
 		 * @param color		颜色变换
 		 * @param blendMode	blend模式
 		 */
-		public function drawTriangles(texture:Texture, x:Number, y:Number, vertices:Float32Array, uvs:Float32Array, indices:Uint16Array, matrix:Matrix = null, alpha:Number = 1, color:String = null, blendMode:String = null):void {
-			_saveToCmd(Render._context.drawTriangles, [texture, x, y, vertices, uvs, indices, matrix, alpha, color, blendMode]);
+		public function drawTriangles(texture:Texture, x:Number, y:Number, vertices:Float32Array, uvs:Float32Array, indices:Uint16Array, matrix:Matrix = null, alpha:Number = 1, color:String = null, blendMode:String = null):DrawTrianglesCmd {
+			return _saveToCmd(Render._context.drawTriangles, DrawTrianglesCmd.create.call(this, texture, x, y, vertices, uvs, indices, matrix, alpha, color, blendMode));
 		}
 		
+		/**
+		 * 用texture填充。
+		 * @param texture		纹理。
+		 * @param x			X轴偏移量。
+		 * @param y			Y轴偏移量。
+		 * @param width		（可选）宽度。
+		 * @param height	（可选）高度。
+		 * @param type		（可选）填充类型 repeat|repeat-x|repeat-y|no-repeat
+		 * @param offset	（可选）贴图纹理偏移
+		 *
+		 */
+		public function fillTexture(texture:Texture, x:Number, y:Number, width:Number = 0, height:Number = 0, type:String = "repeat", offset:Point = null):FillTextureCmd {
+			if (texture && texture.getIsReady())
+				return _saveToCmd(Render._context._fillTexture, FillTextureCmd.create.call(this, texture, x, y, width, height, type, offset || Point.EMPTY, {}));
+			else
+				return null;
+		}
 		
 		/**
 		 * @private
 		 * 保存到命令流。
 		 */
-		public function _saveToCmd(fun:Function, args:Array):Array {
-			_sp && (_sp._renderType |= RenderSprite.GRAPHICS);
+		public function _saveToCmd(fun:Function, args:*):* {
+			if (_sp) {
+				_sp._renderType |= SpriteConst.GRAPHICS;
+				_sp._setRenderType(_sp._renderType);
+			}
 			if (_one == null) {
 				_one = args;
 				_render = _renderOne;
 			} else {
-				_sp && (_sp._renderType &= ~RenderSprite.IMAGE);
+				//_sp && (_sp._renderType &= ~SpriteConst.IMAGE);
 				_render = _renderAll;
 				(_cmds || (_cmds = [])).length === 0 && _cmds.push(_one);
 				_cmds.push(args);
 			}
-			args.callee = fun;
 			_repaint();
 			return args;
 		}
@@ -462,8 +384,8 @@ package laya.display {
 		 * @param width 宽度。
 		 * @param height 高度。
 		 */
-		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			_saveToCmd(Render._context._clipRect, [x, y, width, height]);
+		public function clipRect(x:Number, y:Number, width:Number, height:Number):ClipRectCmd {
+			return _saveToCmd(Render._context._clipRect, ClipRectCmd.create.call(this, x, y, width, height));
 		}
 		
 		/**
@@ -475,8 +397,8 @@ package laya.display {
 		 * @param color 定义文本颜色，比如"#ff0000"。
 		 * @param textAlign 文本对齐方式，可选值："left"，"center"，"right"。
 		 */
-		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String,underLine:int = 0):void {
-			_saveToCmd(Render._context._fillText, [text, x, y, font || Font.defaultFont, color, textAlign]);
+		public function fillText(text:String, x:Number, y:Number, font:String, color:String, textAlign:String):FillTextCmd {
+			return _saveToCmd(Render._context._fillText, FillTextCmd.create.call(this, text, x, y, font || Text.defaultFontStr(), color, textAlign));
 		}
 		
 		/**
@@ -490,8 +412,18 @@ package laya.display {
 		 * @param lineWidth		镶边线条宽度。
 		 * @param textAlign		文本对齐方式，可选值："left"，"center"，"right"。
 		 */
-		public function fillBorderText(text:*, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:Number, textAlign:String):void {
-			_saveToCmd(Render._context._fillBorderText, [text, x, y, font || Font.defaultFont, fillColor, borderColor, lineWidth, textAlign]);
+		public function fillBorderText(text:String, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:Number, textAlign:String):FillBorderTextCmd {
+			return _saveToCmd(Render._context._fillBorderText, FillBorderTextCmd.create.call(this, text, x, y, font || Text.defaultFontStr(), fillColor, borderColor, lineWidth, textAlign));
+		}
+		
+		/*** @private */
+		public function fillWords(words:Array, x:Number, y:Number, font:String, color:String):FillWordsCmd {
+			return _saveToCmd(Render._context._fillWords, FillWordsCmd.create.call(this, words, x, y, font || Text.defaultFontStr(), color));
+		}
+		
+		/*** @private */
+		public function fillBorderWords(words:Array, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int):FillBorderWordsCmd {
+			return _saveToCmd(Render._context._fillBorderWords, FillBorderWordsCmd.create.call(this, words, x, y, font || Text.defaultFontStr(), fillColor, borderColor, lineWidth));
 		}
 		
 		/**
@@ -504,26 +436,16 @@ package laya.display {
 		 * @param lineWidth	线条宽度。
 		 * @param textAlign	文本对齐方式，可选值："left"，"center"，"right"。
 		 */
-		public function strokeText(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
-			_saveToCmd(Render._context._strokeText, [text, x, y, font || Font.defaultFont, color, lineWidth, textAlign]);
+		public function strokeText(text:String, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):StrokeTextCmd {
+			return _saveToCmd(Render._context._strokeText, StrokeTextCmd.create.call(this, text, x, y, font || Text.defaultFontStr(), color, lineWidth, textAlign));
 		}
 		
 		/**
 		 * 设置透明度。
 		 * @param value 透明度。
 		 */
-		public function alpha(value:Number):void {
-			value = value < 0 ? 0 : (value > 1 ? 1 : value);
-			_saveToCmd(Render._context._alpha, [value]);
-		}
-		
-		/**
-		 * 设置当前透明度。
-		 * @param	value 透明度。
-		 */
-		public function setAlpha(value:Number):void {
-			value = value < 0 ? 0 : (value > 1 ? 1 : value);
-			_saveToCmd(Render._context._setAlpha, [value]);
+		public function alpha(alpha:Number):AlphaCmd {
+			return _saveToCmd(Render._context._alpha, AlphaCmd.create.call(this, alpha));
 		}
 		
 		/**
@@ -532,8 +454,8 @@ package laya.display {
 		 * @param pivotX	（可选）水平方向轴心点坐标。
 		 * @param pivotY	（可选）垂直方向轴心点坐标。
 		 */
-		public function transform(matrix:Matrix, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render._context._transform, [matrix, pivotX, pivotY]);
+		public function transform(matrix:Matrix, pivotX:Number = 0, pivotY:Number = 0):TransformCmd {
+			return _saveToCmd(Render._context._transform, TransformCmd.create.call(this, matrix, pivotX, pivotY));
 		}
 		
 		/**
@@ -542,8 +464,8 @@ package laya.display {
 		 * @param pivotX	（可选）水平方向轴心点坐标。
 		 * @param pivotY	（可选）垂直方向轴心点坐标。
 		 */
-		public function rotate(angle:Number, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render._context._rotate, [angle, pivotX, pivotY]);
+		public function rotate(angle:Number, pivotX:Number = 0, pivotY:Number = 0):RotateCmd {
+			return _saveToCmd(Render._context._rotate, RotateCmd.create.call(this, angle, pivotX, pivotY));
 		}
 		
 		/**
@@ -553,8 +475,8 @@ package laya.display {
 		 * @param pivotX	（可选）水平方向轴心点坐标。
 		 * @param pivotY	（可选）垂直方向轴心点坐标。
 		 */
-		public function scale(scaleX:Number, scaleY:Number, pivotX:Number = 0, pivotY:Number = 0):void {
-			_saveToCmd(Render._context._scale, [scaleX, scaleY, pivotX, pivotY]);
+		public function scale(scaleX:Number, scaleY:Number, pivotX:Number = 0, pivotY:Number = 0):ScaleCmd {
+			return _saveToCmd(Render._context._scale, ScaleCmd.create.call(this, scaleX, scaleY, pivotX, pivotY));
 		}
 		
 		/**
@@ -562,22 +484,22 @@ package laya.display {
 		 * @param x 添加到水平坐标（x）上的值。
 		 * @param y 添加到垂直坐标（y）上的值。
 		 */
-		public function translate(x:Number, y:Number):void {
-			_saveToCmd(Render._context._translate, [x, y]);
+		public function translate(tx:Number, ty:Number):TranslateCmd {
+			return _saveToCmd(Render._context._translate, TranslateCmd.create.call(this, tx, ty));
 		}
 		
 		/**
 		 * 保存当前环境的状态。
 		 */
-		public function save():void {
-			_saveToCmd(Render._context._save, []);
+		public function save():SaveCmd {
+			return _saveToCmd(Render._context._save, SaveCmd.create.call(this));
 		}
 		
 		/**
 		 * 返回之前保存过的路径状态和属性。
 		 */
-		public function restore():void {
-			_saveToCmd(Render._context._restore, []);
+		public function restore():RestoreCmd {
+			return _saveToCmd(Render._context._restore, RestoreCmd.create.call(this));
 		}
 		
 		/**
@@ -588,18 +510,17 @@ package laya.display {
 		 */
 		public function replaceText(text:String):Boolean {
 			_repaint();
+			//todo 该函数现在加速器应该不对
 			var cmds:Array = this._cmds;
 			if (!cmds) {
-				if (_one && _isTextCmd(_one.callee)) {
-					if (_one[0].toUpperCase) _one[0] = text;
-					else _one[0].setText(text);
+				if (_one && _isTextCmd(_one)) {
+					_one.text = text;
 					return true;
 				}
 			} else {
 				for (var i:int = cmds.length - 1; i > -1; i--) {
-					if (_isTextCmd(cmds[i].callee)) {
-						if (cmds[i][0].toUpperCase) cmds[i][0] = text;
-						else cmds[i][0].setText(text);
+					if (_isTextCmd(cmds[i])) {
+						cmds[i].text = text;
 						return true;
 					}
 				}
@@ -608,8 +529,9 @@ package laya.display {
 		}
 		
 		/**@private */
-		private function _isTextCmd(fun:Function):Boolean {
-			return fun === Render._context._fillText || fun === Render._context._fillBorderText || fun === Render._context._strokeText;
+		private function _isTextCmd(cmd:*):Boolean {
+			var cmdID:String = cmd.cmdID;
+			return cmdID == FillTextCmd.ID || cmdID == StrokeTextCmd.ID || cmdID == FillBorderTextCmd.ID;
 		}
 		
 		/**
@@ -621,17 +543,31 @@ package laya.display {
 			_repaint();
 			var cmds:Array = this._cmds;
 			if (!cmds) {
-				if (_one && _isTextCmd(_one.callee)) {
-					_one[4] = color;
-					if (!_one[0].toUpperCase) _one[0].changed = true;
+				if (_one && _isTextCmd(_one)) {
+					_setTextCmdColor(_one, color);
 				}
 			} else {
 				for (var i:int = cmds.length - 1; i > -1; i--) {
-					if (_isTextCmd(cmds[i].callee)) {
-						cmds[i][4] = color;
-						if (!cmds[i][0].toUpperCase) cmds[i][0].changed = true;
+					if (_isTextCmd(cmds[i])) {
+						_setTextCmdColor(cmds[i], color);
 					}
 				}
+			}
+		}
+		
+		/**@private */
+		private function _setTextCmdColor(cmdO:*, color:String):void {
+			var cmdID:String = cmdO.cmdID;
+			switch (cmdID) {
+			case FillTextCmd.ID: 
+			case StrokeTextCmd.ID: 
+				cmdO.color = color;
+				break;
+			case FillBorderTextCmd.ID: 
+			case FillBorderWordsCmd.ID: 
+			case FillBorderTextCmd.ID: 
+				cmdO.fillColor = color;
+				break;
 			}
 		}
 		
@@ -646,50 +582,50 @@ package laya.display {
 		 */
 		public function loadImage(url:String, x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0, complete:Function = null):void {
 			var tex:Texture = Loader.getRes(url);
-			if (tex) onloaded(tex);
-			else Laya.loader.load(url, Handler.create(null, onloaded), null, Loader.IMAGE);
-			
-			function onloaded(tex:Texture):void {
-				if (tex) {
-					drawTexture(tex, x, y, width, height);
-					if (complete != null) complete.call(_sp, tex);
-				}
+			if (!tex) {
+				tex = new Texture();
+				tex.load(url);
+				Loader.cacheRes(url, tex);
+				tex.once(Event.READY, this, drawImage, [tex, x, y, width, height]);
+			} else {
+				if (!tex.getIsReady()) {
+					tex.once(Event.READY, this, drawImage, [tex, x, y, width, height]);
+				} else
+					drawImage(tex, x, y, width, height);
 			}
-			//TODO:clear不掉
+			if (complete != null) {
+				tex.getIsReady() ? complete.call(_sp) : tex.on(Event.READY, _sp, complete);
+			}
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _renderEmpty(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		public function _renderEmpty(sprite:Sprite, context:Context, x:Number, y:Number):void {
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _renderAll(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		public function _renderAll(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			var cmds:Array = this._cmds, cmd:*;
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
-				(cmd = cmds[i]).callee.call(context, x, y, cmd);
+				(cmd = cmds[i]).run(context, x, y);
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _renderOne(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			_one.callee.call(context, x, y, _one);
+		public function _renderOne(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			_one.run(context, x, y);
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _renderOneImg(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			_one.callee.call(context, x, y, _one);
-			if (sprite._renderType !== 2305) {
-				sprite._renderType |= RenderSprite.IMAGE;
-					//TODO:CHIND,IMAGE,GRAHPICS
-			}
+		public function _renderOneImg(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			_one.run(context, x, y);
 		}
 		
 		/**
@@ -701,7 +637,7 @@ package laya.display {
 		 * @param lineColor	颜色。
 		 * @param lineWidth	（可选）线条宽度。
 		 */
-		public function drawLine(fromX:Number, fromY:Number, toX:Number, toY:Number, lineColor:String, lineWidth:Number = 1):void {
+		public function drawLine(fromX:Number, fromY:Number, toX:Number, toY:Number, lineColor:String, lineWidth:Number = 1):DrawLineCmd {
 			var tId:uint = 0;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
@@ -709,9 +645,8 @@ package laya.display {
 				_vectorgraphArray.push(tId);
 			}
 			
-			var offset:Number = lineWidth % 2 === 0 ? 0 : 0.5;
-			var arr:Array = [fromX + offset, fromY + offset, toX + offset, toY + offset, lineColor, lineWidth, tId];
-			_saveToCmd(Render._context._drawLine, arr);
+			var offset:Number = (lineWidth < 1 || lineWidth % 2 === 0) ? 0 : 0.5;
+			return _saveToCmd(Render._context._drawLine, DrawLineCmd.create.call(this, fromX + offset, fromY + offset, toX + offset, toY + offset, lineColor, lineWidth, tId));
 		}
 		
 		/**
@@ -722,30 +657,28 @@ package laya.display {
 		 * @param lineColor	线段颜色，或者填充绘图的渐变对象。
 		 * @param lineWidth	（可选）线段宽度。
 		 */
-		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
+		public function drawLines(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):DrawLinesCmd {
 			var tId:uint = 0;
-			if (!points || points.length < 4) return;
+			if (!points || points.length < 4) return null;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var offset:Number = lineWidth % 2 === 0 ? 0 : 0.5;
-			var arr:Array = [x + offset, y + offset, points, lineColor, lineWidth, tId];
-			_saveToCmd(Render._context._drawLines, arr);
+			var offset:Number = (lineWidth < 1 || lineWidth % 2 === 0) ? 0 : 0.5;
+			return _saveToCmd(Render._context._drawLines, DrawLinesCmd.create.call(this, x + offset, y + offset, points, lineColor, lineWidth, tId));
 		}
 		
 		/**
 		 * 绘制一系列曲线。
 		 * @param x			开始绘制的 X 轴位置。
 		 * @param y			开始绘制的 Y 轴位置。
-		 * @param points	线段的点集合，格式[startx,starty,ctrx,ctry,startx,starty...]。
+		 * @param points	线段的点集合，格式[controlX, controlY, anchorX, anchorY...]。
 		 * @param lineColor	线段颜色，或者填充绘图的渐变对象。
 		 * @param lineWidth	（可选）线段宽度。
 		 */
-		public function drawCurves(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):void {
-			var arr:Array = [x, y, points, lineColor, lineWidth];
-			_saveToCmd(Render._context._drawCurves, arr);
+		public function drawCurves(x:Number, y:Number, points:Array, lineColor:*, lineWidth:Number = 1):DrawCurvesCmd {
+			return _saveToCmd(Render._context._drawCurves, DrawCurvesCmd.create.call(this, x, y, points, lineColor, lineWidth));
 		}
 		
 		/**
@@ -758,11 +691,10 @@ package laya.display {
 		 * @param lineColor	（可选）边框颜色，或者填充绘图的渐变对象。
 		 * @param lineWidth	（可选）边框宽度。
 		 */
-		public function drawRect(x:Number, y:Number, width:Number, height:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? lineWidth / 2 : 0;
+		public function drawRect(x:Number, y:Number, width:Number, height:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):DrawRectCmd {
+			var offset:Number = (lineWidth >= 1 && lineColor) ? lineWidth / 2 : 0;
 			var lineOffset:Number = lineColor ? lineWidth : 0;
-			var arr:Array = [x + offset, y + offset, width - lineOffset, height - lineOffset, fillColor, lineColor, lineWidth];
-			_saveToCmd(Render._context._drawRect, arr);
+			return _saveToCmd(Render._context.drawRect, DrawRectCmd.create.call(this, x + offset, y + offset, width - lineOffset, height - lineOffset, fillColor, lineColor, lineWidth));
 		}
 		
 		/**
@@ -774,8 +706,8 @@ package laya.display {
 		 * @param lineColor	（可选）边框颜色，或者填充绘图的渐变对象。
 		 * @param lineWidth	（可选）边框宽度。
 		 */
-		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? lineWidth / 2 : 0;
+		public function drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):DrawCircleCmd {
+			var offset:Number = (lineWidth >= 1 && lineColor) ? lineWidth / 2 : 0;
 			
 			var tId:uint = 0;
 			if (Render.isWebGL) {
@@ -783,8 +715,7 @@ package laya.display {
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var arr:Array = [x, y, radius - offset, fillColor, lineColor, lineWidth, tId];
-			_saveToCmd(Render._context._drawCircle, arr);
+			return _saveToCmd(Render._context._drawCircle, DrawCircleCmd.create.call(this, x, y, radius - offset, fillColor, lineColor, lineWidth, tId));
 		}
 		
 		/**
@@ -798,8 +729,8 @@ package laya.display {
 		 * @param lineColor		（可选）边框颜色，或者填充绘图的渐变对象。
 		 * @param lineWidth		（可选）边框宽度。
 		 */
-		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
-			var offset:Number = lineColor ? lineWidth / 2 : 0;
+		public function drawPie(x:Number, y:Number, radius:Number, startAngle:Number, endAngle:Number, fillColor:*, lineColor:* = null, lineWidth:Number = 1):DrawPieCmd {
+			var offset:Number = (lineWidth >= 1 && lineColor) ? lineWidth / 2 : 0;
 			var lineOffset:Number = lineColor ? lineWidth : 0;
 			
 			var tId:uint = 0;
@@ -808,10 +739,7 @@ package laya.display {
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
 			}
-			var arr:Array = [x + offset, y + offset, radius - lineOffset, startAngle, endAngle, fillColor, lineColor, lineWidth, tId];
-			arr[3] = Utils.toRadian(startAngle);
-			arr[4] = Utils.toRadian(endAngle);
-			_saveToCmd(Render._context._drawPie, arr);
+			return _saveToCmd(Render._context._drawPie, DrawPieCmd.create.call(this, x + offset, y + offset, radius - lineOffset, Utils.toRadian(startAngle), Utils.toRadian(endAngle), fillColor, lineColor, lineWidth, tId));
 		}
 		
 		/**
@@ -823,13 +751,13 @@ package laya.display {
 		 * @param lineColor	（可选）边框颜色，或者填充绘图的渐变对象。
 		 * @param lineWidth	（可选）边框宽度。
 		 */
-		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):void {
+		public function drawPoly(x:Number, y:Number, points:Array, fillColor:*, lineColor:* = null, lineWidth:Number = 1):DrawPolyCmd {
 			var tId:uint = 0;
-			var tIsConvexPolygon:Boolean;
 			if (Render.isWebGL) {
 				tId = VectorGraphManager.getInstance().getId();
 				if (_vectorgraphArray == null) _vectorgraphArray = [];
 				_vectorgraphArray.push(tId);
+				var tIsConvexPolygon:Boolean = false;
 				//这里加入多加形是否是凸边形
 				if (points.length > 6) {
 					tIsConvexPolygon = false;
@@ -837,22 +765,20 @@ package laya.display {
 					tIsConvexPolygon = true;
 				}
 			}
-			var offset:Number = lineColor ? (lineWidth % 2 === 0 ? 0 : 0.5) : 0;
-			var arr:Array = [x + offset, y + offset, points, fillColor, lineColor, lineWidth, tId, tIsConvexPolygon];
-			_saveToCmd(Render._context._drawPoly, arr);
+			var offset:Number = (lineWidth >= 1 && lineColor) ? (lineWidth % 2 === 0 ? 0 : 0.5) : 0;
+			return _saveToCmd(Render._context._drawPoly, DrawPolyCmd.create.call(this, x + offset, y + offset, points, fillColor, lineColor, lineWidth, tIsConvexPolygon, tId));
 		}
 		
 		/**
 		 * 绘制路径。
 		 * @param x		开始绘制的 X 轴位置。
 		 * @param y		开始绘制的 Y 轴位置。
-		 * @param paths	路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y,x,y,x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
-		 * @param brush	（可选）刷子定义，支持以下设置{fillStyle}。
-		 * @param pen	（可选）画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin,lineCap,miterLimit}。
+		 * @param paths	路径集合，路径支持以下格式：[["moveTo",x,y],["lineTo",x,y],["arcTo",x1,y1,x2,y2,r],["closePath"]]。
+		 * @param brush	（可选）刷子定义，支持以下设置{fillStyle:"#FF0000"}。
+		 * @param pen	（可选）画笔定义，支持以下设置{strokeStyle,lineWidth,lineJoin:"bevel|round|miter",lineCap:"butt|round|square",miterLimit}。
 		 */
-		public function drawPath(x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null):void {
-			var arr:Array = [x, y, paths, brush, pen];
-			_saveToCmd(Render._context._drawPath, arr);
+		public function drawPath(x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null):DrawPathCmd {
+			return _saveToCmd(Render._context._drawPath, DrawPathCmd.create.call(this, x, y, paths, brush, pen));
 		}
 	}
 }

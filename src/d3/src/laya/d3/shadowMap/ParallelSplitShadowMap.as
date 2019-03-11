@@ -1,8 +1,7 @@
 package laya.d3.shadowMap {
 	import laya.d3.core.BaseCamera;
 	import laya.d3.core.Camera;
-	import laya.d3.core.render.RenderQueue;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.BoundSphere;
@@ -11,36 +10,21 @@ package laya.d3.shadowMap {
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.RenderTexture;
-	import laya.d3.shader.ValusArray;
-	import laya.webgl.WebGLContext;
+	import laya.d3.shader.DefineDatas;
+	import laya.d3.shader.ShaderData;
+	import laya.webgl.resource.BaseTexture;
+	import laya.webgl.resource.RenderTexture2D;
 	
 	/**
 	 * ...
 	 * @author ...
 	 */
 	public class ParallelSplitShadowMap {
-		/**@private 精灵级着色器宏定义,接收阴影。*/
-		public static var SHADERDEFINE_RECEIVE_SHADOW:int= 0x1;
-		
-		/**@private */
-		public static var SHADERDEFINE_CAST_SHADOW:int = 0x200;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PSSM1:int = 0x400;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PSSM2:int = 0x800;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PSSM3:int = 0x1000;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PCF_NO:int = 0x2000;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PCF1:int = 0x4000;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PCF2:int = 0x8000;
-		/**@private */
-		public static var SHADERDEFINE_SHADOW_PCF3:int = 0x10000;
-		
 		/**@private */
 		public static const MAX_PSSM_COUNT:int = 3;
+		
+		/**@private */
+		public static var _tempVector30:Vector3 = new Vector3();
 		
 		/**@private */
 		private var lastNearPlane:Number;
@@ -54,29 +38,21 @@ package laya.d3.shadowMap {
 		/**@private */
 		private var _currentPSSM:int = -1;
 		/**@private */
-		private var _numberOfPSSM:int = 3;
+		private var _shadowMapCount:int = 3;
 		/**@private */
 		private var _maxDistance:Number = 200.0;
 		/**@private */
-		private var _ratioOfDistance:Number = 1.0 / _numberOfPSSM;
+		private var _ratioOfDistance:Number = 1.0 / _shadowMapCount;
 		/**@private */
 		private var _globalParallelLightDir:Vector3 = new Vector3(0, -1, 0);
 		/**@private */
 		private var _statesDirty:Boolean = true;
 		/**@private */
-		public var _lightCulling:Vector.<BoundFrustum> = null;
-		/** @private */
-		public var _renderTarget:Vector.<RenderTexture> = null;
-		/**@private */
-		public var _lightVPMatrix:Vector.<Matrix4x4> = null;
-		/**@private */
-		private var _lightCameras:Vector.<Camera> = null;
-		/**@private */
-		public var _shadowQuenes:Vector.<RenderQueue> = null;
+		public var cameras:Vector.<Camera>;
 		/**@private */
 		private var _shadowMapTextureSize:int = 1024;
 		/**@private */
-		private var _scene:Scene = null;
+		private var _scene:Scene3D = null;
 		/**@private */
 		private var _boundingSphere:Vector.<BoundSphere> = new Vector.<BoundSphere>(ParallelSplitShadowMap.MAX_PSSM_COUNT + 1);
 		/**@private */
@@ -110,7 +86,7 @@ package laya.d3.shadowMap {
 		/**@private */
 		private var _splitFrustumCulling:BoundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
 		/** @private */
-		private var _tempScaleMatrix44:Matrix4x4 = new Matrix4x4;
+		private var _tempScaleMatrix44:Matrix4x4 = new Matrix4x4();
 		/** @private */
 		private var _shadowPCFOffset:Vector2 = new Vector2(1.0 / 1024.0, 1.0 / 1024.0);
 		/** @private */
@@ -118,9 +94,11 @@ package laya.d3.shadowMap {
 		/** @private */
 		private var _shaderValueLightVP:Float32Array = null;
 		/** @private */
-		private var _shaderValueVPs:Vector.<Float32Array> = null;
+		private var _shaderValueVPs:Vector.<Float32Array>;
 		
 		public function ParallelSplitShadowMap() {
+			cameras = new Vector.<Camera>();
+			_shaderValueVPs = new Vector.<Float32Array>();
 			var i:int;
 			for (i = 0; i < _spiltDistance.length; i++) {
 				_spiltDistance[i] = 0.0;
@@ -147,15 +125,15 @@ package laya.d3.shadowMap {
 			_tempScaleMatrix44.elements[13] = 0.5;
 		}
 		
-		public function setInfo(scene:Scene, maxDistance:Number, globalParallelDir:Vector3, shadowMapTextureSize:int, numberOfPSSM:int, PCFType:int):void {
+		public function setInfo(scene:Scene3D, maxDistance:Number, globalParallelDir:Vector3, shadowMapTextureSize:int, numberOfPSSM:int, PCFType:int):void {
 			if (numberOfPSSM > ParallelSplitShadowMap.MAX_PSSM_COUNT) {
-				_numberOfPSSM = ParallelSplitShadowMap.MAX_PSSM_COUNT;
+				_shadowMapCount = ParallelSplitShadowMap.MAX_PSSM_COUNT;
 			}
 			_scene = scene;
 			_maxDistance = maxDistance;
-			PSSMNum = numberOfPSSM;
+			shadowMapCount = numberOfPSSM;
 			_globalParallelLightDir = globalParallelDir;
-			_ratioOfDistance = 1.0 / _numberOfPSSM;
+			_ratioOfDistance = 1.0 / _shadowMapCount;
 			for (var i:int = 0; i < _spiltDistance.length; i++) {
 				_spiltDistance[i] = 0.0;
 			}
@@ -168,30 +146,31 @@ package laya.d3.shadowMap {
 		
 		public function setPCFType(PCFtype:int):void {
 			_PCFType = PCFtype;
+			var defineData:DefineDatas = _scene._defineDatas;
 			switch (_PCFType) {
 			case 0: 
-				_scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3);
+				defineData.add(Scene3D.SHADERDEFINE_SHADOW_PCF_NO);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF1);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF2);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF3);
 				break;
 			case 1: 
-				_scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3);
+				defineData.add(Scene3D.SHADERDEFINE_SHADOW_PCF1);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF_NO);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF2);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF3);
 				break;
 			case 2: 
-				_scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3);
+				defineData.add(Scene3D.SHADERDEFINE_SHADOW_PCF2);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF_NO);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF1);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF3);
 				break;
 			case 3: 
-				_scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF3);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF_NO);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF1);
-				_scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PCF2);
+				defineData.add(Scene3D.SHADERDEFINE_SHADOW_PCF3);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF_NO);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF1);
+				defineData.remove(Scene3D.SHADERDEFINE_SHADOW_PCF2);
 				break;
 			}
 		}
@@ -211,41 +190,30 @@ package laya.d3.shadowMap {
 			return _maxDistance;
 		}
 		
-		public function set PSSMNum(value:int):void {
+		public function set shadowMapCount(value:int):void {
 			value = value > 0 ? value : 1;
 			value = value <= MAX_PSSM_COUNT ? value : MAX_PSSM_COUNT;
-			if (_numberOfPSSM != value) {
-				_numberOfPSSM = value;
-				_ratioOfDistance = 1.0 / _numberOfPSSM;
+			if (_shadowMapCount != value) {
+				_shadowMapCount = value;
+				_ratioOfDistance = 1.0 / _shadowMapCount;
 				_statesDirty = true;
+				
+				_shaderValueLightVP = new Float32Array(value * 16);
+				_shaderValueVPs.length = value;
+				for (var i:int = 0; i < value; i++) 
+					_shaderValueVPs[i] = new Float32Array(_shaderValueLightVP.buffer, i * 64);
 			}
 		}
 		
-		public function get PSSMNum():int {
-			return _numberOfPSSM;
-		}
-		
-		public function _setGlobalParallelLightDir(dir:Vector3):void {
-			_globalParallelLightDir = dir;
-		}
-		
-		public function getGlobalParallelLightDir():Vector3 {
-			return _globalParallelLightDir;
-		}
-		
-		public function getCurrentPSSM():int {
-			return _currentPSSM;
-		}
-		
-		public function getLightCamera(index:int):Camera {
-			return _lightCameras[index];
+		public function get shadowMapCount():int {
+			return _shadowMapCount;
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _beginSampler(index:int, sceneCamera:BaseCamera):void {
-			if (index < 0 || index > _numberOfPSSM) //TODO:
+			if (index < 0 || index > _shadowMapCount) //TODO:
 				throw new Error("ParallelSplitShadowMap: beginSample invalid index");
 			
 			_currentPSSM = index;
@@ -263,11 +231,11 @@ package laya.d3.shadowMap {
 		 * @private
 		 */
 		public function _calcAllLightCameraInfo(sceneCamera:BaseCamera):void {
-			if (_numberOfPSSM === 1) {
+			if (_shadowMapCount === 1) {
 				_beginSampler(0, sceneCamera);
 				endSampler(sceneCamera);
 			} else {
-				for (var i:int = 0, n:int = _numberOfPSSM + 1; i < n; i++) {
+				for (var i:int = 0, n:int = _shadowMapCount + 1; i < n; i++) {
 					_beginSampler(i, sceneCamera);
 					endSampler(sceneCamera);
 				}
@@ -306,41 +274,41 @@ package laya.d3.shadowMap {
 		 * @private
 		 */
 		private function _uploadShaderValue():void {
-			var scene:Scene = _scene;
-			switch (_numberOfPSSM) {
+			var defDatas:DefineDatas = _scene._defineDatas;
+			switch (_shadowMapCount) {
 			case 1: 
-				scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
+				defDatas.add(Scene3D.SHADERDEFINE_SHADOW_PSSM1);
+				defDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM2);
+				defDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM3);
 				break;
 			case 2: 
-				scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
+				defDatas.add(Scene3D.SHADERDEFINE_SHADOW_PSSM2);
+				defDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM1);
+				defDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM3);
 				break;
 			case 3: 
-				scene.addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
+				defDatas.add(Scene3D.SHADERDEFINE_SHADOW_PSSM3);
+				defDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM1);
+				defDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM2);
 				break;
 			}
 			
-			var sceneSV:ValusArray = scene._shaderValues;
-			sceneSV.setValue(Scene.SHADOWDISTANCE, _shaderValueDistance.elements);
-			sceneSV.setValue(Scene.SHADOWLIGHTVIEWPROJECT, _shaderValueLightVP);
-			sceneSV.setValue(Scene.SHADOWMAPPCFOFFSET, _shadowPCFOffset.elements);
-			switch (_numberOfPSSM) {
+			var sceneSV:ShaderData = _scene._shaderValues;
+			sceneSV.setVector(Scene3D.SHADOWDISTANCE, _shaderValueDistance);
+			sceneSV.setBuffer(Scene3D.SHADOWLIGHTVIEWPROJECT, _shaderValueLightVP);
+			sceneSV.setVector(Scene3D.SHADOWMAPPCFOFFSET, _shadowPCFOffset);
+			switch (_shadowMapCount) {
 			case 3: 
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1));
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2));
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE3, getRenderTarget(3));
+				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE1, cameras[1].renderTarget);
+				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE2, cameras[2].renderTarget)
+				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE3, cameras[3].renderTarget);
 				break;
 			case 2: 
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1));
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE2, getRenderTarget(2));
+				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE1, cameras[1].renderTarget);
+				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE2, cameras[2].renderTarget);
 				break;
 			case 1: 
-				sceneSV.setValue(Scene.SHADOWMAPTEXTURE1, getRenderTarget(1));
+				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE1, cameras[1].renderTarget);
 				break;
 			}
 		}
@@ -350,19 +318,19 @@ package laya.d3.shadowMap {
 		 */
 		private function _calcSplitDistance(nearPlane:Number):void {
 			var far:Number = _maxDistance;
-			var invNumberOfPSSM:Number = 1.0 / _numberOfPSSM;
+			var invNumberOfPSSM:Number = 1.0 / _shadowMapCount;
 			var i:int;
-			for (i = 0; i <= _numberOfPSSM; i++) {
+			for (i = 0; i <= _shadowMapCount; i++) {
 				_uniformDistance[i] = nearPlane + (far - nearPlane) * i * invNumberOfPSSM;
 			}
 			
 			var farDivNear:Number = far / nearPlane;
-			for (i = 0; i <= _numberOfPSSM; i++) {
+			for (i = 0; i <= _shadowMapCount; i++) {
 				var n:Number = Math.pow(farDivNear, i * invNumberOfPSSM);
 				_logDistance[i] = nearPlane * n;
 			}
 			
-			for (i = 0; i <= _numberOfPSSM; i++) {
+			for (i = 0; i <= _shadowMapCount; i++) {
 				_spiltDistance[i] = _uniformDistance[i] * _ratioOfDistance + _logDistance[i] * (1.0 - _ratioOfDistance);
 			}
 			_shaderValueDistance.x = _spiltDistance[1];
@@ -384,7 +352,7 @@ package laya.d3.shadowMap {
 			var distance:Number;
 			
 			var i:int;
-			for (i = 0; i <= _numberOfPSSM; i++) {
+			for (i = 0; i <= _shadowMapCount; i++) {
 				distance = _spiltDistance[i];
 				height = distance * halfTanValue;
 				width = height * aspectRatio;
@@ -418,7 +386,7 @@ package laya.d3.shadowMap {
 			var min:Float32Array;
 			var max:Float32Array;
 			var center:Float32Array;
-			for (i = 1; i <= _numberOfPSSM; i++) {
+			for (i = 1; i <= _shadowMapCount; i++) {
 				
 				d = _dimension[i].elements;
 				min = _boundingBox[i].min.elements;
@@ -440,10 +408,10 @@ package laya.d3.shadowMap {
 			}
 			
 			min = _boundingBox[0].min.elements;
-			d = _dimension[_numberOfPSSM].elements;
+			d = _dimension[_shadowMapCount].elements;
 			min[0] = -d[0];
 			min[1] = -d[1];
-			min[2] = -_spiltDistance[_numberOfPSSM];
+			min[2] = -_spiltDistance[_shadowMapCount];
 			
 			max = _boundingBox[0].max.elements;
 			max[0] = d[0];
@@ -461,7 +429,7 @@ package laya.d3.shadowMap {
 			if (_currentPSSM > 0) {
 				Matrix4x4.createPerspective(3.1416 * sceneCamera.fieldOfView / 180.0, (sceneCamera as Camera).aspectRatio, _spiltDistance[_currentPSSM - 1], _spiltDistance[_currentPSSM], _tempMatrix44);
 			} else {
-				Matrix4x4.createPerspective(3.1416 * sceneCamera.fieldOfView / 180.0, (sceneCamera as Camera).aspectRatio, _spiltDistance[0], _spiltDistance[_numberOfPSSM], _tempMatrix44);
+				Matrix4x4.createPerspective(3.1416 * sceneCamera.fieldOfView / 180.0, (sceneCamera as Camera).aspectRatio, _spiltDistance[0], _spiltDistance[_shadowMapCount], _tempMatrix44);
 			}
 			Matrix4x4.multiply(_tempMatrix44, (sceneCamera as Camera).viewMatrix, _tempMatrix44);
 			_splitFrustumCulling.matrix = _tempMatrix44;
@@ -471,86 +439,23 @@ package laya.d3.shadowMap {
 		 * @private
 		 */
 		private function _rebuildRenderInfo():void {
-			var nNum:int = _numberOfPSSM + 1;
-			var i:int = 0;
-			if (_renderTarget == null) {
-				_renderTarget = new Vector.<RenderTexture>(nNum);
-				_renderTarget[0] = null;
-				for (i = 1; i < nNum; i++) {
-					_renderTarget[i] = new RenderTexture(_shadowMapTextureSize, _shadowMapTextureSize, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, WebGLContext.DEPTH_COMPONENT16, false, false, WebGLContext.NEAREST, WebGLContext.NEAREST);
+			var nNum:int = _shadowMapCount + 1;
+			var i:int;
+			cameras.length = nNum;
+			for (i = 0; i < nNum; i++) {
+				if (!cameras[i]) {
+					var camera:Camera = new Camera();
+					camera.name = "lightCamera" + i;
+					camera.clearColor = new Vector4(1.0, 1.0, 1.0, 1.0);
+					cameras[i] = camera;
 				}
-			} else if (_renderTarget.length != nNum) {
-				disposeAllRenderTarget();
-				_renderTarget.length = nNum;
-				_renderTarget[0] = null;
-				for (i = 1; i < nNum; i++) {
-					_renderTarget[i] = new RenderTexture(_shadowMapTextureSize, _shadowMapTextureSize, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, WebGLContext.DEPTH_COMPONENT16, false, false, WebGLContext.NEAREST, WebGLContext.NEAREST);
-				}
-			} else {
-				for (i = 1; i < nNum; i++) {
-					if (_renderTarget[i] == null || _renderTarget[i].width != _shadowMapTextureSize || _renderTarget[i].height != _shadowMapTextureSize) {
-						if (_renderTarget[i] != null) {
-							_renderTarget[i].destroy();
-						}
-						_renderTarget[i] = new RenderTexture(_shadowMapTextureSize, _shadowMapTextureSize, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, WebGLContext.DEPTH_COMPONENT16, false, false, WebGLContext.NEAREST, WebGLContext.NEAREST);
-					}
-				}
-			}
-			/*
-			 * 这个函数只有设置的阴影级别的时候才会调用，所以new的时候都是从 0 - lenght全部new的
-			 * 为了代码简单，不容易出错，并且这段代码就没有考虑效率问题。
-			 * 但是C++移植代码的时候，new的地方千万也记得析构，否则会有内存泄漏
-			 */
-			if (_lightCulling == null || _lightCulling.length != nNum) {
-				if (_lightCulling) {
-					_lightCulling.length = nNum;
-				} else {
-					_lightCulling = new Vector.<BoundFrustum>(nNum);
-				}
-				for (i = 0; i < _lightCulling.length; i++) {
-					_lightCulling[i] = new BoundFrustum(Matrix4x4.DEFAULT);
-				}
-			}
-			if (_lightVPMatrix == null || _lightVPMatrix.length != nNum) {
-				if (_lightVPMatrix) {
-					_lightVPMatrix.length = nNum;
-				} else {
-					_lightVPMatrix = new Vector.<Matrix4x4>(nNum);
-				}
-				for (i = 0; i < _lightVPMatrix.length; i++) {
-					_lightVPMatrix[i] = new Matrix4x4();
-				}
-			}
-			if (_lightCameras == null || _lightCameras.length != nNum) {
-				if (_lightCameras) {
-					_lightCameras.length = nNum;
-				} else {
-					_lightCameras = new Vector.<Camera>(nNum);
-				}
-				for (i = 0; i < _lightCameras.length; i++) {
-					_lightCameras[i] = new Camera();
-					_lightCameras[i].name = "lightCamera" + i;
-				}
-			}
-			if (_shadowQuenes == null || _shadowQuenes.length != _numberOfPSSM) {
-				if (_shadowQuenes) {
-					_shadowQuenes.length = _numberOfPSSM;
-				} else {
-					_shadowQuenes = new Vector.<RenderQueue>(_numberOfPSSM);
-				}
-				for (i = 0; i < _shadowQuenes.length; i++) {
-					_shadowQuenes[i] = new RenderQueue(_scene);
-				}
-			}
-			if (_shaderValueVPs == null || _shaderValueVPs.length != nNum) {
-				if (_shaderValueVPs) {
-					_shaderValueVPs.length = nNum;
-				} else {
-					_shaderValueVPs = new Vector.<Float32Array>(nNum);
-				}
-				_shaderValueLightVP = new Float32Array(nNum * 16);
-				for (i = 0; i < nNum; i++) {
-					_shaderValueVPs[i] = new Float32Array(_shaderValueLightVP.buffer, i * 64);
+				
+				var shadowMap:RenderTexture = cameras[i].renderTarget;
+				if (shadowMap == null || shadowMap.width != _shadowMapTextureSize || shadowMap.height != _shadowMapTextureSize) {
+					(shadowMap) && (shadowMap.destroy());
+					shadowMap = new RenderTexture(_shadowMapTextureSize, _shadowMapTextureSize, BaseTexture.FORMAT_R8G8B8A8, BaseTexture.FORMAT_DEPTH_16);
+					shadowMap.filterMode = BaseTexture.FILTERMODE_POINT;
+					cameras[i].renderTarget = shadowMap;
 				}
 			}
 		}
@@ -570,14 +475,15 @@ package laya.d3.shadowMap {
 			lookAt3Element[1] = lookAt4Element[1];
 			lookAt3Element[2] = lookAt4Element[2];
 			var lightUpElement:Float32Array = _tempLightUp.elements;
-			var sceneCameraDir:Float32Array = sceneCamera.forward.elements;//
+			sceneCamera.transform.worldMatrix.getForward(_tempVector30);
+			var sceneCameraDir:Float32Array = _tempVector30.elements;
 			lightUpElement[0] = sceneCameraDir[0];
 			lightUpElement[1] = 1.0;
 			lightUpElement[2] = sceneCameraDir[2];
 			Vector3.normalize(_tempLightUp, _tempLightUp);
 			Vector3.scale(_globalParallelLightDir, boundSphere.radius * 4, _tempPos);
 			Vector3.subtract(_tempLookAt3, _tempPos, _tempPos);
-			var curLightCamera:Camera = _lightCameras[_currentPSSM];
+			var curLightCamera:Camera = cameras[_currentPSSM];
 			curLightCamera.transform.position = _tempPos;
 			curLightCamera.transform.lookAt(_tempLookAt3, _tempLightUp, false);
 			var tempMaxElements:Float32Array = _tempMax.elements;
@@ -654,9 +560,9 @@ package laya.d3.shadowMap {
 			Matrix4x4.createOrthoOffCenterRH(tempMinElements[0], tempMaxElements[0], tempMinElements[1], tempMaxElements[1], 1.0, farPlane + 0.5 * (tempMaxElements[2] - tempMinElements[2]), curLightCamera.projectionMatrix);
 			
 			//calc frustum
-			curLightCamera.projectionViewMatrix.cloneTo(_lightVPMatrix[_currentPSSM]);
-			_lightCulling[_currentPSSM].matrix = _lightVPMatrix[_currentPSSM];
-			multiplyMatrixOutFloat32Array(_tempScaleMatrix44, _lightVPMatrix[_currentPSSM], _shaderValueVPs[_currentPSSM]);
+			var projectView:Matrix4x4 = curLightCamera.projectionViewMatrix;
+			multiplyMatrixOutFloat32Array(_tempScaleMatrix44, projectView, _shaderValueVPs[_currentPSSM]);
+			_scene._shaderValues.setBuffer(Scene3D.SHADOWLIGHTVIEWPROJECT, _shaderValueLightVP);
 		}
 		
 		/**
@@ -682,18 +588,6 @@ package laya.d3.shadowMap {
 			}
 		}
 		
-		public function getLightFrustumCulling(currentPSSM:int):BoundFrustum {
-			return _lightCulling[currentPSSM];
-		}
-		
-		public function getSplitFrustumCulling():BoundFrustum {
-			return _splitFrustumCulling;
-		}
-		
-		public function getSplitDistance(index:int):Number {
-			return _spiltDistance[index];
-		}
-		
 		public function setShadowMapTextureSize(size:int):void {
 			if (size !== _shadowMapTextureSize) {
 				_shadowMapTextureSize = size;
@@ -703,27 +597,11 @@ package laya.d3.shadowMap {
 			}
 		}
 		
-		public function getShadowMapTextureSize():int {
-			return _shadowMapTextureSize;
-		}
-		
-		public function beginRenderTarget(index:int):void {
-			_renderTarget[index].start();
-		}
-		
-		public function endRenderTarget(index:int):void {
-			_renderTarget[index].end();
-		}
-		
-		public function getRenderTarget(index:int):RenderTexture {
-			return _renderTarget[index];
-		}
-		
 		public function disposeAllRenderTarget():void {
-			for (var i:int = 0, n:int = _numberOfPSSM + 1; i < n; i++) {
-				if (_renderTarget[i]) {
-					_renderTarget[i].destroy();
-					_renderTarget[i] = null;
+			for (var i:int = 0, n:int = _shadowMapCount + 1; i < n; i++) {
+				if (cameras[i].renderTarget) {
+					cameras[i].renderTarget.destroy();
+					cameras[i].renderTarget = null;
 				}
 			}
 		}

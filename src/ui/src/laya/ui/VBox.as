@@ -35,8 +35,8 @@ package laya.ui {
 			var maxWidth:Number = 0;
 			
 			for (var i:int = 0, n:int = numChildren; i < n; i++) {
-				var item:Component = getChildAt(i) as Component;
-				if (item&&item.layoutEnabled) {
+				var item:UIComponent = getChildAt(i) as UIComponent;
+				if (item) {
 					items.push(item);
 					maxWidth = _width?_width:Math.max(maxWidth, item.width * item.scaleX);
 				}
@@ -56,7 +56,7 @@ package laya.ui {
 					item.x = maxWidth - item.width * item.scaleX;
 				}
 			}
-			changeSize();
+			_sizeChanged();
 		}
 	}
 }

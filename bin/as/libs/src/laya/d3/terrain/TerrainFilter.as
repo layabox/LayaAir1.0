@@ -1,20 +1,23 @@
 package laya.d3.terrain {
+	import laya.d3.core.BufferState;
 	import laya.d3.core.Camera;
-	import laya.d3.core.GeometryFilter;
+	import laya.d3.core.GeometryElement;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.RenderState;
 	import laya.d3.core.material.TerrainMaterial;
-	import laya.d3.core.render.IRenderable;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderState;
+	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.graphics.VertexPositionTerrain;
+	import laya.d3.graphics.Vertex.VertexPositionTerrain;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
+	import laya.events.EventDispatcher;
+	import laya.layagl.LayaGL;
 	import laya.utils.Stat;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
@@ -22,9 +25,13 @@ package laya.d3.terrain {
 	/**
 	 * <code>TerrainFilter</code> 类用于创建TerrainFilter过滤器。
 	 */
-	public class TerrainFilter extends GeometryFilter implements IRenderable {
+	public class TerrainFilter extends GeometryElement {
 		/** @private */
 		public static var _TEMP_ARRAY_BUFFER:Uint32Array = new Uint32Array(TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM * TerrainLeaf.CHUNK_GRID_NUM / TerrainLeaf.LEAF_GRID_NUM);
+		
+		/**@private */
+		private static var _type:int = _typeCounter++;
+		
 		public var _owner:TerrainChunk;
 		public var _gridSize:Number;
 		public var memorySize:int;
@@ -34,8 +41,7 @@ package laya.d3.terrain {
 		protected var _numberTriangle:int;
 		protected var _vertexBuffer:VertexBuffer3D;
 		protected var _indexBuffer:IndexBuffer3D;
-		protected var _boundingSphere:BoundSphere;
-		protected var _boundingBox:BoundBox;
+		protected var _bufferState:BufferState = new BufferState();
 		protected var _indexArrayBuffer:Uint16Array;
 		public var _boundingBoxCorners:Vector.<Vector3>;
 		private var _leafs:Vector.<TerrainLeaf>;
@@ -50,6 +56,11 @@ package laya.d3.terrain {
 		private var _currentLOD:uint;//LOD级别 4个叶子节点  第1个叶子的level<<24 + 第2个叶子的level<<16 + 第3个叶子的level<<8 + 第4个叶子的level
 		private var _perspectiveFactor:Number;
 		private var _LODTolerance:int;
+		
+		/** @private */
+		public var _boundingSphere:BoundSphere;
+		/** @private */
+		public var _boundingBox:BoundBox;
 		
 		/**
 		 * 创建一个新的 <code>MeshFilter</code> 实例。
@@ -71,30 +82,6 @@ package laya.d3.terrain {
 				_leafs[i] = new TerrainLeaf();
 			}
 			recreateResource();
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function get _originalBoundingSphere():BoundSphere {
-			return _boundingSphere;
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function get _originalBoundingBox():BoundBox {
-			return _boundingBox;
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _destroy():void {
-			super._destroy();
-			_owner = null;
-			if (_vertexBuffer) _vertexBuffer.destroy();
-			if (_indexBuffer) _indexBuffer.destroy();
 		}
 		
 		protected function recreateResource():void {
@@ -121,12 +108,18 @@ package laya.d3.terrain {
 				_leafs[i].calcSkirtVertextBuffer(_chunkOffsetX, _chunkOffsetZ, x * TerrainLeaf.LEAF_GRID_NUM, z * TerrainLeaf.LEAF_GRID_NUM, _gridSize, vertices, _leafNum * TerrainLeaf.LEAF_PLANE_VERTEXT_COUNT + i * TerrainLeaf.LEAF_SKIRT_VERTEXT_COUNT, vertexFloatStride, _terrainHeightData, _terrainHeightDataWidth, _terrainHeightDataHeight);
 			}
 			assembleIndexInit();
-			_vertexBuffer = new VertexBuffer3D(vertexDeclaration, _numberVertices, WebGLContext.STATIC_DRAW, false);
+			_vertexBuffer = new VertexBuffer3D(vertexDeclaration.vertexStride * _numberVertices, WebGLContext.STATIC_DRAW, false);
+			_vertexBuffer.vertexDeclaration = vertexDeclaration;
 			_indexBuffer = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, _maxNumberIndices, WebGLContext.STATIC_DRAW, false);
 			_vertexBuffer.setData(vertices);
 			_indexBuffer.setData(_indexArrayBuffer);
 			memorySize = (_vertexBuffer._byteLength + _indexBuffer._byteLength) * 2;//修改占用内存,upload()到GPU后CPU中和GPU中各占一份内存
 			calcOriginalBoudingBoxAndSphere();
+			
+			_bufferState.bind();
+			_bufferState.applyVertexBuffer(_vertexBuffer);
+			_bufferState.applyIndexBuffer(_indexBuffer);
+			_bufferState.unBind();
 		}
 		
 		private function setLODLevel(leafsLODLevel:Uint32Array):Boolean {
@@ -238,14 +231,6 @@ package laya.d3.terrain {
 			}
 		}
 		
-		public function get _vertexBufferCount():int {
-			return _numberVertices;
-		}
-		
-		public function get triangleCount():int {
-			return _numberTriangle;
-		}
-		
 		public function _getVertexBuffer(index:int = 0):VertexBuffer3D {
 			if (index == 0) {
 				return _vertexBuffer;
@@ -257,13 +242,21 @@ package laya.d3.terrain {
 			return _indexBuffer;
 		}
 		
-		public function _beforeRender(state:RenderState):Boolean {
-			_vertexBuffer._bind();			
-			_indexBuffer._bind();
-			var terrainMaterial:TerrainMaterial = state.renderElement._material as TerrainMaterial;
-			if (terrainMaterial.blend == BaseMaterial.BLEND_DISABLE) {
+		/**
+		 * @inheritDoc
+		 */
+		override public function _getType():int {
+			return _type;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _prepareRender(state:RenderContext3D):Boolean {
+			var terrainMaterial:TerrainMaterial = state.renderElement.material as TerrainMaterial;
+			if (terrainMaterial.getRenderState(0).blend == RenderState.BLEND_DISABLE) {
 				var camera:Camera = state.camera as Camera;
-				if (assembleIndex(camera, camera.position)) {
+				if (assembleIndex(camera, camera.transform.position)) {
 					_indexBuffer.setData(_indexArrayBuffer);
 				}
 			}
@@ -271,13 +264,10 @@ package laya.d3.terrain {
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
-		public function _getVertexBuffers():Vector.<VertexBuffer3D>{
-			return null;
-		}
-		
-		public function _render(state:RenderState):void {
+		override public function _render(state:RenderContext3D):void {
+			_bufferState.bind();
 			/*
 			   //绘制第二遍的时候，如果DEPTHFUNC_LEQUAL有bug，就可以用这种偏移的方式
 			   if ( (state.renderElement._material as TerrainMaterial).renderMode == TerrainMaterial.RENDERMODE_TRANSPARENT )
@@ -290,9 +280,19 @@ package laya.d3.terrain {
 			   WebGL.mainContext.disable( WebGLContext.POLYGON_OFFSET_FILL );
 			   }
 			 */
-			WebGL.mainContext.drawElements(Terrain.RENDER_LINE_MODEL ? WebGLContext.LINES : WebGLContext.TRIANGLES, _currentNumberIndices, WebGLContext.UNSIGNED_SHORT, 0);
+			LayaGL.instance.drawElements(Terrain.RENDER_LINE_MODEL ? WebGLContext.LINES : WebGLContext.TRIANGLES, _currentNumberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.trianglesFaces += _numberTriangle;
-			Stat.drawCall++;
+			Stat.renderBatch++;
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function destroy():void {
+			_owner = null;
+			_bufferState.destroy();
+			if (_vertexBuffer) _vertexBuffer.destroy();
+			if (_indexBuffer) _indexBuffer.destroy();
 		}
 	}
 }

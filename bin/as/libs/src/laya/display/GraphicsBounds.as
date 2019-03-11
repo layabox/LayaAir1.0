@@ -1,21 +1,37 @@
-package laya.display 
-{
+package laya.display {
+	import laya.display.cmd.AlphaCmd;
+	import laya.display.cmd.DrawCircleCmd;
+	import laya.display.cmd.DrawCurvesCmd;
+	import laya.display.cmd.DrawImageCmd;
+	import laya.display.cmd.DrawLineCmd;
+	import laya.display.cmd.DrawLinesCmd;
+	import laya.display.cmd.DrawPathCmd;
+	import laya.display.cmd.DrawPieCmd;
+	import laya.display.cmd.DrawPolyCmd;
+	import laya.display.cmd.DrawRectCmd;
+	import laya.display.cmd.DrawTextureCmd;
+	import laya.display.cmd.FillTextureCmd;
+	import laya.display.cmd.RestoreCmd;
+	import laya.display.cmd.RotateCmd;
+	import laya.display.cmd.ScaleCmd;
+	import laya.display.cmd.TransformCmd;
+	import laya.display.cmd.TranslateCmd;
 	import laya.maths.Bezier;
 	import laya.maths.GrahamScan;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.renders.Render;
-	import laya.renders.RenderContext;
+	import laya.resource.Context;
 	import laya.resource.Texture;
+	import laya.utils.Pool;
 	import laya.utils.Utils;
-
+	
 	/**
 	 * @private
 	 * Graphic bounds数据类
 	 */
-	public class GraphicsBounds 
-	{
+	public class GraphicsBounds {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**@private */
 		private static var _tempMatrix:Matrix = new Matrix();
@@ -39,21 +55,29 @@ package laya.display
 		public var _graphics:Graphics;
 		
 		/**
-		 * 销毁 
-		 */		
-		public function destroy():void
-		{
-			_graphics=null;
-			_temp=null;
-			_rstBoundPoints=null;
-			_bounds=null;
+		 * 销毁
+		 */
+		public function destroy():void {
+			_graphics = null;
+			_cacheBoundsType = false;
+			if (_temp) _temp.length = 0;
+			if (_rstBoundPoints) _rstBoundPoints.length = 0;
+			if (_bounds) _bounds.recover();
+			_bounds = null;
+			Pool.recover("GraphicsBounds", this);
 		}
 		
 		/**
-		 * 重置数据 
-		 */		
-		public function reset():void
-		{
+		 * 创建
+		 */
+		public static function create():GraphicsBounds {
+			return Pool.getItemByClass("GraphicsBounds", GraphicsBounds);
+		}
+		
+		/**
+		 * 重置数据
+		 */
+		public function reset():void {
 			_temp && (_temp.length = 0);
 		}
 		
@@ -83,7 +107,7 @@ package laya.display
 		}
 		
 		private function _getCmdPoints(realSize:Boolean = false):Array {
-			var context:RenderContext = Render._context;
+			var context:Context = Render._context;
 			var cmds:Array = _graphics.cmds;
 			var rst:Array;
 			rst = _temp || (_temp = []);
@@ -94,146 +118,117 @@ package laya.display
 				_tempCmds.push(_graphics._one);
 				cmds = _tempCmds;
 			}
-			if (!cmds)
-				return rst;
+			if (!cmds) return rst;
 			
-			var matrixs:Array;
-			matrixs = _tempMatrixArrays;
+			var matrixs:Array = _tempMatrixArrays;
 			matrixs.length = 0;
 			var tMatrix:Matrix = _initMatrix;
 			tMatrix.identity();
 			var tempMatrix:Matrix = _tempMatrix;
 			var cmd:Object;
 			var tex:Texture;
-			
-			var wRate:Number;
-			var hRate:Number;
-			var oWidth:Number;
-			var oHeight:Number;
-			
-			var offX:Number;
-			var offY:Number;
-						
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
 				cmd = cmds[i];
-				if (!cmd.callee) continue;
-				switch (cmd.callee) {
-				case context._save: 
-				case 7: //save
+				switch (cmd.cmdID) {
+				case AlphaCmd.ID: //save //TODO:是否还需要
 					matrixs.push(tMatrix);
 					tMatrix = tMatrix.clone();
 					break;
-				case context._restore: 
-				case 8: //restore
+				case RestoreCmd.ID: //restore
 					tMatrix = matrixs.pop();
 					break;
-				case context._scale: 
-				case 5://scale
+				case ScaleCmd.ID://scale
 					tempMatrix.identity();
-					tempMatrix.translate(-cmd[2], -cmd[3]);
-					tempMatrix.scale(cmd[0], cmd[1]);
-					tempMatrix.translate(cmd[2], cmd[3]);
+					tempMatrix.translate(-cmd.pivotX, -cmd.pivotY);
+					tempMatrix.scale(cmd.scaleX, cmd.scaleY);
+					tempMatrix.translate(cmd.pivotX, cmd.pivotY);
 					
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
-				case context._rotate: 
-				case 3://case context._rotate: 
+				case RotateCmd.ID://case context._rotate: 
 					tempMatrix.identity();
-					tempMatrix.translate(-cmd[1], -cmd[2]);
-					tempMatrix.rotate(cmd[0]);
-					tempMatrix.translate(cmd[1], cmd[2]);
+					tempMatrix.translate(-cmd.pivotX, -cmd.pivotY);
+					tempMatrix.rotate(cmd.angle);
+					tempMatrix.translate(cmd.pivotX, cmd.pivotY);
 					
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
-				case context._translate: 
-				case 6://translate
+				case TranslateCmd.ID://translate
 					tempMatrix.identity();
-					tempMatrix.translate(cmd[0], cmd[1]);
+					tempMatrix.translate(cmd.tx, cmd.ty);
 					
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
-				case context._transform: 
-				case 4://context._transform:
+				case TransformCmd.ID://context._transform:
 					tempMatrix.identity();
-					tempMatrix.translate(-cmd[1], -cmd[2]);
-					tempMatrix.concat(cmd[0]);
-					tempMatrix.translate(cmd[1], cmd[2]);
+					tempMatrix.translate(-cmd.pivotX, -cmd.pivotY);
+					tempMatrix.concat(cmd.matrix);
+					tempMatrix.translate(cmd.pivotX, cmd.pivotY);
 					
 					_switchMatrix(tMatrix, tempMatrix);
 					break;
-				case 16://case context._drawTexture: 
-				case 24://case context._fillTexture
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
+				case DrawImageCmd.ID://case context._drawTexture: 
+				case FillTextureCmd.ID://case context._fillTexture
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, cmd.width, cmd.height), tMatrix);
 					break;
-				case 17://case context._drawTextureTransform: 
+				case DrawTextureCmd.ID://case context._drawTextureTransform: 
 					tMatrix.copyTo(tempMatrix);
-					tempMatrix.concat(cmd[4]);
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tempMatrix);
+					if(cmd.matrix)
+					tempMatrix.concat(cmd.matrix);
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, cmd.width, cmd.height), tempMatrix);
 					break;
-				case context._drawTexture: 
-					//width = width - tex.sourceWidth + tex.width;
-					//height = height - tex.sourceHeight + tex.height;
-					tex = cmd[0];
+				case DrawImageCmd.ID: 
+					tex = cmd.texture;
 					if (realSize) {
-						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
+						if (cmd.width && cmd.height) {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, cmd.width, cmd.height), tMatrix);
 						} else {
-							tex = cmd[0];
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, tex.width, tex.height), tMatrix);
 						}
 					} else {
-						//var wRate:Number = owidth / tex.sourceWidth;
-						//var hRate:Number =oheight / tex.sourceHeight;
-						//twidth = tex.width*wRate;
-						//theight = tex.height * hRate;
-						wRate = (cmd[3] || tex.sourceWidth) / tex.width;
-						hRate = (cmd[4] || tex.sourceHeight) / tex.height;
-						oWidth = wRate * tex.sourceWidth;
-						oHeight = hRate * tex.sourceHeight;
+						var wRate:Number = (cmd.width || tex.sourceWidth) / tex.width;
+						var hRate:Number = (cmd.height || tex.sourceHeight) / tex.height;
+						var oWidth:Number = wRate * tex.sourceWidth;
+						var oHeight:Number = hRate * tex.sourceHeight;
 						
-						offX = tex.offsetX > 0 ? tex.offsetX : 0;
-						offY = tex.offsetY > 0 ? tex.offsetY : 0;
+						var offX:Number = tex.offsetX > 0 ? tex.offsetX : 0;
+						var offY:Number = tex.offsetY > 0 ? tex.offsetY : 0;
 						
 						offX *= wRate;
 						offY *= hRate;
 						
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, oWidth,oHeight), tMatrix);
-						//if (cmd[3] && cmd[4]) {
-							//_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, oWidth, oHeight), tMatrix);
-						//} else {
-							//_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, tex.width + tex.sourceWidth - tex.width, tex.height + tex.sourceHeight - tex.height), tMatrix);
-						//}
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x - offX, cmd.y - offY, oWidth, oHeight), tMatrix);
 					}
 					
 					break;
-				case context._fillTexture: 
-					if (cmd[3] && cmd[4]) {
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
+				case FillTextureCmd.ID: 
+					if (cmd.width && cmd.height) {
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, cmd.width, cmd.height), tMatrix);
 					} else {
-						tex = cmd[0];
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), tMatrix);
+						tex = cmd.texture;
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, tex.width, tex.height), tMatrix);
 					}
 					break;
-				case context._drawTextureWithTransform: 
+				case DrawTextureCmd.ID: 
 					var drawMatrix:Matrix;
-					if (cmd[5]) {
+					if (cmd.matrix) {
 						tMatrix.copyTo(tempMatrix);
-						tempMatrix.concat(cmd[5]);
+						tempMatrix.concat(cmd.matrix);
 						drawMatrix = tempMatrix;
 					} else {
 						drawMatrix = tMatrix;
 					}
 					if (realSize) {
-						if (cmd[3] && cmd[4]) {
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], cmd[3], cmd[4]), drawMatrix);
+						if (cmd.width && cmd.height) {
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, cmd.width, cmd.height), drawMatrix);
 						} else {
-							tex = cmd[0];
-							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1], cmd[2], tex.width, tex.height), drawMatrix);
+							tex = cmd.texture;
+							_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, tex.width, tex.height), drawMatrix);
 						}
 					} else {
-						tex = cmd[0];
-						wRate = (cmd[3] || tex.sourceWidth) / tex.width;
-						hRate = (cmd[4] || tex.sourceHeight) / tex.height;
+						tex = cmd.texture;
+						wRate = (cmd.width || tex.sourceWidth) / tex.width;
+						hRate = (cmd.height || tex.sourceHeight) / tex.height;
 						oWidth = wRate * tex.sourceWidth;
 						oHeight = hRate * tex.sourceHeight;
 						
@@ -243,61 +238,43 @@ package laya.display
 						offX *= wRate;
 						offY *= hRate;
 						
-						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, oWidth, oHeight), drawMatrix);
-						//if (cmd[3] && cmd[4]) {
-							//_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, cmd[3] + tex.sourceWidth - tex.width, cmd[4] + tex.sourceHeight - tex.height), drawMatrix);
-						//} else {
-							//_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[1] - offX, cmd[2] - offY, tex.width + tex.sourceWidth - tex.width, tex.height + tex.sourceHeight - tex.height), drawMatrix);
-						//}
+						_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x - offX, cmd.y - offY, oWidth, oHeight), drawMatrix);
 					}
 					
 					break;
-				case context._drawRect: 
-				case 13://case context._drawRect:
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0], cmd[1], cmd[2], cmd[3]), tMatrix);
+				case DrawRectCmd.ID://case context._drawRect:
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x, cmd.y, cmd.width, cmd.height), tMatrix);
 					break;
-				case context._drawCircle: 
-				case context._fillCircle: 
-				case 14://case context._drawCircle
-					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd[0] - cmd[2], cmd[1] - cmd[2], cmd[2] + cmd[2], cmd[2] + cmd[2]), tMatrix);
+				case DrawCircleCmd.ID://case context._drawCircle
+					_addPointArrToRst(rst, Rectangle._getBoundPointS(cmd.x - cmd.radius, cmd.y - cmd.radius, cmd.radius + cmd.radius, cmd.radius + cmd.radius), tMatrix);
 					break;
-				case context._drawLine: 
-				case 20://drawLine
+				case DrawLineCmd.ID://drawLine
 					_tempPoints.length = 0;
 					var lineWidth:Number;
-					lineWidth = cmd[5] * 0.5;
-					if (cmd[0] == cmd[2]) {
-						_tempPoints.push(cmd[0] + lineWidth, cmd[1], cmd[2] + lineWidth, cmd[3], cmd[0] - lineWidth, cmd[1], cmd[2] - lineWidth, cmd[3]);
-					} else if (cmd[1] == cmd[3]) {
-						_tempPoints.push(cmd[0], cmd[1] + lineWidth, cmd[2], cmd[3] + lineWidth, cmd[0], cmd[1] - lineWidth, cmd[2], cmd[3] - lineWidth);
+					lineWidth = cmd.lineWidth * 0.5;
+					if (cmd.fromX == cmd.toX) {
+						_tempPoints.push(cmd.fromX + lineWidth, cmd.fromY, cmd.toX + lineWidth, cmd.toY, cmd.fromX - lineWidth, cmd.fromY, cmd.toX - lineWidth, cmd.toY);
+					} else if (cmd.fromY == cmd.toY) {
+						_tempPoints.push(cmd.fromX, cmd.fromY + lineWidth, cmd.toX, cmd.toY + lineWidth, cmd.fromX, cmd.fromY - lineWidth, cmd.toX, cmd.toY - lineWidth);
 					} else {
-						_tempPoints.push(cmd[0], cmd[1], cmd[2], cmd[3]);
+						_tempPoints.push(cmd.fromX, cmd.fromY, cmd.toX, cmd.toY);
 					}
 					
 					_addPointArrToRst(rst, _tempPoints, tMatrix);
 					break;
-				case context._drawCurves: 
-				case 22://context._drawCurves: 
-					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
-					//addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
-					_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
+				case DrawCurvesCmd.ID://context._drawCurves:					
+					_addPointArrToRst(rst, Bezier.I.getBezierPoints(cmd.points), tMatrix, cmd.x, cmd.y);
 					break;
-				case context._drawPoly: 
-				case context._drawLines: 
-				case 18://drawpoly
-					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
-					_addPointArrToRst(rst, cmd[2], tMatrix, cmd[0], cmd[1]);
+				case DrawLinesCmd.ID://drawpoly
+				case DrawPolyCmd.ID://drawpoly
+					_addPointArrToRst(rst, cmd.points, tMatrix,  cmd.x, cmd.y);
 					break;
-				case context._drawPath: 
-				case 19://drawPath
-					//addPointArrToRst(rst, [cmd[0], cmd[1]], tMatrix);
-					_addPointArrToRst(rst, _getPathPoints(cmd[2]), tMatrix, cmd[0], cmd[1]);
+				case DrawPathCmd.ID://drawPath
+					_addPointArrToRst(rst, _getPathPoints(cmd.paths), tMatrix, cmd.x, cmd.y);
 					break;
-				case context._drawPie: 
-				case 15://drawPie
-					_addPointArrToRst(rst, _getPiePoints(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]), tMatrix);
+				case DrawPieCmd.ID://drawPie
+					_addPointArrToRst(rst, _getPiePoints(cmd.x, cmd.y, cmd.radius, cmd.startAngle, cmd.endAngle), tMatrix);
 					break;
-					
 				}
 			}
 			if (rst.length > 200) {
@@ -331,14 +308,13 @@ package laya.display
 			var rst:Array = _tempPoints;
 			_tempPoints.length = 0;
 			rst.push(x, y);
-			var delta:Number =  (endAngle - startAngle) % ( 2 * Math.PI);
-			var segnum:int = 10;
-			var step:Number = delta / segnum;		
+			var dP:Number = Math.PI / 10;
 			var i:Number;
-			var angle:Number = startAngle;
-			for (i = 0; i <= segnum; i++) {
-				rst.push(x + radius * Math.cos(angle), y + radius * Math.sin(angle));
-				angle += step;
+			for (i = startAngle; i < endAngle; i += dP) {
+				rst.push(x + radius * Math.cos(i), y + radius * Math.sin(i));
+			}
+			if (endAngle != i) {
+				rst.push(x + radius * Math.cos(endAngle), y + radius * Math.sin(endAngle));
 			}
 			return rst;
 		}
@@ -360,8 +336,5 @@ package laya.display
 			}
 			return rst;
 		}
-		
-		
 	}
-
 }

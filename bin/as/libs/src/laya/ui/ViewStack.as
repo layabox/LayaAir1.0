@@ -48,6 +48,11 @@ package laya.ui {
 			initItems();
 		}
 		
+		public function _afterInited():void 
+		{
+			initItems();
+		}
+		
 		/**
 		 * 初始化视图对象集合。
 		 */

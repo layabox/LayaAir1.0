@@ -8,6 +8,7 @@ package laya.d3.terrain {
 	import laya.events.Event;
 	import laya.net.Loader;
 	import laya.resource.Resource;
+	import laya.utils.Handler;
 	
 	/**
 	 * <code>TerrainRes</code> 类用于描述地形信息。
@@ -31,11 +32,22 @@ package laya.d3.terrain {
 		public var _normalMaps:Vector.<String>;
 		
 		/**
+		 * 异步回调
+		 * 
+		 */
+		public static function _parse(data:*, propertyParams:Object = null, constructParams:Array = null):TerrainRes {
+			var terrainRes:TerrainRes = new TerrainRes();
+			terrainRes.parseData(data);
+			return terrainRes;
+		}
+		
+		/**
 		 * 加载地形模板,注意:不缓存。
 		 * @param url 模板地址。
+		 * @param complete 完成回掉。
 		 */
-		public static function load(url:String):TerrainRes {
-			return Laya.loader.create(url, null, null, TerrainRes, null, 1, false);
+		public static function load(url:String, complete:Handler):void {
+			Laya.loader.create(url, complete, null, Laya3D.TERRAINRES, null, null, 1, false);
 		}
 		
 		/**
@@ -136,14 +148,7 @@ package laya.d3.terrain {
 		}
 		
 		public function onLoadTerrainComplete(heightData:TerrainHeightData):void {
-			_endLoaded();
 		}
-		
-		/**
-		 * 异步回调
-		 */
-		override public function onAsynLoaded(url:String, data:*, params:Array):void {
-			parseData(data);
-		}
+	
 	}
 }

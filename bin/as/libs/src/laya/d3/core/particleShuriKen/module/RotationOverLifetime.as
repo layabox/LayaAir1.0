@@ -51,7 +51,7 @@ package laya.d3.core.particleShuriKen.module {
 				break;
 			case 1: 
 				if (_angularVelocity.separateAxes)
-					destAngularVelocity = GradientAngularVelocity.createByGradientSeparate(_angularVelocity.gradientX.clone(), _angularVelocity.gradientY.clone(), _angularVelocity.gradientZ.clone(), _angularVelocity.gradientW.clone());
+					destAngularVelocity = GradientAngularVelocity.createByGradientSeparate(_angularVelocity.gradientX.clone(), _angularVelocity.gradientY.clone(), _angularVelocity.gradientZ.clone());
 				else
 					destAngularVelocity = GradientAngularVelocity.createByGradient(_angularVelocity.gradient.clone());
 				break;

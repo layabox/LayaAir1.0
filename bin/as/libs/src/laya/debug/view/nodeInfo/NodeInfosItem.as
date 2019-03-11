@@ -120,7 +120,7 @@ package laya.debug.view.nodeInfo
 			tParent = NodeInfoContainer.nodeRecInfoLayer;
 			var i:int, len:int;
 			var cList:Array;
-			cList = tParent._childs;
+			cList = tParent._children;
 			len = cList.length;
 			var tChild:Sprite;
 			var mRec:Rectangle;

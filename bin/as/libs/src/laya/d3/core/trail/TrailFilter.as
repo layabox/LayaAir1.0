@@ -1,46 +1,55 @@
 package laya.d3.core.trail {
 	
-	import laya.d3.core.GeometryFilter;
-	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.trail.module.Gradient;
-	import laya.d3.core.trail.module.GradientMode;
-	import laya.d3.core.trail.module.TextureMode;
-	import laya.d3.core.trail.module.TrailKeyFrame;
+	import laya.d3.core.Camera;
+	import laya.d3.core.FloatKeyframe;
+	import laya.d3.core.GeometryElement;
+	import laya.d3.core.Gradient;
+	import laya.d3.core.render.BaseRender;
+	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.render.RenderElement;
+	import laya.d3.core.scene.Scene3D;
+	import laya.d3.core.GradientMode;
+	import laya.d3.core.TextureMode;
+	import laya.d3.core.FloatKeyframe;
+	import laya.d3.math.Color;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderDefines;
-	import laya.events.Event;
-	import laya.utils.Stat;
+	import laya.events.EventDispatcher;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * <code>TrailFilter</code> 类用于创建拖尾过滤器。
 	 */
-	public class TrailFilter extends GeometryFilter {
+	public class TrailFilter {
+		/** 轨迹准线_面向摄像机。*/
+		public static const ALIGNMENT_VIEW:int = 0;
+		/** 轨迹准线_面向运动方向。*/
+		public static const ALIGNMENT_TRANSFORM_Z:int = 1;
+		
+		/**@private */
+		private var _minVertexDistance:Number;
+		/**@private */
+		private var _widthMultiplier:Number;
+		/**@private */
+		private var _time:Number;
+		/**@private */
+		private var _widthCurve:Vector.<FloatKeyframe>;
+		/**@private */
+		private var _colorGradient:Gradient;
+		/**@private */
+		private var _textureMode:int;
+		/**@private */
+		private var _trialGeometry:GeometryElement;
+		/**@private 拖尾总长度*/
+		public var _totalLength:Number = 0;
 		
 		public var _owner:TrailSprite3D;
-		private var _trailRenderElements:Vector.<TrailRenderElement>;
-		
-		private var _minVertexDistance:Number;
-		private var _widthMultiplier:Number;
-		private var _time:Number;
-		private var _widthCurve:Vector.<TrailKeyFrame>;
-		private var _colorGradient:Gradient;
-		private var _textureMode:int;
+		public var _lastPosition:Vector3 = new Vector3();
 		
 		public var _curtime:Number = 0;
-		public var _curSubTrailFinishPosition:Vector3 = new Vector3();
-		public var _curSubTrailFinishDirection:Vector3 = new Vector3();
-		public var _curSubTrailFinishCurTime:Number = 0;
-		public var _curSubTrailFinished:Boolean = false;
-		public var _hasLifeSubTrail:Boolean = false;
 		
-		public var _trailTotalLength:Number = 0;
-		public var _trailSupplementLength:Number = 0;
-		public var _trailDeadLength:Number = 0;
-		
-		public var _isStart:Boolean = false;
 		private var _trailRenderElementIndex:int;
+		
+		/**轨迹准线。*/
+		public var alignment:int = ALIGNMENT_VIEW;
 		
 		/**
 		 * 获取淡出时间。
@@ -56,7 +65,7 @@ package laya.d3.core.trail {
 		 */
 		public function set time(value:Number):void {
 			_time = value;
-			_owner._render._setShaderValueNumber(TrailSprite3D.LIFETIME, value);
+			_owner._render._shaderValues.setNumber(TrailSprite3D.LIFETIME, value);
 		}
 		
 		/**
@@ -95,7 +104,7 @@ package laya.d3.core.trail {
 		 * 获取宽度曲线。
 		 * @return  宽度曲线。
 		 */
-		public function get widthCurve():Vector.<TrailKeyFrame> {
+		public function get widthCurve():Vector.<FloatKeyframe> {
 			return _widthCurve;
 		}
 		
@@ -103,18 +112,18 @@ package laya.d3.core.trail {
 		 * 设置宽度曲线。
 		 * @param value 宽度曲线。
 		 */
-		public function set widthCurve(value:Vector.<TrailKeyFrame>):void {
+		public function set widthCurve(value:Vector.<FloatKeyframe>):void {
 			_widthCurve = value;
 			var widthCurveFloatArray:Float32Array = new Float32Array(value.length * 4);
 			var i:int, j:int, index:int = 0;
-			for (i = 0, j = value.length; i < j; i++ ){
+			for (i = 0, j = value.length; i < j; i++) {
 				widthCurveFloatArray[index++] = value[i].time;
 				widthCurveFloatArray[index++] = value[i].inTangent;
 				widthCurveFloatArray[index++] = value[i].outTangent;
 				widthCurveFloatArray[index++] = value[i].value;
 			}
-			_owner._render._setShaderValueBuffer(TrailSprite3D.WIDTHCURVE, widthCurveFloatArray);
-			_owner._render._setShaderValueInt(TrailSprite3D.WIDTHCURVEKEYLENGTH, value.length);
+			_owner._render._shaderValues.setBuffer(TrailSprite3D.WIDTHCURVE, widthCurveFloatArray);
+			_owner._render._shaderValues.setInt(TrailSprite3D.WIDTHCURVEKEYLENGTH, value.length);
 		}
 		
 		/**
@@ -130,15 +139,13 @@ package laya.d3.core.trail {
 		 * @param value 颜色梯度。
 		 */
 		public function set colorGradient(value:Gradient):void {
-			
 			_colorGradient = value;
-			_owner._render._setShaderValueBuffer(TrailSprite3D.GRADIENTCOLORKEY, value._colorKeyData);
-			_owner._render._setShaderValueBuffer(TrailSprite3D.GRADIENTALPHAKEY, value._alphaKeyData);
-			if (value.mode == GradientMode.Blend){
-				_owner._render._addShaderDefine(TrailSprite3D.SHADERDEFINE_GRADIENTMODE_BLEND);
-			}
-			else{
-				_owner._render._removeShaderDefine(TrailSprite3D.SHADERDEFINE_GRADIENTMODE_BLEND);
+			_owner._render._shaderValues.setBuffer(TrailSprite3D.GRADIENTCOLORKEY, value._rgbElements);
+			_owner._render._shaderValues.setBuffer(TrailSprite3D.GRADIENTALPHAKEY, value._alphaElements);
+			if (value.mode == GradientMode.Blend) {
+				_owner._render._defineDatas.add(TrailSprite3D.SHADERDEFINE_GRADIENTMODE_BLEND);
+			} else {
+				_owner._render._defineDatas.remove(TrailSprite3D.SHADERDEFINE_GRADIENTMODE_BLEND);
 			}
 		}
 		
@@ -159,75 +166,85 @@ package laya.d3.core.trail {
 		}
 		
 		public function TrailFilter(owner:TrailSprite3D) {
-			
 			_owner = owner;
-			
-			_trailRenderElements = new Vector.<TrailRenderElement>();
-			
+			_initDefaultData();
 			addRenderElement();
-		}
-		
-		public function getRenderElementsCount():int {
-			return _trailRenderElements.length;
-		}
-		
-		public function addRenderElement():int {
-			
-			for (var i:int = 0; i < _trailRenderElements.length; i++ ){
-				if (_trailRenderElements[i]._isDead == true){
-					_trailRenderElements[i].reActivate();
-					return i;
-				}
-			}
-			
-			var _trailRenderElement:TrailRenderElement = new TrailRenderElement(this);
-			_trailRenderElements.push(_trailRenderElement);
-			return _trailRenderElements.length - 1;
-		}
-		
-		public function getRenderElement(index:int):IRenderable {
-			return _trailRenderElements[index];
-		}
-		
-		public function _update(state:RenderState):void {
-			
-			_curtime += state.elapsedTime / 1000;
-			_owner._render._setShaderValueNumber(TrailSprite3D.CURTIME, _curtime);
-			
-			if (_curSubTrailFinished) {
-				_curSubTrailFinished = false;
-				_trailRenderElementIndex = addRenderElement();
-				event(Event.TRAIL_FILTER_CHANGE, [_trailRenderElementIndex, _trailRenderElements[_trailRenderElementIndex]]);
-			}
-		}
-		
-		public function reset():void{
-			
-			for (var i:int = 0; i < _trailRenderElements.length; i++ ){
-				_trailRenderElements[i].reActivate();
-			}
-			_isStart = false;
-			_hasLifeSubTrail = false;
-			_curSubTrailFinished = false;
-			_curSubTrailFinishCurTime = 0;
-			_trailTotalLength = 0;
-			_trailSupplementLength = 0;
-			_trailDeadLength = 0;
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _destroy():void {
-			super._destroy();
-			for (var i:int = 0; i < _trailRenderElements.length; i++ ){
-				_trailRenderElements[i]._destroy();
-			}
-			_trailRenderElements = null;
+		public function addRenderElement():void {
+			var render:TrailRenderer = _owner._render as TrailRenderer;
+			var elements:Vector.<RenderElement> = render._renderElements;
+			var material:TrailMaterial = render.sharedMaterials[0] as TrailMaterial;
+			(material) || (material = TrailMaterial.defaultMaterial);
+			var element:RenderElement = new RenderElement();
+			element.setTransform(_owner._transform);
+			element.render = render;
+			element.material = material;
+			_trialGeometry = new TrailGeometry(this);
+			element.setGeometry(_trialGeometry);
+			elements.push(element);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _update(state:RenderContext3D):void {
+			var render:BaseRender = _owner._render;
+			_curtime += (state.scene as Scene3D).timer._delta / 1000;
+			render._shaderValues.setNumber(TrailSprite3D.CURTIME, _curtime);
+			
+			var curPos:Vector3 = _owner.transform.position;
+			var element:TrailGeometry = render._renderElements[0]._geometry as TrailGeometry;
+			element._updateDisappear();
+			element._updateTrail(state.camera as Camera, _lastPosition, curPos);
+			element._updateVertexBufferUV();
+			curPos.cloneTo(_lastPosition);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _initDefaultData():void {
+			time = 5.0;
+			minVertexDistance = 0.1;
+			widthMultiplier = 1;
+			textureMode = TextureMode.Stretch;
+			
+			var widthKeyFrames:Vector.<FloatKeyframe> = new Vector.<FloatKeyframe>();
+			var widthKeyFrame1:FloatKeyframe = new FloatKeyframe();
+			widthKeyFrame1.time = 0;
+			widthKeyFrame1.inTangent = 0;
+			widthKeyFrame1.outTangent = 0;
+			widthKeyFrame1.value = 1;
+			widthKeyFrames.push(widthKeyFrame1);
+			var widthKeyFrame2:FloatKeyframe = new FloatKeyframe();
+			widthKeyFrame2.time = 1;
+			widthKeyFrame2.inTangent = 0;
+			widthKeyFrame2.outTangent = 0;
+			widthKeyFrame2.value = 1;
+			widthKeyFrames.push(widthKeyFrame2);
+			widthCurve = widthKeyFrames;
+			
+			var gradient:Gradient = new Gradient(2, 2);
+			gradient.mode = GradientMode.Blend;
+			gradient.addColorRGB(0, Color.WHITE);
+			gradient.addColorRGB(1, Color.WHITE);
+			gradient.addColorAlpha(0, 1);
+			gradient.addColorAlpha(1, 1);
+			colorGradient = gradient;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function destroy():void {
+			_trialGeometry.destroy();
+			_trialGeometry = null;
 			_widthCurve = null;
 			_colorGradient = null;
-			_curSubTrailFinishPosition = null;
-			_curSubTrailFinishDirection = null;
 		}
 	}
 }

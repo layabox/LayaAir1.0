@@ -1,59 +1,35 @@
 package laya.resource {
 	import laya.renders.Render;
 	import laya.utils.Browser;
-	import laya.utils.RunDriver;
 	
 	/**
-	 * <code>HTMLCanvas</code> 是 Html Canvas 的代理类，封装了 Canvas 的属性和方法。。请不要直接使用 new HTMLCanvas！
+	 * <code>HTMLCanvas</code> 是 Html Canvas 的代理类，封装了 Canvas 的属性和方法。
 	 */
 	public class HTMLCanvas extends Bitmap {
 		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		
+		private var _ctx:*;
+		public var _source:*;
+		public var _texture:Texture;
 		/**
-		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。
-		 * @param	type 类型。2D、3D。
+		 * @inheritDoc
 		 */
-		public static var create:Function = function(type:String,canvas:*=null):HTMLCanvas
-		{
-			return new HTMLCanvas(type,canvas);
+		 public function get source():* {
+			return _source;
 		}
 		
-		/** 2D 模式。*/
-		public static const TYPE2D:String = "2D";
-		/** 3D 模式。*/
-		public static const TYPE3D:String = "3D";
-		/** 自动模式。*/
-		public static const TYPEAUTO:String = "AUTO";
-		
-		/** @private */
-		public static var _createContext:Function;
-		
-		private var _ctx:*;
-		private var _is2D:Boolean = false;
-		
+		override public function _getSource():* 
+		{
+			return _source;
+		}
 		/**
-		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。请不要直接使用 new HTMLCanvas！
-		 * @param	type 类型。2D、3D。
+		 * 根据指定的类型，创建一个 <code>HTMLCanvas</code> 实例。
 		 */
-		public function HTMLCanvas(type:String,canvas:*=null) {
-			_source = this;
-			if (type === "2D" || (type === "AUTO" && !Render.isWebGL)) {
-				_is2D = true;
-				_source = canvas || Browser.createElement("canvas");
-				this._w = _source.width;
-				this._h = _source.height;
-				var o:HTMLCanvas = this;
-				o.getContext = function(contextID:String, other:*=null):Context {
-					if (_ctx) return _ctx;
-					var ctx:* = _ctx = _source.getContext(contextID, other);
-					if (ctx) {
-						ctx._canvas = o;
-						if(!Render.isFlash&&!Browser.onLimixiu) ctx.size = function(w:Number, h:Number):void {
-						};
-					}
-					return ctx;
-				}
+		public function HTMLCanvas(createCanvas:Boolean = false) {
+			if(createCanvas || !Render.isWebGL)	//webgl模式下不建立。除非强制指，例如绘制文字部分
+				_source = Browser.createElement("canvas");
+			else {
+				_source = this;
 			}
 			lock = true;
 		}
@@ -63,6 +39,11 @@ package laya.resource {
 		 */
 		public function clear():void {
 			_ctx && _ctx.clear();
+			if (_texture)
+			{
+				_texture.destroy();
+				_texture = null;
+			}
 		}
 		
 		/**
@@ -71,7 +52,6 @@ package laya.resource {
 		override public function destroy():void {
 			_ctx && _ctx.destroy();
 			_ctx = null;
-			super.destroy();
 		}
 		
 		/**
@@ -84,12 +64,20 @@ package laya.resource {
 		 * Canvas 渲染上下文。
 		 */
 		public function get context():Context {
+			if (_ctx) return _ctx;
+			if (Render.isWebGL && _source==this ) {	//是webgl并且不是真的画布。如果是真的画布，可能真的想要2d context
+				_ctx = __JS__("new laya.webgl.canvas.WebGLContext2D();");
+			}else {
+				_ctx = _source.getContext(Render.isConchApp?'layagl':'2d');
+			}
+			_ctx._canvas = this;
+			//if(!Browser.onLimixiu) _ctx.size = function(w:Number, h:Number):void {};	这个是干什么的，会导致ctx的size不好使
 			return _ctx;
 		}
 		
 		/**
 		 * @private
-		 * 设置 Canvas 渲染上下文。
+		 * 设置 Canvas 渲染上下文。是webgl用来替换_ctx用的
 		 * @param	context Canvas 渲染上下文。
 		 */
 		public function _setContext(context:Context):void {
@@ -102,24 +90,17 @@ package laya.resource {
 		 * @param	other
 		 * @return  Canvas 渲染上下文 Context 对象。
 		 */
-		/*[IF-FLASH]*/ public var getContext:Function =function
-		//[IF-SCRIPT] public function getContext
-		(contextID:String, other:* = null):Context {
-			return _ctx ? _ctx : (_ctx = _createContext(this));
+		public function getContext(contextID:String, other:* = null):Context {
+			return context;
 		}
 		
 		/**
 		 * 获取内存大小。
 		 * @return 内存大小。
 		 */
+		//TODO:coverage
 		public function getMemSize():int {
-			return /*_is2D ? super.getMemSize() :*/ 0;//待调整
-		}
-		
-		/**
-		 * 是否当作 Bitmap 对象。
-		 */
-		public function set asBitmap(value:Boolean):void {
+			return /*_is2D ? super.getMemSize() :*/ 0;//TODO:待调整
 		}
 		
 		/**
@@ -128,18 +109,38 @@ package laya.resource {
 		 * @param	h 高度。
 		 */
 		public function size(w:Number, h:Number):void {
-			if (_w != w || _h != h ||(_source && (_source.width!=w || _source.height!=h))) {
-				_w = w;
-				_h = h;
-				memorySize = _w * _h * 4;
-				_ctx && _ctx.size(w, h);
+			if (_width != w || _height != h || (_source && (_source.width != w || _source.height != h))) {
+				_width = w;
+				_height = h;
+				_setGPUMemory(w * h * 4);
+				_ctx && _ctx.size && _ctx.size(w, h);
 				_source && (_source.height = h, _source.width = w);
+				if (_texture)
+				{
+					_texture.destroy();
+					_texture = null;
+				}
 			}
 		}
 		
-		public function getCanvas():*{
-			return _source;
+		/**
+		 * 获取texture实例
+		 */
+		public function getTexture():Texture
+		{
+			if (!_texture)
+			{
+				_texture = new Texture(this, Texture.DEF_UV);
+			}
+			return _texture;
 		}
+		
+		/**
+		 * 把图片转换为base64信息
+		 * @param	type "image/png"
+		 * @param	encoderOptions	质量参数，取值范围为0-1
+		 * @param	callBack	完成回调，返回base64数据
+		 */
 		public function toBase64(type:String, encoderOptions:Number, callBack:Function):void {
 			if (_source) {
 				if (Render.isConchApp && _source.toBase64) {
@@ -147,10 +148,9 @@ package laya.resource {
 				}
 				else {
 					var base64Data:String = _source.toDataURL(type, encoderOptions);
-					callBack.call(this, base64Data);
+					callBack(base64Data);
 				}
 			}
-			
 		}
 	}
 }

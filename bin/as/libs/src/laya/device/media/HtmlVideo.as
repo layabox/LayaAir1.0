@@ -9,13 +9,13 @@ package laya.device.media
 	public class HtmlVideo extends Bitmap
 	{
 		protected var video:*;
-		
+		protected var _source:*;
 		public function HtmlVideo()
 		{
 			super();
 			
-			_w = 1;
-			_h = 1;
+			_width = 1;
+			_height = 1;
 			
 			createDomElement();
 		}
@@ -64,5 +64,13 @@ package laya.device.media
 		{
 			return video;
 		}
+		
+		override public function _getSource():*
+		{
+			// TODO Auto Generated method stub
+			return _source;
+		}
+		
+		
 	}
 }

@@ -85,7 +85,7 @@ package laya.ui {
 	 *     }
 	 * }
 	 */
-	public class ColorPicker extends Component {
+	public class ColorPicker extends UIComponent {
 		
 		/**
 		 * 当颜色发生改变时执行的函数处理器。
@@ -211,7 +211,7 @@ package laya.ui {
 		protected function changePanel():void {
 			_panelChanged = false;
 			var g:Graphics = _colorPanel.graphics;
-			g.clear();
+			g.clear(true);
 			//g.drawRect(0, 0, 230, 166, _bgColor);
 			g.drawRect(0, 0, 230, 166, _bgColor, _borderColor);
 			
@@ -222,7 +222,7 @@ package laya.ui {
 			_colorInput.color = _inputColor;
 			
 			g = _colorTiles.graphics;
-			g.clear();
+			g.clear(true);
 			
 			var mainColors:Array = [0x000000, 0x333333, 0x666666, 0x999999, 0xCCCCCC, 0xFFFFFF, 0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF, 0xFF00FF];
 			for (var i:int = 0; i < 12; i++) {
@@ -340,7 +340,7 @@ package laya.ui {
 		 */
 		private function drawBlock(color:String):void {
 			var g:Graphics = _colorBlock.graphics;
-			g.clear();
+			g.clear(true);
 			var showColor:String = color ? color : "#ffffff";
 			g.drawRect(0, 0, 50, 20, showColor, _borderColor);
 			
@@ -372,8 +372,9 @@ package laya.ui {
 		}
 		
 		public function set skin(value:String):void {
+			_colorButton.once(Event.LOADED, this, changeColor);
 			_colorButton.skin = value;
-			changeColor();
+			//changeColor();
 		}
 		
 		/**
@@ -381,7 +382,7 @@ package laya.ui {
 		 */
 		private function changeColor():void {
 			var g:Graphics = this.graphics;
-			g.clear();
+			g.clear(true);
 			var showColor:String = _selectedColor || "#000000";
 			g.drawRect(0, 0, _colorButton.width, _colorButton.height, showColor);
 		}

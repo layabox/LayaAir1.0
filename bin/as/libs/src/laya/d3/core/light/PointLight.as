@@ -1,16 +1,22 @@
 package laya.d3.core.light {
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.scene.Scene3D;
+	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ValusArray;
+	import laya.d3.shader.DefineDatas;
+	import laya.d3.shader.ShaderData;
 	
 	/**
 	 * <code>PointLight</code> 类用于创建点光。
 	 */
 	public class PointLight extends LightSprite {
 		/** @private */
+		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
+		
+		/** @private */
 		private var _range:Number;
+		/** @private */
+		private var _lightMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/**
 		 * 创建一个 <code>PointLight</code> 实例。
@@ -18,7 +24,6 @@ package laya.d3.core.light {
 		public function PointLight() {
 			super();
 			_range = 6.0;
-			_attenuation = new Vector3(0.6, 0.6, 0.6);//兼容代码
 		}
 		
 		/**
@@ -40,58 +45,53 @@ package laya.d3.core.light {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _clearSelfRenderObjects():void {
-			var scene:Scene = this.scene;
-			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(Scene.POINTLIGHTCOLOR, null);
-			shaderValue.setValue(Scene.POINTLIGHTPOS, null);
-			shaderValue.setValue(Scene.POINTLIGHTRANGE, null);
-			shaderValue.setValue(Scene.POINTLIGHTATTENUATION, null);//兼容代码
-			scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
+		override protected function _onActive():void {
+			super._onActive();
+			(_lightmapBakedType!==LightSprite.LIGHTMAPBAKEDTYPE_BAKED)&&((_scene as Scene3D)._defineDatas.add(Scene3D.SHADERDEFINE_POINTLIGHT));
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onInActive():void {
+			super._onInActive();
+			(_lightmapBakedType!==LightSprite.LIGHTMAPBAKEDTYPE_BAKED)&&((_scene as Scene3D)._defineDatas.remove(Scene3D.SHADERDEFINE_POINTLIGHT));
 		}
 		
 		/**
 		 * 更新点光相关渲染状态参数。
 		 * @param state 渲染状态参数。
 		 */
-		public override function _prepareToScene(state:RenderState):Boolean {
-			var scene:Scene = state.scene;
-			if (scene.enableLight && _activeInHierarchy) {
-				var shaderValue:ValusArray = scene._shaderValues;
-				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
+		public override function _prepareToScene():Boolean {
+			var scene:Scene3D = _scene as Scene3D;
+			if (scene.enableLight && activeInHierarchy) {
+				var defineDatas:DefineDatas = scene._defineDatas;
+				var shaderValue:ShaderData = scene._shaderValues;
 				Vector3.scale(color, _intensity, _intensityColor);
-				shaderValue.setValue(Scene.POINTLIGHTCOLOR, _intensityColor.elements);
-				shaderValue.setValue(Scene.POINTLIGHTPOS, transform.position.elements);
-				shaderValue.setValue(Scene.POINTLIGHTRANGE, range);
-				shaderValue.setValue(Scene.POINTLIGHTATTENUATION, attenuation.elements);//兼容代码
+				shaderValue.setVector(Scene3D.POINTLIGHTCOLOR, _intensityColor);
+				shaderValue.setVector(Scene3D.POINTLIGHTPOS, transform.position);
+				shaderValue.setNumber(Scene3D.POINTLIGHTRANGE, range);
+				
+				var lightMatrix:Matrix4x4 = _lightMatrix;
+				var lightMatrixE:Float32Array = lightMatrix.elements;
+				lightMatrix.identity();
+				lightMatrixE[0] = lightMatrixE[5] = lightMatrixE[10] = 1.0 / _range;
+				var toLightMatrix:Matrix4x4 = _tempMatrix0;
+				transform.worldMatrix.invert(toLightMatrix);
+				Matrix4x4.multiply(lightMatrix, toLightMatrix, lightMatrix);
+				shaderValue.setMatrix4x4(Scene3D.POINTLIGHTMATRIX, lightMatrix);
 				return true;
 			} else {
-				scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT);
 				return false;
 			}
 		}
 		
-		//.....................................兼容.................................
-		/** @private */
-		private var _attenuation:Vector3;
-		
 		/**
-		 * 获取点光的衰减。
-		 * @return 点光的衰减。
+		 * @inheritDoc
 		 */
-		public function get attenuation():Vector3 {
-			return _attenuation;
+		override public function _parse(data:Object):void {
+			super._parse(data);
+			range = data.range;
 		}
-		
-		/**
-		 * 设置点光的衰减。
-		 * @param value 点光的衰减。
-		 */
-		public function set attenuation(value:Vector3):void {
-			_attenuation = value;
-		}
-		//.....................................兼容.................................
-	
 	}
-
 }

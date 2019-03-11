@@ -29,7 +29,7 @@ package laya.utils {
 		private var _index:int = 0;
 		/**为TWEEN创建属于自己的唯一标识，方便管理*/
 		private var _gidIndex:int = 0;
-		/**保留所有对象第一次注册动画时的状态（根据时间跳转时，需要把对象的回复，再计算接下来的状态）*/
+		/**保留所有对象第一次注册动画时的状态（根据时间跳转时，需要把对象的恢复，再计算接下来的状态）*/
 		private var _firstTweenDic:Object = {};
 		/**是否需要排序*/
 		private var _startTimeSort:Boolean = false;
@@ -276,9 +276,7 @@ package laya.utils {
 					var tTweenData:tweenData = _tweenDataList[i];
 					if (tTweenData != null && tTweenData.type == 0) {
 						var tTarget:* = tTweenData.target;
-						//[IF-JS]var gid:int = (tTarget.$_GID || (tTarget.$_GID = Utils.getGID()));
-						/*[IF-FLASH]*/
-						var gid:* = tTarget;
+						var gid:int = (tTarget.$_GID || (tTarget.$_GID = Utils.getGID()));
 						var tSrcData:Object = null;
 						//把对象的初始属性保留下来，方便跳转时，回复到初始状态
 						if (_firstTweenDic[gid] == null) {

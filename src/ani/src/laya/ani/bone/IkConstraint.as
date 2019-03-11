@@ -18,6 +18,7 @@ package laya.ani.bone {
 		static public var degRad:Number = Math.PI / 180;
 		private static var _tempMatrix:Matrix = new Matrix();
 		
+		//TODO:coverage
 		public function IkConstraint(data:IkConstraintData, bones:Vector.<Bone>) {
 			_data = data;
 			_targetBone = bones[data.targetBoneIndex];
@@ -49,6 +50,7 @@ package laya.ani.bone {
 			}
 		}
 		
+		//TODO:coverage
 		private function _applyIk1(bone:Bone, targetX:Number, targetY:Number, alpha:Number):void {
 			var pp:Bone = bone.parentBone;
 			var id:Number = 1 / (pp.resultMatrix.a * pp.resultMatrix.d - pp.resultMatrix.b * pp.resultMatrix.c);
@@ -68,6 +70,8 @@ package laya.ani.bone {
 		//debug相关代码
 		private var _sp:Sprite;
 		private const isDebug:Boolean = false;
+		
+		//TODO:coverage
 		public function updatePos(x:Number, y:Number):void
 		{
 			if (_sp)
@@ -75,6 +79,8 @@ package laya.ani.bone {
 				_sp.pos(x, y);
 			}
 		}
+		
+		//TODO:coverage
 		private function _applyIk2(parent:Bone, child:Bone, targetX:Number, targetY:Number, bendDir:int, alpha:Number):void {
 			if (alpha == 0) {
 				return;
@@ -245,7 +251,7 @@ package laya.ani.bone {
 			parent.update();
 		}
 	
-		
+		//TODO:coverage
 		private function _applyIk3(parent:Bone, child:Bone, targetX:Number, targetY:Number, bendDir:int, alpha:Number):void {
 			if (alpha == 0) {
 				return;

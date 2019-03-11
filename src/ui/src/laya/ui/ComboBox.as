@@ -81,7 +81,7 @@ package laya.ui {
 	 * }
 	 *
 	 */
-	public class ComboBox extends Component {
+	public class ComboBox extends UIComponent {
 		/**@private */
 		protected var _visibleNum:int = 6;
 		/**
@@ -218,12 +218,12 @@ package laya.ui {
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			return _button.width;
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			return _button.height;
 		}
 		
@@ -318,7 +318,7 @@ package laya.ui {
 			if (!_isCustomList) {
 				//填充背景
 				var g:Graphics = _list.graphics;
-				g.clear();
+				g.clear(true);
 				g.drawRect(0, 0, width - 1, _listHeight, _itemColors[4], _itemColors[3]);
 			}
 			
@@ -442,7 +442,11 @@ package laya.ui {
 					
 					_list.pos(p.x, py);
 					_list.zOrder = 1001;
+					
 					Laya._currentStage.addChild(_list);
+					//Laya.stage.once(Event.MOUSE_DOWN, this, removeList);
+					//Laya.stage.on(Event.MOUSE_WHEEL, this, _onStageMouseWheel);
+					//parent.addChild(_list);
 					Laya.stage.once(Event.MOUSE_DOWN, this, removeList);
 					Laya.stage.on(Event.MOUSE_WHEEL, this, _onStageMouseWheel);
 					_list.selectedIndex = _selectedIndex;

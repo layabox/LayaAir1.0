@@ -2,5 +2,4 @@ node_modules
 debug.txt
 publish/bin
 bin
-libs
 package-lock.json

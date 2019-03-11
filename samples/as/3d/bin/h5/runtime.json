@@ -1,0 +1,4 @@
+{
+    "scripts": ["laya.physics3D.js","LayaAir3DSamples.max.js"],
+    "screenOrientation": "landscape"
+}

@@ -38,7 +38,7 @@ package laya.debug.view.nodeInfo.recinfos
 			
 			_tar = node;
 			if (!node) return;
-			if(!node._$P) return;
+			if(node.destroyed) return;
 		
 			this.graphics.clear();
 			

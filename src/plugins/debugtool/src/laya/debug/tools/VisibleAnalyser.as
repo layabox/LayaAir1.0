@@ -1,11 +1,7 @@
 package laya.debug.tools
 {
-	import laya.debug.tools.enginehook.SpriteRenderForVisibleAnalyse;
 	import laya.debug.view.nodeInfo.DebugInfoLayer;
 	import laya.debug.view.nodeInfo.NodeUtils;
-	import laya.debug.view.nodeInfo.views.NodeListPanelView;
-	import laya.debug.view.nodeInfo.views.OutPutView;
-	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.maths.Rectangle;
 	import laya.renders.Render;
@@ -59,9 +55,6 @@ package laya.debug.tools
 				if (Render.isWebGL)
 				{
 					anlyseRecVisible(node);
-				}else
-				{
-					SpriteRenderForVisibleAnalyse.I.analyseNode(node);
 				}
 				msg += "coverRate:" + coverRate + "\n";
 				if (_coverList.length > 0)
@@ -70,11 +63,9 @@ package laya.debug.tools
 				}
 			}
 			trace(msg);
-			OutPutView.I.showTxt(msg);
 		}
 		private static function showListLater():void
 		{
-			NodeListPanelView.I.showList(_coverList);
 		}
 		
 		public static function isCoverByBrother(node:Sprite):void
@@ -83,7 +74,7 @@ package laya.debug.tools
 			if (!parent)
 				return;
 			var _childs:Array;
-			_childs = parent._childs;
+			_childs = parent._children;
 			var index:int;
 			index = _childs.indexOf(node);
 			if (index < 0)

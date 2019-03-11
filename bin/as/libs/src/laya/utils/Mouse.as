@@ -1,17 +1,13 @@
 package laya.utils {
 	
 	/**
-	 * <code>Mouse</code> 类用于控制鼠标光标。
+	 * <code>Mouse</code> 类用于控制鼠标光标样式。
 	 */
 	public class Mouse {
 		/**@private */
 		private static var _style:Object = Browser.document.body.style;
 		/**@private */
 		private static var _preCursor:String;
-		
-		public function Mouse() {
-		
-		}
 		
 		/**
 		 * 设置鼠标样式
@@ -22,7 +18,6 @@ package laya.utils {
 		 * default text n-resize nw-resize
 		 * help vertical-text s-resize se-resize
 		 * inherit wait w-resize sw-resize
-		 *
 		 */
 		public static function set cursor(cursorStr:String):void {
 			_style.cursor = cursorStr;
@@ -34,7 +29,6 @@ package laya.utils {
 		
 		/**
 		 * 隐藏鼠标
-		 *
 		 */
 		public static function hide():void {
 			if (cursor != "none") {
@@ -45,7 +39,6 @@ package laya.utils {
 		
 		/**
 		 * 显示鼠标
-		 *
 		 */
 		public static function show():void {
 			if (cursor == "none") {
@@ -57,5 +50,4 @@ package laya.utils {
 			}
 		}
 	}
-
 }

@@ -4,7 +4,7 @@
 	precision mediump float;
 #endif
 
-#include "LightHelper.glsl";
+#include "Lighting.glsl";
 
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
 	uniform vec3 u_MaterialDiffuse;
@@ -23,7 +23,6 @@
 	uniform float u_FogRange;
 	uniform vec3 u_FogColor;
 #endif
-
 
 #ifdef DIRECTIONLIGHT
 	uniform DirectionLight u_DirectionLight;
@@ -71,33 +70,37 @@ varying vec2 v_Texcoord1;
 
 void main()
 {
-#ifdef DETAIL_NUM1
-	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
-	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	gl_FragColor.xyz = color1.xyz;
-#endif
-#ifdef DETAIL_NUM2
-	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
-	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
-	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	gl_FragColor.xyz = color1.xyz * (1.0-splatAlpha.r) + color2.xyz * splatAlpha.r;
-#endif
-#ifdef DETAIL_NUM3
-	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
-	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
-	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
-	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g)) + color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g;
-#endif
-#ifdef DETAIL_NUM4
-	vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
-	vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
-	vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
-	vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1/u_DiffuseScale4);
-	vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
-	gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g+splatAlpha.b))+ color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g + color4.xyz * splatAlpha.b;
-#endif
-	gl_FragColor.w = splatAlpha.a;
+	#ifdef DETAIL_NUM1
+		vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+		vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+		gl_FragColor.xyz = color1.xyz;
+		gl_FragColor.w = splatAlpha.a;
+	#endif
+	#ifdef DETAIL_NUM2
+		vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+		vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
+		vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+		gl_FragColor.xyz = color1.xyz * (1.0-splatAlpha.r) + color2.xyz * splatAlpha.r;
+		gl_FragColor.w = splatAlpha.a;
+	#endif
+	#ifdef DETAIL_NUM3
+		vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+		vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
+		vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
+		vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+		gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g)) + color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g;
+		gl_FragColor.w = splatAlpha.a;
+	#endif
+	#ifdef DETAIL_NUM4
+		vec4 color1 = texture2D(u_DiffuseTexture1, v_Texcoord1/u_DiffuseScale1);
+		vec4 color2 = texture2D(u_DiffuseTexture2, v_Texcoord1/u_DiffuseScale2);
+		vec4 color3 = texture2D(u_DiffuseTexture3, v_Texcoord1/u_DiffuseScale3);
+		vec4 color4 = texture2D(u_DiffuseTexture4, v_Texcoord1/u_DiffuseScale4);
+		vec4 splatAlpha = texture2D(u_SplatAlphaTexture, v_Texcoord0);
+		gl_FragColor.xyz = color1.xyz * (1.0-(splatAlpha.r+splatAlpha.g+splatAlpha.b))+ color2.xyz * splatAlpha.r + color3.xyz * splatAlpha.g + color4.xyz * splatAlpha.b;
+		gl_FragColor.w = splatAlpha.a;
+	#endif
+	
 		
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
     vec3 normal = texture2D(u_NormalTexture,v_Normal.xy).xyz;
@@ -108,7 +111,7 @@ void main()
 	vec3 dif, amb, spe;
 #endif
 
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(FOG)
+#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
 	vec3 toEye;
 	#ifdef FOG
 		toEye=u_CameraPos-v_PositionWorld;
@@ -153,14 +156,22 @@ void main()
 	#endif
 #endif
 
+vec3 globalDiffuse=u_AmbientColor;
 #ifdef LIGHTMAP
+	float exponent = texture2D(u_LightMap, v_LightMapUV).a;
+	vec3 finalDiffuse = texture2D(u_LightMap, v_LightMapUV).rgb;
+	float ratio = pow(2.0, exponent * 255.0 - (128.0 + 8.0));
+	finalDiffuse = finalDiffuse * 255.0 * ratio;	
+	globalDiffuse += pow(finalDiffuse, vec3(1.0/2.2));
 	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)
-		gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb);
+		gl_FragColor.rgb=gl_FragColor.rgb*globalDiffuse;
 	#else
-		#if defined(RECEIVESHADOW)
-			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue);
+		#if defined(RECEIVESHADOW)		
+			gl_FragColor.rgb=gl_FragColor.rgb*(globalDiffuse * shadowValue);
+			//vec3 tColor= u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb * shadowValue + mix(vec3(0.15,0.15,0.15),vec3(0.0),shadowValue);
+			//gl_FragColor.rgb*=tColor;
 		#else
-			gl_FragColor.rgb=gl_FragColor.rgb*(u_MaterialAmbient + texture2D(u_LightMap, v_LightMapUV).rgb);
+			gl_FragColor.rgb=gl_FragColor.rgb*(globalDiffuse);
 		#endif
 	#endif
 #endif
@@ -173,9 +184,14 @@ void main()
 	#endif
 #endif
 
-#ifdef FOG
-	float lerpFact=clamp((toEyeLength-u_FogStart)/u_FogRange,0.0,1.0);
-	gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
-#endif
+
+	#ifdef FOG
+		float lerpFact=clamp((1.0/gl_FragCoord.w-u_FogStart)/u_FogRange,0.0,1.0);
+		#ifdef ADDTIVEFOG
+			gl_FragColor.rgb=mix(gl_FragColor.rgb,vec3(0.0,0.0,0.0),lerpFact);
+		#else
+			gl_FragColor.rgb=mix(gl_FragColor.rgb,u_FogColor,lerpFact);
+		#endif
+	#endif
 }
 

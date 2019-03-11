@@ -28,7 +28,7 @@ package laya.d3.math {
 		 * @param	height 高度。
 		 */
 		public function Viewport(x:Number, y:Number, width:Number, height:Number) {
-			minDepth =0.0;//TODO:待确认，-1。
+			minDepth = 0.0;//TODO:待确认，-1。
 			maxDepth = 1.0;
 			
 			this.x = x;
@@ -62,6 +62,25 @@ package laya.d3.math {
 			outEleme[0] = (((outEleme[0] + 1.0) * 0.5) * width) + x;
 			outEleme[1] = (((-outEleme[1] + 1.0) * 0.5) * height) + y;
 			outEleme[2] = (outEleme[2] * (maxDepth - minDepth)) + minDepth;
+		}
+		
+		public function project1(source:Vector3, matrix:Matrix4x4, out:Vector3):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var v4:Vector4 = Vector3._tempVector4;
+			Vector3.transformV3ToV4(source, matrix, v4);
+			var v4e:Float32Array = v4.elements;
+			//v4e[3]是z，是相对于摄像机的位置。注意有时候可能为0
+			var dist:Number = v4e[3];
+			if (dist < 1e-1 && dist > -1e-6) dist = 1e-6;
+			v4e[0] /= dist;
+			v4e[1] /= dist;
+			v4e[2] /= dist;
+			
+			var outEleme:Float32Array = out.elements;
+			outEleme[0] = (v4e[0] + 1) * width / 2 + x;
+			outEleme[1] = (-v4e[1] + 1) * height / 2 + y;
+			outEleme[2] = v4e[3];
+			return;
 		}
 		
 		/**
@@ -106,6 +125,19 @@ package laya.d3.math {
 			(world) && (Matrix4x4.multiply(_tempMatrix4x4, world, _tempMatrix4x4));
 			_tempMatrix4x4.invert(_tempMatrix4x4);
 			unprojectFromMat(source, _tempMatrix4x4, out);
+		}
+		
+		/**
+		 * 克隆
+		 * @param	out
+		 */
+		public function cloneTo(out:Viewport):void {
+			out.x = x;
+			out.y = y;
+			out.width = width;
+			out.height = height;
+			out.minDepth = minDepth;
+			out.maxDepth = maxDepth;
 		}
 	}
 

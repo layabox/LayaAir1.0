@@ -1,6 +1,7 @@
 package laya.ui {
 	import laya.display.Sprite;
 	import laya.events.Event;
+	import laya.net.Loader;
 	import laya.ui.Button;
 	import laya.utils.Handler;
 	
@@ -97,9 +98,9 @@ package laya.ui {
 			if (autoLayOut && index > 0) {
 				var preItem:Sprite = _items[index - 1] as Sprite;
 				if (_direction == "horizontal") {
-					display.x = preItem.x + preItem.width + _space;
+					display.x = preItem._x + preItem.width + _space;
 				} else {
-					display.y = preItem.y + preItem.height + _space;
+					display.y = preItem._y + preItem.height + _space;
 				}
 			} else {
 				if (autoLayOut) {
@@ -139,6 +140,11 @@ package laya.ui {
 					selectedIndex = newIndex;
 				}
 			}
+		}
+		
+		public function _afterInited():void 
+		{
+			initItems();
 		}
 		
 		/**
@@ -202,8 +208,20 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				_setLabelChanged();
+				if (_skin&&!Loader.getRes(_skin))
+				{
+					Laya.loader.load(_skin, Handler.create(this, _skinLoaded), null, Loader.IMAGE,1);
+				}else
+				{
+					_skinLoaded();
+				}
 			}
+		}
+		
+		protected function _skinLoaded():void
+		{
+			_setLabelChanged();
+			event(Event.LOADED);
 		}
 		
 		/**
@@ -434,7 +452,7 @@ package laya.ui {
 					}
 				}
 			}
-			changeSize();
+			_sizeChanged();
 		}
 		
 		/**@inheritDoc */

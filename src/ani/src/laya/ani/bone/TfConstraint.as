@@ -14,6 +14,7 @@ package laya.ani.bone {
 		public var shearMix:Number;
 		private var _temp:Vector.<Number> = new Vector.<Number>(2);
 		
+		//TODO:coverage
 		public function TfConstraint(data:TfConstraintData, bones:Vector.<Bone>) {
 			_data = data;
 			if (_bones == null) {
@@ -30,6 +31,7 @@ package laya.ani.bone {
 			shearMix = data.shearMix;
 		}
 		
+		//TODO:coverage
 		public function apply():void {
 			var tTfBone:Bone;
 			var ta:Number = target.resultMatrix.a, tb:Number = target.resultMatrix.b, tc:Number = target.resultMatrix.c, td:Number = target.resultMatrix.d;

@@ -1,8 +1,7 @@
 package laya.ui {
 	import laya.display.Text;
-	import laya.display.css.Font;
 	import laya.events.Event;
-	import laya.ui.Component;
+	import laya.ui.UIComponent;
 	import laya.ui.UIUtils;
 	
 	/**
@@ -116,7 +115,7 @@ package laya.ui {
 	 * }
 	 * @see laya.display.Text
 	 */
-	public class Label extends Component {
+	public class Label extends UIComponent {
 		
 		/**
 		 * @private
@@ -129,7 +128,6 @@ package laya.ui {
 		 * @param text 文本内容字符串。
 		 */
 		public function Label(text:String = "") {
-			Font.defaultColor = Styles.labelColor;
 			this.text = text;
 		}
 		
@@ -337,14 +335,14 @@ package laya.ui {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			return _tf.width;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			return _tf.height;
 		}
 		

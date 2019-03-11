@@ -1,5 +1,5 @@
 package laya.ui {
-	import laya.display.Node;
+	import laya.Const;
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.net.Loader;
@@ -89,7 +89,7 @@ package laya.ui {
 	 *     }
 	 * }
 	 */
-	public class Button extends Component implements ISelect {
+	public class Button extends UIComponent implements ISelect {
 		/**
 		 * 按钮状态集。
 		 */
@@ -263,16 +263,15 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override protected function initialize():void {
-			if (_mouseEnableState !== 1)
-			{
+			if (_mouseState !== 1) {
 				this.mouseEnabled = true;
-				_setBit(Node.MOUSEENABLE, true);	
+				_setBit(Const.HAS_MOUSE, true);
 			}
-			_createListener(Event.MOUSE_OVER, this, onMouse,null,false,false);
-			_createListener(Event.MOUSE_OUT, this, onMouse,null,false,false);
-			_createListener(Event.MOUSE_DOWN, this, onMouse,null,false,false);
-			_createListener(Event.MOUSE_UP, this, onMouse,null,false,false);
-			_createListener(Event.CLICK, this, onMouse,null,false,false);
+			_createListener(Event.MOUSE_OVER, this, onMouse, null, false, false);
+			_createListener(Event.MOUSE_OUT, this, onMouse, null, false, false);
+			_createListener(Event.MOUSE_DOWN, this, onMouse, null, false, false);
+			_createListener(Event.MOUSE_UP, this, onMouse, null, false, false);
+			_createListener(Event.CLICK, this, onMouse, null, false, false);
 		}
 		
 		/**
@@ -302,9 +301,26 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				callLater(changeClips);
-				_setStateChanged();
+				if (value) {
+					if (!Loader.getRes(value))
+					{
+						Laya.loader.load(_skin, Handler.create(this, _skinLoaded), null, Loader.IMAGE,1);
+					}else
+					{
+						_skinLoaded();
+					}
+				} else {
+					_skinLoaded();
+				}
 			}
+		}
+		
+		protected function _skinLoaded():void
+		{
+			callLater(changeClips);
+			_setStateChanged();
+			_sizeChanged();
+			event(Event.LOADED);
 		}
 		
 		/**
@@ -383,7 +399,7 @@ package laya.ui {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			runCallLater(changeClips);
 			if (_autoSize) return _bitmap.width;
 			runCallLater(changeState);
@@ -393,7 +409,7 @@ package laya.ui {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			runCallLater(changeClips);
 			return _text ? Math.max(_bitmap.height, _text.height) : _bitmap.height;
 		}

@@ -4,14 +4,8 @@ package laya.filters {
 	 * @private
 	 * <code>ColorFilterAction</code> 是一个颜色滤镜应用类。
 	 */
-	public class ColorFilterAction implements IFilterAction {
+	public class ColorFilterAction {
 		public var data:ColorFilter;
-		
-		/**
-		 * 创建一个 <code>ColorFilterAction</code> 实例。
-		 */
-		public function ColorFilterAction() {
-		}
 		
 		/**
 		 * 给指定的对象应用颜色滤镜。
@@ -19,8 +13,9 @@ package laya.filters {
 		 * @return 应用了滤镜后的画布对象。
 		 */
 		public function apply(srcCanvas:*):* {
-			var ctx:* = srcCanvas.ctx.ctx;
-			var canvas:* = srcCanvas.ctx.ctx.canvas;
+			//TODO:
+			var canvas:* = srcCanvas.canvas;
+			var ctx:* = canvas.context;
 			
 			if (canvas.width == 0 || canvas.height == 0) return canvas;
 			

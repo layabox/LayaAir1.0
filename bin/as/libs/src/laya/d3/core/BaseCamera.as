@@ -1,34 +1,28 @@
 package laya.d3.core {
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.RenderTexture;
-	import laya.d3.resource.models.Sky;
-	import laya.d3.shader.ValusArray;
-	import laya.d3.utils.Size;
+	import laya.d3.resource.models.SkyRenderer;
+	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.ShaderData;
 	import laya.events.Event;
-	import laya.webgl.WebGLContext;
+	import laya.net.Loader;
 	
 	/**
 	 * <code>BaseCamera</code> 类用于创建摄像机的父类。
 	 */
 	public class BaseCamera extends Sprite3D {
-		public static const CAMERAPOS:int = 0;
-		public static const VIEWMATRIX:int = 1;
-		public static const PROJECTMATRIX:int = 2;
+		/** @private */
+		private static var _tempMatrix4x40:Matrix4x4 = new Matrix4x4();
+		
+		public static const CAMERAPOS:int = Shader3D.propertyNameToID("u_CameraPos");
+		public static const VIEWMATRIX:int = Shader3D.propertyNameToID("u_View");
+		public static const PROJECTMATRIX:int = Shader3D.propertyNameToID("u_Projection");
 		public static const VPMATRIX:int = 3;//TODO:xx
-		public static const VPMATRIX_NO_TRANSLATE:int = 4;//TODO:xx
-		public static const CAMERADIRECTION:int = 5;
-		public static const CAMERAUP:int = 6;
-		public static const ENVIRONMENTDIFFUSE:int = 7;
-		public static const ENVIRONMENTSPECULAR:int = 8;
-		public static const SIMLODINFO:int = 9;
-		public static const DIFFUSEIRRADMATR:int = 10;
-		public static const DIFFUSEIRRADMATG:int = 11;
-		public static const DIFFUSEIRRADMATB:int = 12;
-		public static const HDREXPOSURE:int = 13;
+		public static const VPMATRIX_NO_TRANSLATE:int = Shader3D.propertyNameToID("u_MvpMatrix");
+		public static const CAMERADIRECTION:int = Shader3D.propertyNameToID("u_CameraDirection");
+		public static const CAMERAUP:int = Shader3D.propertyNameToID("u_CameraUp");
 		
 		/**渲染模式,延迟光照渲染，暂未开放。*/
 		public static const RENDERINGTYPE_DEFERREDLIGHTING:String = "DEFERREDLIGHTING";
@@ -55,21 +49,9 @@ package laya.d3.core {
 		//private static const  boundingFrustum:BoundingFrustum = new BoundingFrustum(Matrix4x4.Identity);
 		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		/** @private */
-		protected var _tempVector3:Vector3;
 		
-		/** @private 位置。*/
-		private var _position:Vector3;
-		/**@private 向上向量。*/
-		private var _up:Vector3;
-		/**@private 前向量。*/
-		private var _forward:Vector3;
-		/** @private 右向量。*/
-		private var _right:Vector3;
 		/** @private 渲染顺序。*/
-		private var _renderingOrder:int;
-		/**@private 渲染目标尺寸。*/
-		private var _renderTargetSize:Size;
+		public var _renderingOrder:int
 		
 		/**@private 近裁剪面。*/
 		private var _nearPlane:Number;
@@ -79,8 +61,8 @@ package laya.d3.core {
 		private var _fieldOfView:Number;
 		/**@private 正交投影的垂直尺寸。*/
 		private var _orthographicVerticalSize:Number;
-		/**@private 天空。*/
-		private var _sky:Sky;
+		/**@private */
+		private var _skyRenderer:SkyRenderer = new SkyRenderer();
 		
 		/**@private */
 		protected var _orthographic:Boolean;
@@ -88,76 +70,29 @@ package laya.d3.core {
 		protected var _renderTarget:RenderTexture;
 		/**@private 是否使用用户自定义投影矩阵，如果使用了用户投影矩阵，摄像机投影矩阵相关的参数改变则不改变投影矩阵的值，需调用ResetProjectionMatrix方法。*/
 		protected var _useUserProjectionMatrix:Boolean;
-		/** @private 表明视口是否使用裁剪空间表达。*/
-		protected var _viewportExpressedInClipSpace:Boolean;
+		
+		/** @private */
+		public var _shaderValues:ShaderData;
+		/** @private [只读] 需先调用viewport保证值正确。*/
+		public var _canvasWidth:Number;
+		/** @private [只读] 需先调用viewport保证值正确。*/
+		public var _canvasHeight:Number;
 		
 		/**清楚标记。*/
 		public var clearFlag:int;
 		/**摄像机的清除颜色。*/
 		public var clearColor:Vector4;
-		/** 可视遮罩图层。 */
+		/** 可视层位标记遮罩值,支持混合 例:cullingMask=Math.pow(2,0)|Math.pow(2,1)为第0层和第1层可见。*/
 		public var cullingMask:int;
 		/** 渲染时是否用遮挡剔除。 */
 		public var useOcclusionCulling:Boolean;
 		
-		/**获取天空。*/
-		public function get sky():Sky {
-			return _sky;
-		}
-		
-		/**设置天空。*/
-		public function set sky(value:Sky):void {
-			_sky = value;
-			value._ownerCamera = this;
-		}
-		
-		/**获取位置。*/
-		public function get position():Vector3 {
-			var worldMatrixe:Float32Array = transform.worldMatrix.elements;
-			var positione:Float32Array = _position.elements;
-			positione[0] = worldMatrixe[12];
-			positione[1] = worldMatrixe[13];
-			positione[2] = worldMatrixe[14];
-			return _position;
-		}
-		
 		/**
-		 * 获取上向量。
-		 * @return 上向量。
+		 * 获取天空渲染器。
+		 * @return 天空渲染器。
 		 */
-		public function get up():Vector3 {
-			var worldMatrixe:Float32Array = transform.worldMatrix.elements;
-			var upe:Float32Array = _up.elements;
-			upe[0] = worldMatrixe[4];
-			upe[1] = worldMatrixe[5];
-			upe[2] = worldMatrixe[6];
-			return _up;
-		}
-		
-		/**
-		 * 获取前向量。
-		 * @return 前向量。
-		 */
-		public function get forward():Vector3 {
-			var worldMatrixe:Float32Array = transform.worldMatrix.elements;
-			var forwarde:Float32Array = _forward.elements;
-			forwarde[0] = -worldMatrixe[8];
-			forwarde[1] = -worldMatrixe[9];
-			forwarde[2] = -worldMatrixe[10];
-			return _forward;
-		}
-		
-		/**
-		 * 获取右向量。
-		 * @return 右向量。
-		 */
-		public function get right():Vector3 {
-			var worldMatrixe:Float32Array = transform.worldMatrix.elements;
-			var righte:Float32Array = _right.elements;
-			righte[0] = worldMatrixe[0];
-			righte[1] = worldMatrixe[1];
-			righte[2] = worldMatrixe[2];
-			return _right;
+		public function get skyRenderer():SkyRenderer {
+			return _skyRenderer;
 		}
 		
 		/**
@@ -173,34 +108,10 @@ package laya.d3.core {
 		 * @param value 渲染场景的渲染目标。
 		 */
 		public function set renderTarget(value:RenderTexture):void {
-			_renderTarget = value;
-			if (value != null)
-				_renderTargetSize = value.size;
-		}
-		
-		/**
-		 * 获取渲染目标的尺寸
-		 * @return 渲染目标的尺寸。
-		 */
-		public function get renderTargetSize():Size {
-			return _renderTargetSize;
-		}
-		
-		/**
-		 * 设置渲染目标的尺寸
-		 * @param value 渲染目标的尺寸。
-		 */
-		public function set renderTargetSize(value:Size):void {
-			if (renderTarget != null && _renderTargetSize != value) {
-				// Recreate render target with new size
-				//AssetContentManager userContentManager = AssetContentManager.CurrentContentManager;
-				//AssetContentManager.CurrentContentManager = renderTarget.ContentManager;
-				//renderTarget.Dispose();
-				//renderTarget = new RenderTarget(value, RenderTarget.SurfaceFormat, RenderTarget.DepthFormat, RenderTarget.Antialiasing);
-				//AssetContentManager.CurrentContentManager = userContentManager;
+			if (_renderTarget !== value) {
+				_renderTarget = value;
+				_calculateProjectionMatrix();
 			}
-			_renderTargetSize = value;
-			_calculateProjectionMatrix();
 		}
 		
 		/**
@@ -327,19 +238,12 @@ package laya.d3.core {
 		 * @param	farPlane 远裁面。
 		 */
 		public function BaseCamera(nearPlane:Number = 0.3, farPlane:Number = 1000) {
-			_tempVector3 = new Vector3();
-			
-			_position = new Vector3();
-			_up = new Vector3();
-			_forward = new Vector3();
-			_right = new Vector3();
+			_shaderValues = new ShaderData(null);
 			
 			_fieldOfView = 60;
 			_useUserProjectionMatrix = false;
 			_orthographic = false;
 			
-			_viewportExpressedInClipSpace = true;
-			_renderTargetSize = Size.fullScreen;
 			_orthographicVerticalSize = 10;
 			renderingOrder = 0;
 			
@@ -357,7 +261,7 @@ package laya.d3.core {
 		 * 通过RenderingOrder属性对摄像机机型排序。
 		 */
 		public function _sortCamerasByRenderingOrder():void {
-			if (_displayedInStage) {
+			if (displayedInStage) {
 				var cameraPool:Vector.<BaseCamera> = scene._cameraPool;//TODO:可优化，从队列中移除再加入
 				var n:int = cameraPool.length - 1;
 				for (var i:int = 0; i < n; i++) {
@@ -388,48 +292,48 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _prepareCameraToRender():void {
-			Layer._currentCameraCullingMask = cullingMask;
-			var cameraSV:ValusArray = _shaderValues;
-			cameraSV.setValue(BaseCamera.CAMERAPOS, transform.position.elements);
-			cameraSV.setValue(BaseCamera.CAMERADIRECTION, forward.elements);
-			cameraSV.setValue(BaseCamera.CAMERAUP, up.elements);
+			var cameraSV:ShaderData = _shaderValues;
+			cameraSV.setVector(BaseCamera.CAMERAPOS, transform.position);
+			cameraSV.setVector(BaseCamera.CAMERADIRECTION, transform.forward);
+			cameraSV.setVector(BaseCamera.CAMERAUP, transform.up);
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _prepareCameraViewProject(viewMatrix:Matrix4x4, projectMatrix:Matrix4x4):void {
-			var cameraSV:ValusArray = _shaderValues;
-			cameraSV.setValue(BaseCamera.VIEWMATRIX, viewMatrix.elements);
-			cameraSV.setValue(BaseCamera.PROJECTMATRIX, projectMatrix.elements);
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _renderCamera(gl:WebGLContext, state:RenderState, scene:Scene):void {
-		}
-		
-		/**
-		 * 增加可视图层。
-		 * @param layer 图层。
-		 */
-		public function addLayer(layer:Layer):void {
-			if (layer.number === 29 || layer.number == 30)//29和30为预留蒙版层,已默认存在
-				return;
+		public function _prepareCameraViewProject(vieMat:Matrix4x4, proMat:Matrix4x4, vieProNoTraSca:Matrix4x4):void {
+			var cameraSV:ShaderData = _shaderValues;
+			cameraSV.setMatrix4x4(BaseCamera.VIEWMATRIX, vieMat);
+			cameraSV.setMatrix4x4(BaseCamera.PROJECTMATRIX, proMat);
 			
-			cullingMask = cullingMask | layer.mask;
+			transform.worldMatrix.cloneTo(_tempMatrix4x40);//视图矩阵逆矩阵的转置矩阵，移除平移和缩放
+			_tempMatrix4x40.transpose();
+			Matrix4x4.multiply(proMat, _tempMatrix4x40, vieProNoTraSca);
+			cameraSV.setMatrix4x4(BaseCamera.VPMATRIX_NO_TRANSLATE, vieProNoTraSca);
 		}
 		
 		/**
-		 * 移除可视图层。
+		 * 相机渲染。
+		 * @param	shader 着色器。
+		 * @param   replacementTag 着色器替换标记。
+		 */
+		public function render(shader:Shader3D = null, replacementTag:String = null):void {
+		}
+		
+		/**
+		 * 增加可视图层,layer值为0到31层。
 		 * @param layer 图层。
 		 */
-		public function removeLayer(layer:Layer):void {
-			//29和30为预留蒙版层,不能移除
-			if (layer.number === 29 || layer.number == 30)
-				return;
-			cullingMask = cullingMask & ~layer.mask;
+		public function addLayer(layer:int):void {
+			cullingMask |= Math.pow(2, layer);
+		}
+		
+		/**
+		 * 移除可视图层,layer值为0到31层。
+		 * @param layer 图层。
+		 */
+		public function removeLayer(layer:int):void {
+			cullingMask &= ~Math.pow(2, layer);
 		}
 		
 		/**
@@ -443,44 +347,12 @@ package laya.d3.core {
 		 * 移除所有图层。
 		 */
 		public function removeAllLayers():void {
-			cullingMask = 0 | Layer.getLayerByNumber(29).mask | Layer.getLayerByNumber(30).mask;
+			cullingMask = 0;
 		}
 		
-		public function ResetProjectionMatrix():void {
+		public function resetProjectionMatrix():void {
 			_useUserProjectionMatrix = false;
 			_calculateProjectionMatrix();
-		}
-		
-		
-		
-		/**
-		 * 向前移动。
-		 * @param distance 移动距离。
-		 */
-		public function moveForward(distance:Number):void {
-			_tempVector3.elements[0] = _tempVector3.elements[1] = 0;
-			_tempVector3.elements[2] = distance;
-			transform.translate(_tempVector3);
-		}
-		
-		/**
-		 * 向右移动。
-		 * @param distance 移动距离。
-		 */
-		public function moveRight(distance:Number):void {
-			_tempVector3.elements[1] = _tempVector3.elements[2] = 0;
-			_tempVector3.elements[0] = distance;
-			transform.translate(_tempVector3);
-		}
-		
-		/**
-		 * 向上移动。
-		 * @param distance 移动距离。
-		 */
-		public function moveVertical(distance:Number):void {
-			_tempVector3.elements[0] = _tempVector3.elements[2] = 0;
-			_tempVector3.elements[1] = distance;
-			transform.translate(_tempVector3, false);
 		}
 		
 		//public void BoundingFrustumViewSpace(Vector3[] cornersViewSpace)
@@ -519,29 +391,39 @@ package laya.d3.core {
 		//cornersWorldSpaceResult[2] = temp;
 		//} // BoundingFrustumWorldSpace
 		
-		override protected function _addSelfRenderObjects():void//TODO:是否应该改名 
-		{
-			var cameraPool:Vector.<BaseCamera> = scene._cameraPool;
-			var cmaeraCount:int = cameraPool.length;
-			if (cmaeraCount > 0) {
-				for (var i:int = cmaeraCount - 1; i >= 0; i--) {
-					if (this.renderingOrder <= cameraPool[i].renderingOrder) {
-						cameraPool.splice(i + 1, 0, this);
-						break;
-					}
-				}
-			} else {
-				cameraPool.push(this);
-				if (scene.conchModel) {//NATIVE
-					scene.conchModel.setCurrentCamera(conchModel);
-				}
-			}
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onActive():void {
+			(_scene as Scene3D)._addCamera(this);
 		}
 		
-		override protected function _clearSelfRenderObjects():void//TODO:是否应该改名 
-		{
-			var cameraPool:Vector.<BaseCamera> = scene._cameraPool;
-			cameraPool.splice(cameraPool.indexOf(this), 1);
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onInActive():void {
+			(_scene as Scene3D)._removeCamera(this);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _parse(data:Object):void {
+			super._parse(data);
+			var clearFlagData:* = data.clearFlag;
+			(clearFlagData !== undefined) && (clearFlag = clearFlagData);
+			
+			orthographic = data.orthographic;
+			fieldOfView = data.fieldOfView;
+			nearPlane = data.nearPlane;
+			farPlane = data.farPlane;
+			
+			var color:Array = data.clearColor;
+			clearColor = new Vector4(color[0], color[1], color[2], color[3]);
+			var skyboxMaterial:Object = data.skyboxMaterial;
+			if (skyboxMaterial) {
+				_skyRenderer.material = Loader.getRes(skyboxMaterial.path);
+			}
 		}
 		
 		/**
@@ -550,8 +432,9 @@ package laya.d3.core {
 		override public function destroy(destroyChild:Boolean = true):void {
 			//postProcess = null;
 			//AmbientLight = null;
-			(_sky) && (_sky.destroy());
 			renderTarget = null;
+			_skyRenderer.destroy();
+			_skyRenderer = null;
 			
 			Laya.stage.off(Event.RESIZE, this, _onScreenSizeChanged);
 			super.destroy(destroyChild);

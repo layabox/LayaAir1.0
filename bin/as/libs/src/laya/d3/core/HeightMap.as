@@ -5,10 +5,10 @@ package laya.d3.core {
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SubMesh;
 	import laya.d3.utils.Picker;
+	import laya.webgl.resource.Texture2D;
 	
 	/**
 	 * <code>HeightMap</code> 类用于实现高度图数据。
@@ -28,10 +28,10 @@ package laya.d3.core {
 			var vertices:Vector.<Vector.<Vector3>> = new Vector.<Vector.<Vector3>>();
 			var indexs:Vector.<Uint16Array> = new Vector.<Uint16Array>();
 			
-			var submesheCount:int = mesh.getSubMeshCount();
+			var submesheCount:int = mesh.subMeshCount;
 			for (var i:int = 0; i < submesheCount; i++) {
-				var subMesh:SubMesh = mesh.getSubMesh(i);
-				var vertexBuffer:VertexBuffer3D = subMesh._getVertexBuffer();
+				var subMesh:SubMesh = mesh._getSubMesh(i) as SubMesh;
+				var vertexBuffer:VertexBuffer3D = subMesh._vertexBuffer;
 				var verts:Float32Array = vertexBuffer.getData();
 				var subMeshVertices:Vector.<Vector3> = new Vector.<Vector3>();
 				
@@ -41,7 +41,7 @@ package laya.d3.core {
 				}
 				vertices.push(subMeshVertices);
 				
-				var ib:IndexBuffer3D = subMesh._getIndexBuffer();
+				var ib:IndexBuffer3D = subMesh._indexBuffer;
 				indexs.push(ib.getData());
 			}
 			

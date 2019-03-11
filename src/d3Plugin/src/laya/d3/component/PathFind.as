@@ -1,14 +1,14 @@
 package laya.d3.component {
 	import PathFinding.core.Grid;
 	import PathFinding.finders.AStarFinder;
-	import laya.d3.core.ComponentNode;
+	import laya.components.Component;
 	import laya.d3.core.MeshTerrainSprite3D;
 	import laya.d3.core.Sprite3D;
 	
 	/**
 	 * <code>PathFinding</code> 类用于创建寻路。
 	 */
-	public class PathFind extends Component3D {
+	public class PathFind extends Component {
 		/** @private */
 		private var _meshTerrainSprite3D:MeshTerrainSprite3D
 		/** @private */
@@ -48,11 +48,10 @@ package laya.d3.component {
 		 * 初始化载入蒙皮动画组件。
 		 * @param	owner 所属精灵对象。
 		 */
-		override public function _load(owner:ComponentNode):void {
+		override public function _onAdded():void {
 			if (!owner is MeshTerrainSprite3D)
 				throw new Error("PathFinding: The owner must MeshTerrainSprite3D!");
 			
-			super._load(owner);
 			_meshTerrainSprite3D = owner as MeshTerrainSprite3D;
 		}
 		

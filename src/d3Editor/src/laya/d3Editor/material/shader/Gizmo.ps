@@ -1,0 +1,16 @@
+#ifdef FSHIGHPRECISION
+	precision highp float;
+#else
+	precision mediump float;
+#endif
+
+uniform vec4 u_Color;
+
+varying vec3 v_ViewDir;
+varying vec3 v_Normal;
+
+void main()
+{
+	float vn = max (0.0, dot (v_ViewDir, v_Normal));
+	gl_FragColor = u_Color * vn * 0.3;
+}

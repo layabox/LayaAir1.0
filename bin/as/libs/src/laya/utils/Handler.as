@@ -65,7 +65,7 @@ package laya.utils {
 		}
 		
 		/**
-		 * 执行处理器，携带额外数据。
+		 * 执行处理器，并携带额外数据。
 		 * @param	data 附加的回调数据，可以是单数据或者Array(作为多参)。
 		 */
 		public function runWith(data:*):* {
@@ -73,9 +73,7 @@ package laya.utils {
 			var id:int = _id;
 			if (data == null)
 				var result:* = method.apply(caller, args);
-			/*[IF-FLASH]*/
-			else if (!args && !(data is Array)) result = method.call(caller, data);
-			//[IF-JS] else if (!args && !data.unshift) result= method.call(caller, data);
+			else if (!args && !data.unshift) result = method.call(caller, data);
 			else if (args) result = method.apply(caller, args.concat(data));
 			else result = method.apply(caller, data);
 			_id === id && once && recover();

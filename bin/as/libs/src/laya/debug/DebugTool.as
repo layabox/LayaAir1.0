@@ -5,8 +5,7 @@
 //  Original author: ww
 ///////////////////////////////////////////////////////////
 
-package laya.debug
-{
+package laya.debug {
 	
 	import laya.debug.tools.CacheAnalyser;
 	import laya.debug.tools.ClassTool;
@@ -27,11 +26,6 @@ package laya.debug
 	import laya.debug.view.nodeInfo.DebugInfoLayer;
 	import laya.debug.view.nodeInfo.NodeInfoPanel;
 	import laya.debug.view.nodeInfo.NodeUtils;
-	import laya.debug.view.nodeInfo.ToolPanel;
-	import laya.debug.view.nodeInfo.nodetree.NodeTree;
-	import laya.debug.view.nodeInfo.views.NodeToolView;
-	import laya.debug.view.nodeInfo.views.ObjectCreateView;
-	import laya.debug.view.nodeInfo.views.RenderCostRankView;
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.display.Text;
@@ -51,55 +45,26 @@ package laya.debug
 	 *
 	 * @created  2015-9-24 下午3:00:38
 	 */
-	public class DebugTool
-	{
-		public function DebugTool()
-		{
+	public class DebugTool {
+		public function DebugTool() {
 		}
 		
 		public static var enableCacheAnalyse:Boolean = false;
 		public static var enableNodeCreateAnalyse:Boolean = true;
-		public static function getMenuShowEvent():String
-		{
+		
+		public static function getMenuShowEvent():String {
 			//return Event.DOUBLE_CLICK;
-			if (Browser.onMobile)
-			{
+			if (Browser.onMobile) {
 				return Event.DOUBLE_CLICK;
-			}else
-			{
+			}
+			else {
 				return Event.RIGHT_CLICK;
 			}
 		}
-		public static function init(cacheAnalyseEnable:Boolean=true,loaderAnalyseEnable:Boolean=true,createAnalyseEnable:Boolean=true,renderAnalyseEnable:Boolean=true,showCacheRec:Boolean=false):void
-		{
-			enableCacheAnalyse = cacheAnalyseEnable;
-			if (enableCacheAnalyse)
-			{
-				RenderSpriteHook.init();	
-			}
-			if (renderAnalyseEnable)
-			{
-				SpriteRenderHook.init();
-			}
-			enableNodeCreateAnalyse = createAnalyseEnable;
-			if (enableNodeCreateAnalyse)
-			{
-				ClassCreateHook.I.hookClass(Node);
-			}
-			if (loaderAnalyseEnable)
-			{
-				LoaderHook.init();
-			}
-			CacheAnalyser.showCacheSprite = showCacheRec;
-			
-			NodeInfoPanel.init();
-			initBasicFunctions();
-		}
-		public static function initBasicFunctions():void
-		{
+		
+		public static function initBasicFunctions():void {
 			DisplayHook.initMe();
-			if (!debugLayer)
-			{
+			if (!debugLayer) {
 				DebugInfoLayer.init();
 				debugLayer = DebugInfoLayer.I.graphicLayer;
 				debugLayer.mouseEnabled = false;
@@ -108,13 +73,13 @@ package laya.debug
 				//showStatu = false;
 				Laya.stage.on(Event.KEY_DOWN, null, keyHandler);
 				
-				cmdToTypeO[RenderSprite.IMAGE] = "IMAGE";
-				cmdToTypeO[RenderSprite.ALPHA] = "ALPHA";
-				cmdToTypeO[RenderSprite.TRANSFORM] = "TRANSFORM";
-				cmdToTypeO[RenderSprite.CANVAS] = "CANVAS";
-				cmdToTypeO[RenderSprite.GRAPHICS] = "GRAPHICS";
-				cmdToTypeO[RenderSprite.CUSTOM] = "CUSTOM";
-				cmdToTypeO[RenderSprite.CHILDS] = "CHILDS";
+//				cmdToTypeO[RenderSprite.IMAGE] = "IMAGE";
+//				cmdToTypeO[RenderSprite.ALPHA] = "ALPHA";
+//				cmdToTypeO[RenderSprite.TRANSFORM] = "TRANSFORM";
+//				cmdToTypeO[RenderSprite.CANVAS] = "CANVAS";
+//				cmdToTypeO[RenderSprite.GRAPHICS] = "GRAPHICS";
+//				cmdToTypeO[RenderSprite.CUSTOM] = "CUSTOM";
+//				cmdToTypeO[RenderSprite.CHILDS] = "CHILDS";
 				
 				DebugExport.export();
 				
@@ -127,17 +92,14 @@ package laya.debug
 		 * 在输出ui中输出
 		 * @param str
 		 */
-		public static function dTrace(str:String):void
-		{
-			if (_traceFun != null)
-			{
+		public static function dTrace(str:String):void {
+			if (_traceFun != null) {
 				_traceFun(str);
 			}
 			trace(str);
 		}
 		
-		private static function keyHandler(e:*):void
-		{
+		private static function keyHandler(e:*):void {
 			var key:String;
 			key = String.fromCharCode(e.keyCode);
 //			trace("keydown:"+key);
@@ -146,8 +108,7 @@ package laya.debug
 			if (!e.altKey)
 				return;
 			//trace("keydown:"+key);
-			switch (e.keyCode)
-			{
+			switch (e.keyCode) {
 				case 38: 
 					//Up
 					showParent();
@@ -168,10 +129,8 @@ package laya.debug
 			dealCMDKey(key);
 		}
 		
-		public static function dealCMDKey(key:String):void
-		{
-			switch (key)
-			{
+		public static function dealCMDKey(key:String):void {
+			switch (key) {
 				case "上": 
 					//Up
 					showParent();
@@ -225,9 +184,7 @@ package laya.debug
 					//switchMyVisible();
 					break;
 				case "O": 
-					//显示对象控制器
-					//switchDisController();
-					ObjectCreateView.I.show();
+
 					break;
 				case "L": 
 					//切换长度控制模式
@@ -251,10 +208,7 @@ package laya.debug
 					break;
 				case "A": 
 					//切换长度控制模式
-					if (NodeToolView.I.target)
-					{
-						MouseEventAnalyser.analyseNode(NodeToolView.I.target);
-					}
+
 					break;
 				case "K": 
 					NodeUtils.traceStage();
@@ -263,10 +217,8 @@ package laya.debug
 					switchNodeTree();
 					break;
 				case "R": 
-					RenderCostRankView.I.show();
 					break;
 				case "X": 
-					NodeTree.I.fresh();
 					break;
 				case "mCMD": 
 					//获取节点信息
@@ -280,73 +232,56 @@ package laya.debug
 			}
 		}
 		
-		public static function switchNodeTree():void
-		{
-			ToolPanel.I.switchShow(ToolPanel.Tree);
+		public static function switchNodeTree():void {
+
 		}
 		
-		public static function analyseMouseHit():void
-		{
+		public static function analyseMouseHit():void {
 			if (target)
 				MouseEventAnalyser.analyseNode(target);
 		}
 		
-		public static function selectNodeUnderMouse():void
-		{
+		public static function selectNodeUnderMouse():void {
 			DisplayHook.instance.selectDisUnderMouse();
 			showDisBound();
 			return;
 		}
 		
-		public static function showToolPanel():void
-		{
-			ToolPanel.I.switchShow(ToolPanel.Find);
+		public static function showToolPanel():void {
 		}
 		
-		public static function showToolFilter():void
-		{
-			ToolPanel.I.switchShow(ToolPanel.Filter);
+		public static function showToolFilter():void {
 		}
 		
-		public static function showNodeInfo():void
-		{
-			if (NodeInfoPanel.I.isWorkState)
-			{
+		public static function showNodeInfo():void {
+			if (NodeInfoPanel.I.isWorkState) {
 				NodeInfoPanel.I.recoverNodes();
 			}
-			else
-			{
+			else {
 				NodeInfoPanel.I.showDisInfo(target);
 			}
 		
 		}
 		
-		public static function switchDisController():void
-		{
-			if (DisController.I.target)
-			{
+		public static function switchDisController():void {
+			if (DisController.I.target) {
 				DisController.I.target = null;
 			}
-			else
-			{
-				if (target)
-				{
+			else {
+				if (target) {
 					DisController.I.target = target;
 				}
 			}
 		}
 		
-		public static function get isThisShow():Boolean
-		{
+		public static function get isThisShow():Boolean {
 			return false;
 		}
 		
-		public static function showParent(sprite:Sprite = null):*
-		{
+		public static function showParent(sprite:Sprite = null):* {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
@@ -354,28 +289,23 @@ package laya.debug
 			autoWork();
 		}
 		
-		public static function showChild(sprite:Sprite = null):*
-		{
+		public static function showChild(sprite:Sprite = null):* {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
-			if (sprite.numChildren > 0)
-			{
+			if (sprite.numChildren > 0) {
 				target = sprite.getChildAt(0) as Sprite;
 				autoWork();
 			}
 		}
 		
-		public static function showAllChild(sprite:Sprite = null):*
-		{
+		public static function showAllChild(sprite:Sprite = null):* {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
@@ -383,33 +313,28 @@ package laya.debug
 			showSelected();
 		}
 		
-		public static function showAllUnderMosue():*
-		{
+		public static function showAllUnderMosue():* {
 			selectedNodes = DisControlTool.getObjectsUnderGlobalPoint(Laya.stage);
 			showSelected();
 		}
 		
-		public static function showParentChain(sprite:Sprite = null):*
-		{
+		public static function showParentChain(sprite:Sprite = null):* {
 			if (!sprite)
 				return;
 			selectedNodes = [];
 			var tar:Sprite;
 			tar = sprite.parent as Sprite;
-			while (tar)
-			{
+			while (tar) {
 				selectedNodes.push(tar);
 				tar = tar.parent as Sprite;
 			}
 			showSelected();
 		}
 		
-		public static function showAllBrother(sprite:Sprite = null):*
-		{
+		public static function showAllBrother(sprite:Sprite = null):* {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
@@ -419,12 +344,10 @@ package laya.debug
 			showSelected();
 		}
 		
-		public static function showBrother(sprite:Sprite, dID:int = 1):*
-		{
+		public static function showBrother(sprite:Sprite, dID:int = 1):* {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
@@ -448,22 +371,18 @@ package laya.debug
 		 * 设置是否显示帧率信息
 		 * @param value 是否显示true|false
 		 */
-		public static function set showStatu(value:Boolean):void
-		{
-			if (value)
-			{
+		public static function set showStatu(value:Boolean):void {
+			if (value) {
 				Stat.show();
 			}
-			else
-			{
+			else {
 				
 				Stat.hide();
 				clearDebugLayer();
 			}
 		}
 		
-		public static function clearDebugLayer():void
-		{
+		public static function clearDebugLayer():void {
 			if (debugLayer.graphics)
 				debugLayer.graphics.clear();
 		}
@@ -476,13 +395,11 @@ package laya.debug
 		 */
 		public static var _target:Sprite;
 		
-		public static function set target(v:Sprite):void
-		{
+		public static function set target(v:Sprite):void {
 			_target = v;
 		}
 		
-		public static function get target():Sprite
-		{
+		public static function get target():Sprite {
 			return _target;
 		}
 		/**
@@ -497,19 +414,17 @@ package laya.debug
 		/**
 		 * 显示选中的节点列表
 		 */
-		public static function showSelected():void
-		{
+		public static function showSelected():void {
 			if (!autoShowSelected)
 				return;
 			if (!selectedNodes || selectedNodes.length < 1)
 				return;
-			trace("selected:",selectedNodes);
+			trace("selected:", selectedNodes);
 			var i:int;
 			var len:int;
 			len = selectedNodes.length;
 			clearDebugLayer();
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				showDisBound(selectedNodes[i], false);
 			}
 		}
@@ -519,8 +434,7 @@ package laya.debug
 		 * @param className
 		 * @return
 		 */
-		public static function getClassCreateInfo(className:String):Object
-		{
+		public static function getClassCreateInfo(className:String):Object {
 			return RunProfile.getRunInfo(className);
 		}
 		
@@ -530,65 +444,54 @@ package laya.debug
 		 * 是否自动显示点击对象的边框
 		 * @param value
 		 */
-		public static function set showBound(value:Boolean):void
-		{
+		public static function set showBound(value:Boolean):void {
 			_showBound = value;
-			if (!_showBound)
-			{
+			if (!_showBound) {
 				clearDebugLayer();
 			}
 		}
 		
-		public static function get showBound():Boolean
-		{
+		public static function get showBound():Boolean {
 			return _showBound;
 		}
 		
 		/**
 		 * 执行默认操作
 		 */
-		public static function autoWork():void
-		{
+		public static function autoWork():void {
 			if (!isThisShow)
 				return;
 			if (showBound)
 				showDisBound();
-			if (autoTraceSpriteInfo && target)
-			{
+			if (autoTraceSpriteInfo && target) {
 				TraceTool.traceSpriteInfo(target, autoTraceBounds, autoTraceSize, autoTraceTree);
 			}
 			if (!target)
 				return;
-			if (autoTraceCMD)
-			{
+			if (autoTraceCMD) {
 				traceCMD();
 			}
-			if (autoTraceCMDR)
-			{
+			if (autoTraceCMDR) {
 				traceCMDR();
 			}
-			if (autoTraceEnable)
-			{
+			if (autoTraceEnable) {
 				traceDisMouseEnable(target);
 			}
 		}
 		
-		public static function traceDisMouseEnable(tar:Object = null):*
-		{
+		public static function traceDisMouseEnable(tar:Object = null):* {
 			trace("----------------traceDisMouseEnable--------------------");
 			if (!tar)
 				tar = target;
-			if (!tar)
-			{
+			if (!tar) {
 				trace("no targetAvalible");
 				return null;
 			}
 			var strArr:Array;
 			strArr = [];
 			selectedNodes = [];
-			while (tar)
-			{
-				strArr.push(ClassTool.getNodeClassAndName(tar) + ": mouseEnabled:" + tar.mouseEnabled+" hitFirst:"+tar.hitTestPrior);
+			while (tar) {
+				strArr.push(ClassTool.getNodeClassAndName(tar) + ": mouseEnabled:" + tar.mouseEnabled + " hitFirst:" + tar.hitTestPrior);
 				//dTrace(TraceTool.getClassName(tar)+":"+tar.mouseEnabled);
 				selectedNodes.push(tar);
 				tar = tar.parent as Sprite;
@@ -598,21 +501,18 @@ package laya.debug
 			return strArr.join("\n");
 		}
 		
-		public static function traceDisSizeChain(tar:Object = null):*
-		{
+		public static function traceDisSizeChain(tar:Object = null):* {
 			trace("---------------------traceDisSizeChain-------------------");
 			if (!tar)
 				tar = target;
-			if (!tar)
-			{
+			if (!tar) {
 				trace("no targetAvalible");
 				return null;
 			}
 			selectedNodes = [];
 			var strArr:Array;
 			strArr = [];
-			while (tar)
-			{
+			while (tar) {
 				//dTrace(TraceTool.getClassName(tar) + ":");
 				strArr.push(ClassTool.getNodeClassAndName(tar) + ": x:" + tar.x + " y:" + tar.y + " w:" + tar.width + " h:" + tar.height + " scaleX:" + tar.scaleX + " scaleY:" + tar.scaleY);
 				//TraceTool.traceSize(tar);
@@ -630,12 +530,10 @@ package laya.debug
 		 * @param sprite 对象
 		 * @param clearPre 是否清楚原先的边框图
 		 */
-		public static function showDisBound(sprite:Sprite = null, clearPre:Boolean = true, color:String = "#ff0000"):*
-		{
+		public static function showDisBound(sprite:Sprite = null, clearPre:Boolean = true, color:String = "#ff0000"):* {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
@@ -651,11 +549,11 @@ package laya.debug
 			pointList = GrahamScan.pointListToPlist(pointList);
 			_disBoundRec = Rectangle._getWrapRec(pointList, _disBoundRec);
 			debugLayer.graphics.drawRect(_disBoundRec.x, _disBoundRec.y, _disBoundRec.width, _disBoundRec.height, null, color);
-		
+			
 			DebugInfoLayer.I.setTop();
 		}
-		public static function showDisBoundToSprite(sprite:Sprite = null,graphicSprite:Sprite=null,color:String = "#ff0000",lineWidth:int=1):*
-		{
+		
+		public static function showDisBoundToSprite(sprite:Sprite = null, graphicSprite:Sprite = null, color:String = "#ff0000", lineWidth:int = 1):* {
 			var pointList:Array;
 //			pointList=target.getSelfBounds().getBoundPoints();
 			pointList = sprite._getBoundPointsM(true);
@@ -665,7 +563,7 @@ package laya.debug
 			WalkTools.walkArr(pointList, sprite.localToGlobal, sprite);
 			pointList = GrahamScan.pointListToPlist(pointList);
 			_disBoundRec = Rectangle._getWrapRec(pointList, _disBoundRec);
-			graphicSprite.graphics.drawRect(_disBoundRec.x, _disBoundRec.y, _disBoundRec.width, _disBoundRec.height, null, color,lineWidth);
+			graphicSprite.graphics.drawRect(_disBoundRec.x, _disBoundRec.y, _disBoundRec.width, _disBoundRec.height, null, color, lineWidth);
 		}
 		public static var autoTraceEnable:Boolean = false;
 		public static var autoTraceBounds:Boolean = false;
@@ -688,8 +586,7 @@ package laya.debug
 		 *  显示节点统计信息
 		 * @return
 		 */
-		public static function getNodeInfo():Object
-		{
+		public static function getNodeInfo():Object {
 			counter.reset();
 			WalkTools.walkTarget(Laya.stage, addNodeInfo);
 //			trace("total:"+counter.count);
@@ -700,8 +597,7 @@ package laya.debug
 		private static var _classList:Array;
 		private static var _tFindClass:String;
 		
-		public static function findByClass(className:String):Array
-		{
+		public static function findByClass(className:String):Array {
 			_classList = [];
 			_tFindClass = className;
 			WalkTools.walkTarget(Laya.stage, addClassNode);
@@ -710,12 +606,10 @@ package laya.debug
 			return _classList;
 		}
 		
-		private static function addClassNode(node:Object):void
-		{
+		private static function addClassNode(node:Object):void {
 			var type:String;
 			type = node["constructor"].name;
-			if (type == _tFindClass)
-			{
+			if (type == _tFindClass) {
 				_classList.push(node);
 			}
 		}
@@ -731,12 +625,10 @@ package laya.debug
 		 * @param sprite
 		 * @return
 		 */
-		public static function traceCMD(sprite:Sprite = null):Object
-		{
+		public static function traceCMD(sprite:Sprite = null):Object {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return null;
 			}
@@ -746,8 +638,7 @@ package laya.debug
 			renderSprite = RenderSprite.renders[sprite._renderType];
 			trace("renderSprite:", renderSprite);
 			_rSpList.length = 0;
-			while (renderSprite && renderSprite["_sign"] > 0)
-			{
+			while (renderSprite && renderSprite["_sign"] > 0) {
 				
 				_rSpList.push(cmdToTypeO[renderSprite["_sign"]]);
 				renderSprite = renderSprite._next;
@@ -759,13 +650,11 @@ package laya.debug
 			return counter.data;
 		}
 		
-		private static function addCMDs(cmds:Array):void
-		{
+		private static function addCMDs(cmds:Array):void {
 			WalkTools.walkArr(cmds, addCMD);
 		}
 		
-		private static function addCMD(cmd:Object):void
-		{
+		private static function addCMD(cmd:Object):void {
 			counter.add(cmd.callee);
 		}
 		private static var counter:CountTool = new CountTool();
@@ -775,12 +664,10 @@ package laya.debug
 		 * @param sprite
 		 * @return
 		 */
-		public static function traceCMDR(sprite:Sprite = null):Object
-		{
+		public static function traceCMDR(sprite:Sprite = null):Object {
 			if (!sprite)
 				sprite = target;
-			if (!sprite)
-			{
+			if (!sprite) {
 				trace("no targetAvalible");
 				return 0;
 			}
@@ -791,8 +678,7 @@ package laya.debug
 			return counter.data;
 		}
 		
-		private static function getCMdCount(target:Sprite):int
-		{
+		private static function getCMdCount(target:Sprite):int {
 			if (!target)
 				return 0;
 			if (!target is Sprite)
@@ -804,8 +690,7 @@ package laya.debug
 			return rst;
 		}
 		
-		private static function addNodeInfo(node:Node):void
-		{
+		private static function addNodeInfo(node:Node):void {
 			var type:String;
 			type = node["constructor"].name;
 			counter.add(type);
@@ -816,13 +701,11 @@ package laya.debug
 		 * @param filter
 		 * @return
 		 */
-		public static function find(filter:Object, ifShowSelected:Boolean = true):Array
-		{
+		public static function find(filter:Object, ifShowSelected:Boolean = true):Array {
 			var rst:Array;
 			rst = findTarget(Laya.stage, filter);
 			selectedNodes = rst;
-			if (selectedNodes)
-			{
+			if (selectedNodes) {
 				target = selectedNodes[0];
 			}
 			if (ifShowSelected)
@@ -836,8 +719,7 @@ package laya.debug
 		 * @param name
 		 * @return
 		 */
-		public static function findByName(name:String):Array
-		{
+		public static function findByName(name:String):Array {
 			nameFilter.name = name;
 			return find(nameFilter);
 		}
@@ -847,8 +729,7 @@ package laya.debug
 		 * @param startStr
 		 * @return
 		 */
-		public static function findNameStartWith(startStr:String):Array
-		{
+		public static function findNameStartWith(startStr:String):Array {
 			nameFilter.name = getStartWithFun(startStr);
 			return find(nameFilter);
 		}
@@ -858,16 +739,13 @@ package laya.debug
 		 * @param hasStr
 		 * @return
 		 */
-		public static function findNameHas(hasStr:String, showSelected:Boolean = true):Array
-		{
+		public static function findNameHas(hasStr:String, showSelected:Boolean = true):Array {
 			nameFilter.name = getHasFun(hasStr);
 			return find(nameFilter, showSelected);
 		}
 		
-		private static function getStartWithFun(startStr:String):Function
-		{
-			var rst:Function = function(str:String):Boolean
-			{
+		private static function getStartWithFun(startStr:String):Function {
+			var rst:Function = function(str:String):Boolean {
 				if (!str)
 					return false;
 				if (str.indexOf(startStr) == 0)
@@ -877,10 +755,8 @@ package laya.debug
 			return rst;
 		}
 		
-		private static function getHasFun(hasStr:String):Function
-		{
-			var rst:Function = function(str:String):Boolean
-			{
+		private static function getHasFun(hasStr:String):Function {
+			var rst:Function = function(str:String):Boolean {
 				if (!str)
 					return false;
 				if (str.indexOf(hasStr) >= 0)
@@ -890,8 +766,7 @@ package laya.debug
 			return rst;
 		}
 		
-		public static function findTarget(target:Sprite, filter:Object):Array
-		{
+		public static function findTarget(target:Sprite, filter:Object):Array {
 			var rst:Array = [];
 			if (isFit(target, filter))
 				rst.push(target);
@@ -899,19 +774,16 @@ package laya.debug
 			var len:int;
 			var tChild:Sprite;
 			len = target.numChildren;
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				tChild = target.getChildAt(i) as Sprite;
-				if (tChild is Sprite)
-				{
+				if (tChild is Sprite) {
 					rst = rst.concat(findTarget(tChild, filter));
 				}
 			}
 			return rst;
 		}
 		
-		public static function findClassHas(target:Sprite, str:String):Array
-		{
+		public static function findClassHas(target:Sprite, str:String):Array {
 			var rst:Array = [];
 			if (ClassTool.getClassName(target).indexOf(str) >= 0)
 				rst.push(target);
@@ -919,37 +791,30 @@ package laya.debug
 			var len:int;
 			var tChild:Sprite;
 			len = target.numChildren;
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				tChild = target.getChildAt(i) as Sprite;
-				if (tChild is Sprite)
-				{
+				if (tChild is Sprite) {
 					rst = rst.concat(findClassHas(tChild, str));
 				}
 			}
 			return rst;
 		}
 		
-		private static function isFit(tar:Object, filter:Object):Boolean
-		{
+		private static function isFit(tar:Object, filter:Object):Boolean {
 			if (!tar)
 				return false;
 			if (!filter)
 				return true;
-			if (filter is Function)
-			{
+			if (filter is Function) {
 				return (filter as Function)(tar);
 			}
 			var key:String;
-			for (key in filter)
-			{
-				if (filter[key] is Function)
-				{
+			for (key in filter) {
+				if (filter[key] is Function) {
 					if (!filter[key](tar[key]))
 						return false;
 				}
-				else
-				{
+				else {
 					if (tar[key] != filter[key])
 						return false;
 				}
@@ -958,16 +823,14 @@ package laya.debug
 			return true;
 		}
 		
-		
 		public static var _logFun:Function;
-		public static function log(...args):void
-		{
+		
+		public static function log(... args):void {
 			var arr:Array;
 			arr = DTrace.getArgArr(args);
-			if (_logFun!=null)
-			{
+			if (_logFun != null) {
 				_logFun(arr.join(" "));
-			}	    
+			}
 		}
 	}
 }

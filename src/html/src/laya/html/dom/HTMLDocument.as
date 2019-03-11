@@ -1,33 +1,22 @@
-package laya.html.dom 
-{
-	import laya.display.css.CSSStyle;
+package laya.html.dom {
+	import laya.html.utils.HTMLStyle;
 	
 	/**
 	 * @private
 	 */
-	public class HTMLDocument extends HTMLElement 
-	{
+	public class HTMLDocument {
 		public static var document:HTMLDocument = new HTMLDocument();
-		
 		public var all:Vector.<HTMLElement> = new Vector.<HTMLElement>;
+		public var styleSheets:Object = HTMLStyle.styleSheets;
 		
-		public var styleSheets:Object=CSSStyle.styleSheets;
-		
-		public function HTMLDocument() 
-		{
-			super();
-		}
-		
-		public function getElementById(id:String):HTMLElement
-		{
+		//TODO:coverage
+		public function getElementById(id:String):HTMLElement {
 			return all[id];
 		}
 		
-		public function setElementById(id:String, e:HTMLElement):void
-		{
+		//TODO:coverage
+		public function setElementById(id:String, e:HTMLElement):void {
 			all[id] = e;
 		}
-		
 	}
-
 }

@@ -12,10 +12,10 @@ package laya.events {
 		
 		/**是否开启键盘事件，默认为true*/
 		public static var enabled:Boolean = true;
-		/** @private */
+		/**@private */
 		public static var _event:Event = new Event();
 		
-		/** @private */
+		/**@private */
 		public static function __init__():void {
 			_addEvent("keydown");
 			_addEvent("keypress");

@@ -4,7 +4,6 @@ package laya.debug.tools
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
-	import laya.debug.view.nodeInfo.ToolPanel;
 	import laya.debug.DebugTool;
 	import laya.utils.HitArea;
 	
@@ -79,7 +78,6 @@ package laya.debug.tools
 			var rstStr:String;
 			rstStr = rstTxts.join("\n");
 			
-			ToolPanel.I.showTxtInfo(rstStr);
 			
 		}
 		private static var _matrix:Matrix = new Matrix();
@@ -116,7 +114,7 @@ package laya.debug.tools
 			
 			var i:int, len:int;
 			var cList:Array;
-			cList = sp._childs;
+			cList = sp._children;
 			len = cList.length;
 			var child:Sprite;
 			var childInChain:Sprite;
@@ -139,9 +137,9 @@ package laya.debug.tools
 				infoO[IDTools.getObjID(sp)] = "hitTestPrior=true，宽高区域不包含鼠标:" + ":" + mouseX + "," + mouseY+" size:"+sp.width+","+sp.height;
 				return false;
 			}
-			for (i = sp._childs.length - 1; i > -1; i--)
+			for (i = sp._children.length - 1; i > -1; i--)
 			{
-				child = sp._childs[i];
+				child = sp._children[i];
 				if (child == childInChain)
 				{
 					if (!childInChain.mouseEnabled)

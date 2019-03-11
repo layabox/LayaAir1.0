@@ -1,6 +1,5 @@
 package laya.debug.tools
 {
-	import laya.utils.Byte;
 
 	/**
 	 * base64编码解码类
@@ -37,7 +36,7 @@ package laya.debug.tools
 		 */
 		public static function encode(arraybuffer:ArrayBuffer):String
 		{
-			var bytes:Uint8Array = new Uint8Array(arraybuffer), i:int, len:int = bytes.length, base64:String = "";
+			var bytes:Uint8Array = new Uint8Array(arraybuffer), i:int, len:int = bytes["length"], base64:String = "";
 			
 			for (i = 0; i < len; i += 3)
 			{
@@ -67,8 +66,8 @@ package laya.debug.tools
 		 */
 		public static function encodeStr(str:String):String
 		{
-			var byte:Byte;
-			byte = new Byte();
+			var byte:ByteEx;
+			byte = new ByteEx();
 			byte.writeUTFString(str);
 			return encodeByte(byte);
 		}
@@ -81,8 +80,8 @@ package laya.debug.tools
 		 */
 		public static function encodeStr2(str:String):String
 		{
-			var byte:Byte;
-			byte = new Byte();
+			var byte:ByteEx;
+			byte = new ByteEx();
 			byte.writeUTFBytes(str);
 			return encodeByte(byte);
 		}
@@ -94,7 +93,7 @@ package laya.debug.tools
 		 * @return 
 		 * 
 		 */
-		public static function encodeByte(byte:Byte, start:int = 0, end:int = -1):String
+		public static function encodeByte(byte:ByteEx, start:int = 0, end:int = -1):String
 		{
 			if (end < 0)
 			{
@@ -109,9 +108,9 @@ package laya.debug.tools
 		 * @return 
 		 * 
 		 */
-		public static function decodeToByte(base64:String):Byte
+		public static function decodeToByte(base64:String):ByteEx
 		{
-			return new Byte(decode(base64));
+			return new ByteEx(decode(base64));
 		}
 		/**
 		 * 解码成ArrayBuffer 

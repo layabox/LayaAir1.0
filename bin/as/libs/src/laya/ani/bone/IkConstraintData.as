@@ -14,6 +14,7 @@ package laya.ani.bone {
 		public var targetBoneIndex:int = -1;
 		public var boneIndexs:Vector.<int> = new Vector.<int>();
 		
+		//TODO:coverage
 		public function IkConstraintData() {
 		
 		}

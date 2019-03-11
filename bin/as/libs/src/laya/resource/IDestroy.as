@@ -6,6 +6,6 @@ package laya.resource {
 	 */
 	public interface IDestroy {
 		function get destroyed():Boolean;
-		function _destroy():void;
+		function destroy():void;
 	}
 }

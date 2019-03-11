@@ -4,23 +4,30 @@ package laya.webgl.submit {
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.value.Value2D;
 	import laya.webgl.utils.CONST3D2D;
+	import laya.webgl.utils.Mesh2D;
 	import laya.webgl.utils.RenderState2D;
+	
+	/**
+	 * cache as normal 模式下的生成的canvas的渲染。
+	 */
 	
 	public class SubmitCanvas extends Submit {
 		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		public static function create(ctx_src:WebGLContext2D, alpha:Number, filters:Array):SubmitCanvas {
-			var o:SubmitCanvas = (!_cache._length) ? (new SubmitCanvas()) : _cache[--_cache._length];
-			o._ctx_src = ctx_src;
+		public static function create(canvas:*, alpha:Number, filters:Array):SubmitCanvas {
+			var o:SubmitCanvas = (!POOL._length) ? (new SubmitCanvas()) : POOL[--POOL._length];
+			o.canv = canvas;
+			o._ref = 1;
+			o._numEle = 0;
 			var v:Value2D = o.shaderValue;
-			v.alpha = alpha;
+			v.alpha = alpha;			
 			v.defines.setValue(0);
 			filters && filters.length && v.setFilters(filters);
 			return o;
 		}
 		
 		public var _matrix:Matrix = new Matrix();
-		public var _ctx_src:WebGLContext2D;
+		public var canv:WebGLContext2D;
 		public var _matrix4:Array = CONST3D2D.defaultMatrix4.concat();
 		
 		public function SubmitCanvas() {
@@ -29,11 +36,7 @@ package laya.webgl.submit {
 		}
 		
 		public override function renderSubmit():int {
-			if (_ctx_src._targets) {
-				_ctx_src._targets.flush(_ctx_src);
-				return 1;
-			}
-			
+			// 下面主要是为了给canvas设置矩阵。因为canvas保存的是没有偏移的。
 			var preAlpha:Number = RenderState2D.worldAlpha;
 			var preMatrix4:Array = RenderState2D.worldMatrix4;
 			var preMatrix:Matrix = RenderState2D.worldMatrix;
@@ -60,9 +63,7 @@ package laya.webgl.submit {
 				RenderState2D.worldFilters = v.filters;
 				RenderState2D.worldShaderDefines = v.defines;
 			}
-			
-			_ctx_src.flush();
-			
+			canv['flushsubmit']();
 			RenderState2D.worldAlpha = preAlpha;
 			RenderState2D.worldMatrix4 = preMatrix4;
 			RenderState2D.worldMatrix.destroy();
@@ -70,21 +71,31 @@ package laya.webgl.submit {
 			
 			RenderState2D.worldFilters = preFilters;
 			RenderState2D.worldShaderDefines = preWorldShaderDefines;
-			
 			return 1;
 		}
 		
 		public override function releaseRender():void {
-			var cache:Array = _cache;
-			this._ctx_src = null;
-			cache[cache._length++] = this;
+			if( (--this._ref) <1)
+			{
+				var cache:Array = POOL;
+				//_vb = null;
+				_mesh = null;
+				cache[cache._length++] = this;
+			}
 		}
 		
+		//TODO:coverage
+		public override function clone(context:WebGLContext2D,mesh:Mesh2D,pos:int):ISubmit
+		{
+			return null;
+		}
+		
+		//TODO:coverage
 		public override function getRenderType():int {
 			return Submit.TYPE_CANVAS;
 		}
 		
-		private static var _cache:Array =/*[STATIC SAFE]*/ (_cache = [], _cache._length = 0, _cache);
+		private static var POOL:Array =/*[STATIC SAFE]*/ (POOL = [], POOL._length = 0, POOL);
 	}
 
 }

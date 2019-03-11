@@ -1,90 +1,52 @@
 package laya.d3.utils {
-	import laya.d3.component.Animator;
+	import laya.components.Component;
 	import laya.d3.core.Camera;
-	import laya.d3.core.ComponentNode;
-	import laya.d3.core.MeshRender;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.SkinnedMeshRender;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.DirectionLight;
-	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
+	import laya.d3.core.light.PointLight;
+	import laya.d3.core.light.SpotLight;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
-	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
-	import laya.d3.core.particleShuriKen.ShurikenParticleRender;
-	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
-	import laya.d3.core.particleShuriKen.module.Burst;
-	import laya.d3.core.particleShuriKen.module.ColorOverLifetime;
-	import laya.d3.core.particleShuriKen.module.Emission;
-	import laya.d3.core.particleShuriKen.module.FrameOverTime;
-	import laya.d3.core.particleShuriKen.module.GradientAngularVelocity;
-	import laya.d3.core.particleShuriKen.module.GradientColor;
-	import laya.d3.core.particleShuriKen.module.GradientDataColor;
-	import laya.d3.core.particleShuriKen.module.GradientDataInt;
-	import laya.d3.core.particleShuriKen.module.GradientDataNumber;
-	import laya.d3.core.particleShuriKen.module.GradientSize;
-	import laya.d3.core.particleShuriKen.module.GradientVelocity;
-	import laya.d3.core.particleShuriKen.module.RotationOverLifetime;
-	import laya.d3.core.particleShuriKen.module.SizeOverLifetime;
-	import laya.d3.core.particleShuriKen.module.StartFrame;
-	import laya.d3.core.particleShuriKen.module.TextureSheetAnimation;
-	import laya.d3.core.particleShuriKen.module.VelocityOverLifetime;
-	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
-	import laya.d3.core.particleShuriKen.module.shape.BoxShape;
-	import laya.d3.core.particleShuriKen.module.shape.CircleShape;
-	import laya.d3.core.particleShuriKen.module.shape.ConeShape;
-	import laya.d3.core.particleShuriKen.module.shape.HemisphereShape;
-	import laya.d3.core.particleShuriKen.module.shape.SphereShape;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.core.trail.TrailSprite3D;
-//	import laya.d3.extension.lineRender.LineSprite3D;
-	import laya.d3.graphics.IndexBuffer3D;
-	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.graphics.VertexElement;
-	import laya.d3.graphics.VertexElementUsage;
-	import laya.d3.graphics.VertexPositionTexture0;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.math.Viewport;
-	import laya.d3.resource.Texture2D;
-	import laya.d3.resource.models.Mesh;
+	import laya.d3.resource.TextureGenerator;
 	import laya.d3.terrain.Terrain;
 	import laya.display.Node;
-	import laya.events.Event;
-	import laya.net.Loader;
-	import laya.net.URL;
-	import laya.utils.Handler;
-	import laya.webgl.WebGLContext;
+	import laya.layagl.LayaGL;
+	import laya.utils.Browser;
+	import laya.utils.ClassUtils;
+	import laya.webgl.resource.BaseTexture;
+	import laya.webgl.resource.Texture2D;
 	
 	/**
 	 * <code>Utils3D</code> 类用于创建3D工具。
 	 */
 	public class Utils3D {
 		/** @private */
-		private static const _typeToFunO:Object = {"INT16": "writeInt16", "SHORT": "writeInt16", "UINT16": "writeUint16", "UINT32": "writeUint32", "FLOAT32": "writeFloat32", "INT": "writeInt32", "UINT": "writeUint32", "BYTE": "writeByte", "STRING": "writeUTFString"};
+		private static var _tempVector3_0:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector3_1:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector3_2:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector3_3:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector3_4:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector3_5:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector3_6:Vector3 = new Vector3();
 		
 		/** @private */
-		private static var _tempVector3_0:Vector3 = /*[STATIC SAFE]*/ new Vector3();
+		private static var _tempVector3Array0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
 		/** @private */
-		private static var _tempVector3_1:Vector3 = /*[STATIC SAFE]*/ new Vector3();
-		/** @private */
-		private static var _tempVector3_2:Vector3 = /*[STATIC SAFE]*/ new Vector3();
-		/** @private */
-		private static var _tempVector3_3:Vector3 = /*[STATIC SAFE]*/ new Vector3();
-		/** @private */
-		private static var _tempVector3_4:Vector3 = /*[STATIC SAFE]*/ new Vector3();
-		/** @private */
-		private static var _tempVector3_5:Vector3 = /*[STATIC SAFE]*/ new Vector3();
-		/** @private */
-		private static var _tempVector3_6:Vector3 = /*[STATIC SAFE]*/ new Vector3();
-		
+		private static var _tempVector3Array1:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
 		/** @private */
 		private static var _tempArray4_0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(4);
 		/** @private */
@@ -95,6 +57,24 @@ package laya.d3.utils {
 		private static var _tempArray16_2:Float32Array = /*[STATIC SAFE]*/ new Float32Array(16);
 		/** @private */
 		private static var _tempArray16_3:Float32Array =  /*[STATIC SAFE]*/ new Float32Array(16);
+		
+		/**
+		 * @private
+		 */
+		public static function _convertToLayaVec3(bVector:*, out:Vector3, inverseX:Boolean):void {
+			var outE:Float32Array = out.elements;
+			outE[0] = inverseX ? -bVector.x() : bVector.x();
+			outE[1] = bVector.y();
+			outE[2] = bVector.z();
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _convertToBulletVec3(lVector:Vector3, out:*, inverseX:Boolean):void {
+			var lVectorE:Float32Array = lVector.elements;
+			out.setValue(inverseX ? -lVectorE[0] : lVectorE[0], lVectorE[1], lVectorE[2]);
+		}
 		
 		/**
 		 *通过数平移、旋转、缩放值计算到结果矩阵数组,骨骼动画专用。
@@ -184,63 +164,218 @@ package laya.d3.utils {
 		/**
 		 * @private
 		 */
-		public static function _createNodeByJson(rootNode:ComponentNode, nodeData:Object, node:*, innerResouMap:Object):* {
-			if (!node) {
-				switch (nodeData.type) {
-				case "Sprite3D": 
-					node = new Sprite3D();
-					break;
-				case "MeshSprite3D": 
-					node = new MeshSprite3D();
-					break;
-				case "SkinnedMeshSprite3D": 
-					node = new SkinnedMeshSprite3D();
-					break;
-				case "ShuriKenParticle3D": 
-					node = new ShuriKenParticle3D();
-					break;
-				case "TrailSprite3D":
-					node = new TrailSprite3D();
-					break;
-				case "LineSprite3D":
-//					node = new LineSprite3D();
-					break;
-				case "Terrain": 
-					node = new Terrain();
-					break;
-				case "Camera": 
-					node = new Camera();
-					break;
-				case "DirectionLight": 
-					node = new DirectionLight();
-					break;
-				default: 
-					throw new Error("Utils3D:unidentified class type in (.lh) file.");
-				}
-			}
-			var props:Object = nodeData.props;
-			if (props)
-				for (var key:String in props)
-					node[key] = props[key];
-			
-			var customProps:Object = nodeData.customProps;
-			if (customProps) {
-				if (node is Sprite3D) {
-					node._parseBaseCustomProps(customProps);
-					node._parseCustomProps(rootNode, innerResouMap, customProps, nodeData);//json为兼容参数，日后移除
-					node._parseCustomComponent(rootNode, innerResouMap, nodeData.components);
-				} else {
-					node._parseCustomProps(rootNode, innerResouMap, customProps, nodeData);//json为兼容参数，日后移除
-				}
+		public static var _compIdToNode:Object = new Object();
+		
+		/**
+		 * @private
+		 */
+		public static function _createSceneByJsonForMaker(nodeData:Object, outBatchSprites:Vector.<RenderableSprite3D>, initTool:* = null):Scene3D {
+			var scene3d:Scene3D = _createNodeByJsonForMaker(nodeData, outBatchSprites, initTool) as Scene3D;
+			_addComponentByJsonForMaker(nodeData, outBatchSprites, initTool);
+			return scene3d;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _createNodeByJsonForMaker(nodeData:Object, outBatchSprites:Vector.<RenderableSprite3D>, initTool:* = null):Node {
+			var node:Node;
+			switch (nodeData.type) {
+			case "Scene3D": 
+				node = new Scene3D();
+				break;
+			case "Sprite3D": 
+				node = new Sprite3D();
+				break;
+			case "MeshSprite3D": 
+				node = new MeshSprite3D();
+				(outBatchSprites) && (outBatchSprites.push(node));
+				break;
+			case "SkinnedMeshSprite3D": 
+				node = new SkinnedMeshSprite3D();
+				break;
+			case "ShuriKenParticle3D": 
+				node = new ShuriKenParticle3D();
+				break;
+			case "Terrain": 
+				node = new Terrain();
+				break;
+			case "Camera": 
+				node = new Camera();
+				break;
+			case "DirectionLight": 
+				node = new DirectionLight();
+				break;
+			case "PointLight": 
+				node = new PointLight();
+				break;
+			case "SpotLight": 
+				node = new SpotLight();
+				break;
+			case "TrailSprite3D": 
+				node = new TrailSprite3D();
+				break;
+			default: 
+				var clas:* = ClassUtils.getClass(nodeData.props.runtime);
+				node = new clas();
+				break;
 			}
 			
 			var childData:Array = nodeData.child;
 			if (childData) {
 				for (var i:int = 0, n:int = childData.length; i < n; i++) {
-					var child:* = _createNodeByJson(rootNode, childData[i], null, innerResouMap)
+					var child:* = _createNodeByJsonForMaker(childData[i], outBatchSprites, initTool);
 					node.addChild(child);
 				}
 			}
+			
+			var compId:int = nodeData.compId;
+			
+			(node as Object).compId = compId;
+			node._parse(nodeData.props);
+			
+			if (initTool) {
+				initTool._idMap[compId] = node;
+			}
+			_compIdToNode[compId] = node;
+			
+			var componentsData:Array = nodeData.components;
+			if (componentsData) {
+				for (var j:int = 0, m:int = componentsData.length; j < m; j++) {
+					var data:Object = componentsData[j];
+					clas = Browser.window.Laya[data.type];//兼容
+					if (!clas) {//兼容
+						clas = Browser.window;
+						var clasPaths:Array = data.type.split('.');
+						clasPaths.forEach(function(cls:*):void {
+							clas = clas[cls];
+						});
+					}
+					if (typeof(clas) == 'function') {
+						var comp:Component = new clas();
+						if (initTool) {
+							initTool._idMap[data.compId] = comp;
+							trace(data.compId);
+						}
+					} else {
+						console.warn("Utils3D:Unkown component type.");
+					}
+				}
+			}
+			
+			return node;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _addComponentByJsonForMaker(nodeData:Object, outBatchSprites:Vector.<RenderableSprite3D>, initTool:* = null):void {
+			
+			var compId:int = nodeData.compId;
+			var node:Node = _compIdToNode[compId];
+			var childData:Array = nodeData.child;
+			if (childData) {
+				for (var i:int = 0, n:int = childData.length; i < n; i++) {
+					var child:* = _addComponentByJsonForMaker(childData[i], outBatchSprites, initTool);
+				}
+			}
+			
+			var componentsData:Array = nodeData.components;
+			if (componentsData) {
+				for (var j:int = 0, m:int = componentsData.length; j < m; j++) {
+					var data:Object = componentsData[j];
+					clas = Browser.window.Laya[data.type];//兼容
+					if (!clas) {//兼容
+						var clasPaths:Array = data.type.split('.');
+						var clas:* = Browser.window;
+						clasPaths.forEach(function(cls:*):void {
+							clas = clas[cls];
+						});
+					}
+					if (typeof(clas) == 'function') {
+						var component:Component = initTool._idMap[data.compId];
+						node.addComponentIntance(component);
+						component._parse(data);
+					} else {
+						console.warn("Utils3D:Unkown component type.");
+					}
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _createNodeByJson(nodeData:Object, outBatchSprites:Vector.<RenderableSprite3D>):Node {
+			var node:Node;
+			switch (nodeData.type) {
+			case "Scene3D": 
+				node = new Scene3D();
+				break;
+			case "Sprite3D": 
+				node = new Sprite3D();
+				break;
+			case "MeshSprite3D": 
+				node = new MeshSprite3D();
+				(outBatchSprites) && (outBatchSprites.push(node));
+				break;
+			case "SkinnedMeshSprite3D": 
+				node = new SkinnedMeshSprite3D();
+				break;
+			case "ShuriKenParticle3D": 
+				node = new ShuriKenParticle3D();
+				break;
+			case "Terrain": 
+				node = new Terrain();
+				break;
+			case "Camera": 
+				node = new Camera();
+				break;
+			case "DirectionLight": 
+				node = new DirectionLight();
+				break;
+			case "PointLight": 
+				node = new PointLight();
+				break;
+			case "SpotLight": 
+				node = new SpotLight();
+				break;
+			case "TrailSprite3D": 
+				node = new TrailSprite3D();
+				break;
+			default: 
+				throw new Error("Utils3D:unidentified class type in (.lh) file.");
+			}
+			
+			var childData:Array = nodeData.child;
+			if (childData) {
+				for (var i:int = 0, n:int = childData.length; i < n; i++) {
+					var child:* = _createNodeByJson(childData[i], outBatchSprites)
+					node.addChild(child);
+				}
+			}
+			
+			var componentsData:Array = nodeData.components;
+			if (componentsData) {
+				for (var j:int = 0, m:int = componentsData.length; j < m; j++) {
+					var data:Object = componentsData[j];
+					clas = Browser.window.Laya[data.type];//兼容
+					if (!clas) {//兼容
+						var clasPaths:Array = data.type.split('.');
+						var clas:* = Browser.window;
+						clasPaths.forEach(function(cls:*):void {
+							clas = clas[cls];
+						});
+					}
+					if (typeof(clas) == 'function') {
+						var component:Component = node.addComponent(clas);
+						component._parse(data);
+					} else {
+						console.warn("Unkown component type.");
+					}
+				}
+			}
+			node._parse(nodeData.props);
 			return node;
 		}
 		
@@ -476,42 +611,24 @@ package laya.d3.utils {
 		 * @param	resultOffset 输出三维向量数组偏移。
 		 */
 		public static function transformVector3ArrayToVector3ArrayCoordinate(source:Float32Array, sourceOffset:int, transform:Matrix4x4, result:Float32Array, resultOffset:int):void {
-			var vectorElem:Float32Array = _tempArray4_0;
-			
-			//var coordinateElem:Float32Array = coordinate.elements;
 			var coordinateX:Number = source[sourceOffset + 0];
 			var coordinateY:Number = source[sourceOffset + 1];
 			var coordinateZ:Number = source[sourceOffset + 2];
 			
 			var transformElem:Float32Array = transform.elements;
-			
-			vectorElem[0] = (coordinateX * transformElem[0]) + (coordinateY * transformElem[4]) + (coordinateZ * transformElem[8]) + transformElem[12];
-			vectorElem[1] = (coordinateX * transformElem[1]) + (coordinateY * transformElem[5]) + (coordinateZ * transformElem[9]) + transformElem[13];
-			vectorElem[2] = (coordinateX * transformElem[2]) + (coordinateY * transformElem[6]) + (coordinateZ * transformElem[10]) + transformElem[14];
-			vectorElem[3] = 1.0 / ((coordinateX * transformElem[3]) + (coordinateY * transformElem[7]) + (coordinateZ * transformElem[11]) + transformElem[15]);
-			
-			//var resultElem:Float32Array = result.elements;
-			result[resultOffset + 0] = vectorElem[0] * vectorElem[3];
-			result[resultOffset + 1] = vectorElem[1] * vectorElem[3];
-			result[resultOffset + 2] = vectorElem[2] * vectorElem[3];
+			var w:Number = ((coordinateX * transformElem[3]) + (coordinateY * transformElem[7]) + (coordinateZ * transformElem[11]) + transformElem[15]);
+			result[resultOffset] = (coordinateX * transformElem[0]) + (coordinateY * transformElem[4]) + (coordinateZ * transformElem[8]) + transformElem[12] / w;
+			result[resultOffset + 1] = (coordinateX * transformElem[1]) + (coordinateY * transformElem[5]) + (coordinateZ * transformElem[9]) + transformElem[13] / w;
+			result[resultOffset + 2] = (coordinateX * transformElem[2]) + (coordinateY * transformElem[6]) + (coordinateZ * transformElem[10]) + transformElem[14] / w;
 		}
 		
 		/**
 		 * @private
 		 */
-		public static function transformLightingMapTexcoordByUV0Array(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
+		public static function transformLightingMapTexcoordArray(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
 			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
 			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
-			result[resultOffset + 1] = (source[sourceOffset + 1] - 1.0) * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];
-		}
-		
-		/**
-		 * @private
-		 */
-		public static function transformLightingMapTexcoordByUV1Array(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
-			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
-			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
-			result[resultOffset + 1] = 1.0 + source[sourceOffset + 1] * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3];
+			result[resultOffset + 1] = 1.0 - ((1.0 - source[sourceOffset + 1]) * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3]);
 		}
 		
 		/**
@@ -580,7 +697,6 @@ package laya.d3.utils {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
 			var rightMatrixE:Float32Array = rightMatrix.elements;
-			//var leftMatrixE:Float32Array = leftMatrix.elements;
 			var m11:Number = rightMatrixE[0], m12:Number = rightMatrixE[1], m13:Number = rightMatrixE[2], m14:Number = rightMatrixE[3];
 			var m21:Number = rightMatrixE[4], m22:Number = rightMatrixE[5], m23:Number = rightMatrixE[6], m24:Number = rightMatrixE[7];
 			var m31:Number = rightMatrixE[8], m32:Number = rightMatrixE[9], m33:Number = rightMatrixE[10], m34:Number = rightMatrixE[11];
@@ -701,6 +817,117 @@ package laya.d3.utils {
 			}
 		}
 		
+		public static function quaterionSlerp(left:Float32Array, right:Float32Array, t:Number, out:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var ax:Number = left[0], ay:Number = left[1], az:Number = left[2], aw:Number = left[3], bx:Number = right[0], by:Number = right[1], bz:Number = right[2], bw:Number = right[3];
+			
+			var omega:Number, cosom:Number, sinom:Number, scale0:Number, scale1:Number;
+			
+			// calc cosine 
+			cosom = ax * bx + ay * by + az * bz + aw * bw;
+			// adjust signs (if necessary) 
+			if (cosom < 0.0) {
+				cosom = -cosom;
+				bx = -bx;
+				by = -by;
+				bz = -bz;
+				bw = -bw;
+			}
+			// calculate coefficients 
+			if ((1.0 - cosom) > 0.000001) {
+				// standard case (slerp) 
+				omega = Math.acos(cosom);
+				sinom = Math.sin(omega);
+				scale0 = Math.sin((1.0 - t) * omega) / sinom;
+				scale1 = Math.sin(t * omega) / sinom;
+			} else {
+				// "from" and "to" quaternions are very close  
+				//  ... so we can do a linear interpolation 
+				scale0 = 1.0 - t;
+				scale1 = t;
+			}
+			// calculate final values 
+			out[0] = scale0 * ax + scale1 * bx;
+			out[1] = scale0 * ay + scale1 * by;
+			out[2] = scale0 * az + scale1 * bz;
+			out[3] = scale0 * aw + scale1 * bw;
+		}
+		
+		public static function quaternionMultiply(le:Float32Array, re:Float32Array, oe:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var lx:Number = le[0];
+			var ly:Number = le[1];
+			var lz:Number = le[2];
+			var lw:Number = le[3];
+			var rx:Number = re[0];
+			var ry:Number = re[1];
+			var rz:Number = re[2];
+			var rw:Number = re[3];
+			var a:Number = (ly * rz - lz * ry);
+			var b:Number = (lz * rx - lx * rz);
+			var c:Number = (lx * ry - ly * rx);
+			var d:Number = (lx * rx + ly * ry + lz * rz);
+			oe[0] = (lx * rw + rx * lw) + a;
+			oe[1] = (ly * rw + ry * lw) + b;
+			oe[2] = (lz * rw + rz * lw) + c;
+			oe[3] = lw * rw - d;
+		}
+		
+		public static function quaternionWeight(f:Float32Array, weight:Number, e:Float32Array):void {
+			e[0] = f[0] * weight;
+			e[1] = f[1] * weight;
+			e[2] = f[2] * weight;
+			e[3] = f[3];
+		}
+		
+		public static function quaternionInvert(f:Float32Array, e:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			
+			var a0:Number = f[0], a1:Number = f[1], a2:Number = f[2], a3:Number = f[3];
+			var dot:Number = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
+			var invDot:Number = dot ? 1.0 / dot : 0;
+			
+			// TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
+			e[0] = -a0 * invDot;
+			e[1] = -a1 * invDot;
+			e[2] = -a2 * invDot;
+			e[3] = a3 * invDot;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function quaternionConjugate(value:Float32Array, offset:int, result:Float32Array):void {
+			result[0] = -value[offset];
+			result[1] = -value[offset + 1];
+			result[2] = -value[offset + 2];
+			result[3] = value[offset + 3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function scaleWeight(s:Float32Array, w:Number, out:Float32Array):void {
+			var sX:Number = s[0], sY:Number = s[1], sZ:Number = s[2];
+			out[0] = sX > 0 ? Math.pow(Math.abs(sX), w) : -Math.pow(Math.abs(sX), w);
+			out[1] = sY > 0 ? Math.pow(Math.abs(sY), w) : -Math.pow(Math.abs(sY), w);
+			out[2] = sZ > 0 ? Math.pow(Math.abs(sZ), w) : -Math.pow(Math.abs(sZ), w);
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function scaleBlend(sa:Float32Array, sb:Float32Array, w:Number, out:Float32Array):void {
+			var saw:Float32Array = _tempVector3Array0;
+			var sbw:Float32Array = _tempVector3Array1;
+			scaleWeight(sa, 1.0 - w, saw);
+			scaleWeight(sb, w, sbw);
+			var sng:Float32Array = w > 0.5 ? sb : sa;
+			out[0] = sng[0] > 0 ? Math.abs(saw[0] * sbw[0]) : -Math.abs(saw[0] * sbw[0]);
+			out[1] = sng[1] > 0 ? Math.abs(saw[1] * sbw[1]) : -Math.abs(saw[1] * sbw[1]);
+			out[2] = sng[2] > 0 ? Math.abs(saw[2] * sbw[2]) : -Math.abs(saw[2] * sbw[2]);
+		}
+		
 		public static function matrix4x4MultiplyFFF(a:Float32Array, b:Float32Array, e:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var i:int, ai0:Number, ai1:Number, ai2:Number, ai3:Number;
@@ -711,20 +938,41 @@ package laya.d3.utils {
 				}
 			}
 			
+			var b0:Number = b[0], b1:Number = b[1], b2:Number = b[2], b3:Number = b[3];
+			var b4:Number = b[4], b5:Number = b[5], b6:Number = b[6], b7:Number = b[7];
+			var b8:Number = b[8], b9:Number = b[9], b10:Number = b[10], b11:Number = b[11];
+			var b12:Number = b[12], b13:Number = b[13], b14:Number = b[14], b15:Number = b[15];
+			
 			for (i = 0; i < 4; i++) {
 				ai0 = a[i];
 				ai1 = a[i + 4];
 				ai2 = a[i + 8];
 				ai3 = a[i + 12];
-				e[i] = ai0 * b[0] + ai1 * b[1] + ai2 * b[2] + ai3 * b[3];
-				e[i + 4] = ai0 * b[4] + ai1 * b[5] + ai2 * b[6] + ai3 * b[7];
-				e[i + 8] = ai0 * b[8] + ai1 * b[9] + ai2 * b[10] + ai3 * b[11];
-				e[i + 12] = ai0 * b[12] + ai1 * b[13] + ai2 * b[14] + ai3 * b[15];
+				e[i] = ai0 * b0 + ai1 * b1 + ai2 * b2 + ai3 * b3;
+				e[i + 4] = ai0 * b4 + ai1 * b5 + ai2 * b6 + ai3 * b7;
+				e[i + 8] = ai0 * b8 + ai1 * b9 + ai2 * b10 + ai3 * b11;
+				e[i + 12] = ai0 * b12 + ai1 * b13 + ai2 * b14 + ai3 * b15;
 			}
 		}
 		
+		public static function matrix4x4MultiplyFFFForNative(a:Float32Array, b:Float32Array, e:Float32Array):void {
+			LayaGL.instance.matrix4x4Multiply(a, b, e);
+		}
+		
 		public static function matrix4x4MultiplyMFM(left:Matrix4x4, right:Float32Array, out:Matrix4x4):void {
-			matrix4x4MultiplyFFF(left.elements,right,out.elements);
+			matrix4x4MultiplyFFF(left.elements, right, out.elements);
+		}
+		
+		/**
+		 * @private
+		 */
+		
+		public static function _buildTexture2D(width:int, height:int, format:int, colorFunc:Function, mipmaps:Boolean = false):Texture2D {
+			var texture:Texture2D = new Texture2D(width, height, format, mipmaps, true);
+			texture.anisoLevel = 1;
+			texture.filterMode = BaseTexture.FILTERMODE_POINT;
+			TextureGenerator._generateTexture2D(texture, width, height, colorFunc);
+			return texture;
 		}
 	}
 

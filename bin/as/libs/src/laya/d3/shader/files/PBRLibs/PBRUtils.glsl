@@ -4,6 +4,22 @@ struct DirectionLight
 	vec3 Direction;
 };
 
+struct PointLight
+{
+	vec3 Color;
+	vec3 Position;
+	float Range;
+};
+
+struct SpotLight
+{
+	vec3 Color;
+	vec3 Position;
+	vec3 Direction;
+	float SpotAngle;
+	float Range;
+};
+
 vec3 UnpackScaleNormal(in vec2 uv0)
 {
 	#ifdef NORMALTEXTURE
@@ -33,6 +49,12 @@ float PI = 3.14159265359;
 vec3 FresnelTerm (in vec3 F0, in float cosA)
 {
 	return F0 + (vec3(1.0) - F0) * pow(1.0 - cosA, 5.0);
+}
+
+vec3 FresnelLerp (in vec3 F0, in vec3 F90, float cosA)
+{
+    float t = pow(1.0 - cosA, 5.0);
+    return mix(F0, F90, t);
 }
 
 float PerceptualRoughnessToRoughness(in float perceptualRoughness)
@@ -143,5 +165,34 @@ vec2 ParallaxOffset(in vec3 viewDir){
 	#else
 		return v_Texcoord0;
 	#endif
+}
+
+vec3 ReflectCubeMap(in vec3 viewDir, in vec3 normal){
+	#ifdef REFLECTMAP
+		vec3 incident = -viewDir;
+		vec3 reflectionVector = reflect(incident, normal);
+		vec3 reflectionColor = textureCube(u_ReflectTexture, vec3(-reflectionVector.x, reflectionVector.yz)).rgb;
+		return reflectionColor * u_ReflectIntensity;
+	#else
+		return vec3(0.0);
+	#endif
+}
+
+float LayaAttenuation(in vec3 L, in float invLightRadius)
+{
+	float fRatio = clamp(length(L) * invLightRadius, 0.0, 1.0);
+	fRatio *= fRatio;
+	return 1.0 / (1.0 + 25.0 * fRatio) * clamp(4.0*(1.0 - fRatio), 0.0, 1.0); //fade to black as if 4 pixel texture
+}
+
+vec3 LayaPreMultiplyAlpha(vec3 diffColor, float alpha, float oneMinusReflectivity, out float outModifiedAlpha)
+{
+	#ifdef ALPHAPREMULTIPLY
+		diffColor *= alpha;
+		outModifiedAlpha = 1.0 - oneMinusReflectivity + alpha * oneMinusReflectivity;
+	#else
+		outModifiedAlpha = alpha;
+	#endif
+	return diffColor;
 }
 

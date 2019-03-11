@@ -1,7 +1,8 @@
 package laya.renders {
+	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
-	import laya.utils.Stat;
+	import laya.utils.RunDriver;
 	
 	/**
 	 * @private
@@ -9,64 +10,44 @@ package laya.renders {
 	 */
 	public class Render {
 		/** @private */
-		public static var _context:RenderContext;
-		/** @private */
+		public static var _context:Context;
+		/** @private 主画布。canvas和webgl渲染都用这个画布*/
 		public static var _mainCanvas:HTMLCanvas;
-		/** @private */
-		public static var WebGL:*;
 		
-		/*[IF-FLASH-BEGIN]*/
-		/**是否是Flash模式*/
-		public static var isFlash:Boolean = true;
-		/*[IF-FLASH-END]*/
-		/**加速器模式下设置是否是节点模式 如果是否就是非节点模式 默认为canvas模式 如果设置了isConchWebGL则是webGL模式*/
-		public static var isConchNode:Boolean;
 		/**是否是加速器 只读*/
-		public static var isConchApp:Boolean;
-		/**加速器模式下设置是否是节点模式 如果是否就是非节点模式 默认为canvas模式 如果设置了isConchWebGL则是webGL模式*/
-		public static var isConchWebGL:Boolean;
-		__JS__("window.ConchRenderType=window.ConchRenderType||1");
-		__JS__("window.ConchRenderType|=(!window.conch?0:0x04);");
-		{
-			isConchNode = __JS__("(window.ConchRenderType & 5) == 5");
-			isConchApp = __JS__("(window.ConchRenderType & 0x04) == 0x04");
-			isConchWebGL = __JS__("window.ConchRenderType==6");
-		}
+		public static var isConchApp:Boolean=__JS__("(window.conch != null)");
 		/**是否是WebGL模式*/
 		public static var isWebGL:Boolean = false;
 		/** 表示是否是 3D 模式。*/
 		public static var is3DMode:Boolean;
 		
-		/**@private */
-		public static var optimizeTextureMemory:Function = function(url:String, texture:*):Boolean {
-			return true;
-		}
-		
+		/**
+		 * 初始化引擎。
+		 * @param	width 游戏窗口宽度。
+		 * @param	height	游戏窗口高度。
+		 */
 		public function Render(width:Number, height:Number) {
-			var style:* = _mainCanvas.source.style;
-			style.position = 'absolute';
-			style.top = style.left = "0px";
-			style.background = "#000000";
-			
+			//创建主画布。改到Browser中了，因为为了runtime，主画布必须是第一个
 			_mainCanvas.source.id = "layaCanvas";
-			var isWebGl:Boolean = Render.isWebGL;
 			_mainCanvas.source.width = width;
 			_mainCanvas.source.height = height;
-			isWebGl && WebGL.init(_mainCanvas, width, height);
-			Browser.container.appendChild(_mainCanvas.source);
-			_context = new RenderContext(width, height, isWebGl ? null : _mainCanvas);
-			_context.ctx.setIsMainContext();
-		   /*[IF-SCRIPT-BEGIN]
-		   Browser.window.requestAnimationFrame(loop);
-		   function loop():void {
-		   Laya.stage._loop();
-		   Browser.window.requestAnimationFrame(loop);
-		   }
-		   [IF-SCRIPT-END]*/	
+			if (Render.isConchApp)
+			{
+				Browser.document.body.appendChild(_mainCanvas.source);
+			}
+			else
+			{
+				Browser.container.appendChild(_mainCanvas.source);
+			}
+			RunDriver.initRender(_mainCanvas, width, height);
+			Browser.window.requestAnimationFrame(loop);
+			function loop(stamp:Number):void {
+				Laya.stage._loop();
+				Browser.window.requestAnimationFrame(loop);
+			}
 			Laya.stage.on("visibilitychange", this, _onVisibilitychange);
-            /*[IF-FLASH]*/
-			Browser.window.stageIn.addEventListener("enterFrame", _enterFrame);
 		}
+		
 		/**@private */
 		private var _timeId:int = 0;
 		
@@ -85,7 +66,7 @@ package laya.renders {
 		}
 		
 		/** 目前使用的渲染器。*/
-		public static function get context():RenderContext {
+		public static function get context():Context {
 			return _context;
 		}
 		

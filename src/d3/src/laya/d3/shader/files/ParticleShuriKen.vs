@@ -132,7 +132,6 @@ uniform int u_SimulationSpace;
     uniform  vec2 u_ROLAngularVelocityGradientX[4];
     uniform  vec2 u_ROLAngularVelocityGradientY[4];
     uniform  vec2 u_ROLAngularVelocityGradientZ[4];
-	uniform  vec2 u_ROLAngularVelocityGradientW[4];
   #endif
   #ifdef ROTATIONOVERLIFETIMERANDOMCURVES
     uniform  vec2 u_ROLAngularVelocityGradientMaxX[4];
@@ -512,7 +511,6 @@ float computeParticleRotationFloat(in float rotation,in float age,in float norma
 	return rotation;
 }
 
-
 #if defined(RENDERMODE_MESH)&&(defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE))
 vec3 computeParticleRotationVec3(in vec3 rotation,in float age,in float normalizedAge)
 { 
@@ -533,7 +531,7 @@ vec3 computeParticleRotationVec3(in vec3 rotation,in float age,in float normaliz
 		#endif
 	#endif
 	#ifdef ROTATIONOVERLIFETIMESEPERATE
-	#ifdef ROTATIONOVERLIFETIMECONSTANT
+		#ifdef ROTATIONOVERLIFETIMECONSTANT
 			vec3 ageRot=u_ROLAngularVelocityConstSeprarate*age;
 	        rotation+=ageRot;
 		#endif
@@ -690,7 +688,7 @@ void main()
 	    vec3 size=computeParticleSizeMesh(a_StartSize,normalizedAge);
 		#if defined(ROTATIONOVERLIFETIME)||defined(ROTATIONOVERLIFETIMESEPERATE)
 			if(u_ThreeDStartRotation){
-				vec3 rotation=vec3(a_StartRotation0.xy,-computeParticleRotationFloat(a_StartRotation0.z, age,normalizedAge));
+				vec3 rotation=vec3(a_StartRotation0.xy,computeParticleRotationFloat(a_StartRotation0.z, age,normalizedAge));
 				center+= rotationByQuaternions(u_SizeScale*rotationByEuler(a_MeshPosition*size,rotation),worldRotation);
 			}
 			else{
@@ -712,9 +710,9 @@ void main()
 				#endif
 				#ifdef ROTATIONOVERLIFETIMESEPERATE
 					//TODO:是否应合并if(u_ThreeDStartRotation)分支代码,待测试
-					vec3 angle=computeParticleRotationVec3(vec3(0.0,0.0,a_StartRotation0.z), age,normalizedAge);
+					vec3 angle=computeParticleRotationVec3(vec3(0.0,0.0,-a_StartRotation0.x), age,normalizedAge);
 					center+= (rotationByQuaternions(rotationByEuler(u_SizeScale*a_MeshPosition*size,vec3(angle.x,angle.y,angle.z)),worldRotation));//已验证
-				#endif	
+				#endif		
 			}
 		#else
 			if(u_ThreeDStartRotation){

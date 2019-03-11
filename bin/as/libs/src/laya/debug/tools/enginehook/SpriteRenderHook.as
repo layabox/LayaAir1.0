@@ -7,8 +7,8 @@ package laya.debug.tools.enginehook
 	import laya.debug.view.nodeInfo.DebugInfoLayer;
 	import laya.display.Sprite;
 	import laya.display.Stage;
-	import laya.renders.RenderContext;
 	import laya.renders.RenderSprite;
+	import laya.resource.Context;
 	import laya.utils.Browser;
 	import laya.utils.Stat;
 
@@ -54,7 +54,7 @@ package laya.debug.tools.enginehook
 		 * @param	x X轴坐标。
 		 * @param	y Y轴坐标。
 		 */
-		public function render(context:RenderContext, x:Number, y:Number):void {
+		public function render(context:Context, x:Number, y:Number):void {
 			if ((this as Stage) == Laya.stage)
 			{
 				CacheAnalyser.renderLoopBegin();

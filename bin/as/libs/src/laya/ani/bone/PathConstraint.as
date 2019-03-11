@@ -47,6 +47,7 @@ package laya.ani.bone {
 		 * @param	boneMatrixArray
 		 * @param	graphics
 		 */
+		//TODO:coverage
 		public function apply(boneList:Vector.<Bone>, graphics:Graphics):void {
 			if (!target)
 				return;
@@ -176,6 +177,7 @@ package laya.ani.bone {
 		 * @param	worldVertices
 		 * @param	offset
 		 */
+		//TODO:coverage
 		public function computeWorldVertices2(boneSlot:BoneSlot, boneList:Vector.<Bone>, start:int, count:int, worldVertices:Vector.<Number>, offset:int):void {
 			var tBones:Array = boneSlot.currDisplayData.bones;
 			var tWeights:Array = boneSlot.currDisplayData.weights;
@@ -268,6 +270,7 @@ package laya.ani.bone {
 		 * @param	percentSpacing
 		 * @return
 		 */
+		//TODO:coverage
 		private function computeWorldPositions(boneSlot:BoneSlot, boneList:Vector.<Bone>, graphics:Graphics, spacesCount:int, tangents:Boolean, percentPosition:Boolean, percentSpacing:Boolean):Vector.<Number> {
 			var tBones:Array = boneSlot.currDisplayData.bones;
 			var tWeights:Array = boneSlot.currDisplayData.weights;
@@ -526,6 +529,7 @@ package laya.ani.bone {
 			return out;
 		}
 		
+		//TODO:coverage
 		private function addBeforePosition(p:Number, temp:Vector.<Number>, i:int, out:Vector.<Number>, o:int):void {
 			var x1:Number = temp[i], y1:Number = temp[i + 1], dx:Number = temp[i + 2] - x1, dy:Number = temp[i + 3] - y1, r:Number = Math.atan2(dy, dx);
 			out[o] = x1 + p * Math.cos(r);
@@ -533,6 +537,7 @@ package laya.ani.bone {
 			out[o + 2] = r;
 		}
 		
+		//TODO:coverage
 		private function addAfterPosition(p:Number, temp:Vector.<Number>, i:int, out:Vector.<Number>, o:int):void {
 			var x1:Number = temp[i + 2], y1:Number = temp[i + 3], dx:Number = x1 - temp[i], dy:Number = y1 - temp[i + 1], r:Number = Math.atan2(dy, dx);
 			out[o] = x1 + p * Math.cos(r);
@@ -540,6 +545,7 @@ package laya.ani.bone {
 			out[o + 2] = r;
 		}
 		
+		//TODO:coverage
 		private function addCurvePosition(p:Number, x1:Number, y1:Number, cx1:Number, cy1:Number, cx2:Number, cy2:Number, x2:Number, y2:Number, out:Vector.<Number>, o:int, tangents:Boolean):void {
 			if (p == 0)
 				p = 0.0001;

@@ -2,34 +2,47 @@ package laya.utils {
 	
 	/**
 	 * <code>Log</code> 类用于在界面内显示日志记录信息。
+	 * 注意：在加速器内不可使用
 	 */
 	public class Log {
 		
 		/**@private */
 		private static var _logdiv:*;
 		/**@private */
+		private static var _btn:*;
+		/**@private */
 		private static var _count:int = 0;
-		/**最大打印数量，超过这个数量，则自动清理一次*/
-		public static var maxCount:int = 20;
+		/**最大打印数量，超过这个数量，则自动清理一次，默认为50次*/
+		public static var maxCount:int = 50;
+		/**是否自动滚动到底部，默认为true*/
+		public static var autoScrollToBottom:Boolean = true;
 		
 		/**
 		 * 激活Log系统，使用方法Laya.init(800,600,Laya.Log);
 		 */
 		public static function enable():void {
 			if (!_logdiv) {
-				_logdiv = Browser.window.document.createElement('div');
-				Browser.window.document.body.appendChild(_logdiv);
-				_logdiv.style.cssText = "pointer-events:none;border:white;overflow:hidden;z-index:1000000;background:rgba(100,100,100,0.6);color:white;position: absolute;left:0px;top:0px;width:50%;height:50%;";
+				_logdiv = Browser.createElement('div');
+				_logdiv.style.cssText = "border:white;padding:4px;overflow-y:auto;z-index:1000000;background:rgba(100,100,100,0.6);color:white;position: absolute;left:0px;top:0px;width:50%;height:50%;";
+				Browser.document.body.appendChild(_logdiv);
+				
+				_btn = Browser.createElement("button");
+				_btn.innerText = "Hide";
+				_btn.style.cssText = "z-index:1000001;position: absolute;left:10px;top:10px;";
+				_btn.onclick = toggle;
+				Browser.document.body.appendChild(_btn);
 			}
 		}
 		
 		/**隐藏/显示日志面板*/
 		public static function toggle():void {
 			var style:* = _logdiv.style;
-			if (style.width == "1px") {
-				style.width = style.height = "50%";
+			if (style.display === "") {
+				_btn.innerText = "Show";
+				style.display = "none";
 			} else {
-				style.width = style.height = "1px";
+				_btn.innerText = "Hide";
+				style.display = "";
 			}
 		}
 		
@@ -45,7 +58,11 @@ package laya.utils {
 				
 				_logdiv.innerText += value + "\n";
 				//自动滚动
-				_logdiv.scrollTop = _logdiv.scrollHeight;
+				if (autoScrollToBottom) {
+					if (_logdiv.scrollHeight - _logdiv.scrollTop - _logdiv.clientHeight < 50) {
+						_logdiv.scrollTop = _logdiv.scrollHeight;
+					}
+				}
 			}
 		}
 		

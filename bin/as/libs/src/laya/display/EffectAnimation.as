@@ -8,14 +8,15 @@ package laya.display {
 	 */
 	public class EffectAnimation extends FrameAnimation {
 		/**
+		 * @private
 		 * 动效开始事件。
 		 */
-		public static const EffectAnimationBegin:String = "effectanimationbegin";
+		private static const EFFECT_BEGIN:String = "effectbegin";
 		
 		/**@private */
 		private var _target:*;
 		/**@private */
-		private var _playEvents:String;
+		private var _playEvent:String;
 		/**@private */
 		private var _initData:Object = {};
 		/**@private */
@@ -28,14 +29,10 @@ package laya.display {
 		 * @param v 指定的目标对象。
 		 */
 		public function set target(v:*):void {
-			if (_target) {
-				_target.off(EffectAnimationBegin, this, _onOtherBegin);
-			}
+			if (_target) _target.off(EFFECT_BEGIN, this, _onOtherBegin);
 			_target = v;
-			if (_target) {
-				_target.on(EffectAnimationBegin, this, _onOtherBegin);
-			}
-			addEvent();
+			if (_target) _target.on(EFFECT_BEGIN, this, _onOtherBegin);
+			_addEvent();
 		}
 		
 		public function get target():* {
@@ -44,8 +41,7 @@ package laya.display {
 		
 		/**@private */
 		private function _onOtherBegin(effect:*):void {
-			if (effect == this)
-				return;
+			if (effect === this) return;
 			this.stop();
 		}
 		
@@ -54,18 +50,16 @@ package laya.display {
 		 * @param event
 		 */
 		public function set playEvent(event:String):void {
-			_playEvents = event;
-			if (!event)
-				return;
-			addEvent();
+			_playEvent = event;
+			if (!event) return;
+			_addEvent();
 		}
 		
 		/**@private */
-		private function addEvent():void {
-			if (!_target || !_playEvents)
-				return;
+		private function _addEvent():void {
+			if (!_target || !_playEvent) return;
 			_setControlNode(_target);
-			_target.on(_playEvents, this, _onPlayAction);
+			_target.on(_playEvent, this, _onPlayAction);
 		}
 		
 		/**@private */
@@ -73,19 +67,18 @@ package laya.display {
 			play(0, false);
 		}
 		
-		override public function play(start:* = 0, loop:Boolean = true, name:String = "", showWarn:Boolean = true):void 
+		override public function play(start:* = 0, loop:Boolean = true, name:String = ""):void 
 		{
 			if (!_target)
 				return;
-			_target.event(EffectAnimationBegin, [this]);
+			_target.event(EFFECT_BEGIN, [this]);
 			_recordInitData();
-			super.play(start, loop, name, showWarn);
+			super.play(start, loop, name);
 		}
 		
 		/**@private */
 		private function _recordInitData():void {
-			if (!_aniKeys)
-				return;
+			if (!_aniKeys) return;
 			var i:int, len:int;
 			len = _aniKeys.length;
 			var key:String;
@@ -102,15 +95,14 @@ package laya.display {
 		public function set effectClass(classStr:String):void {
 			_effectClass = ClassUtils.getClass(classStr);
 			if (_effectClass) {
-				var uiData:Object;
-				uiData = _effectClass["uiView"];
+				var uiData:Object = _effectClass["uiView"];
 				if (uiData) {
-					var aniData:Array;
-					aniData = uiData["animations"];
+					var aniData:Array = uiData["animations"];
 					if (aniData && aniData[0]) {
-						_setUp({}, aniData[0]);
-						if (aniData[0].nodes && aniData[0].nodes[0]) {
-							_aniKeys = aniData[0].nodes[0].keys;
+						var data:* = aniData[0];
+						_setUp({}, data);
+						if (data.nodes && data.nodes[0]) {
+							_aniKeys = data.nodes[0].keys;
 						}
 					}
 				}
@@ -123,12 +115,12 @@ package laya.display {
 		 */
 		public function set effectData(uiData:Object):void {
 			if (uiData) {
-				var aniData:Array;
-				aniData = uiData["animations"];
+				var aniData:Array = uiData["animations"];
 				if (aniData && aniData[0]) {
-					_setUp({}, aniData[0]);
-					if (aniData[0].nodes && aniData[0].nodes[0]) {
-						_aniKeys = aniData[0].nodes[0].keys;
+					var data:* = aniData[0];
+					_setUp({}, data);
+					if (data.nodes && data.nodes[0]) {
+						_aniKeys = data.nodes[0].keys;
 					}
 				}
 			}
@@ -136,12 +128,9 @@ package laya.display {
 		
 		/**@private */
 		override protected function _displayToIndex(value:int):void {
-			if (!_animationData)
-				return;
-			if (value < 0)
-				value = 0;
-			if (value > _count)
-				value = _count;
+			if (!_animationData) return;
+			if (value < 0) value = 0;
+			if (value > _count) value = _count;
 			var nodes:Array = _animationData.nodes, i:int, len:int = nodes.length;
 			len = len > 1 ? 1 : len;
 			for (i = 0; i < len; i++) {
@@ -151,14 +140,11 @@ package laya.display {
 		
 		/**@private */
 		override protected function _displayNodeToFrame(node:Object, frame:int, targetDic:Object = null):void {
-			if (!_target)
-				return;
-			var target:*;
-			target = _target;
+			if (!_target) return;
+			var target:* = _target;
 			var frames:Object = node.frames, key:String, propFrames:Array, value:*;
 			var keys:Array = node.keys, i:int, len:int = keys.length;
-			var secondFrames:Object;
-			secondFrames = node.secondFrames;
+			var secondFrames:Object = node.secondFrames;
 			var tSecondFrame:int;
 			var easeFun:Function;
 			var tKeyFrames:Array;
@@ -176,9 +162,7 @@ package laya.display {
 						startFrame = tKeyFrames[0];
 						if (startFrame.tween) {
 							easeFun = Ease[startFrame.tweenMethod];
-							if (easeFun == null) {
-								easeFun = Ease.linearNone;
-							}
+							if (easeFun == null) easeFun = Ease.linearNone;
 							endFrame = tKeyFrames[1];
 							value = easeFun(frame, _initData[key], endFrame.value - _initData[key], endFrame.index);
 						} else {
@@ -186,35 +170,26 @@ package laya.display {
 						}
 						
 					} else {
-						if (propFrames.length > frame) {
-							value = propFrames[frame];
-						} else {
-							value = propFrames[propFrames.length - 1];
-						}
+						if (propFrames.length > frame) value = propFrames[frame];
+						else value = propFrames[propFrames.length - 1];
 					}
 				}
-				
 				target[key] = value;
 			}
 		}
 		
 		/**@private */
-		override protected function _calculateNodeKeyFrames(node:Object):void {
-			super._calculateNodeKeyFrames(node);
+		override protected function _calculateKeyFrames(node:Object):void {
+			super._calculateKeyFrames(node);
 			var keyFrames:Object = node.keyframes, key:String, tKeyFrames:Array, target:int = node.target;
 			
-			var secondFrames:Object;
-			secondFrames = {};
+			var secondFrames:Object = {};
 			node.secondFrames = secondFrames;
 			for (key in keyFrames) {
 				tKeyFrames = keyFrames[key];
-				if (tKeyFrames.length <= 1) {
-					secondFrames[key] = -1;
-				} else {
-					secondFrames[key] = tKeyFrames[1].index;
-				}
+				if (tKeyFrames.length <= 1) secondFrames[key] = -1;
+				else secondFrames[key] = tKeyFrames[1].index;
 			}
 		}
 	}
-
 }

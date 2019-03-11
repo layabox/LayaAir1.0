@@ -1,5 +1,4 @@
 package laya.events {
-	
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.maths.Point;
@@ -57,6 +56,8 @@ package laya.events {
 		public static const COMPLETE:String = "complete";
 		/** 定义 loaded 事件对象的 type 属性值。*/
 		public static const LOADED:String = "loaded";
+		/** 定义 loaded 事件对象的 type 属性值。*/
+		public static const READY:String = "ready";
 		/** 定义 progress 事件对象的 type 属性值。*/
 		public static const PROGRESS:String = "progress";
 		/** 定义 input 事件对象的 type 属性值。*/
@@ -105,20 +106,10 @@ package laya.events {
 		public static const START:String = "start";
 		/** 定义 end 事件对象的 type 属性值。*/
 		public static const END:String = "end";
-		/** 定义 enablechanged 事件对象的 type 属性值。*/
-		public static const ENABLE_CHANGED:String = "enablechanged";
-		/** 定义 activeinhierarchychanged 事件对象的 type 属性值。*/
-		public static const ACTIVE_IN_HIERARCHY_CHANGED:String = "activeinhierarchychanged";
 		/** 定义 componentadded 事件对象的 type 属性值。*/
 		public static const COMPONENT_ADDED:String = "componentadded";
 		/** 定义 componentremoved 事件对象的 type 属性值。*/
 		public static const COMPONENT_REMOVED:String = "componentremoved";
-		/** 定义 layerchanged 事件对象的 type 属性值。*/
-		public static const LAYER_CHANGED:String = "layerchanged";
-		/** 定义 hierarchyloaded 事件对象的 type 属性值。*/
-		public static const HIERARCHY_LOADED:String = "hierarchyloaded";
-		/** 定义 recovered 事件对象的 type 属性值。*/
-		public static const RECOVERED:String = "recovered";
 		/** 定义 released 事件对象的 type 属性值。*/
 		public static const RELEASED:String = "released";
 		/** 定义 link 事件对象的 type 属性值。*/
@@ -129,24 +120,18 @@ package laya.events {
 		public static const FULL_SCREEN_CHANGE:String = "fullscreenchange";
 		/**显卡设备丢失时触发*/
 		public static const DEVICE_LOST:String = "devicelost";
-		/**模型更换时触发*/
-		public static const MESH_CHANGED:String = "meshchanged";
-		/**材质更换时触发*/
-		public static const MATERIAL_CHANGED:String = "materialchanged";
 		/**世界矩阵更新时触发。*/
-		public static const WORLDMATRIX_NEEDCHANGE:String = "worldmatrixneedchanged";
+		public static const TRANSFORM_CHANGED:String = "transformchanged";
 		/**更换动作时触发。*/
 		public static const ANIMATION_CHANGED:String = "animationchanged";
-		/**进入触发器时触发。*/
-		public static const TRIGGER_ENTER:String = "triggerenter";
-		/**保持触发器时触发。*/
-		public static const TRIGGER_STAY:String = "triggerstay";
-		/**退出触发器时触发。*/
-		public static const TRIGGER_EXIT:String = "triggerexit";
 		/**拖尾渲染节点改变时触发。*/
 		public static const TRAIL_FILTER_CHANGE:String = "trailfilterchange";
-		/**多米诺渲染节点改变时触发。*/
-		public static const DOMINO_FILTER_CHANGE:String = "dominofilterchange";
+		/**物理碰撞开始*/
+		public static const TRIGGER_ENTER:String = "triggerenter";
+		/**物理碰撞持续*/
+		public static const TRIGGER_STAY:String = "triggerstay";
+		/**物理碰撞结束*/
+		public static const TRIGGER_EXIT:String = "triggerexit";
 		
 		/** 事件类型。*/
 		public var type:String;
@@ -190,6 +175,7 @@ package laya.events {
 		 * 触摸点列表。
 		 */
 		public function get touches():Array {
+			if (!this.nativeEvent) return null;
 			var arr:Array = this.nativeEvent.touches;
 			if (arr) {
 				var stage:Stage = Laya.stage;
@@ -240,7 +226,7 @@ package laya.events {
 		 * 例如，您可以根据此属性的值来区分左 Shift 键和右 Shift 键：左 Shift 键的值为 KeyLocation.LEFT，右 Shift 键的值为 KeyLocation.RIGHT。另一个示例是区分标准键盘 (KeyLocation.STANDARD) 与数字键盘 (KeyLocation.NUM_PAD) 上按下的数字键。
 		 */
 		public function get keyLocation():uint {
-			return this.nativeEvent.keyLocation;
+			return this.nativeEvent.location || this.nativeEvent.keyLocation;
 		}
 		
 		/**鼠标在 Stage 上的 X 轴坐标*/

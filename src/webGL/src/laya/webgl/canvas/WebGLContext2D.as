@@ -1,5 +1,8 @@
 package laya.webgl.canvas {
 	import laya.display.Sprite;
+	import laya.display.Stage;
+	import laya.filters.ColorFilter;
+	import laya.layagl.LayaGL;
 	import laya.maths.Bezier;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
@@ -9,49 +12,51 @@ package laya.webgl.canvas {
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.Texture;
-	import laya.utils.Color;
+	import laya.utils.ColorUtils;
+	import laya.utils.FontInfo;
 	import laya.utils.HTMLChar;
-	import laya.utils.RunDriver;
-	import laya.utils.Stat;
+	import laya.utils.StringKey;
 	import laya.utils.VectorGraphManager;
+	import laya.utils.WordText;
 	import laya.webgl.WebGL;
 	import laya.webgl.WebGLContext;
-	import laya.webgl.atlas.AtlasResourceManager;
 	import laya.webgl.canvas.save.ISaveData;
 	import laya.webgl.canvas.save.SaveBase;
 	import laya.webgl.canvas.save.SaveClipRect;
-	import laya.webgl.canvas.save.SaveClipRectStencil;
 	import laya.webgl.canvas.save.SaveMark;
 	import laya.webgl.canvas.save.SaveTransform;
 	import laya.webgl.canvas.save.SaveTranslate;
-	import laya.webgl.resource.RenderTargetMAX;
-	import laya.webgl.resource.WebGLImage;
+	import laya.webgl.resource.BaseTexture;
+	import laya.webgl.resource.CharBook;
+	import laya.webgl.resource.CharRenderInfo;
+	import laya.webgl.resource.RenderTexture2D;
+	import laya.webgl.resource.Texture2D;
+	import laya.webgl.shader.BaseShader;
 	import laya.webgl.shader.Shader;
+	import laya.webgl.shader.ShaderValue;
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.skinAnishader.SkinMeshBuffer;
-	import laya.webgl.shader.d2.value.FillTextureSV;
-	import laya.webgl.shader.d2.value.PrimitiveSV;
-	import laya.webgl.shader.d2.value.TextSV;
 	import laya.webgl.shader.d2.value.Value2D;
-	import laya.webgl.shapes.IShape;
+	import laya.webgl.shapes.BasePoly;
+	import laya.webgl.shapes.Earcut;
 	import laya.webgl.submit.ISubmit;
 	import laya.webgl.submit.Submit;
+	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.submit.SubmitCanvas;
-	import laya.webgl.submit.SubmitOtherIBVB;
-	import laya.webgl.submit.SubmitScissor;
-	import laya.webgl.submit.SubmitStencil;
+	import laya.webgl.submit.SubmitKey;
 	import laya.webgl.submit.SubmitTarget;
 	import laya.webgl.submit.SubmitTexture;
-	import laya.webgl.text.DrawText;
-	import laya.webgl.text.FontInContext;
+	import laya.webgl.text.TextRender;
 	import laya.webgl.utils.Buffer2D;
-	import laya.webgl.utils.GlUtils;
 	import laya.webgl.utils.IndexBuffer2D;
 	import laya.webgl.utils.Mesh2D;
+	import laya.webgl.utils.MeshQuadTexture;
 	import laya.webgl.utils.MeshTexture;
+	import laya.webgl.utils.MeshVG;
 	import laya.webgl.utils.RenderState2D;
 	import laya.webgl.utils.VertexBuffer2D;
+	import laya.webgl.text.CharSubmitCache;
 	
 	public class WebGLContext2D extends Context {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -59,10 +64,9 @@ package laya.webgl.canvas {
 		public static const _SUBMITVBSIZE:int = 32000;
 		
 		public static const _MAXSIZE:int = 99999999;
+		private static const _MAXVERTNUM:int = 65535;
 		
-		public static const _RECTVBSIZE:int = 16;
-		
-		public static const MAXCLIPRECT:Rectangle = /*[STATIC SAFE]*/ new Rectangle(0, 0, _MAXSIZE, _MAXSIZE);
+		public static const MAXCLIPRECT:Rectangle = /*[STATIC SAFE]*/ new Rectangle(0,0, _MAXSIZE, _MAXSIZE);
 		
 		public static var _COUNT:int = 0;
 			
@@ -70,68 +74,116 @@ package laya.webgl.canvas {
 		
 		private static var SEGNUM:int = 32;
 			 
-		private static var _fontTemp:FontInContext = new FontInContext();
 		private static var _drawStyleTemp:DrawStyle = new DrawStyle(null);
 		private static var _contextcount:int = 0;
+		private static var _keyMap:StringKey = new StringKey();
+		
+		private static var _drawTexToDrawTri_Vert:Float32Array = new Float32Array(8);
+		private static var _drawTexToDrawTri_Index:Uint16Array = new Uint16Array([0, 1, 2, 0, 2, 3]);
+		private var _drawTriUseAbsMatrix:Boolean = false;	//drawTriange函数的矩阵是全局的，不用再乘以当前矩阵了。这是一个补丁。
 		
 		public static function __init__():void {
 			ContextParams.DEFAULT = new ContextParams();
+			WebGLCacheAsNormalCanvas;
 		}
 		
-		public var _x:Number = 0;
-		public var _y:Number = 0;
+		public static function set2DRenderConfig():void{
+			var gl:*= LayaGL.instance;
+			WebGLContext.setBlend(gl, true);//还原2D设置
+			WebGLContext.setBlendFunc(gl, WebGLContext.ONE, WebGLContext.ONE_MINUS_SRC_ALPHA);
+			WebGLContext.setDepthTest(gl, false);
+			WebGLContext.setCullFace(gl, false);
+			WebGLContext.setDepthMask(gl, true);
+			WebGLContext.setFrontFace(gl, WebGLContext.CCW);
+			gl.viewport(0, 0, RenderState2D.width, RenderState2D.height);//还原2D视口
+		}
+		
 		public var _id:int = ++_COUNT;
 		
 		private var _other:ContextParams;
+		private var _renderNextSubmitIndex:int;
 		
 		private var _path:Path = null;
 		private var _primitiveValue2D:Value2D;
-		private var _drawCount:int = 1;
-		private var _maxNumEle:int = 0;
-		private var _clear:Boolean = false;
+		public  var _drawCount:int = 1;
+		private var _maxNumEle:int = 0;			//所有submit中的最多的element个数
 		private var _width:Number = _MAXSIZE;
 		private var _height:Number = _MAXSIZE;
-		private var _isMain:Boolean = false;
-		private var _atlasResourceChange:int = 0;
-		
+		private var _renderCount:int = 0;
+		private var _isConvexCmd:Boolean = true;	//arc等是convex的，moveTo,linTo就不是了
 		public var _submits:* = null;
 		public var _curSubmit:* = null;
-		public var _ib:IndexBuffer2D = null;
-		public var _vb:VertexBuffer2D = null; // 不同的顶点格式，使用不同的顶点缓冲区		
-		public var _clipRect:Rectangle = MAXCLIPRECT;
-		public var _curMat:Matrix;
-		public var _nBlendType:int = 0;
-		public var _save:*;
-		public var _targets:RenderTargetMAX;
-		public var _renderKey:Number;
+		public var _submitKey:SubmitKey = new SubmitKey();	//当前将要使用的设置。用来跟上一次的_curSubmit比较
 		
-		public var _saveMark:SaveMark = null;
-		public var _shader2D:Shader2D = null;
-		private var _triangleMesh:MeshTexture;	//drawTriangles专用mesh。由于ib不固定，所以不能与_mesh通用
+		public var _mesh:MeshQuadTexture;			//用Mesh2D代替_vb,_ib. 当前使用的mesh
+		public var _pathMesh:MeshVG;			//矢量专用mesh。
+		public var _triangleMesh:MeshTexture;	//drawTriangles专用mesh。由于ib不固定，所以不能与_mesh通用
+		
 		public var meshlist:Array = [];	//本context用到的mesh
 		
-		/**所cacheAs精灵*/
-		public var sprite:Sprite;
+		//public var _vbs:Array = [];	//双buffer管理。TODO 临时删掉，需要mesh中加上
+		private var _transedPoints:Array = new Array(8);	//临时的数组，用来计算4个顶点的转换后的位置。
+		private var _temp4Points:Array = new Array(8);		//临时数组。用来保存4个顶点的位置。
 		
-		public function WebGLContext2D(c:HTMLCanvas) {
-			
-			//__JS__('this.drawTexture = this._drawTextureM');
-			
-			_canvas = c;
-			
+		public var _clipRect:Rectangle = MAXCLIPRECT;
+		//public var _transedClipInfo:Array = [0, 0, WebGLContext2D._MAXSIZE, 0, 0, WebGLContext2D._MAXSIZE];	//应用矩阵后的clip。ox,oy, xx,xy,yx,yy 	xx,xy等是缩放*宽高
+		public var _globalClipMatrix:Matrix = new Matrix(WebGLContext2D._MAXSIZE, 0, 0, WebGLContext2D._MAXSIZE, 0, 0);	//用矩阵描述的clip信息。最终的点投影到这个矩阵上，在0~1之间就可见。
+		public var _clipInfoID:uint = 0;					//用来区分是不是clipinfo已经改变了
+		private static var _clipID_Gen:uint = 0;			//生成clipid的，原来是  _clipInfoID=++_clipInfoID 这样会有问题，导致兄弟clip的id都相同
+		public var _curMat:Matrix;
+		
+		//计算矩阵缩放的缓存
+		public var _lastMatScaleX:Number = 1.0;
+		public var _lastMatScaleY:Number = 1.0;
+		private var _lastMat_a:Number = 1.0;
+		private var _lastMat_b:Number = 0.0;
+		private var _lastMat_c:Number = 0.0;
+		private var _lastMat_d:Number = 1.0;
+		
+		public var _nBlendType:int = 0;
+		public var _save:*;
+		public var _targets:RenderTexture2D;
+		public var _charSubmitCache:CharSubmitCache;
+		
+		public var _saveMark:SaveMark = null;
+		
+		public var _shader2D:Shader2D = new Shader2D();	//
+		
+		/**
+		 * 所cacheAs精灵
+		 * 对于cacheas bitmap的情况，如果图片还没准备好，需要有机会重画，所以要保存sprite。例如在图片
+		 * 加载完成后，调用repaint
+		 */
+		public var sprite:Sprite;	
+		
+		//文字颜色。使用顶点色
+		public var _drawTextureUseColor:Boolean = false;
+		
+		private static var _textRender:CharBook = TextRender.useOldCharBook?new CharBook(): (new TextRender() as CharBook);
+		
+		public var _italicDeg:Number = 0;//文字的倾斜角度
+		public var _lastTex:Texture = null; //上次使用的texture。主要是给fillrect用，假装自己也是一个drawtexture
+		
+		private var _fillColor:uint = 0;
+		private var _flushCnt:int = 0;
+		
+		private static var defTexture:Texture;	//给fillrect用
+		
+		public var _colorFiler:ColorFilter;
+		
+		public var drawTexAlign:Boolean = false;		// 按照像素对齐
+		
+		public function WebGLContext2D(){
 			_contextcount++;
 			
-			if (Render.isFlash) {
-				_ib = IndexBuffer2D.create(WebGLContext.STATIC_DRAW);
-				GlUtils.fillIBQuadrangle(_ib, 16);
-			} else
-				_ib = IndexBuffer2D.QuadrangleIB;
-			
+			//_ib = IndexBuffer2D.QuadrangleIB;
+			if (!defTexture) {
+				var defTex2d:Texture2D = new Texture2D(2,2);
+				defTex2d.setPixels(new Uint8Array(16));
+				defTexture = new Texture(defTex2d);
+			}
+			_lastTex = defTexture;
 			clear();
-		}
-		
-		public override function setIsMainContext():void {
-			this._isMain = true;
 		}
 		
 		public function clearBG(r:Number, g:Number, b:Number, a:Number):void {
@@ -140,11 +192,12 @@ package laya.webgl.canvas {
 			gl.clear(WebGLContext.COLOR_BUFFER_BIT);
 		}
 		
+		//TODO:coverage
 		public function _getSubmits():Array {
 			return _submits;
 		}
 		
-private function _releaseMem():void
+		private function _releaseMem():void
 		{			
 			if (!_submits)
 				return;
@@ -153,27 +206,36 @@ private function _releaseMem():void
 			_curMat = null;			
 			_shader2D.destroy();
 			_shader2D = null;
+			_charSubmitCache.clear();
+			
 			for (var i:int = 0, n:int = _submits._length; i < n; i++)
+			{
 				_submits[i].releaseRender();
+			}
 			_submits.length = 0;
 			_submits._length = 0;
 			_submits = null;
 			_curSubmit = null;
 
-			_path && _path.recover();
 			_path = null;
-			_other && (_other.font = null);
+			//_other && (_other.font = null);
 			_save = null;			
-			
-			if (_vb)
-			{
-				_vb.releaseResource();
-				_vb.destroy();
-				_vb.destory();
-				_vb = null;
+
+			var sz:int;
+			for ( i = 0, sz= meshlist.length; i < sz; i++) {
+				var curm:Mesh2D = meshlist[i];
+				curm.destroy();
 			}
+			meshlist.length = 0;
+			
+			sprite = null;
+			_targets && (_targets.destroy());
+			_targets = null;
+			
+			//TODO mesh 暂时releaseMem了
 		}
 		
+		//TODO:coverage
 		override public function destroy():void
 		{
 			--_contextcount;
@@ -182,52 +244,63 @@ private function _releaseMem():void
 			
 			_releaseMem();
 			
-			_targets && _targets.destroy();
+			_charSubmitCache.destroy();
+			
+			_targets && _targets.destroy();//用回收么？可能没什么重复利用的价值
 			_targets = null;
-			_canvas = null;
-			_ib && (_ib != IndexBuffer2D.QuadrangleIB) && _ib.releaseResource();
+			//_ib && (_ib != IndexBuffer2D.QuadrangleIB) && _ib.releaseResource();
+			_mesh.destroy();
 		}
 		
 		override public function clear():void
 		{
 			if (!_submits)
-			{
+			{//第一次
 				_other = ContextParams.DEFAULT;
 				_curMat = Matrix.create();
-				_vb = VertexBuffer2D.create( -1);
+				_charSubmitCache = new CharSubmitCache();
+				//_vb = _vbs[0] = VertexBuffer2D.create( -1);
+				_mesh = MeshQuadTexture.getAMesh();
+				meshlist.push(_mesh);
+				_pathMesh = MeshVG.getAMesh();
+				meshlist.push(_pathMesh);
+				_triangleMesh = MeshTexture.getAMesh();
+				meshlist.push(_triangleMesh);
+				//if(Config.smartCache) _vbs[1] = VertexBuffer2D.create( -1);
 				_submits = [];
 				_save = [SaveMark.Create(this)];
 				_save.length = 10;
-				_shader2D = new Shader2D();				
-				_triangleMesh = MeshTexture.getAMesh();	
-				
+				_shader2D = new Shader2D();
 			}
 			
-			_vb.clear();
+			_submitKey.clear();
 			
-			_targets && (_targets.repaint = true);
+			//_vb = _vbs[_renderCount%2];
+			//_vb.clear();
+			_mesh.clearVB();
 			
-			_other = ContextParams.DEFAULT;
-			_clear = true;
+			_renderCount++;
 			
-			_repaint = false;
+			//_targets && (_targets.repaint = true);
 			
 			_drawCount = 1;
 			
-			_renderKey = 0;
-			
+			_other = ContextParams.DEFAULT;
 			_other.lineWidth = _shader2D.ALPHA = 1.0;
 			
-			_nBlendType = 0; // BlendMode.NORMAL;
+			_nBlendType = 0;
 			
 			_clipRect = MAXCLIPRECT;
 			
 			_curSubmit = Submit.RENDERBASE;
-			_shader2D.glTexture = null;
+			Submit.RENDERBASE._ref = 0xFFFFFF;
+			Submit.RENDERBASE._numEle = 0;
+			
 			_shader2D.fillStyle = _shader2D.strokeStyle = DrawStyle.DEFAULT;
 			
 			for (var i:int = 0, n:int = _submits._length; i < n; i++)
 				_submits[i].releaseRender();
+				
 			_submits._length = 0;
 			
 			_curMat.identity();
@@ -238,53 +311,88 @@ private function _releaseMem():void
 		
 		}
 		
+		/**
+		 * 设置ctx的size，这个不允许直接设置，必须是canvas调过来的。所以这个函数里也不用考虑canvas相关的东西
+		 * @param	w
+		 * @param	h
+		 */
 		public function size(w:Number, h:Number):void {
 			if (_width != w || _height != h) {
-				if (w == 0 || h == 0) {
-					if (_vb._byteLength != 0) {
-						_width = w;
-						_height = h;
-						_vb.clear();
-						_vb.upload();
-					}
-					for (var i:int = 0, n:int = _submits._length; i < n; i++)
-						_submits[i].releaseRender();
-					_submits.length = 0;
-					_submits._length = 0;
-					_curSubmit = null;
-					_path && _path.recover();
-					_path = null;
-					sprite = null;
-					_targets && (_targets.destroy());
-					_targets = null;
-				} else {
-					_width = w;
-					_height = h;
-					_targets && (_targets.size(w, h));
-					_canvas.memorySize -= _canvas.memorySize;//webGLCanvas为0;
+				_width = w;
+				_height = h;
+				//TODO 问题：如果是rendertarget 计算内存会有问题，即canvas算一次，rt又算一次,所以这里要修改
+				//这种情况下canvas应该不占内存
+				if (_targets) {
+					_targets.destroy();
+					_targets = new RenderTexture2D(w, h, BaseTexture.FORMAT_R8G8B8A8, -1);
+				}
+				//如果是主画布，要记录窗口大小
+				//如果不是 TODO
+				if ( Render._context==this) {
+					WebGL.mainContext.viewport(0, 0, w, h);
+					RenderState2D.width = w;
+					RenderState2D.height = h;
 				}
 			}
 			if (w === 0 && h === 0) _releaseMem();
 		}
 		
+		/**
+		 * 当前canvas请求保存渲染结果。
+		 * 实现：
+		 * 如果value==true，就要给_target赋值
+		 * @param value {Boolean} 
+		 */
 		public function set asBitmap(value:Boolean):void {
 			if (value) {
-				_targets || (_targets = new RenderTargetMAX());
-				_targets.repaint = true;
+				//缺省的RGB没有a，不合理把。况且没必要自定义一个常量。
+				//深度格式为-1表示不用深度缓存。
+				_targets || (_targets = new RenderTexture2D(_width, _height,BaseTexture.FORMAT_R8G8B8A8,-1));
 				if (!_width || !_height)
 					throw Error("asBitmap no size!");
-				_targets.setSP(sprite);
-				_targets.size(_width, _height);
-			} else
+			} else {
+				_targets && _targets.destroy();	
 				_targets = null;
+			}
 		}
 		
-		public function _getTransformMatrix():Matrix {
-			return this._curMat;
+		/**
+		 * 获得当前矩阵的缩放值
+		 * 避免每次都计算getScaleX
+		 * @return
+		 */
+		public function getMatScaleX():Number {
+			if (_lastMat_a == _curMat.a && _lastMat_b == _curMat.b)
+				return _lastMatScaleX;
+			_lastMatScaleX = _curMat.getScaleX();
+			_lastMat_a = _curMat.a;
+			_lastMat_b = _curMat.b;
+			return _lastMatScaleX;
+		}
+		
+		public function getMatScaleY():Number {
+			if (_lastMat_c == _curMat.c && _lastMat_d == _curMat.d)
+				return _lastMatScaleY;
+			_lastMatScaleY = _curMat.getScaleY();
+			_lastMat_c = _curMat.c;
+			_lastMat_d = _curMat.d;
+			return _lastMatScaleY;
+		}
+		
+		//TODO
+		public function setFillColor(color:uint):void {
+			_fillColor = color;
+		}
+		public function getFillColor():uint {
+			return _fillColor;
 		}
 		
 		override public function set fillStyle(value:*):void {
-			_shader2D.fillStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_FILESTYLE, _shader2D, false), _shader2D.fillStyle = DrawStyle.create(value));
+			if (!_shader2D.fillStyle.equal(value)) {
+				SaveBase.save(this, SaveBase.TYPE_FILESTYLE, _shader2D, false);
+				_shader2D.fillStyle = DrawStyle.create(value);
+				_submitKey.other =-_shader2D.fillStyle.toInt();
+			}
 		}
 		
 		public function get fillStyle():* {
@@ -292,10 +400,9 @@ private function _releaseMem():void
 		}
 		
 		override public function set globalAlpha(value:Number):void {
-			
 			value = Math.floor(value * 1000) / 1000;
 			if (value != _shader2D.ALPHA) {
-				SaveBase.save(this, SaveBase.TYPE_ALPHA, _shader2D, true);
+				SaveBase.save(this, SaveBase.TYPE_ALPHA, _shader2D, false);
 				_shader2D.ALPHA = value;
 			}
 		}
@@ -323,7 +430,7 @@ private function _releaseMem():void
 		override public function set globalCompositeOperation(value:String):void {
 			var n:* = BlendMode.TOINT[value];
 			
-			n == null || (_nBlendType === n) || (SaveBase.save(this, SaveBase.TYPE_GLOBALCOMPOSITEOPERATION, this, true), _curSubmit = Submit.RENDERBASE, _renderKey = 0, _nBlendType = n /*, _shader2D.ALPHA = 1*/);
+			n == null || (_nBlendType === n) || (SaveBase.save(this, SaveBase.TYPE_GLOBALCOMPOSITEOPERATION, this, true), _curSubmit = Submit.RENDERBASE, _nBlendType = n /*, _shader2D.ALPHA = 1*/);
 		}
 		
 		override public function get globalCompositeOperation():String {
@@ -331,7 +438,7 @@ private function _releaseMem():void
 		}
 		
 		override public function set strokeStyle(value:*):void {
-			_shader2D.strokeStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_STROKESTYLE, _shader2D, false), _shader2D.strokeStyle = DrawStyle.create(value));
+			_shader2D.strokeStyle.equal(value) || (SaveBase.save(this, SaveBase.TYPE_STROKESTYLE, _shader2D, false), _shader2D.strokeStyle = DrawStyle.create(value),_submitKey.other=-_shader2D.strokeStyle.toInt());
 		}
 		
 		public function get strokeStyle():* {
@@ -341,14 +448,18 @@ private function _releaseMem():void
 		override public function translate(x:Number, y:Number):void {
 			if (x !== 0 || y !== 0) {
 				SaveTranslate.save(this);
-				if (_curMat.bTransform) {
+				if (_curMat._bTransform) {
 					SaveTransform.save(this);
-					_curMat.transformPointN(Point.TEMP.setTo(x, y));
-					x = Point.TEMP.x;
-					y = Point.TEMP.y;
+					//_curMat.transformPointN(Point.TEMP.setTo(x, y));
+					//x = Point.TEMP.x;
+					//y = Point.TEMP.y;
+					//translate的话，相当于在当前坐标系下移动x,y，所以直接修改_curMat,然后x,y就消失了。
+					_curMat.tx += (x * _curMat.a + y * _curMat.c);
+					_curMat.ty += (x * _curMat.b + y * _curMat.d);
+				}else {
+					_curMat.tx = x;
+					_curMat.ty = y;
 				}
-				this._x += x;
-				this._y += y;
 			}
 		}
 		
@@ -366,6 +477,7 @@ private function _releaseMem():void
 		
 		override public function restore():void {
 			var sz:int = _save._length;
+			var lastBlend:int = _nBlendType;
 			if (sz < 1)
 				return;
 			for (var i:int = sz - 1; i >= 0; i--) {
@@ -376,292 +488,286 @@ private function _releaseMem():void
 					return;
 				}
 			}
+			if (lastBlend != _nBlendType) {
+				//阻止合并
+				_curSubmit = Submit.RENDERBASE;
+			}
 		}
 		
 		override public function set font(str:String):void {
-			if (str == _other.font.toString())
-				return;
+			//if (str == _other.font.toString())
+			//	return;
 			_other = _other.make();
 			SaveBase.save(this, SaveBase.TYPE_FONT, _other, false);
-			_other.font === FontInContext.EMPTY ? (_other.font = new FontInContext(str)) : (_other.font.setFont(str));
+			//_other.font === FontInContext.EMPTY ? (_other.font = new FontInContext(str)) : (_other.font.setFont(str));
 		}
 		
-		private function _fillText(txt:*, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String, strokeColor:String, lineWidth:int, textAlign:String,underLine:int=0):void {
-			var shader:Shader2D = _shader2D;
-			var curShader:Value2D = _curSubmit.shaderValue;
-			var font:FontInContext = fontStr ? FontInContext.create(fontStr) : _other.font;
-			
-			if (AtlasResourceManager.enabled) {
-				if (shader.ALPHA !== curShader.ALPHA)
-					shader.glTexture = null;
-				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, strokeColor, lineWidth, x, y,underLine);
-			} else {
-				var preDef:int = _shader2D.defines.getValue();
-				var colorAdd:Array = color ? Color.create(color)._color : shader.colorAdd;
-				if (shader.ALPHA !== curShader.ALPHA || colorAdd !== shader.colorAdd || curShader.colorAdd !== shader.colorAdd) {
-					shader.glTexture = null;
-					shader.colorAdd = colorAdd;
-				}
-				//shader.defines.add(ShaderDefines2D.COLORADD);
-				DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, color, strokeColor, lineWidth, x, y,underLine);
-					//shader.defines.setValue(preDef);
+		//TODO:coverage
+		public function fillText(txt:String,x:Number, y:Number, fontStr:String, color:String, align:String):void {
+			_fillText(txt, null, x, y, fontStr, color, null,0,null);
+		}
+		
+		/**
+		 * 
+		 * @param	txt
+		 * @param	words		HTMLChar 数组，是已经在外面排好版的一个数组
+		 * @param	x
+		 * @param	y
+		 * @param	fontStr
+		 * @param	color
+		 * @param	strokeColor
+		 * @param	lineWidth
+		 * @param	textAlign
+		 * @param	underLine
+		 */
+		private function _fillText(txt:*, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String, strokeColor:String, lineWidth:int, textAlign:String, underLine:int = 0):void {
+			/*
+			if (!window.testft) {
+				//测试文字
+				var teststr = 'a丠両丢丣两严並丧丨丩个丫丬中丮丯';
+				_charBook.filltext(this, teststr, 0, 0, 'normal 100 66px 华文行楷', '#ff0000');
+				window.testft = true;
 			}
-			//TODO:实现下划线
+			*/
+			if (txt)
+				_textRender.filltext(this, txt, x, y, fontStr, color, strokeColor, lineWidth, textAlign, underLine);
+			else if( words)
+				_textRender.fillWords(this, words, x, y, fontStr, color, strokeColor, lineWidth);
 		}
 		
-		public override function fillWords(words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, color:String,underLine:int):void {
-			_fillText(null, words, x, y, fontStr, color, null, -1, null,underLine);
+		public function _fast_filltext(data:WordText, x:Number, y:Number, fontObj:Object, color:String, strokeColor:String, lineWidth:int, textAlign:int, underLine:int = 0 ):void {
+			_textRender._fast_filltext(this, data,null, x, y, fontObj as FontInfo, color, strokeColor, lineWidth, textAlign, underLine);
 		}
 		
-		override public function fillBorderWords(words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String, borderColor:String, lineWidth:int):void {
-			_fillBorderText(null, words, x, y, font, color, borderColor, lineWidth, null);
+		//TODO:coverage
+		public override function fillWords(words:Array, x:Number, y:Number, fontStr:String, color:String):void {
+			_fillText(null, words as Vector.<HTMLChar>, x, y, fontStr, color, null, -1, null,0);
 		}
 		
-		override public function fillText(txt:*, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void {
-			_fillText(txt, null, x, y, fontStr, color, null, -1, textAlign);
+		//TODO:coverage
+		override public function fillBorderWords(words:Array, x:Number, y:Number, font:String, color:String, borderColor:String, lineWidth:int):void {
+			_fillBorderText(null, words as Vector.<HTMLChar>, x, y, font, color, borderColor, lineWidth, null);
 		}
 		
-		override public function strokeText(txt:*, x:Number, y:Number, fontStr:String, color:String, lineWidth:Number, textAlign:String):void {
-			_fillText(txt, null, x, y, fontStr, null, color, lineWidth || 1, textAlign);
+		override public function drawText(text:*, x:Number, y:Number, font:String, color:String, textAlign:String):void 
+		{
+			_fillText(text, null, x, y, font, ColorUtils.create(color).strColor, null, -1, textAlign);
 		}
 		
+		//override public function fillText(txt:*, x:Number, y:Number, fontStr:String, color:String, textAlign:String):void {
+			//_fillText(txt, null, x, y, fontStr, color, null, -1, textAlign);
+		//}
+		
+		/**
+		 * 只画边框
+		 * @param	text
+		 * @param	x
+		 * @param	y
+		 * @param	font
+		 * @param	color
+		 * @param	lineWidth
+		 * @param	textAlign
+		 */
+		override public function strokeWord(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
+			//webgl绘制不了，需要解决
+			;
+			_fillText(text, null, x, y, font, null, ColorUtils.create(color).strColor, lineWidth || 1, textAlign);
+		}
+		
+		/**
+		 * 即画文字又画边框
+		 * @param	txt
+		 * @param	x
+		 * @param	y
+		 * @param	fontStr
+		 * @param	fillColor
+		 * @param	borderColor
+		 * @param	lineWidth
+		 * @param	textAlign
+		 */
 		override public function fillBorderText(txt:*, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
-			_fillBorderText(txt, null, x, y, fontStr, fillColor, borderColor, lineWidth, textAlign);
+			//webgl绘制不了，需要解决
+			_fillBorderText(txt, null, x, y, fontStr,  ColorUtils.create(fillColor).strColor,  ColorUtils.create(borderColor).strColor, lineWidth, textAlign);
 		}
 		
 		private function _fillBorderText(txt:*, words:Vector.<HTMLChar>, x:Number, y:Number, fontStr:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
-			if (!AtlasResourceManager.enabled) {
-				_fillText(txt, words, x, y, fontStr, null, borderColor, lineWidth || 1, textAlign);
-				_fillText(txt, words, x, y, fontStr, fillColor, null, -1, textAlign);
-				return;
-			}
-			//判断是否大图合集
-			var shader:Shader2D = _shader2D;
-			var curShader:Value2D = _curSubmit.shaderValue;
-			if (shader.ALPHA !== curShader.ALPHA)
-				shader.glTexture = null;
-			
-			var font:FontInContext = fontStr ? (_fontTemp.setFont(fontStr), _fontTemp) : _other.font;
-			DrawText.drawText(this, txt, words, _curMat, font, textAlign || _other.textAlign, fillColor, borderColor, lineWidth || 1, x, y,0);
+			_fillText(txt, words, x, y, fontStr, fillColor, borderColor, lineWidth || 1, textAlign);
 		}
 		
-		override public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void {
-			var vb:VertexBuffer2D = _vb;
-			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, width, height, Texture.DEF_UV, _curMat, _x, _y, 0, 0)) {
-				_renderKey = 0;
-				
-				var pre:DrawStyle = _shader2D.fillStyle;
-				fillStyle && (_shader2D.fillStyle = DrawStyle.create(fillStyle));
-
-				var shader:Shader2D = _shader2D;
-				var curShader:Value2D = _curSubmit.shaderValue;
-				
-				if (shader.fillStyle !== curShader.fillStyle || shader.ALPHA !== curShader.ALPHA) {
-					shader.glTexture = null;
-					var submit:Submit = _curSubmit = Submit.createSubmit(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
-					submit.shaderValue.color = shader.fillStyle._color._color;
-					submit.shaderValue.ALPHA = shader.ALPHA;
+		private function _fillRect(x:Number, y:Number, width:Number, height:Number, rgba:uint):void {
+			var submit:Submit = _curSubmit;
+			var sameKey:Boolean = submit  && (submit._key.submitType === Submit.KEY_DRAWTEXTURE && submit._key.blendShader === _nBlendType);
+			if ( _mesh.vertNum + 4 > _MAXVERTNUM) {
+				_mesh = MeshQuadTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(_mesh);
+				sameKey = false;
+			}
+			
+			//clipinfo
+			sameKey && (sameKey &&= isSameClipInfo(submit));
+			
+			transformQuad(x, y, width, height, 0, _curMat, _transedPoints);
+			if(!clipedOff(_transedPoints)){
+				_mesh.addQuad(_transedPoints, Texture.NO_UV, rgba, false);
+				//if (GlUtils.fillRectImgVb(_mesh._vb, _clipRect, x, y, width, height, Texture.DEF_UV, _curMat, rgba,this)){
+				if (!sameKey) {
+					submit = _curSubmit =  SubmitTexture.create(this, _mesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
 					_submits[_submits._length++] = submit;
-				}
+					_copyClipInfo(submit, _globalClipMatrix);
+					submit.shaderValue.textureHost = _lastTex;
+					//这里有一个问题。例如 clip1, drawTex(tex1), clip2, fillRect, drawTex(tex2)	会被分成3个submit，
+					//submit._key.copyFrom2(_submitKey, Submit.KEY_DRAWTEXTURE, (_lastTex && _lastTex.bitmap)?_lastTex.bitmap.id: -1);
+					submit._key.other = (_lastTex && _lastTex.bitmap)?_lastTex.bitmap.id: -1
+					submit._renderType = Submit.TYPE_TEXTURE;
+				}				
 				_curSubmit._numEle += 6;
-				_shader2D.fillStyle = pre;
-			}
+				_mesh.indexNum += 6;
+				_mesh.vertNum += 4;
+			}			
 		}
 		
+		public function fillRect(x:Number, y:Number, width:Number, height:Number, fillStyle:*):void {
+			var drawstyle:DrawStyle = fillStyle? DrawStyle.create(fillStyle) : _shader2D.fillStyle;
+			//var rgb = drawstyle.toInt() ;
+			//由于显卡的格式是 rgba，所以需要处理一下
+			//var rgba:uint = ((rgb & 0xff0000) >> 16) | (rgb & 0x00ff00) | ((rgb & 0xff) << 16) | (_shader2D.ALPHA * 255) << 24;
+			var rgba:int = mixRGBandAlpha(drawstyle.toInt());
+			_fillRect(x, y, width, height, rgba);
+		}		
+		
+		//TODO:coverage
 		public override function fillTexture(texture:Texture, x:Number, y:Number, width:Number, height:Number, type:String, offset:Point, other:*):void {
-			if (!(texture.loaded && texture.bitmap && texture.source)) {
-				if (this.sprite) {
-					Laya.timer.callLater(this, this._repaintSprite);
-				}
+			//test
+			/*
+			var aa = 95 / 274, bb = 136 / 341, cc = (95 + 41) / 274, dd = (136 + 48) / 341;
+			texture.uv = [aa,bb, cc,bb, cc,dd, aa,dd];
+			texture.width = 41;
+			texture.height = 48;
+			*/
+			//test
+			
+			if (!texture._getSource()){
+				sprite && Laya.systemTimer.callLater(this, _repaintSprite);
 				return;
 			}
-			;
-			var vb:VertexBuffer2D = _vb;
-			var w:Number = texture.bitmap.width, h:Number = texture.bitmap.height, uv:Array = texture.uv;
-			var ox:Number = offset.x % texture.width, oy:Number = offset.y % texture.height;
-			if (w != other.w || h != other.h) {
-				if (!other.w && !other.h) {
-					other.oy = other.ox = 0;
-					switch (type) {
-					case "repeat": 
-						other.width = width;
-						other.height = height;
-						break;
-					case "repeat-x": 
-						other.width = width;
-						if (oy < 0) {
-							if (texture.height + oy > height) {
-								other.height = height;
-							} else {
-								other.height = texture.height + oy;
-							}
-						} else {
-							other.oy = oy;
-							if (texture.height + oy > height) {
-								other.height = height - oy;
-							} else {
-								other.height = texture.height;
-							}
-						}
-						break;
-					case "repeat-y": 
-						if (ox < 0) {
-							if (texture.width + ox > width) {
-								other.width = width;
-							} else {
-								other.width = texture.width + ox;
-							}
-						} else {
-							other.ox = ox;
-							if (texture.width + ox > width) {
-								other.width = width - ox;
-							} else {
-								other.width = texture.width;
-							}
-						}
-						other.height = height;
-						break;
-					default: 
-						other.width = width;
-						other.height = height;
-						break;
-					}
-				}
-				other.w = w;
-				other.h = h;
-				other.uv = [0, 0, other.width / w, 0, other.width / w, other.height / h, 0, other.height / h];
+			
+			var submit:Submit = _curSubmit;
+			var sameKey:Boolean = false;
+			if ( _mesh.vertNum + 4 > _MAXVERTNUM) {
+				_mesh = MeshQuadTexture.getAMesh();
+				meshlist.push(_mesh);
+				sameKey = false;
 			}
 			
-			x += other.ox;
-			y += other.oy;
-			ox -= other.ox;
-			oy -= other.oy;
-			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, other.width, other.height, other.uv, _curMat, _x, _y, 0, 0)) {
+			var tex2d:Texture2D = texture.bitmap as Texture2D;
+			//filltexture相关逻辑。计算rect大小以及对应的uv
+			var repeatx:Boolean = true;
+			var repeaty:Boolean = true;
+			switch(type) {
+			case "repeat": break;
+			case "repeat-x": repeaty = false; break;
+			case "repeat-y": repeatx = false; break;
+			case "no-repeat": repeatx = repeaty = false; break;
+			default:break;
+			}
+			//用 _temp4Points 来存计算出来的顶点的uv。这里的uv用0到1表示纹理的uv区域。这样便于计算，直到shader中才真的转成了实际uv
+			var uv:Array =_temp4Points;
+			var stu:Number = 0; //uv起点
+			var stv:Number = 0;
+			var stx:Number = 0, sty:Number = 0, edx:Number = 0, edy:Number = 0;
+			if (offset.x < 0) {
+				stx = x; 
+				stu = (-offset.x %texture.width) / texture.width ;//有偏移的情况下的u不是从头开始
+			}else { 
+				stx = x + offset.x;
+			}
+			if (offset.y < 0) { 
+				sty = y; 
+				stv = (-offset.y %texture.height) / texture.height;//有偏移的情况下的v不是从头开始
+			}else { 
+				sty = y + offset.y; 
+			}
+			
+			edx = x + width;
+			edy = y + height;
+			(!repeatx) && (edx = Math.min(edx, x + offset.x + texture.width));//x不重复的话，最多只画一个
+			(!repeaty) && (edy = Math.min(edy, y + offset.y + texture.height));//y不重复的话，最多只画一个
+			if (edx < x || edy < y)
+				return;
+			if (stx > edx || sty > edy)
+				return;
 				
-				_renderKey = 0;
-				var submit:SubmitTexture = SubmitTexture.create(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.FILLTEXTURE, 0));
+			//计算最大uv
+			var edu:Number = (edx-x-offset.x)/texture.width;
+			var edv:Number = (edy - y - offset.y) / texture.height;
+			
+			transformQuad(stx, sty, edx-stx, edy-sty, 0, _curMat, _transedPoints);
+			//四个点对应的uv。必须在transformQuad后面，因为共用了_temp4Points
+			uv[0] = stu; uv[1] = stv; uv[2] = edu; uv[3] = stv; uv[4] = edu; uv[5] = edv; uv[6] = stu; uv[7] = edv;
+			if (!clipedOff(_transedPoints)) {
+				//不依赖于wrapmode了，都走filltexture流程，自己修改纹理坐标
+				//tex2d.wrapModeU = BaseTexture.WARPMODE_REPEAT;	//这里会有重复判断
+				//tex2d.wrapModeV = BaseTexture.WARPMODE_REPEAT;
+				//var rgba:int = mixRGBandAlpha(0xffffffff);
+				//rgba = _mixRGBandAlpha(rgba, alpha);	这个函数有问题，不能连续调用，输出作为输入
+				var rgba:int = _mixRGBandAlpha( 0xffffffff, _shader2D.ALPHA );
 				
+				_mesh.addQuad(_transedPoints, uv, rgba, true);
+			
+				var sv:Value2D = Value2D.create(ShaderDefines2D.TEXTURE2D, 0);
+				//这个优化先不要了，因为没太弄明白wrapmode的设置，总是不起作用。
+				//if(texture.uvrect[2]<1.0||texture.uvrect[3]<1.0)//这表示是大图集中的一部分，只有这时候才用特殊shader
+					sv.defines.add(ShaderDefines2D.FILLTEXTURE);
+				(sv as Object).u_TexRange = texture.uvrect;
+				submit = _curSubmit =  SubmitTexture.create(this, _mesh, sv );
 				_submits[_submits._length++] = submit;
-				var shaderValue:FillTextureSV = submit.shaderValue as FillTextureSV;
-				shaderValue.textureHost = texture;
-				
-				var tTextureX:Number = uv[0] * w;
-				var tTextureY:Number = uv[1] * h;
-				var tTextureW:Number = (uv[2] - uv[0]) * w;
-				var tTextureH:Number = (uv[5] - uv[3]) * h;
-				
-				var tx:Number = -ox / w;
-				var ty:Number = -oy / h;
-				shaderValue.u_TexRange[0] = tTextureX / w;
-				shaderValue.u_TexRange[1] = tTextureW / w;
-				shaderValue.u_TexRange[2] = tTextureY / h;
-				shaderValue.u_TexRange[3] = tTextureH / h;
-				
-				shaderValue.u_offset[0] = tx;
-				shaderValue.u_offset[1] = ty;
-				//var curShader:Value2D = _curSubmit.shaderValue;
-				//var shader:Shader2D = _shader2D;
-				
-				if (AtlasResourceManager.enabled && !this._isMain) //而且不是主画布
-					submit.addTexture(texture, (vb._byteLength >> 2) - WebGLContext2D._RECTVBSIZE);
-				//submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_FILLTEXTURE && shader.ALPHA === curShader.ALPHA;
-				_curSubmit = submit;
-				
-				submit._renderType = Submit.TYPE_FILLTEXTURE;
-				submit._numEle += 6;
+				_copyClipInfo(submit, _globalClipMatrix);
+				submit.shaderValue.textureHost = texture;
+				submit._renderType = Submit.TYPE_TEXTURE;
+				_curSubmit._numEle += 6;
+				_mesh.indexNum += 6;
+				_mesh.vertNum += 4;
 			}
-		
+			breakNextMerge();	//暂不合并
 		}
 		
-		public function setShader(shader:Shader):void {
-			SaveBase.save(this, SaveBase.TYPE_SHADER, _shader2D, true);
-			_shader2D.shader = shader;
-		}
-		
-		public function setFilters(value:Array):void {
-			SaveBase.save(this, SaveBase.TYPE_FILTERS, _shader2D, true);
-			_shader2D.filters = value;
+		/**
+		 * 反正只支持一种filter，就不要叫setFilter了，直接叫setColorFilter
+		 * @param	value
+		 */
+		public function setColorFilter(filter:ColorFilter):void {
+			SaveBase.save(this, SaveBase.TYPE_COLORFILTER, this, true);
+			//_shader2D.filters = value;
+			_colorFiler = filter;
 			_curSubmit = Submit.RENDERBASE;
-			
-			_renderKey = 0;
-			
-			_drawCount++;
+			//_reCalculateBlendShader();
 		}
 		
-		public override function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number):void {
-			_drawTextureM(tex, x, y, width, height, tx, ty, null, 1);
+		public override function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):void {
+			_drawTextureM(tex, x, y, width, height, null, 1,null);
 		}
 		
-		public function addTextureVb(invb:Array, x:Number, y:Number):void {
-			
-			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
-			var vpos:int = (finalVB._byteLength >> 2) /*FLOAT32*/; // + WebGLContext2D._RECTVBSIZE;
-			finalVB.byteLength = ((vpos + WebGLContext2D._RECTVBSIZE) << 2);
-			var vbdata:* = finalVB.getFloat32Array();
-			
-			for (var i:int = 0, ci:int = 0; i < 16; i += 4) {
-				vbdata[vpos++] = invb[i] + x;
-				vbdata[vpos++] = invb[i + 1] + y;
-				vbdata[vpos++] = invb[i + 2];
-				vbdata[vpos++] = invb[i + 3];
-			}
-			
-			_curSubmit._numEle += 6;
-			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
-			finalVB._upload = true;
-		}
-		
-		public function willDrawTexture(tex:Texture, alpha:Number):Number {
-			if (!(tex.loaded && tex.bitmap && tex.source)) //source内调用tex.active();
+		public override function drawTextures(tex:Texture, pos:Array,tx:Number, ty:Number):void {
+			if (!tex._getSource()) //source内调用tex.active();
 			{
-				if (sprite) {
-					Laya.timer.callLater(this, _repaintSprite);
-				}
-				return 0;
-			}
-			var webGLImg:Bitmap = tex.bitmap as Bitmap;
-			
-			var rid:Number = webGLImg.id + _shader2D.ALPHA * alpha + Submit.TYPE_TEXTURE;
-			
-			if (rid == _renderKey) return rid;
-			
-			var shader:Shader2D = _shader2D;
-			var preAlpha:Number = shader.ALPHA;
-			var curShader:Value2D = _curSubmit.shaderValue;
-			shader.ALPHA *= alpha;
-			
-			_renderKey = rid;
-			_drawCount++;
-			shader.glTexture = webGLImg;
-			var vb:VertexBuffer2D = _vb;
-			var submit:SubmitTexture = null;
-			var vbSize:int = (vb._byteLength / 32) * 3;
-			submit = SubmitTexture.create(this, _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-			_submits[_submits._length++] = submit;
-			submit.shaderValue.textureHost = tex;
-			submit._renderType = Submit.TYPE_TEXTURE;
-			submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_TEXTURE && shader.ALPHA === curShader.ALPHA;
-			_curSubmit = submit;
-			
-			shader.ALPHA = preAlpha;
-			
-			return rid;
-		}
-		
-		public override function drawTextures(tex:Texture, pos:Array, tx:Number, ty:Number):void {
-			if (!(tex.loaded && tex.bitmap && tex.source)) //source内调用tex.active();
-			{
-				sprite && Laya.timer.callLater(this, _repaintSprite);
+				sprite && Laya.systemTimer.callLater(this, _repaintSprite);
 				return;
 			}
 			
+			//TODO 还没实现
+			var n:int = pos.length / 2;
+			var ipos:int = 0;
+			for (var i:int = 0; i < n; i++) {
+				_inner_drawTexture(tex, tex.bitmap.id, pos[ipos++]+tx, pos[ipos++]+ty,0,0,null,null, 1.0,false);
+			}
+			
+			/*
 			var pre:Rectangle = _clipRect;
 			_clipRect = MAXCLIPRECT;
-			if (!_drawTextureM(tex, pos[0], pos[1], tex.width, tex.height, tx, ty, null, 1)) {
-				alert("drawTextures err");
+			if (!_drawTextureM(tex, pos[0], pos[1], tex.width, tex.height,null, 1)) {
+				throw "drawTextures err";
 				return;
 			}
-			
 			_clipRect = pre;
 			
 			Stat.drawCall++;//= pos.length / 2;
@@ -671,344 +777,596 @@ private function _releaseMem():void
 			
 			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
 			var sx:Number = _curMat.a, sy:Number = _curMat.d;
+			var vpos:int = finalVB._byteLength >> 2;// + WebGLContext2D._RECTVBSIZE;
+			finalVB.byteLength = finalVB._byteLength + (pos.length / 2 - 1) * WebGLContext2D._RECTVBSIZEBYTE;
+			var vbdata:Float32Array = finalVB.getFloat32Array();
 			for (var i:int = 2, sz:int = pos.length; i < sz; i += 2) {
-				GlUtils.copyPreImgVb(finalVB, (pos[i] - pos[i - 2]) * sx, (pos[i + 1] - pos[i - 1]) * sy);
+				GlUtils.copyPreImgVb(finalVB,vpos, (pos[i] - pos[i - 2]) * sx, (pos[i + 1] - pos[i - 1]) * sy,vbdata);
 				_curSubmit._numEle += 6;
+				vpos += WebGLContext2D._RECTVBSIZE;
 			}
 			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
+			*/
 		}
 		
-		private function _drawTextureM(tex:Texture, x:Number, y:Number, width:Number, height:Number, tx:Number, ty:Number, m:Matrix, alpha:Number):Boolean {
-			if (!(tex.loaded && tex.source)) //source内调用tex.active();
-			{
+		/**
+		 * 为drawTexture添加一个新的submit。类型是 SubmitTexture
+		 * @param	vbSize
+		 * @param	alpha
+		 * @param	webGLImg
+		 * @param	tex
+		 */
+		//TODO:coverage
+		private function _drawTextureAddSubmit(imgid:int,tex:Texture):void
+		{
+			//var alphaBack:Number = shader.ALPHA;
+			//shader.ALPHA *= alpha;
+			
+			var submit:SubmitTexture = null;			
+			submit = SubmitTexture.create(this, _mesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+			_submits[_submits._length++] = submit;
+			submit.shaderValue.textureHost = tex;
+			//submit._key.copyFrom2(_submitKey, Submit.KEY_DRAWTEXTURE, imgid);
+			submit._key.other = imgid;
+			//submit._key.alpha = shader.ALPHA;
+			submit._renderType = Submit.TYPE_TEXTURE;
+			_curSubmit = submit;
+			
+			//shader.ALPHA = alphaBack;
+		}
+		
+		public function _drawTextureM(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, alpha:Number,uv:Array):Boolean{
+			if (!tex._getSource()){ //source内调用tex.active();
 				if (sprite) {
-					Laya.timer.callLater(this, _repaintSprite);
+					Laya.systemTimer.callLater(this, _repaintSprite);
 				}
 				return false;
 			}
-			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
-			var webGLImg:Bitmap = tex.bitmap as Bitmap;
+			return _inner_drawTexture(tex, tex.bitmap.id, x, y, width, height, m, uv, alpha,false);
+		}
+		
+		public function _drawRenderTexture(tex:RenderTexture2D, x:Number, y:Number, width:Number, height:Number, m:Matrix, alpha:Number, uv:Array):Boolean {
+			return _inner_drawTexture(tex as Texture, -1, x, y, width, height, m, uv, 1.0,false);
+		}
+		
+		//TODO:coverage
+		public function submitDebugger():void {
+			_submits[_submits._length++] = SubmitCMD.create([], function():void { debugger; },this );
+		}
+		
+		/*
+		private function copyClipInfo(submit:Submit, clipInfo:Array):void {
+			var cd:Array = submit.shaderValue.clipDir;
+			cd[0] = clipInfo[2]; cd[1] = clipInfo[3]; cd[2] = clipInfo[4]; cd[3] = clipInfo[5];
+			var cp:Array = submit.shaderValue.clipRect;
+			cp[0] = clipInfo[0]; cp[1] = clipInfo[1];
+			submit.clipInfoID = this._clipInfoID;
+		}
+		*/
+		public function _copyClipInfo(submit:Submit, clipInfo:Matrix):void {
+			var cm:Array = submit.shaderValue.clipMatDir;
+			cm[0] = clipInfo.a; cm[1] = clipInfo.b; cm[2] = clipInfo.c; cm[3] = clipInfo.d; 
+			var cmp:Array = submit.shaderValue.clipMatPos;
+			cmp[0] = clipInfo.tx; cmp[1] = clipInfo.ty;
+			submit.clipInfoID = this._clipInfoID;
+		}
+				
+		
+		private function isSameClipInfo(submit:Submit):Boolean {
+			return (submit.clipInfoID === _clipInfoID);
+			/*
+			var cd:Array = submit.shaderValue.clipDir;
+			var cp:Array = submit.shaderValue.clipRect;
 			
-			x += tx;
-			y += ty;
+			if (clipInfo[0] != cp[0] || clipInfo[1] != cp[1] || clipInfo[2] != cd[0] || clipInfo[3] != cd[1] || clipInfo[4] != cd[2] || clipInfo[5] != cd[3] ) 
+				return false;
+			return true;
+			*/
+		}
+		
+		/**
+		 * 这个还是会检查是否合并
+		 * @param	tex
+		 * @param	minVertNum
+		 */
+		public function _useNewTex2DSubmit(tex:Texture, minVertNum:int):void {
+			//var sameKey:Boolean = tex.bitmap.id >= 0 && preKey.submitType === Submit.KEY_DRAWTEXTURE && preKey.other === tex.bitmap.id ;
 			
+			if (_mesh.vertNum + minVertNum > _MAXVERTNUM) {
+				_mesh = MeshQuadTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(_mesh);
+				//sameKey = false;
+			}	
+			
+			var submit:SubmitTexture  = SubmitTexture.create(this, _mesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+			_submits[_submits._length++] = _curSubmit = submit;
+			submit.shaderValue.textureHost = tex;
+			_copyClipInfo(submit, _globalClipMatrix);
+		}
+		
+		/**
+		 * 使用上面的设置（texture，submit，alpha，clip），画一个rect
+		 */
+		public function _drawTexRect(x:Number, y:Number, w:Number, h:Number, uv:Array):void {
+			transformQuad(x, y, w, h, _italicDeg, _curMat, _transedPoints);
+			//这个是给文字用的，为了清晰，必须要按照屏幕像素对齐，并且四舍五入。
+			var ops:Array = _transedPoints;
+			ops[0] = (ops[0] + 0.5) | 0;
+			ops[1] = (ops[1] + 0.5) | 0;
+			ops[2] = (ops[2] + 0.5) | 0;
+			ops[3] = (ops[3] + 0.5) | 0;
+			ops[4] = (ops[4] + 0.5) | 0;
+			ops[5] = (ops[5] + 0.5) | 0;
+			ops[6] = (ops[6] + 0.5) | 0;
+			ops[7] = (ops[7] + 0.5) | 0;
+			
+			if (!clipedOff(_transedPoints)) {
+				_mesh.addQuad(_transedPoints, uv , _fillColor, true);
+				_curSubmit._numEle += 6;
+				_mesh.indexNum += 6;
+				_mesh.vertNum += 4;
+			}
+		}
+		
+		public function drawCallOptimize(enbale:Boolean):Boolean
+		{
+			_charSubmitCache.enable(enbale, this);
+			return enbale;
+		}
+		
+		/**
+		 * 
+		 * @param	tex {Texture | RenderTexture }
+		 * @param  imgid 图片id用来比较合并的
+		 * @param	x
+		 * @param	y
+		 * @param	width
+		 * @param	height
+		 * @param	m
+		 * @param	alpha
+		 * @param	uv
+		 * @return
+		 */
+		public function _inner_drawTexture(tex:Texture, imgid:int, x:Number, y:Number, width:Number, height:Number, m:Matrix, uv:Array, alpha:Number,lastRender:Boolean):Boolean {
+			var preKey:SubmitKey = _curSubmit._key;
+			uv = uv || __JS__("tex._uv")
+			//为了优化，如果上次是画三角形，并且贴图相同，会认为他们是一组的，把这个也转成三角形，以便合并。
+			//因为好多动画是drawTexture和drawTriangle混用的
+			if ( preKey.submitType === Submit.KEY_TRIANGLES && preKey.other === imgid) {
+				var tv:Float32Array = _drawTexToDrawTri_Vert;
+				tv[0] = x; tv[1] = y; tv[2] = x + width, tv[3] = y, tv[4] = x + width, tv[5] = y + height, tv[6] = x, tv[7] = y + height;
+				_drawTriUseAbsMatrix = true;
+				drawTriangles(tex, 0, 0, tv, (uv as Object as Float32Array), _drawTexToDrawTri_Index, m, alpha,null,'normal');//uv是通过[]访问的，所以arraylike即可
+				_drawTriUseAbsMatrix = false;
+				return true;
+			}
+
+			var ops:Array = lastRender?_charSubmitCache.getPos():_transedPoints;
+			
+			//凡是这个都是在_mesh上操作，不用考虑samekey
+			transformQuad(x, y, width || tex.width, height || tex.height, _italicDeg, m || _curMat, ops);
+			
+			if (drawTexAlign) {
+				ops[0] = (ops[0] + 0.5) | 0;
+				ops[1] = (ops[1] + 0.5) | 0;
+				ops[2] = (ops[2] + 0.5) | 0;
+				ops[3] = (ops[3] + 0.5) | 0;
+				ops[4] = (ops[4] + 0.5) | 0;
+				ops[5] = (ops[5] + 0.5) | 0;
+				ops[6] = (ops[6] + 0.5) | 0;
+				ops[7] = (ops[7] + 0.5) | 0;
+				drawTexAlign = false;	//一次性的
+			}
+
+			var rgba:int = _mixRGBandAlpha( 0xffffffff, _shader2D.ALPHA * alpha);
+			
+			//lastRender = false;
+			if (lastRender)
+			{
+				_charSubmitCache.add(this, tex, imgid, ops, uv , rgba);
+				return true;
+			}
+
 			_drawCount++;
 			
-			var rid:Number = webGLImg.id + _shader2D.ALPHA * alpha + Submit.TYPE_TEXTURE;
+			var sameKey:Boolean = imgid >= 0 && preKey.submitType === Submit.KEY_DRAWTEXTURE && preKey.other === imgid ;
 			
-			if (rid != _renderKey) {
-				_renderKey = rid;
-				
-				var curShader:Value2D = _curSubmit.shaderValue;
-				var shader:Shader2D = _shader2D;
-				var alphaBack:Number = shader.ALPHA;
-				shader.ALPHA *= alpha;
-				
-				shader.glTexture = webGLImg;
-				var vb:VertexBuffer2D = _vb;
-				var submit:SubmitTexture = null;
-				var vbSize:int = (vb._byteLength / 32) * 3;
-				submit = SubmitTexture.create(this, _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-				_submits[_submits._length++] = submit;
-				submit.shaderValue.textureHost = tex;
-				submit._renderType = Submit.TYPE_TEXTURE;
-				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_TEXTURE && shader.ALPHA === curShader.ALPHA;
-				_curSubmit = submit;
-				finalVB = _curSubmit._vb || _vb;
-				
-				shader.ALPHA = alphaBack;
+			//clipinfo
+			sameKey && (sameKey &&= isSameClipInfo(_curSubmit));
+			
+			_lastTex = tex;
+			
+			if (_mesh.vertNum + 4 > _MAXVERTNUM) {
+				_mesh = MeshQuadTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(_mesh);
+				sameKey = false;	//新的mesh不能算samekey了
 			}
 			
-			if (GlUtils.fillRectImgVb(finalVB, _clipRect, x, y, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, 0, 0)) {
-				if (AtlasResourceManager.enabled && !this._isMain) //而且不是主画布
-					(_curSubmit as SubmitTexture).addTexture(tex, (finalVB._byteLength >> 2) - WebGLContext2D._RECTVBSIZE);
+			if (!clipedOff(_transedPoints)) {
+				_mesh.addQuad(ops, uv , rgba, true);
+				if (!sameKey) {
+					var submit:SubmitTexture  = SubmitTexture.create(this, _mesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+					_submits[_submits._length++] = _curSubmit = submit;
+					submit.shaderValue.textureHost = tex;
+					submit._key.other = imgid;
+					_copyClipInfo(submit, _globalClipMatrix);
+				}
 				_curSubmit._numEle += 6;
-				_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
+				_mesh.indexNum += 6;
+				_mesh.vertNum += 4;
 				return true;
 			}
 			return false;
 		}
 		
-		private function _repaintSprite():void {
-			if(sprite)
-			sprite.repaint();
-		}
-		
-		///**
-		//* 请保证图片已经在内存
-		//* @param	... args
-		//*/
-		//public override function drawImage(... args):void {
-		//var img:* = args[0];
-		//var tex:Texture = (img.__texture || (img.__texture = new Texture(new WebGLImage(img)))) as Texture;
-		//tex.uv = Texture.DEF_UV;
-		//switch (args.length) {
-		//case 3: 
-		//if (!img.__width) {
-		//img.__width = img.width;
-		//img.__height = img.height
-		//}
-		//drawTexture(tex, args[1], args[2], img.__width, img.__height, 0, 0);
-		//break;
-		//case 5: 
-		//drawTexture(tex, args[1], args[2], args[3], args[4], 0, 0);
-		//break;
-		//case 9: 
-		//var x1:Number = args[1] / img.__width;
-		//var x2:Number = (args[1] + args[3]) / img.__width;
-		//var y1:Number = args[2] / img.__height;
-		//var y2:Number = (args[2] + args[4]) / img.__height;
-		//tex.uv = [x1, y1, x2, y1, x2, y2, x1, y2];
-		//drawTexture(tex, args[5], args[6], args[7], args[8], 0, 0);
-		//break;
-		//}
-		//}
-		
-		public function _drawText(tex:Texture, x:Number, y:Number, width:Number, height:Number, m:Matrix, tx:Number, ty:Number, dx:Number, dy:Number):void {
-			var webGLImg:Bitmap = tex.bitmap as Bitmap;
-			
-			_drawCount++;
-			
-			var rid:Number = webGLImg.id + _shader2D.ALPHA + Submit.TYPE_TEXTURE;
-			if (rid != _renderKey) {
-				_renderKey = rid;
-				
-				var curShader:Value2D = _curSubmit.shaderValue;
-				var shader:Shader2D = _shader2D;
-				
-				shader.glTexture = webGLImg;
-				
-				var vb:VertexBuffer2D = _vb;
-				var submit:SubmitTexture = null;
-				var submitID:Number;
-				var vbSize:int = (vb._byteLength / 32) * 3;
-				if (AtlasResourceManager.enabled) {
-					//开启了大图合集
-					submit = SubmitTexture.create(this, _ib, vb, vbSize, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-				} else {
-					submit = SubmitTexture.create(this, _ib, vb, vbSize, TextSV.create());
-						//submit.shaderValue.colorAdd = shader.colorAdd;
-						//submit.shaderValue.defines.add(ShaderDefines2D.COLORADD);
-				}
-				
-				submit._preIsSameTextureShader = _curSubmit._renderType === Submit.TYPE_TEXTURE && shader.ALPHA === curShader.ALPHA;
-				
-				_submits[_submits._length++] = submit;
-				submit.shaderValue.textureHost = tex;
-				submit._renderType = Submit.TYPE_TEXTURE;
-				_curSubmit = submit;
-			}
-			tex.active();
-			
-			var finalVB:VertexBuffer2D = _curSubmit._vb || _vb;
-			if (GlUtils.fillRectImgVb(finalVB, _clipRect, x + tx, y + ty, width || tex.width, height || tex.height, tex.uv, m || _curMat, _x, _y, dx, dy, true)) {
-				if (AtlasResourceManager.enabled && !this._isMain) {
-					(_curSubmit as SubmitTexture).addTexture(tex, (finalVB._byteLength >> 2) - WebGLContext2D._RECTVBSIZE);
-				}
-				
-				_curSubmit._numEle += 6;
-				_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
-			}
-		}
-		
-		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number, alpha:Number):void {
-			if (!transform) {
-				_drawTextureM(tex, x, y, width, height, tx, ty, null, alpha);
-				return;
-			}
-			var curMat:Matrix = _curMat;
-			var prex:Number = _x;
-			var prey:Number = _y;
-			(tx !== 0 || ty !== 0) && (_x = tx * curMat.a + ty * curMat.c, _y = ty * curMat.d + tx * curMat.b);
-			
-			if (transform && curMat.bTransform) {
-				Matrix.mul(transform, curMat, _tmpMatrix);
-				transform = _tmpMatrix;
-				transform._checkTransform();
-			} else {
-				_x += curMat.tx;
-				_y += curMat.ty;
-			}
-			_drawTextureM(tex, x, y, width, height, 0, 0, transform, alpha);
-			_x = prex;
-			_y = prey;
-		}
-		
-		public function fillQuadrangle(tex:Texture, x:Number, y:Number, point4:Array, m:Matrix):void {
-			var submit:Submit = this._curSubmit;
-			var vb:VertexBuffer2D = _vb;
-			var shader:Shader2D = _shader2D;
-			var curShader:Value2D = submit.shaderValue;
-			_renderKey = 0;
-			if (tex.bitmap) {
-				var t_tex:WebGLImage = tex.bitmap as WebGLImage;
-				if (shader.glTexture != t_tex || shader.ALPHA !== curShader.ALPHA) {
-					shader.glTexture = t_tex;
-					submit = _curSubmit = Submit.createSubmit(this, _ib, vb, ((vb._byteLength) / 32) * 3, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-					submit.shaderValue.glTexture = t_tex;
-					_submits[_submits._length++] = submit;
-				}
-				GlUtils.fillQuadrangleImgVb(vb, x, y, point4, tex.uv, m || _curMat, _x, _y);
-			} else {
-				if (!submit.shaderValue.fillStyle || !submit.shaderValue.fillStyle.equal(tex) || shader.ALPHA !== curShader.ALPHA) {
-					shader.glTexture = null;
-					submit = _curSubmit = Submit.createSubmit(this, _ib, vb, ((vb._byteLength) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
-					submit.shaderValue.defines.add(ShaderDefines2D.COLOR2D);
-					submit.shaderValue.fillStyle = DrawStyle.create(tex);
-					_submits[_submits._length++] = submit;
-				}
-				GlUtils.fillQuadrangleImgVb(vb, x, y, point4, Texture.DEF_UV, m || _curMat, _x, _y);
-			}
-			submit._numEle += 6;
-		}
-		
-		override public function drawTexture2(x:Number, y:Number, pivotX:Number, pivotY:Number, transform:Matrix, alpha:Number, blendMode:String, args:Array):void {
-			if (alpha == 0) return;
-			var curMat:Matrix = _curMat;
-			_x = x * curMat.a + y * curMat.c;
-			_y = y * curMat.d + x * curMat.b;
-			
-			if (transform) {
-				if (curMat.bTransform || transform.bTransform) {
-					Matrix.mul(transform, curMat, _tmpMatrix);
-					transform = _tmpMatrix;
-				} else {
-					_x += transform.tx + curMat.tx;
-					_y += transform.ty + curMat.ty;
-					transform = Matrix.EMPTY;
-				}
-			}
-			
-			if (alpha === 1 && !blendMode)
-				//tx:Texture, x:Number, y:Number, width:Number, height:Number
-				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform, 1);
-			else {
-				var preAlpha:Number = _shader2D.ALPHA;
-				var preblendType:int = _nBlendType;
-				_shader2D.ALPHA = alpha;
-				blendMode && (_nBlendType = BlendMode.TOINT(blendMode));
-				_drawTextureM(args[0], args[1] - pivotX, args[2] - pivotY, args[3], args[4], 0, 0, transform, 1);
-				_shader2D.ALPHA = preAlpha;
-				_nBlendType = preblendType;
-			}
-			_x = _y = 0;
-		}
-		
-		override public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
-			var src:WebGLContext2D = canvas.context as WebGLContext2D;
-			_renderKey = 0;
-			if (src._targets) {
-				this._submits[this._submits._length++] = SubmitCanvas.create(src, 0, null);
-				//src._targets.flush(src);
-				_curSubmit = Submit.RENDERBASE;
-				src._targets.drawTo(this, x, y, width, height);
-			} else {
-				var submit:SubmitCanvas = this._submits[this._submits._length++] = SubmitCanvas.create(src, _shader2D.ALPHA, _shader2D.filters);
-				var sx:Number = width / canvas.width;
-				var sy:Number = height / canvas.height;
-				var mat:Matrix = submit._matrix;
-				_curMat.copyTo(mat);
-				sx != 1 && sy != 1 && mat.scale(sx, sy);
-				var tx:Number = mat.tx, ty:Number = mat.ty;
-				mat.tx = mat.ty = 0;
-				mat.transformPoint(Point.TEMP.setTo(x, y));
-				mat.translate(Point.TEMP.x + tx, Point.TEMP.y + ty);
-				_curSubmit = Submit.RENDERBASE;
-			}
-			if (Config.showCanvasMark) {
-				save();
-				lineWidth = 4;
-				strokeStyle = src._targets ? "yellow" : "green";
-				strokeRect(x - 1, y - 1, width + 2, height + 2, 1);
-				strokeRect(x, y, width, height, 1);
-				restore();
-			}
-		}
-		
-		public function drawTarget(scope:*, x:Number, y:Number, width:Number, height:Number, m:Matrix, proName:String, shaderValue:Value2D, uv:Array = null, blend:int = -1):void {
-			var vb:VertexBuffer2D = _vb;
-			if (GlUtils.fillRectImgVb(vb, _clipRect, x, y, width, height, uv || Texture.DEF_UV, m || _curMat, _x, _y, 0, 0)) {
-				_renderKey = 0;
-				var shader:Shader2D = _shader2D;
-				shader.glTexture = null;
-				var curShader:Value2D = _curSubmit.shaderValue;
-				var submit:SubmitTarget = _curSubmit = SubmitTarget.create(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, shaderValue, proName);
-				if (blend == -1) {
-					submit.blendType = _nBlendType;
-				} else {
-					submit.blendType = blend;
-				}
-				submit.scope = scope;
-				_submits[_submits._length++] = submit;
-				_curSubmit._numEle += 6;
+		/**
+		 * 转换4个顶点。为了效率这个不做任何检查。需要调用者的配合。
+		 * @param	a		输入。8个元素表示4个点
+		 * @param	out		输出
+		 */
+		public function transform4Points(a:Array, m:Matrix, out:Array):void {
+			//var m:Matrix = _curMat;
+			var tx:Number = m.tx;
+			var ty:Number = m.ty;
+			if (m._bTransform) {
+				out[0] = a[0] * m.a + a[1] * m.c + tx; out[1] = a[0] * m.b + a[1] * m.d + ty;
+				out[2] = a[2] * m.a + a[3] * m.c + tx; out[3] = a[2] * m.b + a[3] * m.d + ty;
+				out[4] = a[4] * m.a + a[5] * m.c + tx; out[5] = a[4] * m.b + a[5] * m.d + ty;
+				out[6] = a[6] * m.a + a[7] * m.c + tx; out[7] = a[6] * m.b + a[7] * m.d + ty;
+			}else {
+				out[0] = a[0] + tx; out[1] = a[1] + ty;
+				out[2] = a[2] + tx; out[3] = a[3] + ty;
+				out[4] = a[4] + tx; out[5] = a[5] + ty;
+				out[6] = a[6] + tx; out[7] = a[7] + ty;
 			}
 		}
 		
 		/**
-		 * 把颜色跟当前设置的alpha混合
+		 * pt所描述的多边形完全在clip外边，整个被裁掉了
+		 * @param	pt
 		 * @return
 		 */
-		public function mixRGBandAlpha(color:uint):uint {
-			return _mixRGBandAlpha(color, _shader2D.ALPHA);
+		public function clipedOff(pt:Array) :Boolean{
+			//TODO
+			if (_clipRect.width <= 0 || _clipRect.height <= 0)
+				return true;
+			return false;
 		}
-		public function _mixRGBandAlpha(color:uint, alpha:Number):uint {
-			var a:* = ((color & 0xff000000) >>> 24);
-			if (a != 0) {
-				a*= alpha;
-			}else {
-				a=alpha*255;
-			}
-			return (color & 0x00ffffff) | (a << 24);	
-		}			
 		
-		public function drawTriangles(tex:Texture, x:Number, y:Number, vertices:Float32Array, uvs:Float32Array, indices:Uint16Array, matrix:Matrix, alpha:Number, color:String, blendMode:String):Boolean {
-			if (!(tex.loaded && tex.source)) //source内调用tex.active();
-			{
-				if (sprite) {
-					Laya.timer.callLater(this, _repaintSprite);
+		/**
+		 * 应用当前矩阵。把转换后的位置放到输出数组中。 
+		 * @param	x
+		 * @param	y
+		 * @param	w
+		 * @param	h
+		 * @param   italicDeg 倾斜角度，单位是度。0度无，目前是下面不动。以后要做成可调的
+		 */
+		public function transformQuad(x:Number, y:Number, w:Number, h:Number, italicDeg:Number, m:Matrix, out:Array):void {
+			var xoff:Number = 0;
+			if (italicDeg != 0) {
+				xoff = Math.tan(italicDeg * Math.PI / 180) * h;
+			}
+			var maxx:Number = x + w; var maxy:Number = y + h;
+			_temp4Points[0] = x+xoff; _temp4Points[1] = y;
+			_temp4Points[2] = maxx+xoff; _temp4Points[3] = y;
+			_temp4Points[4] = maxx; _temp4Points[5] = maxy;
+			_temp4Points[6] = x; _temp4Points[7] = maxy;
+			transform4Points(_temp4Points,m, out);
+		}
+		
+		public function pushRT():void {
+			addRenderObject(SubmitCMD.create(null, RenderTexture2D.pushRT,this));
+		}
+		public function popRT():void {
+			addRenderObject(SubmitCMD.create(null, RenderTexture2D.popRT, this));
+			breakNextMerge();
+		}
+		
+		//TODO:coverage
+		public function useRT(rt:RenderTexture2D):void {
+			//这里并没有做cliprect的保存恢复。因为认为调用这个函数的话，就是完全不走context流程了，完全自己控制。
+			function _use(rt:RenderTexture2D):void {
+				if (!rt) {
+					throw 'error useRT'
+				}else{
+					rt.start();
+					rt.clear(0, 0, 0, 0);
 				}
-				return false;
+			}
+				
+			addRenderObject(SubmitCMD.create([rt], _use,this));
+			breakNextMerge();
+		}
+		
+		/**
+		 * 异步执行rt的restore函数
+		 * @param	rt
+		 */
+		//TODO:coverage
+		public function RTRestore(rt:RenderTexture2D):void {
+			function _restore(rt:RenderTexture2D):void {
+				rt.restore();
+			}
+			addRenderObject(SubmitCMD.create([rt], _restore,this));
+			breakNextMerge();
+		}
+		
+		/**
+		 * 强制拒绝submit合并
+		 * 例如切换rt的时候
+		 */
+		public function breakNextMerge():void {
+			_curSubmit = Submit.RENDERBASE;			
+		}
+		
+		//TODO:coverage
+		private function _repaintSprite():void {
+			sprite && sprite.repaint();
+		}
+		
+		/**
+		 * 
+		 * @param	tex
+		 * @param	x			
+		 * @param	y
+		 * @param	width
+		 * @param	height
+		 * @param	transform	图片本身希望的矩阵
+		 * @param	tx			节点的位置
+		 * @param	ty
+		 * @param	alpha
+		 */
+		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number, alpha:Number, blendMode:String, colorfilter:ColorFilter = null):void {
+			var oldcomp:String = null;
+			if (blendMode) {
+				oldcomp = globalCompositeOperation;
+				globalCompositeOperation = blendMode;
+			}
+			var oldColorFilter:ColorFilter = _colorFiler;
+			if (colorfilter) {
+				setColorFilter(colorfilter);
+			}
+			
+			if (!transform) {
+				_drawTextureM(tex, x + tx, y + ty, width, height, null, alpha, null);
+				if (blendMode) {
+					globalCompositeOperation = oldcomp;
+				}
+				if ( colorfilter) {
+					setColorFilter(oldColorFilter);
+				}
+				return;
+			}
+			var curMat:Matrix = _curMat;
+			//克隆transform,因为要应用tx，ty，这里不能修改原始的transform
+			_tmpMatrix.a = transform.a; _tmpMatrix.b = transform.b; _tmpMatrix.c = transform.c; _tmpMatrix.d = transform.d; _tmpMatrix.tx = transform.tx + tx; _tmpMatrix.ty = transform.ty + ty;
+			_tmpMatrix._bTransform = transform._bTransform;
+			if (transform && curMat._bTransform) {
+				Matrix.mul(_tmpMatrix, curMat, _tmpMatrix);
+				transform = _tmpMatrix;
+				transform._bTransform = true;
+			}else {
+				//如果curmat没有旋转。
+				transform = _tmpMatrix;
+			}
+			_drawTextureM(tex, x, y, width, height, transform, alpha, null);
+			if (blendMode) {
+				globalCompositeOperation = oldcomp;
+			}
+			if ( colorfilter) {
+				setColorFilter(oldColorFilter);
+			}
+		}
+
+		/**
+		 * * 把ctx中的submits提交。结果渲染到target上
+		 * @param	ctx
+		 * @param	target
+		 */
+		private function _flushToTarget(context:WebGLContext2D, target:RenderTexture2D):void {
+			//if (target._destroy) return;
+			//var preworldClipRect:Rectangle = RenderState2D.worldClipRect;
+			//裁剪不用考虑，现在是在context内部自己维护，不会乱窜
+			RenderState2D.worldScissorTest = false;
+			WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
+			
+			var preAlpha:Number = RenderState2D.worldAlpha;
+			var preMatrix4:Array = RenderState2D.worldMatrix4;
+			var preMatrix:Matrix = RenderState2D.worldMatrix;
+			
+			var preShaderDefines:ShaderDefines2D = RenderState2D.worldShaderDefines;
+			
+			RenderState2D.worldMatrix = Matrix.EMPTY;
+			
+			RenderState2D.restoreTempArray();
+			RenderState2D.worldMatrix4 = RenderState2D.TEMPMAT4_ARRAY;
+			RenderState2D.worldAlpha = 1;
+			//RenderState2D.worldFilters = null;
+			//RenderState2D.worldShaderDefines = null;
+			BaseShader.activeShader = null;
+			
+			target.start();
+			// 如果没有命令就不要clear。这么改是因为嵌套cacheas出问题了
+			// 如果一个sprite cacheas normal ，他的子节点有cacheas bitmap的（包括mask等）就会不断的执行 _flushToTarget和drawCamvase,从而把target上的内容清掉
+			// 由于cacheas normal 导致 RenderSprite没有机会执行 _cacheStyle.canvas 存在的分支。在
+			if(context._submits._length>0)
+				target.clear(0, 0, 0, 0);			
+			
+			context._curSubmit = Submit.RENDERBASE;
+			context.flush();
+			context.clear();
+			target.restore();
+			context._curSubmit = Submit.RENDERBASE;
+			//context._canvas
+			BaseShader.activeShader = null;
+			RenderState2D.worldAlpha = preAlpha;
+			RenderState2D.worldMatrix4 = preMatrix4;
+			RenderState2D.worldMatrix = preMatrix;
+			//RenderState2D.worldFilters = preFilters;
+			//RenderState2D.worldShaderDefines = preShaderDefines;
+		}		
+		
+		override public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
+			var src:WebGLContext2D = canvas.context as WebGLContext2D;
+			var submit:ISubmit;
+			if (src._targets) {
+				//生成渲染结果到src._targets上
+				/*
+				this._submits[this._submits._length++] = SubmitCanvas.create(src, 0, null);
+				_curSubmit = Submit.RENDERBASE;
+				//画出src._targets
+				//drawTexture(src._targets.target.getTexture(), x, y, width, height, 0, 0);
+				*/
+				//应用并清空canvas中的指令。如果内容需要重画，RenderSprite会给他重新加入submit
+				if ( src._submits._length > 0) {
+					submit = SubmitCMD.create([src, src._targets], _flushToTarget,this);
+					_submits[_submits._length++] = submit;
+				}
+				//在这之前就已经渲染出结果了。
+				_drawRenderTexture(src._targets, x, y, width, height, null, 1.0, RenderTexture2D.flipyuv);
+				_curSubmit = Submit.RENDERBASE;
+				/*
+				this._submits[this._submits._length++] = SubmitCanvas.create(src, 0, null);
+				//src._targets.flush(src);
+				_curSubmit = Submit.RENDERBASE;
+				//src._targets.drawTo(this, x, y, width, height);
+				//drawTexture(src._targets.target.getTexture(), x, y, width, height, 0, 0);
+				_drawRenderTexture(src._targets, x, y, width, height,null,1.0, RenderTexture.flipyuv);
+				*/
+			} else {
+				var canv:WebGLCacheAsNormalCanvas = canvas as WebGLCacheAsNormalCanvas;
+				if (canv.touches) {
+					(canv.touches as Array).forEach(function(v:CharRenderInfo):void { v.touch(); } );
+				}
+								
+				submit = SubmitCanvas.create(canvas, _shader2D.ALPHA, _shader2D.filters);
+				this._submits[this._submits._length++] = submit;
+				(submit as SubmitCanvas)._key.clear();
+				//var sx:Number = width / canvas.width;
+				//var sy:Number = height / canvas.height;
+				var mat:Matrix = (submit as SubmitCanvas)._matrix;
+				_curMat.copyTo(mat);
+				//sx != 1 && sy != 1 && mat.scale(sx, sy);
+				// 先加上位置，最后再乘逆
+				var tx:Number = mat.tx, ty:Number = mat.ty;
+				mat.tx = mat.ty = 0;
+				mat.transformPoint(Point.TEMP.setTo(x, y));
+				mat.translate(Point.TEMP.x + tx, Point.TEMP.y + ty);
+				
+				Matrix.mul(canv.invMat, mat,  mat);
+
+				_curSubmit = Submit.RENDERBASE;
+			}
+		}
+		
+		public function drawTarget(rt:RenderTexture2D, x:Number, y:Number, width:Number, height:Number, m:Matrix, shaderValue:Value2D, uv:Array = null, blend:int = -1):Boolean {
+			_drawCount++;
+			var rgba:int = mixRGBandAlpha(_drawTextureUseColor?(fillStyle?fillStyle.toInt():0):0xffffffff);
+			if (_mesh.vertNum + 4 > _MAXVERTNUM) {
+				_mesh = MeshQuadTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(_mesh);
+			}
+			
+			//凡是这个都是在_mesh上操作，不用考虑samekey
+			transformQuad(x, y, width, height, 0, m || _curMat, _transedPoints);
+			if(!clipedOff(_transedPoints)){
+				_mesh.addQuad(_transedPoints, uv || Texture.DEF_UV, 0xffffffff, true);
+				//if (GlUtils.fillRectImgVb( _mesh._vb, _clipRect, x, y, width , height , uv || Texture.DEF_UV, m || _curMat, rgba, this)) {
+				var submit:SubmitTarget = _curSubmit = SubmitTarget.create(this,_mesh,shaderValue, rt);
+				submit.blendType = (blend == -1)?_nBlendType:blend;
+				_copyClipInfo(submit as Submit, _globalClipMatrix);
+				submit._numEle = 6;
+				_mesh.indexNum += 6;
+				_mesh.vertNum += 4;
+				_maxNumEle = Math.max(_maxNumEle, submit._numEle);				
+				_submits[_submits._length++] = submit;
+				//暂时drawTarget不合并
+				_curSubmit = Submit.RENDERBASE
+				return true;
+			}
+			//暂时drawTarget不合并
+			_curSubmit = Submit.RENDERBASE
+			return false;			
+		}
+		
+		override public function drawTriangles(tex:Texture, x:Number, y:Number, vertices:Float32Array, uvs:Float32Array, indices:Uint16Array, matrix:Matrix, alpha:Number, color:ColorFilter, blendMode:String):void {
+			if (!tex._getSource()){ //source内调用tex.active();
+				if (sprite) {
+					Laya.systemTimer.callLater(this, _repaintSprite);
+				}
+				return ;
 			}
 			_drawCount++;
-			var webGLImg:Bitmap = tex.bitmap as Bitmap;
 			
-			var rgba:int = _mixRGBandAlpha( 0xffffffff, alpha);
+			var oldColorFilter:ColorFilter=null;
+			var needRestorFilter:Boolean = false;
+			if (color) {
+				oldColorFilter = _colorFiler;
+				//这个不用save，直接修改就行
+				_colorFiler = color;
+				_curSubmit = Submit.RENDERBASE;
+				needRestorFilter = oldColorFilter!=color;
+			}
+			var webGLImg:Bitmap = tex.bitmap as Bitmap;
+			var preKey:SubmitKey = _curSubmit._key;
+			var sameKey:Boolean = preKey.submitType === Submit.KEY_TRIANGLES && preKey.other === webGLImg.id && preKey.blendShader== _nBlendType;
+			
+			//var rgba:int = mixRGBandAlpha(0xffffffff);
+			//rgba = _mixRGBandAlpha(rgba, alpha);	这个函数有问题，不能连续调用，输出作为输入
+			var rgba:int = _mixRGBandAlpha( 0xffffffff, _shader2D.ALPHA * alpha);			
 			var vertNum:int = vertices.length / 2;
 			var eleNum:int = indices.length;
-			//添加一个新的submit
-			_renderKey = -1;
-			var submit:SubmitTexture = _curSubmit = SubmitTexture.create(this, _triangleMesh.getIBR(),_triangleMesh.getVBR(), _triangleMesh.indexNum, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-			submit.shaderValue.textureHost = tex;
-			submit._renderType = Submit.TYPE_TEXTURE;
-			_submits[_submits._length++] = submit;
-			
-			if(matrix){
-				_tmpMatrix.a = matrix.a;_tmpMatrix.b = matrix.b;_tmpMatrix.c = matrix.c;_tmpMatrix.d = matrix.d;_tmpMatrix.tx = matrix.tx+x;_tmpMatrix.ty = matrix.ty+y;
-				Matrix.mul(_tmpMatrix,_curMat, _tmpMatrix);
-			}else {
-				_tmpMatrix.a = _curMat.a;_tmpMatrix.b = _curMat.b;_tmpMatrix.c = _curMat.c;_tmpMatrix.d = _curMat.d;_tmpMatrix.tx = _curMat.tx+x;_tmpMatrix.ty = _curMat.ty+y;
+			if (_triangleMesh.vertNum + vertNum > _MAXVERTNUM) {
+				_triangleMesh = MeshTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(_triangleMesh);
+				sameKey = false;	//新的mesh不能算samekey了
 			}
-			_triangleMesh.addData(vertices, uvs, indices, _tmpMatrix, rgba, this);
+			if (!sameKey) {
+				//添加一个新的submit
+				var submit:SubmitTexture = _curSubmit = SubmitTexture.create(this, _triangleMesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+				submit.shaderValue.textureHost = tex;
+				submit._renderType = Submit.TYPE_TEXTURE;
+				submit._key.submitType = Submit.KEY_TRIANGLES;
+				submit._key.other = webGLImg.id;
+				_copyClipInfo(submit, _globalClipMatrix);				
+				_submits[_submits._length++] = submit;
+			}
+			if (!matrix) {
+				_tmpMatrix.a = 1; _tmpMatrix.b = 0; _tmpMatrix.c = 0; _tmpMatrix.d = 1; _tmpMatrix.tx = x; _tmpMatrix.ty = y;
+			} else {
+				_tmpMatrix.a = matrix.a; _tmpMatrix.b = matrix.b; _tmpMatrix.c = matrix.c; _tmpMatrix.d = matrix.d; _tmpMatrix.tx = matrix.tx + x; _tmpMatrix.ty = matrix.ty + y;
+			}
+			if(!_drawTriUseAbsMatrix){
+				Matrix.mul(_tmpMatrix, _curMat, _tmpMatrix);
+			}
+			_triangleMesh.addData(vertices, uvs, indices, _tmpMatrix, rgba,this);
 			_curSubmit._numEle += eleNum;
 			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);				
-			return true;
+			
+			if (needRestorFilter) {
+				_colorFiler = oldColorFilter;
+				_curSubmit = Submit.RENDERBASE;
+			}	
+			//return true;
 		}
 		
-		
-		override public function transform(a:Number, b:Number, c:Number, d:Number, tx:Number, ty:Number):void {
-			SaveTransform.save(this);
-			Matrix.mul(Matrix.TEMP.setTo(a, b, c, d, tx, ty), _curMat, _curMat);
+		public function transform(a:Number, b:Number, c:Number, d:Number, tx:Number, ty:Number):void {
+			SaveTransform.save(this);			
+			Matrix.mul(Matrix.TEMP.setTo(a, b, c, d, tx, ty), _curMat, _curMat);	//TODO 这里会有效率问题。一堆的set
 			_curMat._checkTransform();
 		}
 		
+		//TODO:coverage
+		public function _transformByMatrix(matrix:Matrix, tx:Number, ty:Number):void {
+			matrix.setTranslate(tx, ty);
+			Matrix.mul(matrix, _curMat, _curMat);
+			matrix.setTranslate(0, 0);
+			_curMat._bTransform = true;
+		}
+		
+		//TODO:coverage
 		override public function setTransformByMatrix(value:Matrix):void {
 			value.copyTo(_curMat);
-		}
-		
-		override public function transformByMatrix(value:Matrix):void {
-			SaveTransform.save(this);
-			Matrix.mul(value, _curMat, _curMat);
-			_curMat._checkTransform();
 		}
 		
 		public function rotate(angle:Number):void {
@@ -1022,182 +1380,166 @@ private function _releaseMem():void
 		}
 		
 		override public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			if (_curMat.b != 0 || _curMat.c != 0) {
-				_renderKey = 0;
-				//1、创建模板缓冲区
-				var submitStencil0:SubmitStencil = SubmitStencil.create(4);
-				addRenderObject(submitStencil0);
-				//2、创建Rect顶点并绘制Rect
-
-				var vb:VertexBuffer2D = _vb;
-				var nPos:int = (vb._byteLength >> 2);
-				if (GlUtils.fillRectImgVb(vb, null, x, y, width, height, Texture.DEF_UV, _curMat, _x, _y, 0, 0)) {
-					var shader:Shader2D = _shader2D;
-					shader.glTexture = null;
-					var submit:Submit = _curSubmit = Submit.createSubmit(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
-					submit.shaderValue.ALPHA = 1.0;
-					_submits[_submits._length++] = submit;
-					_curSubmit._numEle += 6;
-				} else {
-					alert("clipRect calc stencil rect error");
-				}
+			SaveClipRect.save(this);
+			if (this._clipRect == MAXCLIPRECT) {
+				this._clipRect = new Rectangle(x, y, width, height);
+			}else {
+				_clipRect.width = width;
+				_clipRect.height = height;
 				
-				//3、设置模板缓冲区
-				var submitStencil1:SubmitStencil = SubmitStencil.create(5);
-				addRenderObject(submitStencil1);
-				
-				
-				//4、计算clipRect
-				var vbdata:* = vb.getFloat32Array();
-				var minx:Number = Math.min(Math.min(Math.min(vbdata[nPos + 0], vbdata[nPos + 4]), vbdata[nPos + 8]), vbdata[nPos + 12]);
-				var maxx:Number = Math.max(Math.max(Math.max(vbdata[nPos + 0], vbdata[nPos + 4]), vbdata[nPos + 8]), vbdata[nPos + 12]);
-				var miny:Number = Math.min(Math.min(Math.min(vbdata[nPos + 1], vbdata[nPos + 5]), vbdata[nPos + 9]), vbdata[nPos + 13]);
-				var maxy:Number = Math.max(Math.max(Math.max(vbdata[nPos + 1], vbdata[nPos + 5]), vbdata[nPos + 9]), vbdata[nPos + 13]);
-
-				SaveClipRectStencil.save(this, submitStencil1, x, y, width, height, minx, miny, maxx - minx, maxy - miny);
-				
-				_curSubmit = Submit.RENDERBASE;
-				//5、在restore中进行恢复
-				//代码在SaveClipRectStencil.as中，进行恢复的模板缓冲区
-			} else {
-				width *= _curMat.a;
-				height *= _curMat.d;
-				var p:Point = Point.TEMP;
-				this._curMat.transformPoint(p.setTo(x, y));
-				
-				if (width < 0)
-				{
-					p.x = p.x + width;
-					width = -width;
-				}
-				if (height < 0)
-				{
-					p.y = p.y + height;
-					height = -height;
-				}
-
-				_renderKey = 0;
-				var submitSc:SubmitScissor = _curSubmit = SubmitScissor.create(this);
-				_submits[this._submits._length++] = submitSc;
-				submitSc.submitIndex = this._submits._length;
-				submitSc.submitLength = 9999999;
-				SaveClipRect.save(this, submitSc);
-				var clip:Rectangle = this._clipRect;
-				var x1:Number = clip.x, y1:Number = clip.y;
-				var r:Number = p.x + width, b:Number = p.y + height;
-				x1 < p.x && (clip.x = p.x);
-				y1 < p.y && (clip.y = p.y);
-				clip.width = Math.min(r, x1 + clip.width) - clip.x;
-				clip.height = Math.min(b, y1 + clip.height) - clip.y;
-				_shader2D.glTexture = null;
-				submitSc.clipRect.copyFrom(clip);
-				_curSubmit = Submit.RENDERBASE;
+				//把xy转换到当前矩阵空间。宽高不用转换，这样在shader中计算的时候就不用把方向normalize了
+				_clipRect.x = x;
+				_clipRect.y = y;
 			}
-		}
-		
-		public function setIBVB(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0, offset:int = 0, type:int = 0):void {
-			if (ib === null) {
-				if (!Render.isFlash) {
-					ib = _ib;
-				} else {
-					var falshVB:* = vb;
-					(falshVB._selfIB) || (falshVB._selfIB = IndexBuffer2D.create(WebGLContext.STATIC_DRAW));
-					falshVB._selfIB.clear();
-					ib = falshVB._selfIB;
+			_clipID_Gen++;
+			_clipID_Gen %= 10000;
+			_clipInfoID = _clipID_Gen;
+			var cm:Matrix = _globalClipMatrix;
+			//TEMP 处理clip交集问题，这里有点问题，无法处理旋转，翻转 是临时瞎写的
+			var minx:Number = cm.tx;
+			var miny:Number = cm.ty;
+			var maxx:Number = minx + cm.a;
+			var maxy:Number = miny + cm.d;
+			//TEMP end
+			
+			if (_clipRect.width >= WebGLContext2D._MAXSIZE) {
+				cm.a = cm.d = WebGLContext2D._MAXSIZE; 
+				cm.b = cm.c = cm.tx = cm.ty = 0;
+			}else {
+				//其实就是矩阵相乘
+				if (_curMat._bTransform) {
+					cm.tx = _clipRect.x * _curMat.a + _clipRect.y * _curMat.c + _curMat.tx;
+					cm.ty = _clipRect.x * _curMat.b + _clipRect.y * _curMat.d + _curMat.ty;
+					cm.a = _clipRect.width * _curMat.a;
+					cm.b = _clipRect.width * _curMat.b;
+					cm.c = _clipRect.height * _curMat.c;
+					cm.d = _clipRect.height * _curMat.d;
+				}else {
+					cm.tx = _clipRect.x + _curMat.tx;
+					cm.ty = _clipRect.y + _curMat.ty;
+					cm.a = _clipRect.width ;
+					cm.b = cm.c  = 0;
+					cm.d = _clipRect.height;
 				}
-				GlUtils.expandIBQuadrangle(ib, (vb._byteLength / (Buffer2D.FLOAT32 * vb.vertexStride * 4)));
 			}
 			
-			if (!shaderValues || !shader)
-				throw Error("setIBVB must input:shader shaderValues");
-			var submit:SubmitOtherIBVB = SubmitOtherIBVB.create(this, vb, ib, numElement, shader, shaderValues, startIndex, offset, type);
-			mat || (mat = Matrix.EMPTY);
-			mat.translate(x, y);
-			Matrix.mul(mat, _curMat, submit._mat);
-			mat.translate(-x, -y);
-			_submits[this._submits._length++] = submit;
-			_curSubmit = Submit.RENDERBASE;
-			_renderKey = 0;
+			//TEMP 处理clip交集问题，这里有点问题，无法处理旋转,翻转
+			if ( cm.a > 0 && cm.d > 0) {
+				var cmaxx:Number = cm.tx + cm.a;
+				var cmaxy:Number = cm.ty + cm.d;
+				if (cmaxx <= minx ||cmaxy<=miny || cm.tx>=maxx || cm.ty>=maxy) {
+					//超出范围了
+					cm.a =-0.1; cm.d =-0.1;
+				}else{
+					if (cm.tx < minx) {
+						cm.a -= (minx - cm.tx);
+						cm.tx = minx;
+					}
+					if (cmaxx > maxx) {
+						cm.a -= (cmaxx - maxx);
+					}
+					if (cm.ty < miny) {
+						cm.d -= (miny-cm.ty);
+						cm.ty = miny;
+					}
+					if (cmaxy > maxy) {
+						cm.d -= (cmaxy - maxy);
+					}
+					if (cm.a <= 0) cm.a =-0.1;
+					if (cm.d <= 0) cm.d =-0.1;
+				}
+			}
+			//TEMP end
+			
+			
+		}
+		
+		/**
+		 * 从setIBVB改为drawMesh
+		 * type 参数不知道是干什么的，先删掉。offset好像跟attribute有关，删掉
+		 * @param	x
+		 * @param	y
+		 * @param	ib
+		 * @param	vb
+		 * @param	numElement
+		 * @param	mat
+		 * @param	shader
+		 * @param	shaderValues
+		 * @param	startIndex
+		 * @param	offset
+		 */
+		//TODO:coverage
+		public function drawMesh(x:Number, y:Number, ib:IndexBuffer2D, vb:VertexBuffer2D, numElement:int, mat:Matrix, shader:Shader, shaderValues:Value2D, startIndex:int = 0):void {
+			;
 		}
 		
 		public function addRenderObject(o:ISubmit):void {
 			this._submits[this._submits._length++] = o;
 		}
 		
-		public function fillTrangles(tex:Texture, x:Number, y:Number, points:Array, m:Matrix):void {
-			var submit:Submit = this._curSubmit;
-			var vb:VertexBuffer2D = _vb;
-			var shader:Shader2D = _shader2D;
-			var curShader:Value2D = submit.shaderValue;
-			var length:int = points.length >> 4 /*16*/;
-			var t_tex:WebGLImage = tex.bitmap as WebGLImage;
-			
-			_renderKey = 0;
-			
-			if (shader.glTexture != t_tex || shader.ALPHA !== curShader.ALPHA) {
-				submit = _curSubmit = Submit.createSubmit(this, _ib, vb, ((vb._byteLength) / 32) * 3, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-				submit.shaderValue.textureHost = tex;
-				_submits[_submits._length++] = submit;
-			}
-			
-			GlUtils.fillTranglesVB(vb, x, y, points, m || _curMat, _x, _y);
-			submit._numEle += length * 6;
-		}
-		
-		public function submitElement(start:int, end:int):void {
+		/**
+		 * 
+		 * @param	start
+		 * @param	end
+		 */
+		public function submitElement(start:int, end:int):int {
+			//_ib._bind_upload() || _ib._bind();
+			//_vb._bind_upload() || _vb._bind();
+			var mainCtx:Boolean = Render._context === this;
 			var renderList:Array = this._submits;
-			end < 0 && (end = renderList._length);
+			var ret:int = (renderList as Object)._length;
+			end < 0 && (end = (renderList as Object)._length);			
+			var submit:Submit=Submit.RENDERBASE;
 			while (start < end) {
-				start += renderList[start].renderSubmit();
+				_renderNextSubmitIndex = start + 1;
+				if (renderList[start] === Submit.RENDERBASE) 
+				{
+					start++;
+					continue;
+				}
+				Submit.preRender = submit;
+				submit = renderList[start];
+				//只有submitscissor才会返回多个
+				start += submit.renderSubmit();
+				//本来做了个优化，如果是主画布，用完立即releaseRender. 但是实际没有什么效果，且由于submit需要用来对比，即使用完也不能修改，所以这个优化又去掉了
 			}
-		}
-		
-		public function finish():void {
-			WebGL.mainContext.finish();
+			return ret;
 		}
 		
 		override public function flush():int {
-			var maxNum:int = Math.max(_vb._byteLength / (Buffer2D.FLOAT32 * 16), _maxNumEle / 6) + 8;
-			if (maxNum > (_ib.bufferLength / (6 * Buffer2D.SHORT))) {
-				GlUtils.expandIBQuadrangle(_ib, maxNum);
-			}
-			
-			if (!this._isMain && AtlasResourceManager.enabled && AtlasResourceManager._atlasRestore > _atlasResourceChange) //这里还要判断大图合集是否修改
-			{
-				_atlasResourceChange = AtlasResourceManager._atlasRestore;
-				var renderList:Array = this._submits;
-				for (var i:int = 0, s:int = renderList._length; i < s; i++) {
-					var submit:ISubmit = renderList[i] as ISubmit;
-					if (submit.getRenderType() === Submit.TYPE_TEXTURE)
-						(submit as SubmitTexture).checkTexture();
-				}
-			}
-			
-			//_vb.bind_upload(_ib);//重复绑定
-			submitElement(0, _submits._length);
-			
+			var ret:int =  submitElement(0, _submits._length);
 			_path && _path.reset();
 			SkinMeshBuffer.instance && SkinMeshBuffer.getInstance().reset();
-			var sz:int=0;
-			for (  i = 0, sz = meshlist.length; i < sz; i++) {
+			
+			//Stat.mesh2DNum += meshlist.length;
+			_curSubmit = Submit.RENDERBASE;
+			
+			for (var i:int= 0, sz:int= meshlist.length; i < sz; i++) {
 				var curm:Mesh2D = meshlist[i];
 				curm.canReuse?(curm.releaseMesh()):(curm.destroy());
 			}
 			meshlist.length = 0;
 			
-			_curSubmit = Submit.RENDERBASE;
-			_renderKey = 0;
+			_mesh = MeshQuadTexture.getAMesh();	//TODO 不要这样。
+			_pathMesh = MeshVG.getAMesh();
 			_triangleMesh = MeshTexture.getAMesh();
-			meshlist.push(_triangleMesh);
-			return _submits._length;
+			meshlist.push(_mesh, _pathMesh, _triangleMesh);
+			
+			_flushCnt++;
+			//charbook gc
+			if (_flushCnt % 60 == 0 && Render._context == this) {
+				var texRender:* = Laya['textRender'] ;
+				if(texRender)
+				texRender.GC(false);
+			}
+			
+			return ret;
 		}
 		
 		/*******************************************start矢量绘制***************************************************/
 		private var mId:int = -1;
 		private var mHaveKey:Boolean = false;
 		private var mHaveLineKey:Boolean = false;
-		private var mX:Number = 0;
-		private var mY:Number = 0;
 		private var mOutPoint:Point
 		
 		public function setPathId(id:int):void {
@@ -1215,107 +1557,230 @@ private function _releaseMem():void
 			}
 		}
 		
-		public function movePath(x:Number, y:Number):void {
-			var _x1:Number = x, _y1:Number = y;
-			x = _curMat.a * _x1 + _curMat.c * _y1 + _curMat.tx;
-			y = _curMat.b * _x1 + _curMat.d * _y1 + _curMat.ty;
-			mX += x;
-			mY += y;
-		}
-		
-		override public function beginPath():void {
+		override public function beginPath(convex:Boolean=false):void {
 			var tPath:Path = _getPath();
-			tPath.tempArray.length = 0;
-			tPath.closePath = false;
-			mX = 0;
-			mY = 0;
+			tPath.beginPath(convex);
 		}
 		
-		public function closePath():void {
-			_path.closePath = true;
+		override public function closePath():void {
+			//_path.closePath = true;
+			_path.closePath();
 		}
 		
-		public function fill(isConvexPolygon:Boolean = false):void {
+		/**
+		 * 添加一个path。
+		 * @param	points [x,y,x,y....]	这个会被保存下来，所以调用者需要注意复制。
+		 * @param	close	是否闭合
+		 * @param   convex 是否是凸多边形。convex的优先级是这个最大。fill的时候的次之。其实fill的时候不应该指定convex，因为可以多个path
+		 * @param	dx  需要添加的平移。这个需要在应用矩阵之前应用。
+		 * @param	dy
+		 */
+		public function addPath(points:Array, close:Boolean, convex:Boolean, dx:Number, dy:Number):void {
+			var ci:int = 0;
+			for (var i:int = 0, sz:int = points.length / 2; i < sz; i++) {
+				var x1:Number = points[ci]+dx, y1:Number = points[ci + 1]+dy;
+				points[ci] = x1;
+				points[ci + 1] = y1;
+				ci += 2;
+			}
+			_getPath().push(points, convex);
+		}
+		
+		public function fill():void {
+			var m:Matrix = _curMat;
 			var tPath:Path = _getPath();
-			this.drawPoly(0, 0, tPath.tempArray, fillStyle._color.numColor, 0, 0, isConvexPolygon);
-		}
-		
-		override public function stroke():void {
-			var tPath:Path = _getPath();
-			if (lineWidth > 0) {
-				if (mId == -1) {
-					tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor);
-				} else {
-					if (mHaveLineKey) {
-						var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
-						tShapeLine.rebuild(tPath.tempArray);
-						tPath.setGeomtry(tShapeLine);
-					} else {
-						VectorGraphManager.getInstance().addLine(mId, tPath.drawLine(0, 0, tPath.tempArray, lineWidth, this.strokeStyle._color.numColor));
+			var submit:Submit = _curSubmit;
+			var sameKey:Boolean = (submit._key.submitType === Submit.KEY_VG && submit._key.blendShader === _nBlendType);
+			sameKey && (sameKey&&=isSameClipInfo(submit));
+			if (!sameKey) {
+				_curSubmit = addVGSubmit(_pathMesh);
+			}
+			var rgba:uint = mixRGBandAlpha(fillStyle.toInt());
+			var curEleNum:int = 0;
+			var idx:Array;
+			//如果有多个path的话，要一起填充mesh，使用相同的颜色和alpha
+			for ( var i:int = 0, sz:int = tPath.paths.length; i < sz; i++) {
+				var p:* = tPath.paths[i];
+				var vertNum:int = p.path.length / 2;
+				if (vertNum < 3 ||(vertNum==3 && !p.convex))
+					continue;
+				var cpath:Array = p.path.concat();
+				// 应用矩阵转换顶点
+				var pi:int = 0;
+				var xp:int, yp:int;
+				var _x:Number, _y:Number;
+				if ( m._bTransform) {
+					for ( pi = 0; pi < vertNum; pi++) {
+						xp = pi << 1;
+						yp = xp+1;
+						_x = cpath[xp];
+						_y = cpath[yp];
+						
+						cpath[xp] = m.a * _x + m.c * _y + m.tx;
+						cpath[yp] = m.b * _x + m.d * _y + m.ty;
+					}
+				}else {
+					for ( pi = 0; pi < vertNum; pi++) {
+						xp = pi << 1;
+						yp = xp+1;
+						_x = cpath[xp];
+						_y = cpath[yp];
+						cpath[xp] = _x + m.tx;
+						cpath[yp] = _y + m.ty;
 					}
 				}
 				
-				tPath.update();
-				//var tArray:Array = RenderState2D.getMatrArray();
-				//RenderState2D.mat2MatArray(_curMat, tArray);
-				var tPosArray:Array = [mX, mY];
-				var tempSubmit:Submit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.TEMPMAT4_ARRAY;
-				_submits[_submits._length++] = tempSubmit;
-				_renderKey = -1;
-			}
-		}
-		
-		public function line(fromX:Number, fromY:Number, toX:Number, toY:Number, lineWidth:Number, mat:Matrix):void {
-			var submit:Submit = _curSubmit;
-			var vb:VertexBuffer2D = _vb;
-			if (GlUtils.fillLineVb(vb, _clipRect, fromX, fromY, toX, toY, lineWidth, mat)) {
-				_renderKey = 0;
-				
-				var shader:Shader2D = _shader2D;
-				var curShader:Value2D = submit.shaderValue;
-				if (shader.strokeStyle !== curShader.strokeStyle || shader.ALPHA !== curShader.ALPHA) {
-					shader.glTexture = null;
-					submit = _curSubmit = Submit.createSubmit(this, _ib, vb, ((vb._byteLength - _RECTVBSIZE * Buffer2D.FLOAT32) / 32) * 3, Value2D.create(ShaderDefines2D.COLOR2D, 0));
-					submit.shaderValue.strokeStyle = shader.strokeStyle;
-					submit.shaderValue.mainID = ShaderDefines2D.COLOR2D;
-					submit.shaderValue.ALPHA = shader.ALPHA;
-					_submits[_submits._length++] = submit;
+				if ( _pathMesh.vertNum + vertNum > _MAXVERTNUM ) {
+					//;
+					//顶点数超了，要先提交一次
+					_curSubmit._numEle += curEleNum;
+					curEleNum = 0;
+					//然后用新的mesh，和新的submit。
+					_pathMesh = MeshVG.getAMesh();
+					_curSubmit = addVGSubmit(_pathMesh);
 				}
-				submit._numEle += 6;
+				
+				var curvert:int = _pathMesh.vertNum;
+				//生成 ib
+				if (p.convex) { //convex的ib比较容易
+					var faceNum:int = vertNum - 2;
+					idx = new Array(faceNum * 3);
+					var idxpos:int = 0;
+					for (var fi:int = 0; fi < faceNum; fi++) {
+						idx[idxpos++] = curvert ;
+						idx[idxpos++] = fi+1 + curvert;
+						idx[idxpos++] = fi+2 + curvert;
+					}
+				}
+				else {
+					idx = Earcut.earcut(cpath, null, 2);	//返回索引
+					if (curvert > 0) {
+						//修改ib
+						for (var ii:int = 0; ii < idx.length; ii++) {
+							idx[ii] += curvert;
+						}
+					}
+				}
+				//填充mesh
+				_pathMesh.addVertAndIBToMesh(this, cpath, rgba, idx);
+				curEleNum += idx.length;
+			}
+			_curSubmit._numEle+=  curEleNum;			
+		}
+		
+		private function addVGSubmit(mesh:Mesh2D):Submit {
+			//elenum设为0，后面再加
+			var submit:Submit = Submit.createShape(this, mesh, 0, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
+			//submit._key.clear();
+			//submit._key.blendShader = _submitKey.blendShader;	//TODO 这个在哪里赋值的啊
+			submit._key.submitType = Submit.KEY_VG;
+			_submits[_submits._length++] = submit;
+			_copyClipInfo(submit, _globalClipMatrix);
+			return submit;
+		}
+		
+		override public function stroke():void {
+			if (lineWidth > 0) {
+				var rgba:uint = mixRGBandAlpha(strokeStyle._color.numColor);
+				var tPath:Path = _getPath();
+				var submit:Submit = _curSubmit;
+				var sameKey:Boolean = (submit._key.submitType === Submit.KEY_VG && submit._key.blendShader === _nBlendType);
+				sameKey && (sameKey &&= isSameClipInfo(submit));
+				
+				if (!sameKey) {
+					_curSubmit = addVGSubmit(_pathMesh);
+				}
+				var curEleNum:int = 0;
+				//如果有多个path的话，要一起填充mesh，使用相同的颜色和alpha
+				for ( var i:int = 0, sz:int = tPath.paths.length; i < sz; i++) {
+					var p:* = tPath.paths[i];
+					if (p.path.length <= 0)
+						continue;
+					var idx:Array = [];
+					var vertex:Array = [];//x,y
+					//p.path.loop;
+					//填充vbib
+					var maxVertexNum:int = p.path.length * 2;	//最大可能产生的顶点数。这个需要考虑考虑
+					if (maxVertexNum < 2)
+						continue;
+					if ( _pathMesh.vertNum + maxVertexNum > _MAXVERTNUM ) {
+						//;
+						//顶点数超了，要先提交一次
+						_curSubmit._numEle += curEleNum;
+						curEleNum = 0;
+						//然后用新的mesh，和新的submit。
+						_pathMesh = MeshVG.getAMesh();
+						meshlist.push(_pathMesh);
+						_curSubmit = addVGSubmit(_pathMesh);
+					}
+					//这个需要放在创建新的mesh的后面，因为需要mesh.vertNum,否则如果先调用这个，再创建mesh，那么ib就不对了
+					BasePoly.createLine2(p.path, idx, lineWidth, _pathMesh.vertNum, vertex, p.loop);	//_pathMesh.vertNum 是要加到生成的ib上的
+					// 变换所有的点
+					var ptnum:int = vertex.length / 2;
+					var m:Matrix = _curMat;
+					var pi:int = 0;
+					var xp:int, yp:int;
+					var _x:Number, _y:Number;
+					if ( m._bTransform) {
+						for ( pi = 0; pi < ptnum; pi++) {
+							xp = pi << 1;
+							yp = xp+1;
+							_x = vertex[xp];
+							_y = vertex[yp];
+							
+							vertex[xp] = m.a * _x + m.c * _y + m.tx;
+							vertex[yp] = m.b * _x + m.d * _y + m.ty;
+						}
+					}else {
+						for ( pi = 0; pi < ptnum; pi++) {
+							xp = pi << 1;
+							yp = xp+1;
+							_x = vertex[xp];
+							_y = vertex[yp];
+							vertex[xp] = _x + m.tx;
+							vertex[yp] = _y + m.ty;
+						}
+					}
+					
+					//this.drawPoly(0, 0, p.path, fillStyle._color.numColor, 0, 0, p.convex);
+					//填充mesh
+					_pathMesh.addVertAndIBToMesh(this, vertex, rgba, idx);
+					curEleNum += idx.length;
+				}
+				_curSubmit._numEle+=  curEleNum;
 			}
 		}
 		
-		public function moveTo(x:Number, y:Number, b:Boolean = true):void {
+		public override function moveTo(x:Number, y:Number):void {
 			var tPath:Path = _getPath();
-			if (b) {
-				var _x1:Number = x, _y1:Number = y;
-				x = _curMat.a * _x1 + _curMat.c * _y1 /*+ _curMat.tx*/;
-				y = _curMat.b * _x1 + _curMat.d * _y1 /*+ _curMat.ty*/;
-			}
+			tPath.newPath();
+			tPath._lastOriX = x;
+			tPath._lastOriY = y;
 			tPath.addPoint(x, y);
 		}
 		
-		public function lineTo(x:Number, y:Number, b:Boolean = true):void {
+		/**
+		 * 
+		 * @param	x
+		 * @param	y
+		 * @param	b 是否应用矩阵
+		 */
+		public override function lineTo(x:Number, y:Number):void {
 			var tPath:Path = _getPath();
-			if (b) {
-				var _x1:Number = x, _y1:Number = y;
-				x = _curMat.a * _x1 + _curMat.c * _y1/* + _curMat.tx*/;
-				y = _curMat.b * _x1 + _curMat.d * _y1/* + _curMat.ty*/;
-			}
+			if (Math.abs(x-tPath._lastOriX)<1e-3 && Math.abs(y - tPath._lastOriY)<1e-3)//不判断的话，下面的画线算法受不了
+				return;
+			tPath._lastOriX = x;
+			tPath._lastOriY = y;
 			tPath.addPoint(x, y);
 		}
-		
-		override public function drawCurves(x:Number, y:Number, args:Array):void {
-			setPathId(-1);
+		/*
+		override public function drawCurves(x:Number, y:Number,points:Array, lineColor:*, lineWidth:Number = 1):void {
+			//setPathId(-1);
 			beginPath();
-			strokeStyle = args[3];
-			lineWidth = args[4];
-			var points:Array = args[2];
-			x += args[0], y += args[1];
-			movePath(x, y);
+			strokeStyle = lineColor;
+			this.lineWidth = lineWidth;
+			var points:Array = points;
+			//movePath(x, y); TODO 这个被去掉了
 			moveTo(points[0], points[1]);
 			var i:int = 2, n:int = points.length;
 			while (i < n) {
@@ -1323,23 +1788,20 @@ private function _releaseMem():void
 			}
 			stroke();
 		}
+		*/
 		
 		override public function arcTo(x1:Number, y1:Number, x2:Number, y2:Number, r:Number):void {
+			/*
 			if (mId != -1) {
 				if (mHaveKey) {
 					return;
 				}
 			}
+			*/
 			var i:int = 0;
 			var x:Number = 0, y:Number = 0;
-			var tPath:Path = _getPath();
-			_curMat.copyTo(_tmpMatrix);
-			_tmpMatrix.tx = _tmpMatrix.ty = 0;
-			_tempPoint.setTo(tPath.getEndPointX(), tPath.getEndPointY());
-			_tmpMatrix.invertTransformPoint(_tempPoint);
-		
-			var dx:Number = _tempPoint.x - x1;
-			var dy:Number = _tempPoint.y - y1;
+			var dx:Number = _path._lastOriX - x1;
+			var dy:Number = _path._lastOriY - y1;
 			var len1:Number = Math.sqrt(dx*dx + dy*dy);
 			if (len1 <= 0.000001) {
 				return;
@@ -1372,7 +1834,8 @@ private function _releaseMem():void
 			var ptx1:Number = len1*ndx + x1;
 			var pty1:Number = len1*ndy + y1;
   
-			var orilen:Number = Math.sqrt(len1*len1 + r*r);
+			var orilen:Number = Math.sqrt(len1 * len1 + r * r);
+			//圆心
 			var orix:Number = x1 + nOdx*orilen;
 			var oriy:Number = y1 + nOdy*orilen;
 
@@ -1397,10 +1860,16 @@ private function _releaseMem():void
 				cosx = Math.cos(fda);
 			}
 		
-			x = _curMat.a * ptx1 + _curMat.c * pty1 /*+ _curMat.tx*/;
-			y = _curMat.b * ptx1 + _curMat.d * pty1 /*+ _curMat.ty*/;
-			if (x != _path.getEndPointX() || y != _path.getEndPointY()) {
-				tPath.addPoint(x, y);
+			//x = _curMat.a * ptx1 + _curMat.c * pty1 /*+ _curMat.tx*/;
+			//y = _curMat.b * ptx1 + _curMat.d * pty1 /*+ _curMat.ty*/;
+			var lastx:Number=_path._lastOriX, lasty:Number=_path._lastOriY;	//没有矩阵转换的上一个点
+			var _x1:Number = ptx1 , _y1:Number = pty1 ;
+			if ( Math.abs(_x1- _path._lastOriX)>0.1 || Math.abs( _y1- _path._lastOriY)>0.1 ) {
+				x = _x1;// _curMat.a * _x1 + _curMat.c * _y1 + _curMat.tx;
+				y = _y1;//_curMat.b * _x1 + _curMat.d * _y1 + _curMat.ty;
+				lastx = _x1;
+				lasty = _y1;
+				_path.addPoint(x, y);
 			}
 			var cvx:Number = ptx1 - orix;
 			var cvy:Number = pty1 - oriy;
@@ -1412,12 +1881,17 @@ private function _releaseMem():void
 				x = cx + orix;
 				y = cy + oriy;
 			
-				x1 = _curMat.a * x + _curMat.c * y /*+ _curMat.tx*/;
-				y1 = _curMat.b * x + _curMat.d * y /*+ _curMat.ty*/;
-				x = x1;
-				y = y1;
-				if (x != _path.getEndPointX() || y != _path.getEndPointY()) {
-					tPath.addPoint(x, y);
+				//x1 = _curMat.a * x + _curMat.c * y /*+ _curMat.tx*/;
+				//y1 = _curMat.b * x + _curMat.d * y /*+ _curMat.ty*/;
+				//x = x1;
+				//y = y1;
+				if ( Math.abs(lastx-x)>0.1 || Math.abs(lasty - y)>0.1) {
+					//var _tx1:Number = x, _ty1:Number = y;
+					//x = _curMat.a * _tx1 + _curMat.c * _ty1 + _curMat.tx;
+					//y = _curMat.b * _tx1 + _curMat.d * _ty1 + _curMat.ty;
+					_path.addPoint(x, y);
+					lastx = x;
+					lasty = y;
 				}
 				cvx = cx;
 				cvy = cy;
@@ -1425,6 +1899,7 @@ private function _releaseMem():void
 		}
 		
 		public function arc(cx:Number, cy:Number, r:Number, startAngle:Number, endAngle:Number, counterclockwise:Boolean = false, b:Boolean = true):void {
+			/* TODO 缓存还没想好
 			if (mId != -1) {
 				var tShape:IShape = VectorGraphManager.getInstance().shapeDic[this.mId];
 				if (tShape) {
@@ -1434,6 +1909,7 @@ private function _releaseMem():void
 				cx = 0;
 				cy = 0;
 			}
+			*/
 			var a:Number = 0, da:Number = 0, hda:Number = 0, kappa:Number = 0;
 			var dx:Number = 0, dy:Number = 0, x:Number = 0, y:Number = 0, tanx:Number = 0, tany:Number = 0;
 			var px:Number = 0, py:Number = 0, ptanx:Number = 0, ptany:Number = 0;
@@ -1458,13 +1934,11 @@ private function _releaseMem():void
 					}
 				}
 			}
-			if (r < 101) {
-				ndivs = Math.max(10, da * r / 5);
-			} else if (r < 201) {
-				ndivs = Math.max(10, da * r / 20);
-			} else {
-				ndivs = Math.max(10, da * r / 40);
-			}
+			var sx:Number = getMatScaleX();
+			var sy:Number = getMatScaleY();
+			var sr:Number = r * (sx > sy?sx:sy);
+			var cl:Number = 2 * Math.PI * sr;
+			ndivs = (Math.max(cl / 10,10))|0;
 			
 			hda = (da / ndivs) / 2.0;
 			kappa = Math.abs(4 / 3 * (1 - Math.cos(hda)) / Math.sin(hda));
@@ -1480,12 +1954,10 @@ private function _releaseMem():void
 				dy = Math.sin(a);
 				x = cx + dx * r;
 				y = cy + dy * r;
-				if (b) {
-					_x1 = x, _y1 = y;
-					x = _curMat.a * _x1 + _curMat.c * _y1 /*+ _curMat.tx*/;
-					y = _curMat.b * _x1 + _curMat.d * _y1 /*+ _curMat.ty*/;
-				}
-				if (x != _path.getEndPointX() || y != _path.getEndPointY()) {
+				if ( x != _path._lastOriX || y != _path._lastOriY) {
+					//var _tx1:Number = x, _ty1:Number = y;
+					//x = _curMat.a * _tx1 + _curMat.c * _ty1 + _curMat.tx;
+					//y = _curMat.b * _tx1 + _curMat.d * _ty1 + _curMat.ty;
 					tPath.addPoint(x, y);
 				}
 			}
@@ -1493,12 +1965,10 @@ private function _releaseMem():void
 			dy = Math.sin(endAngle);
 			x = cx + dx * r;
 			y = cy + dy * r;
-			if (b) {
-				_x1 = x, _y1 = y;
-				x = _curMat.a * _x1 + _curMat.c * _y1 /*+ _curMat.tx*/;
-				y = _curMat.b * _x1 + _curMat.d * _y1 /*+ _curMat.ty*/;
-			}
-			if (x != _path.getEndPointX() || y != _path.getEndPointY()) {
+			if (x != _path._lastOriX|| y != _path._lastOriY) {
+				//var _x2:Number = x, _y2:Number = y;
+				//x = _curMat.a * _x2 + _curMat.c * _y2 + _curMat.tx;
+				//y = _curMat.b * _x2 + _curMat.d * _y2 + _curMat.ty;
 				tPath.addPoint(x, y);
 			}
 		}
@@ -1506,91 +1976,79 @@ private function _releaseMem():void
 		override public function quadraticCurveTo(cpx:Number, cpy:Number, x:Number, y:Number):void {
 			var tBezier:Bezier = Bezier.I;
 			var tResultArray:Array = [];
-			var _x1:Number = x, _y1:Number = y;
-			x = _curMat.a * _x1 + _curMat.c * _y1 /*+ _curMat.tx*/;
-			y = _curMat.b * _x1 + _curMat.d * _y1 /*+ _curMat.ty*/;
-			_x1 = cpx, _y1 = cpy;
-			cpx = _curMat.a * _x1 + _curMat.c * _y1 /*+ _curMat.tx*/;
-			cpy = _curMat.b * _x1 + _curMat.d * _y1 /*+ _curMat.ty*/;
-			var tArray:Array = tBezier.getBezierPoints([_path.getEndPointX(), _path.getEndPointY(), cpx, cpy, x, y], 30, 2);
+			//var _x1:Number = x, _y1:Number = y;
+			//x = _curMat.a * _x1 + _curMat.c * _y1 ;// + _curMat.tx;
+			//y = _curMat.b * _x1 + _curMat.d * _y1;// + _curMat.ty;
+			//_x1 = cpx, _y1 = cpy;
+			//cpx = _curMat.a * _x1 + _curMat.c * _y1;// + _curMat.tx;
+			//cpy = _curMat.b * _x1 + _curMat.d * _y1;// + _curMat.ty;
+			var tArray:Array = tBezier.getBezierPoints([_path._lastOriX, _path._lastOriY, cpx, cpy, x, y], 30, 2);
 			for (var i:int = 0, n:int = tArray.length / 2; i < n; i++) {
-				lineTo(tArray[i * 2], tArray[i * 2 + 1], false);
+				lineTo(tArray[i * 2], tArray[i * 2 + 1]);
 			}
-			lineTo(x, y, false);
+			lineTo(x, y);
 		}
 		
+		//TODO:coverage
 		override public function rect(x:Number, y:Number, width:Number, height:Number):void {
 			_other = _other.make();
 			_other.path || (_other.path = new Path());
 			_other.path.rect(x, y, width, height);
 		}
 		
+		/**
+		 * 把颜色跟当前设置的alpha混合
+		 * @return
+		 */
+		public function mixRGBandAlpha(color:uint):uint {
+			return _mixRGBandAlpha(color, _shader2D.ALPHA);
+		}
+		public function _mixRGBandAlpha(color:uint, alpha:Number):uint {
+			var a:int = ((color & 0xff000000) >>> 24);
+			//TODO 这里容易出问题，例如颜色的alpha部分虽然为0，但是他的意义就是0，不能假设是没有设置alpha。例如级联多个alpha就会生成这种结果
+			if (a != 0) {
+				a*= alpha;
+			}else {
+				a=alpha*255;
+			}
+			return (color & 0x00ffffff) | (a << 24);	
+		}		
+		
 		public function strokeRect(x:Number, y:Number, width:Number, height:Number, parameterLineWidth:Number):void {
 			var tW:Number = parameterLineWidth * 0.5;
-			line(x - tW, y, x + width + tW, y, parameterLineWidth, _curMat);
-			line(x + width, y, x + width, y + height, parameterLineWidth, _curMat);
-			line(x, y, x, y + height, parameterLineWidth, _curMat);
-			line(x - tW, y + height, x + width + tW, y + height, parameterLineWidth, _curMat);
+			//line(x - tW, y, x + width + tW, y, parameterLineWidth, _curMat);
+			//line(x + width, y, x + width, y + height, parameterLineWidth, _curMat);
+			//line(x, y, x, y + height, parameterLineWidth, _curMat);
+			//line(x - tW, y + height, x + width + tW, y + height, parameterLineWidth, _curMat);
+			/**
+			 * p1-------------------------------p2
+			 * |  x,y                      x+w,y|
+			 * |     p4--------------------p3   |
+			 * |     |                     |    |
+			 * |     p6--------------------p7   |
+			 * |  x,y+h                  x+w,y+h|
+			 * p5-------------------------------p8
+			 * 
+			 * 不用了
+			 * 这个其实用4个fillrect拼起来更好，能与fillrect合并。虽然多了几个点。
+			 */
+			//TODO 这里能不能与下面的stroke合并一下
+			if (lineWidth > 0) {
+				var rgba:uint = mixRGBandAlpha(strokeStyle._color.numColor);
+				var hw:int = lineWidth / 2;
+				_fillRect(x - hw, y - hw, width + lineWidth, lineWidth, rgba);				//上
+				_fillRect(x - hw, y - hw + height, width + lineWidth, lineWidth, rgba);		//下
+				_fillRect(x - hw, y + hw, lineWidth, height - lineWidth, rgba);					//左
+				_fillRect(x - hw + width, y + hw, lineWidth, height - lineWidth, rgba);			//右
+			}			
 		}
 		
 		override public function clip():void {
 		}
 		
-		/**
-		 * 画多边形(用)
-		 * @param	x
-		 * @param	y
-		 * @param	points
-		 */
-		public function drawPoly(x:Number, y:Number, points:Array, color:uint, lineWidth:Number, boderColor:uint, isConvexPolygon:Boolean = false):void {
-			_renderKey = 0;
-			_shader2D.glTexture = null; //置空下，打断纹理相同合并
-			var tPath:Path = _getPath();
-			if (mId == -1) {
-				tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor)
-			} else {
-				if (mHaveKey) {
-					var tShape:IShape = VectorGraphManager.getInstance().shapeDic[mId];
-					tShape.setMatrix(_curMat);
-					tShape.rebuild(tPath.tempArray);
-					tPath.setGeomtry(tShape);
-				} else {
-					var t:IShape = tPath.polygon(x, y, points, color, lineWidth ? lineWidth : 1, boderColor);
-					VectorGraphManager.getInstance().addShape(mId, t);
-					t.setMatrix(_curMat);
-				}
-			}
-			
-			tPath.update();
-			var tPosArray:Array = [mX, mY];
-			//var tArray:Array = RenderState2D.getMatrArray();
-			//RenderState2D.mat2MatArray(_curMat, tArray);
-			var tempSubmit:Submit;
-			//通过模板数据来开始真实的绘制
-			tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-			tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-			(tempSubmit.shaderValue as PrimitiveSV).u_pos = tPosArray;
-			tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
-			_submits[_submits._length++] = tempSubmit;
-			//画闭合线
-			if (lineWidth > 0) {
-				if (mHaveLineKey) {
-					var tShapeLine:IShape = VectorGraphManager.getInstance().shapeLineDic[mId];
-					tShapeLine.rebuild(tPath.tempArray);
-					tPath.setGeomtry(tShapeLine);
-				} else {
-					VectorGraphManager.getInstance().addShape(mId, tPath.drawLine(x, y, points, lineWidth, boderColor));
-				}
-				tPath.update();
-				tempSubmit = Submit.createShape(this, tPath.ib, tPath.vb, tPath.count, tPath.offset, Value2D.create(ShaderDefines2D.PRIMITIVE, 0));
-				tempSubmit.shaderValue.ALPHA = _shader2D.ALPHA;
-				tempSubmit.shaderValue.u_mmat2 = RenderState2D.EMPTYMAT4_ARRAY;
-				_submits[_submits._length++] = tempSubmit;
-			}
-		}
-		
 		/*******************************************end矢量绘制***************************************************/
-		public function drawParticle(x:Number, y:Number, pt:*):void {
+		//TODO:coverage
+		override public function drawParticle(x:Number, y:Number, pt:*):void {
 			pt.x = x;
 			pt.y = y;
 			_submits[_submits._length++] = pt;
@@ -1599,9 +2057,32 @@ private function _releaseMem():void
 		private function _getPath():Path {
 			return _path || (_path = new Path());
 		}
+		
+		/**获取canvas*/
+		//注意这个是对外接口
+		public override function get canvas():HTMLCanvas {
+			return _canvas;
+		}
+		//=============新增==================	
+		/* 下面的方式是有bug的。canvas是直接save，restore，现在是为了优化，但是有bug，所以先不重载了
+		override public function saveTransform(matrix:Matrix):void {
+			this._curMat.copyTo(matrix);
+		}
+		
+		override public function restoreTransform(matrix:Matrix):void {
+			matrix.copyTo(this._curMat);
+		}
+		
+		override public function transformByMatrix(matrix:Matrix,tx:Number,ty:Number):void {
+			var mat:Matrix = _curMat;
+			matrix.setTranslate(tx, ty);
+			Matrix.mul(matrix, mat, mat);
+			matrix.setTranslate(0, 0);
+			mat._bTransform = true;
+		}
+		*/
 	}
 }
-import laya.webgl.text.FontInContext;
 
 class ContextParams {
 	public static var DEFAULT:ContextParams;
@@ -1610,13 +2091,11 @@ class ContextParams {
 	public var path:*;
 	public var textAlign:String;
 	public var textBaseline:String;
-	public var font:FontInContext = FontInContext.EMPTY;
 	
 	public function clear():void {
 		lineWidth = 1;
 		path && path.clear();
 		textAlign = textBaseline = null;
-		font = FontInContext.EMPTY;
 	}
 	
 	public function make():ContextParams {

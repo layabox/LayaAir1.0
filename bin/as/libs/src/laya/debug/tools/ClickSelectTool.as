@@ -7,7 +7,6 @@ package laya.debug.tools
 	import laya.display.Sprite;
 	import laya.maths.Rectangle;
 	import laya.utils.Browser;
-	import laya.debug.uicomps.ContextMenuItem;
 	import laya.utils.Handler;
 	/**
 	 * ...
@@ -23,7 +22,7 @@ package laya.debug.tools
 		}
 		public function ClickSelectTool() 
 		{
-			_selectTip.setBounds(new Rectangle(0, 0, 0, 0 ));
+			_selectTip.setSelfBounds(new Rectangle(0, 0, 0, 0 ));
 			Notice.listen(DisplayHook.ITEM_CLICKED, this, itemClicked);
 		}
 		public static var isClickSelectState:Boolean = false;
@@ -81,10 +80,7 @@ package laya.debug.tools
 			{
 				if (DebugInfoLayer.I.isDebugItem(tar)) return;
 			}
-			if (tar is ContextMenuItem || tar.parent is ContextMenuItem)
-			{
-				return ;
-			}
+
 			DebugTool.showDisBound(tar);
 			if (completeHandler)
 			{

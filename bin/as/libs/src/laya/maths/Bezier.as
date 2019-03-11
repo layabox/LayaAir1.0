@@ -24,9 +24,6 @@ package laya.maths {
 		
 		/**
 		 * 计算二次贝塞尔点。
-		 * @param t
-		 * @param rst
-		 *
 		 */
 		public function getPoint2(t:Number, rst:Array):void {
 			//二次贝塞尔曲线公式
@@ -40,9 +37,6 @@ package laya.maths {
 		
 		/**
 		 * 计算三次贝塞尔点
-		 * @param t
-		 * @param rst
-		 *
 		 */
 		public function getPoint3(t:Number, rst:Array):void {
 			//三次贝塞尔曲线公式
@@ -57,9 +51,6 @@ package laya.maths {
 		
 		/**
 		 * 计算贝塞尔点序列
-		 * @param count
-		 * @param rst
-		 *
 		 */
 		public function insertPoints(count:Number, rst:Array):void {
 			var i:Number;
@@ -68,23 +59,19 @@ package laya.maths {
 			dLen = 1 / count;
 			for (i = 0; i <= 1; i += dLen) {
 				_calFun(i, rst);
-			}
-		
+			}		
 		}
 		
 		/**
 		 * 获取贝塞尔曲线上的点。
 		 * @param pList 控制点[x0,y0,x1,y1...]
 		 * @param inSertCount 每次曲线的插值数量
-		 * @return
-		 *
 		 */
 		public function getBezierPoints(pList:Array, inSertCount:int = 5, count:int = 2):Array {
 			var i:int, len:int;
 			len = pList.length;
 			if (len < (count + 1) * 2) return [];
-			var rst:Array;
-			rst = [];
+			var rst:Array = [];
 			switch (count) {
 			case 2: 
 				_calFun = getPoint2;
@@ -96,19 +83,16 @@ package laya.maths {
 				return [];
 			}
 			while (_controlPoints.length <= count) {
-				_controlPoints.push(new Point());
+				_controlPoints.push(Point.create());
 			}
 			for (i = 0; i < count * 2; i += 2) {
 				_switchPoint(pList[i], pList[i + 1]);
 			}
 			for (i = count * 2; i < len; i += 2) {
 				_switchPoint(pList[i], pList[i + 1]);
-				if ((i / 2) % count == 0)
-					insertPoints(inSertCount, rst);
-				
+				if ((i / 2) % count == 0) insertPoints(inSertCount, rst);				
 			}
 			return rst;
 		}
 	}
-
 }

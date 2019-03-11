@@ -1,55 +1,52 @@
 package laya.d3.core {
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.StandardMaterial;
-	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.SubMeshRenderElement;
-	import laya.d3.graphics.MeshSprite3DStaticBatchManager;
+	import laya.d3.graphics.DynamicBatchManager;
+	import laya.d3.graphics.MeshRenderDynamicBatchManager;
+	import laya.d3.graphics.MeshRenderStaticBatchManager;
 	import laya.d3.graphics.StaticBatchManager;
-	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.math.Vector4;
-	import laya.d3.resource.models.BaseMesh;
 	import laya.d3.resource.models.Mesh;
-	import laya.events.Event;
+	import laya.d3.shader.ShaderDefines;
 	import laya.net.Loader;
-	import laya.renders.Render;
 	
 	/**
 	 * <code>MeshSprite3D</code> 类用于创建网格。
 	 */
 	public class MeshSprite3D extends RenderableSprite3D {
-		/** @private */
-		private static var _staticBatchManager:MeshSprite3DStaticBatchManager = new MeshSprite3DStaticBatchManager();
+		public static var SHADERDEFINE_UV0:int;
+		public static var SHADERDEFINE_COLOR:int;
+		public static var SHADERDEFINE_UV1:int;
+		/**@private */
+		public static var shaderDefines:ShaderDefines = new ShaderDefines(RenderableSprite3D.shaderDefines);
 		
 		/**
 		 * @private
 		 */
 		public static function __init__():void {
-			StaticBatchManager._staticBatchManagers.push(_staticBatchManager);
+			SHADERDEFINE_UV0 = shaderDefines.registerDefine("UV");
+			SHADERDEFINE_COLOR = shaderDefines.registerDefine("COLOR");
+			SHADERDEFINE_UV1 = shaderDefines.registerDefine("UV1");
+			StaticBatchManager._registerManager(MeshRenderStaticBatchManager.instance);
+			DynamicBatchManager._registerManager(MeshRenderDynamicBatchManager.instance);
 		}
 		
-		/**
-		 * 加载网格模板。
-		 * @param url 模板地址。
-		 */
-		public static function load(url:String):MeshSprite3D {
-			return Laya.loader.create(url, null, null, MeshSprite3D);
-		}
+		/** @private */
+		private var _meshFilter:MeshFilter;
 		
 		/**
 		 * 获取网格过滤器。
 		 * @return  网格过滤器。
 		 */
 		public function get meshFilter():MeshFilter {
-			return _geometryFilter as MeshFilter;
+			return _meshFilter as MeshFilter;
 		}
 		
 		/**
 		 * 获取网格渲染器。
 		 * @return  网格渲染器。
 		 */
-		public function get meshRender():MeshRender {
-			return _render as MeshRender;
+		public function get meshRenderer():MeshRenderer {
+			return _render as MeshRenderer;
 		}
 		
 		/**
@@ -57,178 +54,44 @@ package laya.d3.core {
 		 * @param mesh 网格,同时会加载网格所用默认材质。
 		 * @param name 名字。
 		 */
-		public function MeshSprite3D(mesh:BaseMesh = null, name:String = null) {
+		public function MeshSprite3D(mesh:Mesh = null, name:String = null) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super(name);
-			_geometryFilter = new MeshFilter(this);
-			_render = new MeshRender(this);
-			
-			_geometryFilter.on(Event.MESH_CHANGED, this, _onMeshChanged);
-			_render.on(Event.MATERIAL_CHANGED, this, _onMaterialChanged);
-			
-			if (mesh) {
-				(_geometryFilter as MeshFilter).sharedMesh = mesh;
-				
-				if (mesh is Mesh)//TODO:待考虑。
-					if (mesh.loaded)
-						_render.sharedMaterials = (mesh as Mesh).materials;
-					else
-						mesh.once(Event.LOADED, this, _applyMeshMaterials);
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _changeRenderObjectByMesh(index:int):RenderElement {
-			var renderObjects:Vector.<RenderElement> = _render._renderElements;
-			
-			var renderElement:RenderElement = renderObjects[index];
-			(renderElement) || (renderElement = renderObjects[index] = new SubMeshRenderElement());
-			renderElement._render = _render;
-			
-			var material:BaseMaterial = _render.sharedMaterials[index];
-			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
-			
-			var renderObj:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
-			renderElement._mainSortID = _getSortID(renderObj, material);//根据MeshID排序，处理同材质合并处理。
-			renderElement._sprite3D = this;
-			
-			renderElement.renderObj = renderObj;
-			renderElement._material = material;
-			
-			return renderElement;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):RenderElement {
-			var renderElement:RenderElement = _render._renderElements[index];
-			
-			(material) || (material = StandardMaterial.defaultMaterial);//确保有材质,由默认材质代替。
-			var renderObj:IRenderable = (_geometryFilter as MeshFilter).sharedMesh.getRenderElement(index);
-			renderElement._mainSortID = _getSortID(renderObj, material);//根据MeshID排序，处理同材质合并处理。
-			renderElement._sprite3D = this;
-			
-			renderElement.renderObj = renderObj;
-			renderElement._material = material;
-			
-			return renderElement;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _changeRenderObjectsByMesh():void {
-			var renderElementsCount:int = (_geometryFilter as MeshFilter).sharedMesh.getRenderElementsCount();
-			_render._renderElements.length = renderElementsCount;
-			for (var i:int = 0; i < renderElementsCount; i++)
-				_changeRenderObjectByMesh(i);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onMeshChanged(meshFilter:MeshFilter):void {
-			var mesh:BaseMesh = meshFilter.sharedMesh;
-			if (mesh.loaded)
-				_changeRenderObjectsByMesh();
-			else
-				mesh.once(Event.LOADED, this, _onMeshLoaded);//TODO:假设Mesh未加载完成前无效。
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onMeshLoaded(sender:Mesh):void {
-			(sender === meshFilter.sharedMesh) && (_changeRenderObjectsByMesh());
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onMaterialChanged(meshRender:MeshRender, index:int, material:BaseMaterial):void {//TODO:
-			var renderElementCount:int = _render._renderElements.length;
-			(index < renderElementCount) && _changeRenderObjectByMaterial(index, material);
+			_meshFilter = new MeshFilter(this);
+			_render = new MeshRenderer(this);
+			(mesh) && (_meshFilter.sharedMesh = mesh);
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render);
-			//if (scene.conchModel) {//NATIVE
-			//scene.conchModel.removeChild(_render._conchRenderObject);
-			//}
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render);
-			//if (scene.conchModel) {//NATIVE
-			//scene.conchModel.addChildAt(_render._conchRenderObject);
-			//}
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
-			var render:MeshRender = meshRender;
-			var lightmapIndex:* = customProps.lightmapIndex;
+		override public function _parse(data:Object):void {
+			super._parse(data);
+			var render:MeshRenderer = meshRenderer;
+			var lightmapIndex:* = data.lightmapIndex;
 			(lightmapIndex != null) && (render.lightmapIndex = lightmapIndex);
-			var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
+			var lightmapScaleOffsetArray:Array = data.lightmapScaleOffset;
 			(lightmapScaleOffsetArray) && (render.lightmapScaleOffset = new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
-			var meshPath:String, mesh:Mesh;
-			if (json.instanceParams) {//兼容代码
-				meshPath = json.instanceParams.loadPath;
-				if (meshPath) {
-					mesh = Loader.getRes(innerResouMap[meshPath]);
-					meshFilter.sharedMesh = mesh;
-					if (mesh.loaded)
-						render.sharedMaterials = mesh.materials;
-					else
-						mesh.once(Event.LOADED, this, _applyMeshMaterials);
-				}
-			} else {
-				meshPath = customProps.meshPath;
-				if (meshPath) {
-					mesh = Loader.getRes(innerResouMap[meshPath]);
-					meshFilter.sharedMesh = mesh;
+			(data.meshPath!=undefined) && (meshFilter.sharedMesh = Loader.getRes(data.meshPath));
+			(data.enableRender!=undefined) && (meshRenderer.enable = data.enableRender);
+			var materials:Array = data.materials;
+			if (materials) {
+				var sharedMaterials:Vector.<BaseMaterial> = render.sharedMaterials;
+				var materialCount:int = materials.length;
+				sharedMaterials.length = materialCount;
+				for (var i:int = 0; i < materialCount; i++) {
+					sharedMaterials[i] = Loader.getRes(materials[i].path);
 				}
 				
-				var materials:Array = customProps.materials;
-				if (materials) {
-					var sharedMaterials:Vector.<BaseMaterial> = render.sharedMaterials;
-					var materialCount:int = materials.length;
-					sharedMaterials.length = materialCount;
-					for (var i:int = 0; i < materialCount; i++)
-						sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
-					render.sharedMaterials = sharedMaterials;
-				}
+				render.sharedMaterials = sharedMaterials;
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _applyMeshMaterials(mesh:Mesh):void {
-			var shaderMaterials:Vector.<BaseMaterial> = _render.sharedMaterials;
-			var meshMaterials:Vector.<BaseMaterial> = mesh.materials;
-			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
-				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
-			
-			_render.sharedMaterials = shaderMaterials;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override public function _addToInitStaticBatchManager():void {
-			_staticBatchManager._addInitBatchSprite(this);
+			MeshRenderStaticBatchManager.instance._addBatchSprite(this);
 		}
 		
 		/**
@@ -236,9 +99,9 @@ package laya.d3.core {
 		 */
 		override public function cloneTo(destObject:*):void {
 			var meshSprite3D:MeshSprite3D = destObject as MeshSprite3D;
-			(meshSprite3D._geometryFilter as MeshFilter).sharedMesh = (_geometryFilter as MeshFilter).sharedMesh;
-			var meshRender:MeshRender = _render as MeshRender;
-			var destMeshRender:MeshRender = meshSprite3D._render as MeshRender;
+			meshSprite3D._meshFilter.sharedMesh = _meshFilter.sharedMesh;
+			var meshRender:MeshRenderer = _render as MeshRenderer;
+			var destMeshRender:MeshRenderer = meshSprite3D._render as MeshRenderer;
 			destMeshRender.enable = meshRender.enable;
 			destMeshRender.sharedMaterials = meshRender.sharedMaterials;
 			destMeshRender.castShadow = meshRender.castShadow;
@@ -256,10 +119,9 @@ package laya.d3.core {
 		override public function destroy(destroyChild:Boolean = true):void {
 			if (destroyed)
 				return;
-			var mesh:BaseMesh = meshFilter.sharedMesh;
-			(mesh.loaded) || (mesh.off(Event.LOADED, this, _applyMeshMaterials));
 			super.destroy(destroyChild);
-			(_geometryFilter as MeshFilter)._destroy();
+			_meshFilter.destroy();
 		}
+	
 	}
 }

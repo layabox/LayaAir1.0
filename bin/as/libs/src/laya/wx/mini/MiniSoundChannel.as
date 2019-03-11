@@ -32,12 +32,12 @@ package laya.wx.mini {
 		
 		/**@private **/
 		private function __onEnd():void {
+			MiniSound._audioCache[this.url] = this._miniSound;
 			if (this.loops == 1) {
 				if (completeHandler) {
-					Laya.timer.once(10, this, __runComplete, [completeHandler], false);
+					Laya.systemTimer.once(10, this, __runComplete, [completeHandler], false);
 					completeHandler = null;
 				}
-//				trace("-------------------__onEnd-------sound-yinxiao------------------");
 				this.stop();
 				event(Event.COMPLETE);
 				return;
@@ -46,7 +46,6 @@ package laya.wx.mini {
 				this.loops--;
 			}
 			this.startTime = 0;
-//			trace("-------------------__onEnd-------sound-beijing------------------");
 			this.play();
 		}
 		
@@ -60,6 +59,18 @@ package laya.wx.mini {
 			this.isStopped = false;
 			SoundManager.addChannel(this);
 			this._audio.play();
+		}
+		
+		/**
+		 * 设置开始时间 
+		 * @param time
+		 */		
+		public function set startTime(time:Number):void
+		{
+			if(this._audio)
+			{
+				this._audio.startTime = time;
+			}
 		}
 		
 			
@@ -106,16 +117,14 @@ package laya.wx.mini {
 		 *
 		 */
 		override public function stop():void {
-//			trace("--------------stop--sound---------------------url:"+ this.url);
 			this.isStopped = true;
 			SoundManager.removeChannel(this);
 			completeHandler = null;
 			if (!this._audio)
 				return;
-			this._audio.pause();//停止播放
+			this._audio.stop();//停止播放
 			this._audio.offEnded(null);
-//			this._audio.destroy();//小游戏里声音销毁ios没问题，安卓存在问题。目前采用复用上次创建的实例，多次利用
-//			this._miniSound.dispose();
+			this._miniSound.dispose();
 			this._audio = null;
 			this._miniSound = null;
 			this._onEnd = null;

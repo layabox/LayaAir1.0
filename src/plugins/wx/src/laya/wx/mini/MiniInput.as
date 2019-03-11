@@ -40,11 +40,11 @@ package laya.wx.mini {
 				Browser.onIPhone = true;
 				Browser.onIOS = true;
 				Browser.onIPad = true;
-				Browser.onAndriod = false;
+				Browser.onAndroid = false;
 			}
 			if(system.indexOf("Android") != -1 || system.indexOf("Adr") != -1)
 			{
-				Browser.onAndriod = true;
+				Browser.onAndroid = true;
 				Browser.onIPhone = false;
 				Browser.onIOS = false;
 				Browser.onIPad = false;
@@ -53,7 +53,7 @@ package laya.wx.mini {
 		
 		private static function _onStageResize():void {
 			var ts:Matrix = Laya.stage._canvasTransform.identity();
-			ts.scale((Browser.width / Render.canvas.width / RunDriver.getPixelRatio()), Browser.height / Render.canvas.height / RunDriver.getPixelRatio());
+			ts.scale((Browser.width / Render.canvas.width / Browser.pixelRatio), Browser.height / Render.canvas.height / Browser.pixelRatio);
 		}
 		
 		public static function wxinputFocus(e:*):void {
@@ -63,15 +63,24 @@ package laya.wx.mini {
 			}
 			MiniAdpter.window.wx.offKeyboardConfirm();
 			MiniAdpter.window.wx.offKeyboardInput();
-			MiniAdpter.window.wx.showKeyboard({defaultValue: _inputTarget.text, maxLength: _inputTarget.maxChars, multiple: _inputTarget.multiline, confirmHold: true, confirmType: 'done', success: function(res:*):void {
+			MiniAdpter.window.wx.showKeyboard({defaultValue: _inputTarget.text, maxLength: _inputTarget.maxChars, multiple: _inputTarget.multiline, confirmHold: true, confirmType: _inputTarget["confirmType"]||'done', success: function(res:*):void {
 			}, fail: function(res:*):void {
 			}});
 			
 			MiniAdpter.window.wx.onKeyboardConfirm(function(res:*):void {
 				var str:String = res ? res.value : "";
+				// 对输入字符进行限制
+				if (_inputTarget._restrictPattern) {
+					// 部分输入法兼容
+					str = str.replace(/\u2006|\x27/g, "");
+					if (_inputTarget._restrictPattern.test(str)) {
+						str = str.replace(_inputTarget._restrictPattern, "");
+					}
+				}
 				_inputTarget.text = str;
 				_inputTarget.event(Event.INPUT);
 				MiniInput.inputEnter();
+				_inputTarget.event("confirm");
 			})
 			MiniAdpter.window.wx.onKeyboardInput(function(res:*):void {
 				var str:String = res ? res.value : "";
@@ -79,6 +88,14 @@ package laya.wx.mini {
 					if (str.indexOf("\n") != -1) {
 						MiniInput.inputEnter();
 						return;
+					}
+				}
+				// 对输入字符进行限制
+				if (_inputTarget._restrictPattern) {
+					// 部分输入法兼容
+					str = str.replace(/\u2006|\x27/g, "");
+					if (_inputTarget._restrictPattern.test(str)) {
+						str = str.replace(_inputTarget._restrictPattern, "");
 					}
 				}
 				_inputTarget.text = str;

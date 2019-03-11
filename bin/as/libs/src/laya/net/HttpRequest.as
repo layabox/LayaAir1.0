@@ -32,6 +32,8 @@ package laya.net {
 		protected var _responseType:String;
 		/**@private */
 		protected var _data:*;
+		/**@private */
+		protected var _url:String;
 		
 		/**
 		 * 发送 HTTP 请求。
@@ -44,8 +46,11 @@ package laya.net {
 		public function send(url:String, data:* = null, method:String = "get", responseType:String = "text", headers:Array = null):void {
 			_responseType = responseType;
 			_data = null;
+			_url = url;
 			var _this:HttpRequest = this;
 			var http:* = this._http;
+			//临时，因为微信不支持以下文件格式
+			url = URL.getAdptedFilePath(url);
 			http.open(method, url, true);
 			if (headers) {
 				for (var i:int = 0; i < headers.length; i++) {
@@ -121,6 +126,7 @@ package laya.net {
 		 */
 		protected function error(message:String):void {
 			clear();
+			console.warn(url, message);
 			event(Event.ERROR, message);
 		}
 		
@@ -157,7 +163,7 @@ package laya.net {
 		
 		/** 请求的地址。*/
 		public function get url():String {
-			return _http.responseURL;
+			return _url;
 		}
 		
 		/** 返回的数据。*/

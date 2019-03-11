@@ -46,8 +46,6 @@ package laya.net {
 		/**@private */
 		public var _endian:String;
 		/**@private */
-		private var _stamp:Number;
-		/**@private */
 		protected var _socket:*;
 		/**@private */
 		private var _connected:Boolean;
@@ -57,18 +55,9 @@ package laya.net {
 		private var _input:*;
 		/**@private */
 		private var _output:*;
+		
 		/**
-		 * @private
-		 * 表示建立连接时需等待的毫秒数。
-		 */
-		public var timeout:int;
-		/**
-		 * @private
-		 * 在写入或读取对象时，控制所使用的 AMF 的版本。
-		 */
-		public var objectEncoding:int;
-		/**
-		 * 不再缓存服务端发来的数据。
+		 * 不再缓存服务端发来的数据，如果传输的数据为字符串格式，建议设置为true，减少二进制转换消耗。
 		 */
 		public var disableInput:Boolean = false;
 		/**
@@ -120,20 +109,17 @@ package laya.net {
 		
 		/**
 		 * <p>创建新的 Socket 对象。默认字节序为 Socket.BIG_ENDIAN 。若未指定参数，将创建一个最初处于断开状态的套接字。若指定了有效参数，则尝试连接到指定的主机和端口。</p>
-		 * <p><b>注意：</b>强烈建议使用<b>不带参数</b>的构造函数形式，并添加任意事件侦听器和设置 protocols 等属性，然后使用 host 和 port 参数调用 connect 方法。此顺序将确保所有事件侦听器和其他相关流程工作正常。</p>
 		 * @param host		服务器地址。
 		 * @param port		服务器端口。
 		 * @param byteClass	用于接收和发送数据的 Byte 类。如果为 null ，则使用 Byte 类，也可传入 Byte 类的子类。
+		 * @param protocols	子协议名称。子协议名称字符串，或由多个子协议名称字符串构成的数组
 		 * @see laya.utils.Byte
 		 */
-		public function Socket(host:String = null, port:int = 0, byteClass:Class = null) {
-			super();
+		public function Socket(host:String = null, port:int = 0, byteClass:Class = null, protocols:Array = null) {
 			_byteClass = byteClass ? byteClass : Byte;
+			this.protocols = protocols;
 			endian = BIG_ENDIAN;
-			timeout = 20000;
-			_addInputPosition = 0;
-			if (host && port > 0 && port < 65535)
-				connect(host, port);
+			if (host && port > 0 && port < 65535) connect(host, port);
 		}
 		
 		/**
@@ -144,11 +130,6 @@ package laya.net {
 		 */
 		public function connect(host:String, port:int):void {
 			var url:String = "ws://" + host + ":" + port;
-			if (Browser.window.location.protocol == "https:") {
-				url = "wss://" + host + ":" + port;
-			} else {
-				url = "ws://" + host + ":" + port;
-			}
 			connectByUrl(url);
 		}
 		
@@ -158,8 +139,7 @@ package laya.net {
 		 * @param url	要连接的服务端 WebSocket URL。 URL 类似 ws://yourdomain:port。
 		 */
 		public function connectByUrl(url:String):void {
-			if (_socket != null)
-				close();
+			if (_socket != null) close();
 			
 			_socket && cleanSocket();
 			
@@ -192,13 +172,10 @@ package laya.net {
 		}
 		
 		/**
-		 * 清理socket。
+		 * 清理Socket：关闭Socket链接，关闭事件监听，重置Socket
 		 */
 		public function cleanSocket():void {
-			try {
-				_socket.close();
-			} catch (e:*) {
-			}
+			close();
 			_connected = false;
 			_socket.onopen = null;
 			_socket.onmessage = null;

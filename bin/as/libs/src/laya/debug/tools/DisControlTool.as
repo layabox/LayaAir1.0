@@ -43,8 +43,8 @@ package laya.debug.tools
 				tempP = sprite.fromParentPoint(tempP);
 				x = tempP.x;
 				y = tempP.y;
-				for (var i:int = sprite._childs.length - 1; i > -1; i--) {
-					var child:Sprite = sprite._childs[i];
+				for (var i:int = sprite._children.length - 1; i > -1; i--) {
+					var child:Sprite = sprite._children[i];
 					if(child is Sprite)
 						getObjectsUnderPoint(child,x,y,rst,filterFun);
 				}

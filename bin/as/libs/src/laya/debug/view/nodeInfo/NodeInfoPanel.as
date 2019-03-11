@@ -21,7 +21,6 @@ package laya.debug.view.nodeInfo
 			{
 				I = new NodeInfoPanel();
 				NodeInfosItem.init();
-				ToolPanel.init();
 			}
 		
 		}
@@ -87,7 +86,7 @@ package laya.debug.view.nodeInfo
 				return;
 			var i:int, len:int;
 			var cList:Array;
-			cList = node._childs;
+			cList = node._children;
 			len = cList.length;
 			var tChild:Sprite;
 			for (i = 0; i < len; i++)
@@ -110,7 +109,7 @@ package laya.debug.view.nodeInfo
 				return;
 			var i:int, len:int;
 			var cList:Array;
-			cList = p._childs;
+			cList = p._children;
 			len = cList.length;
 			var tChild:Sprite;
 			for (i = 0; i < len; i++)

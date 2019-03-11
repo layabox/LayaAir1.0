@@ -1,132 +1,91 @@
 package laya.d3.core.render {
-	import laya.d3.component.Component3D;
 	import laya.d3.core.BaseCamera;
-	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
+	import laya.d3.core.GeometryElement;
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.scene.Scene;
-	import laya.d3.graphics.DynamicBatch;
-	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.graphics.VertexDeclaration;
-	import laya.d3.math.Vector3;
+	import laya.d3.core.material.RenderState;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.SubShader;
+	import laya.d3.shader.ShaderInstance;
+	import laya.d3.shader.ShaderPass;
+	import laya.layagl.LayaGL;
 	import laya.utils.Stat;
+	import laya.webgl.WebGLContext;
 	
 	/**
 	 * @private
 	 * <code>RenderQuene</code> 类用于实现渲染队列。
 	 */
 	public class RenderQueue {
-		/**唯一标识ID计数器*/
-		private static var _uniqueIDCounter:int = 0;
-		/** 定义非透明渲染队列标记。*/
-		public static const OPAQUE:int = 1;//TODO:从零开始
-		/** 透明混合渲染队列标记。*/
-		public static const TRANSPARENT:int = 2;
-		
+		/** @private [只读]*/
+		public var isTransparent:Boolean;
 		/** @private */
-		private static var _cameraPosition:Vector3;
+		public var elements:Array;
 		/** @private */
-		private var _id:int;
+		public var lastTransparentRenderElement:RenderElement;
 		/** @private */
-		private var _needSort:Boolean;
-		/** @private */
-		public var _renderElements:Array;
-		/** @private */
-		private var _renderableRenderObjects:Array;
-		/** @private */
-		private var _dynamicBatchCombineRenderElements:Array;
-		/** @private */
-		private var _finalElements:Array;
-		/** @private */
-		private var _scene:Scene;
-		
-		/**
-		 * 获取唯一标识ID(通常用于优化或识别)。
-		 */
-		public function get id():int {
-			return _id;
-		}
+		public var lastTransparentBatched:Boolean;
 		
 		/**
 		 * 创建一个 <code>RenderQuene</code> 实例。
-		 * @param renderConfig 渲染配置。
 		 */
-		public function RenderQueue(scene:Scene) {
-			_id = ++_uniqueIDCounter;
-			_needSort = false;
-			_scene = scene;
-			_renderElements = [];
-			_renderableRenderObjects = [];
-			
-			_dynamicBatchCombineRenderElements = [];
-		}
-		
-		private function _sortOpaqueFunc(a:RenderElement, b:RenderElement):Number {
-			if (a._render && b._render)//TODO:临时
-				return a._render._distanceForSort - b._render._distanceForSort;
-			else
-				return 0;
-		}
-		
-		private function _sortAlphaFunc(a:RenderElement, b:RenderElement):Number {
-			if (a._render && b._render)//TODO:临时
-				return b._render._distanceForSort - a._render._distanceForSort;
-			else
-				return 0;
+		public function RenderQueue(isTransparent:Boolean = false) {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			this.isTransparent = isTransparent;
+			elements = [];
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _begainRenderElement(state:RenderState, renderObj:IRenderable, material:BaseMaterial):Boolean {
-			if (renderObj._beforeRender(state)) {
-				return true;
+		private function _compare(left:RenderElement, right:RenderElement):int {
+			var renderQueue:int = left.material.renderQueue - right.material.renderQueue;
+			if (renderQueue === 0) {
+				var sort:int = isTransparent ? right.render._distanceForSort - left.render._distanceForSort : left.render._distanceForSort - right.render._distanceForSort;
+				return sort + left.render.sortingFudge - right.render.sortingFudge;
+			} else {
+				return renderQueue;
 			}
-			return false;
-		}
-		
-		///**
-		//* @private
-		//*/
-		//public  function _sortAlpha(/*list:Vector.<RenderElement>, */cameraPosition:Vector3):void {
-		//var list:Array = _finalElements;
-		//for (var pass:int = 1; pass < list.length; pass++)
-		//for (var i:int = 0; i < list.length - 1; i++) {
-		//var objectDistance1:Number = Vector3.distance(list[i]._renderCullingObject._boundingSphere.center, cameraPosition);
-		//var objectDistance2:Number = Vector3.distance(list[i + 1]._renderCullingObject._boundingSphere.center, cameraPosition);
-		//if (objectDistance1 < objectDistance2) {
-		//var temp:RenderElement = list[i];// Swap
-		//list[i] = list[i + 1];
-		//list[i + 1] = temp;
-		//}
-		//}
-		//}
-		
-		/**
-		 * @private
-		 */
-		public function _sortAlpha(cameraPos:Vector3):void {
-			_cameraPosition = cameraPos;
-			_finalElements.sort(_sortAlphaFunc);
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _sortOpaque(cameraPos:Vector3):void {
-			_cameraPosition = cameraPos;
-			_finalElements.sort(_sortOpaqueFunc);
+		private function _partitionRenderObject(left:int, right:int):int {
+			var pivot:RenderElement = elements[Math.floor((right + left) / 2)];
+			while (left <= right) {
+				while (_compare(elements[left], pivot) < 0)
+					left++;
+				while (_compare(elements[right], pivot) > 0)
+					right--;
+				if (left < right) {
+					var temp:RenderElement = elements[left];
+					elements[left] = elements[right];
+					elements[right] = temp;
+					left++;
+					right--;
+				} else if (left === right) {
+					left++;
+					break;
+				}
+			}
+			return left;
 		}
 		
 		/**
 		 * @private
-		 * 准备渲染队列。
-		 * @param	state 渲染状态。
 		 */
-		public function _preRender(state:RenderState):void {
-			_finalElements = _renderElements.concat(_dynamicBatchCombineRenderElements);
-			//_needSort && (_finalElements.sort(_sort)，_needSort=false);//排序函数如果改变，仍需重新排列。//TODO:不排序面变多
+		public function _quickSort(left:int, right:int):void {
+			if (elements.length > 1) {
+				var index:int = _partitionRenderObject(left, right);
+				var leftIndex:int = index - 1;
+				if (left < leftIndex)
+					_quickSort(left, leftIndex);
+				
+				if (index < right)
+					_quickSort(index, right);
+			}
 		}
 		
 		/**
@@ -134,139 +93,104 @@ package laya.d3.core.render {
 		 * 渲染队列。
 		 * @param	state 渲染状态。
 		 */
-		public function _render(state:RenderState, isTarget:Boolean):void {
+		public function _render(context:RenderContext3D, isTarget:Boolean, customShader:Shader3D = null, replacementTag:String = null):void {
+			var lastStateRenderState:RenderState, lastStateRender:BaseRender;
 			var loopCount:int = Stat.loopCount;
-			var scene:Scene = _scene;
-			var camera:BaseCamera = state.camera;
-			var cameraID:int = camera.id;
-			var vbs:Vector.<VertexBuffer3D>;
-			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
-			var forceUploadParams:Boolean;
-			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
-			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
-				var renderElement:RenderElement = _finalElements[i];
-				var renderObj:IRenderable, material:BaseMaterial, owner:Sprite3D;
-				if (renderElement._onPreRenderFunction != null) {//TODO:
-					renderElement._onPreRenderFunction.call(renderElement._sprite3D, state);
+			var scene:Scene3D = context.scene;
+			var camera:BaseCamera = context.camera;
+			for (var i:int = 0, n:int = elements.length; i < n; i++) {
+				var element:RenderElement = elements[i];
+				var transform:Transform3D = element._transform;
+				var render:BaseRender = element.render;
+				var geometry:GeometryElement = element._geometry;
+				var material:BaseMaterial = element.material;
+				context.renderElement = element;
+				
+				if (loopCount !== render._updateLoopCount) {//此处处理更新为裁剪和合并后的，可避免浪费
+					render._renderUpdate(context, transform);
+					render._renderUpdateWithCamera(context, transform);
+					render._updateLoopCount = loopCount;
+					render._updateCamera = camera;
+				} else if (camera !== render._updateCamera) {
+					render._renderUpdateWithCamera(context, transform);
+					render._updateCamera = camera;
 				}
 				
-				if (renderElement._type === 0) {
-					state.owner = owner = renderElement._sprite3D;
-					state.renderElement = renderElement;
-					owner._preRenderUpdateComponents(state);//TODO:静态合并组件问题。
-					renderObj = renderElement.renderObj, material = renderElement._material;
-					if (_begainRenderElement(state, renderObj, material)) {
-						vbs = renderObj._getVertexBuffers();
-						vertexBuffer = renderObj._getVertexBuffer(0);
-						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);//TODO:需要合并vertexDeclaration
-						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
-						if (vbs) {
-							if (shader._uploadVertexBuffer !== vbs || forceUploadParams) {
-								for (var j:int = 0; j < vbs.length; j++ ){
-									var vb:VertexBuffer3D = vbs[j];
-									shader.uploadAttributesX(vb.vertexDeclaration.shaderValues.data, vb);
+				if (geometry._prepareRender(context)) {
+					var subShader:SubShader = material._shader.getSubShaderAt(0);//TODO:
+					var renderStates:Vector.<RenderState> = material._renderStates;
+					var passes:Vector.<ShaderPass>;
+					if (customShader) {
+						if (replacementTag) {
+							var oriTag:String = subShader.getFlag(replacementTag);
+							if (oriTag) {
+								var customSubShaders:Vector.<SubShader> = customShader._subShaders;
+								for (var k:int = 0, p:int = customSubShaders.length; k < p; k++) {
+									var customSubShader:SubShader = customSubShaders[k];
+									if (oriTag === customSubShader.getFlag(replacementTag)) {
+										passes = customSubShader._passes;
+										break;
+									}
 								}
-								shader._uploadVertexBuffer = vbs;
+								if (!passes)
+									continue;
+							} else {
+								continue;
 							}
 						} else {
-							if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
-								shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
-								shader._uploadVertexBuffer = vertexBuffer;
-							}
+							passes = customShader.getSubShaderAt(0)._passes;//TODO:
 						}
-						
-						if (shader._uploadScene !== scene || forceUploadParams) {
-							shader.uploadSceneUniforms(scene._shaderValues.data);
-							shader._uploadScene = scene;
-						}
-						
-						if (camera !== shader._uploadCamera || shader._uploadSprite3D !== owner || forceUploadParams) {
-							shader.uploadSpriteUniforms(owner._shaderValues.data);
-							shader._uploadSprite3D = owner;
-						}
-						
-						if (camera !== shader._uploadCamera || forceUploadParams) {
-							shader.uploadCameraUniforms(camera._shaderValues.data);
-							shader._uploadCamera = camera;
-						}
-						
-						if (shader._uploadMaterial !== material || forceUploadParams) {
-							material._upload();
-							shader._uploadMaterial = material;
-						}
-						
-						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
-							material._setRenderStateBlendDepth();
-							material._setRenderStateFrontFace(isTarget, owner.transform);
-							lastStateMaterial = material;
-							lastStateOwner = owner;
-						} else {
-							if (lastStateOwner !== owner) {
-								material._setRenderStateFrontFace(isTarget, owner.transform);
-								lastStateOwner = owner;
-							}
-						}
-						
-						renderObj._render(state);
-						shader._uploadLoopCount = loopCount;
-						
+					} else {
+						passes = subShader._passes;
 					}
-					owner._postRenderUpdateComponents(state);//TODO:静态合并组件问题。
 					
-				} else if (renderElement._type === 2) {//TODO:合并后组件渲染问题
-					var dynamicBatch:DynamicBatch = renderElement.renderObj as DynamicBatch;
-					state.owner = owner = renderElement._sprite3D;
-					state.renderElement = renderElement;
-					state._batchIndexStart = renderElement._tempBatchIndexStart;
-					state._batchIndexEnd = renderElement._tempBatchIndexEnd;
-					renderObj = renderElement.renderObj, material = renderElement._material;
-					if (_begainRenderElement(state, renderObj, material)) {
-						vertexBuffer = renderObj._getVertexBuffer(0);
-						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
-						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
+					for (var j:int = 0, m:int = passes.length; j < m; j++) {
+						var shaderPass:ShaderInstance = context.shader = passes[j].withCompile((scene._defineDatas.value) & (~material._disablePublicDefineDatas.value), render._defineDatas.value, material._defineDatas.value);
+						var switchShader:Boolean = shaderPass.bind();//纹理需要切换shader时重新绑定 其他uniform不需要
+						var switchShaderLoop:Boolean = (loopCount !== shaderPass._uploadLoopCount);
 						
-						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
-							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
-							shader._uploadVertexBuffer = vertexBuffer;
+						var uploadScene:Boolean = (shaderPass._uploadScene !== scene) || switchShaderLoop;
+						if (uploadScene || switchShader) {
+							shaderPass.uploadUniforms(shaderPass._sceneUniformParamsMap, scene._shaderValues, uploadScene);
+							shaderPass._uploadScene = scene;
 						}
 						
-						if (shader._uploadScene !== scene || forceUploadParams) {
-							shader.uploadSceneUniforms(scene._shaderValues.data);
-							shader._uploadScene = scene;
+						var switchCamera:Boolean = shaderPass._uploadCamera !== camera;
+						var uploadSprite3D:Boolean = (switchCamera || shaderPass._uploadRender !== render) || switchShaderLoop;
+						if (uploadSprite3D || switchShader) {
+							shaderPass.uploadUniforms(shaderPass._spriteUniformParamsMap, render._shaderValues, uploadSprite3D);
+							shaderPass._uploadRender = render;
 						}
 						
-						if (camera !== shader._uploadCamera || shader._uploadSprite3D !== owner || forceUploadParams) {
-							shader.uploadSpriteUniforms(owner._shaderValues.data);
-							shader._uploadSprite3D = owner;
+						var uploadCamera:Boolean = switchCamera || switchShaderLoop;
+						if (uploadCamera || switchShader) {
+							shaderPass.uploadUniforms(shaderPass._cameraUniformParamsMap, camera._shaderValues, uploadCamera);
+							shaderPass._uploadCamera = camera;
 						}
 						
-						if (camera !== shader._uploadCamera || forceUploadParams) {
-							shader.uploadCameraUniforms(camera._shaderValues.data);
-							shader._uploadCamera = camera;
+						var uploadMaterial:Boolean = (shaderPass._uploadMaterial !== material) || switchShaderLoop;
+						if (uploadMaterial || switchShader) {
+							shaderPass.uploadUniforms(shaderPass._materialUniformParamsMap, material._shaderValues, uploadMaterial);
+							shaderPass._uploadMaterial = material;
 						}
 						
-						if (shader._uploadMaterial !== material || forceUploadParams) {
-							material._upload();
-							shader._uploadMaterial = material;
-						}
-						
-						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
-							material._setRenderStateBlendDepth();
-							material._setRenderStateFrontFace(isTarget, owner.transform);
-							lastStateMaterial = material;
-							lastStateOwner = owner;
+						var renderState:RenderState =renderStates[j];
+						if (lastStateRenderState !== renderState) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
+							renderState._setRenderStateBlendDepth();
+							renderState._setRenderStateFrontFace(isTarget, transform);
+							lastStateRenderState = renderState;
+							lastStateRender = render;
 						} else {
-							if (lastStateOwner !== owner) {
-								material._setRenderStateFrontFace(isTarget, owner.transform);
-								lastStateOwner = owner;
+							if (lastStateRender !== render) {//TODO:是否可以用transfrom
+								renderState._setRenderStateFrontFace(isTarget, transform);
+								lastStateRender = render;
 							}
 						}
+						if (customShader)	//TODO:临时
+							WebGLContext.setBlend(LayaGL.instance, false);
 						
-						renderObj._render(state);
-						shader._uploadLoopCount = loopCount;
-						
+						geometry._render(context);
+						shaderPass._uploadLoopCount = loopCount;
 					}
 				}
 			}
@@ -274,108 +198,11 @@ package laya.d3.core.render {
 		
 		/**
 		 * @private
-		 * 渲染队列。
-		 * @param	state 渲染状态。
 		 */
-		public function _renderShadow(state:RenderState, isOnePSSM:Boolean):void {//TODO:SM
-			var loopCount:int = Stat.loopCount;
-			var scene:Scene = _scene;
-			var camera:BaseCamera = state.camera;//TODO:是否直接设置灯光摄像机
-			var vertexBuffer:VertexBuffer3D, vertexDeclaration:VertexDeclaration, shader:Shader3D;
-			var forceUploadParams:Boolean;
-			var lastStateMaterial:BaseMaterial, lastStateOwner:Sprite3D;
-			
-			for (var i:int = 0, n:int = _finalElements.length; i < n; i++) {
-				var renderElement:RenderElement = _finalElements[i];
-				var renderObj:IRenderable, material:BaseMaterial, owner:RenderableSprite3D;
-				if (renderElement._type === 0) {//TODO:静态合并,动态合并
-					state.owner = owner = renderElement._sprite3D;
-					//传入灯光的MVP矩阵
-					if (!isOnePSSM && (owner._projectionViewWorldUpdateCamera !== camera || owner._projectionViewWorldUpdateLoopCount !== Stat.loopCount)) {
-						owner._render._renderUpdate(state._projectionViewMatrix);
-						owner._projectionViewWorldUpdateLoopCount = Stat.loopCount;
-						owner._projectionViewWorldUpdateCamera = camera;
-					}
-					state.renderElement = renderElement;
-					owner._preRenderUpdateComponents(state);
-					renderObj = renderElement.renderObj, material = renderElement._material;
-					if (_begainRenderElement(state, renderObj, null)) {
-						vertexBuffer = renderObj._getVertexBuffer(0);
-						vertexDeclaration = vertexBuffer.vertexDeclaration;
-						shader = state._shader = material._getShader(scene._shaderDefineValue, vertexDeclaration.shaderDefineValue, owner._shaderDefineValue);
-						forceUploadParams = shader.bind() || (loopCount !== shader._uploadLoopCount);
-						if (shader._uploadVertexBuffer !== vertexBuffer || forceUploadParams) {
-							//WebGL.mainContext.disableVertexAttribArray(0);
-							//WebGL.mainContext.disableVertexAttribArray(1);
-							//WebGL.mainContext.disableVertexAttribArray(2);
-							//WebGL.mainContext.disableVertexAttribArray(3);
-							shader.uploadAttributes(vertexDeclaration.shaderValues.data, null);
-							shader._uploadVertexBuffer = vertexBuffer;
-						}
-						
-						if (camera !== shader._uploadCamera || shader._uploadSprite3D !== owner || forceUploadParams) {
-							shader.uploadSpriteUniforms(owner._shaderValues.data);
-							shader._uploadSprite3D = owner;
-						}
-						
-						if (camera !== shader._uploadCamera || forceUploadParams) {
-							shader.uploadCameraUniforms(camera._shaderValues.data);
-							shader._uploadCamera = camera;
-						}
-						
-						if (shader._uploadMaterial !== material || forceUploadParams) {
-							material._upload();
-							shader._uploadMaterial = material;
-						}
-						
-						if (shader._uploadRenderElement !== renderElement || forceUploadParams) {//TODO:是否也删除
-							//shader.uploadRenderElementUniforms(renderElement._shaderValue.data);
-							//shader._uploadRenderElement = renderElement;
-						}
-						
-						if (lastStateMaterial !== material) {//lastStateMaterial,lastStateOwner存到全局，多摄像机还可优化
-							material._setRenderStateFrontFace(false, owner.transform);
-							lastStateMaterial = material;
-							lastStateOwner = owner;
-						} else {
-							if (lastStateOwner !== owner) {
-								material._setRenderStateFrontFace(false, owner.transform);
-								lastStateOwner = owner;
-							}
-						}
-						
-						renderObj._render(state);
-						shader._uploadLoopCount = loopCount;
-					}
-					owner._postRenderUpdateComponents(state);
-				}
-			}
-		}
-		
-		/**
-		 * 清空队列中的渲染物体。
-		 */
-		public function _clearRenderElements():void {
-			_dynamicBatchCombineRenderElements.length = 0;
-			_renderElements.length = 0;
-			_needSort = true;
-		}
-		
-		/**
-		 * 添加渲染物体。
-		 * @param renderObj 渲染物体。
-		 */
-		public function _addRenderElement(renderElement:RenderElement):void {
-			_renderElements.push(renderElement);
-			_needSort = true;
-		}
-		
-		/**
-		 * 添加动态批处理。
-		 * @param renderObj 动态批处理。
-		 */
-		public function _addDynamicBatchElement(dynamicBatchElement:RenderElement):void {
-			_dynamicBatchCombineRenderElements.push(dynamicBatchElement);
+		public function clear():void {
+			elements.length = 0;
+			lastTransparentRenderElement = null;
+			lastTransparentBatched = false;
 		}
 	}
 }

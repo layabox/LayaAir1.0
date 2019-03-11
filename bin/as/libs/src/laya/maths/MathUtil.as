@@ -95,8 +95,7 @@ package laya.maths {
 		 * @return 如果a等于b 则值为0；如果b>a则值为1；如果b<则值为-1。
 		 */
 		public static function sortBigFirst(a:Number, b:Number):Number {
-			if (a == b)
-				return 0;
+			if (a == b) return 0;
 			return b > a ? 1 : -1;
 		}
 		
@@ -107,8 +106,7 @@ package laya.maths {
 		 * @return 如果a等于b 则值为0；如果b>a则值为-1；如果b<则值为1。
 		 */
 		public static function sortSmallFirst(a:Number, b:Number):Number {
-			if (a == b)
-				return 0;
+			if (a == b) return 0;
 			return b > a ? -1 : 1;
 		}
 		

@@ -8,6 +8,7 @@ package laya.ani.bone
 		public var time:Number;
 		public var drawOrder:Vector.<int> = new Vector.<int>();
 		
+		//TODO:coverage
 		public function DrawOrderData() 
 		{
 		}

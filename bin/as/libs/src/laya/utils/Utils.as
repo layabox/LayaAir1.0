@@ -4,10 +4,7 @@ package laya.utils {
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
-	import laya.renders.Render;
-	import laya.renders.RenderContext;
 	import laya.resource.Texture;
-	import laya.runtime.IConchNode;
 	
 	/**
 	 * <code>Utils</code> 是工具类。
@@ -132,13 +129,15 @@ package laya.utils {
 		 */
 		public static function getGlobalRecByPoints(sprite:Sprite, x0:Number, y0:Number, x1:Number, y1:Number):Rectangle {
 			var newLTPoint:Point;
-			newLTPoint = new Point(x0, y0);
+			newLTPoint = Point.create().setTo(x0, y0);
 			newLTPoint = sprite.localToGlobal(newLTPoint);
 			var newRBPoint:Point;
-			newRBPoint = new Point(x1, y1);
+			newRBPoint = Point.create().setTo(x1, y1);
 			newRBPoint = sprite.localToGlobal(newRBPoint);
-			
-			return Rectangle._getWrapRec([newLTPoint.x, newLTPoint.y, newRBPoint.x, newRBPoint.y]);
+			var rst:Rectangle = Rectangle._getWrapRec([newLTPoint.x, newLTPoint.y, newRBPoint.x, newRBPoint.y]);
+			newLTPoint.recover();
+			newRBPoint.recover();
+			return rst;
 		}
 		
 		/**
@@ -191,19 +190,6 @@ package laya.utils {
 				}
 				array[j + 1] = c;
 				i++;
-			}
-			var model:IConchNode = c.parent.conchModel;
-			if (model) {
-				if (model.updateZOrder != null) {
-					model.updateZOrder();
-				} else {
-					for (i = 0; i < len; i++) {
-						model.removeChild(array[i].conchModel);
-					}
-					for (i = 0; i < len; i++) {
-						model.addChildAt(array[i].conchModel, i);
-					}
-				}
 			}
 			return true;
 		}
@@ -310,6 +296,9 @@ package laya.utils {
 				ty += canvasTop;
 			}
 			
+			// Safari兼容
+			ty += Laya.stage['_safariOffsetY'];
+			
 			// 组合画布缩放和舞台适配缩放以及显示对象缩放，得到DOM原因的缩放因子
 			var domScaleX:Number, domScaleY:Number;
 			if (perpendicular) {
@@ -355,15 +344,13 @@ package laya.utils {
 		 * @param	textureList
 		 * @return
 		 */
-		public static function isOkTextureList(textureList:Array):Boolean
-		{
+		public static function isOkTextureList(textureList:Array):Boolean {
 			if (!textureList) return false;
 			var i:int, len:int = textureList.length;
 			var tTexture:Texture;
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				tTexture = textureList[i];
-				if (!tTexture||!tTexture.source) return false;
+				if (!tTexture || !tTexture._getSource()) return false;
 			}
 			return true;
 		}
@@ -374,27 +361,39 @@ package laya.utils {
 		 * @param	cmds
 		 * @return
 		 */
-		public static function isOKCmdList(cmds:Array):Boolean
-		{
+		public static function isOKCmdList(cmds:Array):Boolean {
+			//todo 改成适应新版cmd版本
 			if (!cmds) return false;
 			var i:int, len:int = cmds.length;
-			var context:RenderContext = Render._context;
+			//var context:RenderContext = Render._context;
 			var cmd:Object;
 			var tex:Texture;
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				cmd = cmds[i];
-				switch(cmd.callee)
-				{
-					case context._drawTexture: 
-					case context._fillTexture: 
-					case context._drawTextureWithTransform: 
-						tex = cmd[0];
-						if (!tex || !tex.source) return false;
-					
-				}
+					//switch(cmd.callee)
+					//{
+					//case context._drawTexture: 
+					//case context._fillTexture: 
+					//case context._drawTextureWithTransform: 
+					//tex = cmd[0];
+					//if (!tex || !tex.source) return false;
+					//
+					//}
 			}
 			return true;
+		}
+		
+		/**
+		 * 获得URL参数值
+		 * @param	name 参数名称
+		 * @return	参数值
+		 */
+		public static function getQueryString(name:String):String {
+			if (Browser.onMiniGame) return null;
+			var reg:RegExp = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+			var r:* = window.location.search.substr(1).match(reg);
+			if (r != null) return unescape(r[2]);
+			return null;
 		}
 	}
 }

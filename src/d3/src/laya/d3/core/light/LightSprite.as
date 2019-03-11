@@ -1,7 +1,6 @@
 package laya.d3.core.light {
-	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Sprite3D;
-	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Vector3;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	
@@ -32,7 +31,7 @@ package laya.d3.core.light {
 		/** @private */
 		protected var _shadowMapPCFType:int;
 		/** @private */
-		protected var _parallelSplitShadowMap:ParallelSplitShadowMap;
+		public var _parallelSplitShadowMap:ParallelSplitShadowMap;
 		/** @private */
 		public var _lightmapBakedType:int;
 		
@@ -120,7 +119,7 @@ package laya.d3.core.light {
 		 */
 		public function set shadowPSSMCount(value:int):void {
 			_shadowMapCount = value;
-			(_parallelSplitShadowMap) && (_parallelSplitShadowMap.PSSMNum = value);
+			(_parallelSplitShadowMap) && (_parallelSplitShadowMap.shadowMapCount = value);
 		}
 		
 		/**
@@ -153,11 +152,11 @@ package laya.d3.core.light {
 		public function set lightmapBakedType(value:int):void {
 			if (_lightmapBakedType !== value) {
 				_lightmapBakedType = value;
-				if (_activeInHierarchy) {
+				if (activeInHierarchy) {
 					if (value !== LIGHTMAPBAKEDTYPE_BAKED)
-						_scene._addLight(this);
+						(_scene as Scene3D)._addLight(this);
 					else
-						_scene._removeLight(this);
+						(_scene as Scene3D)._removeLight(this);
 				}
 			}
 		}
@@ -181,33 +180,33 @@ package laya.d3.core.light {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, nodeData:Object):void {
-			var colorData:Array = customProps.color;
-			var colorE:Float32Array = color.elements;
-			colorE[0] = colorData[0];
-			colorE[1] = colorData[1];
-			colorE[2] = colorData[2];
+		override public function _parse(data:Object):void {
+			super._parse(data);
+			var colorData:Array = data.color;
+			color.fromArray(colorData);
+			intensity = data.intensity;
+			lightmapBakedType = data.lightmapBakedType;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _addSelfRenderObjects():void {
-			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && (_scene._addLight(this));
+		override protected function _onActive():void {
+			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && ((_scene as Scene3D)._addLight(this));
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _clearSelfRenderObjects():void {
-			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && (_scene._removeLight(this));
+		override protected function _onInActive():void {
+			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && ((_scene as Scene3D)._removeLight(this));
 		}
 		
 		/**
 		 * 更新灯光相关渲染状态参数。
 		 * @param state 渲染状态参数。
 		 */
-		public function _prepareToScene(state:RenderState):Boolean {
+		public function _prepareToScene():Boolean {
 			return false;
 		}
 		

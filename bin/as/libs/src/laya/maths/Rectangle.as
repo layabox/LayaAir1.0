@@ -1,4 +1,5 @@
 package laya.maths {
+	import laya.utils.Pool;
 	
 	/**
 	 * <p><code>Rectangle</code> 对象是按其位置（由它左上角的点 (x, y) 确定）以及宽度和高度定义的区域。</p>
@@ -63,6 +64,28 @@ package laya.maths {
 			this.width = width;
 			this.height = height;
 			return this;
+		}
+		
+		/**
+		 * 重置
+		 */
+		public function reset():Rectangle {
+			this.x = this.y = this.width = this.height = 0;
+			return this;
+		}
+		
+		/**
+		 * 回收
+		 */
+		public function recover():void {
+			Pool.recover("Rectangle", reset());
+		}
+		
+		/**
+		 * 创建
+		 */
+		public static function create():Rectangle {
+			return Pool.getItemByClass("Rectangle", Rectangle);
 		}
 		
 		/**
@@ -216,7 +239,7 @@ package laya.maths {
 		public static function _getWrapRec(pointList:Array, rst:Rectangle = null):Rectangle {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			if (!pointList || pointList.length < 1) return rst ? rst.setTo(0, 0, 0, 0) : TEMP.setTo(0, 0, 0, 0);
-			rst = rst ? rst : new Rectangle();
+			rst = rst ? rst : Rectangle.create();
 			var i:int, len:int = pointList.length, minX:Number, maxX:Number, minY:Number, maxY:Number, tPoint:Point = Point.TEMP;
 			minX = minY = 99999;
 			maxX = maxY = -minX;

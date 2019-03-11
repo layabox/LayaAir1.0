@@ -1,4 +1,5 @@
 package laya.ani.swf {
+	import laya.Const;
 	import laya.display.Node;
 	import laya.display.Sprite;
 	import laya.events.Event;
@@ -7,6 +8,7 @@ package laya.ani.swf {
 	import laya.net.URL;
 	import laya.utils.Byte;
 	import laya.utils.Handler;
+	import laya.utils.Timer;
 	
 	/**
 	 * 动画播放完毕后调度。
@@ -99,7 +101,7 @@ package laya.ani.swf {
 			if (!parentMovieClip) {
 				_movieClipList = [this];
 				_isRoot = true;
-				_setUpNoticeType(Node.NOTICE_DISPLAY);
+				_setBitUp(Const.DISPLAY);
 			} else {
 				_isRoot = false;
 				_movieClipList = parentMovieClip._movieClipList;
@@ -130,8 +132,9 @@ package laya.ani.swf {
 			if (value) timer.loop(this.interval, this, updates, null, true);
 			else timer.clear(this, updates);		
 		}
-		
+
 		/**@private 更新时间轴*/
+		//TODO:coverage
 		public function updates():void {
 			if (_parentMovieClip) return;
 			var i:int, len:int;
@@ -197,6 +200,7 @@ package laya.ani.swf {
 		 * @private
 		 * 动画的帧更新处理函数。
 		 */
+		//TODO:coverage
 		private function _update():void {
 			if (!_data) return;
 			if (!_playing) return;
@@ -209,7 +213,7 @@ package laya.ani.swf {
 				}
 				_playIndex = 0;
 			}
-			_parse(_playIndex);
+			_parseFrame(_playIndex);
 			if (_labels && _labels[_playIndex]) event(Event.LABEL, _labels[_playIndex]);
 			if (_endFrame!=-1&&_endFrame == _playIndex )
 			{
@@ -288,10 +292,11 @@ package laya.ani.swf {
 		}
 		
 		/**@private */
+		//TODO:coverage
 		private function _displayFrame(frameIndex:int = -1):void {
 			if (frameIndex != -1) {
 				if (_curIndex > frameIndex) _reset();
-				_parse(frameIndex);
+				_parseFrame(frameIndex);
 			}
 		}
 		
@@ -303,7 +308,8 @@ package laya.ani.swf {
 		}
 		
 		/**@private */
-		private function _parse(frameIndex:int):void {
+		//TODO:coverage
+		private function _parseFrame(frameIndex:int):void {
 			var curChild:Sprite = this;
 			var mc:MovieClip, sp:Sprite, key:int, type:int, tPos:int, ttype:int, ifAdd:Boolean = false;
 			var _idOfSprite:Array = this._idOfSprite, _data:Byte = this._data, eStr:String;
@@ -416,6 +422,7 @@ package laya.ani.swf {
 		}
 		
 		/**@private */
+		//TODO:coverage
 		public function _setData(data:Byte, start:int):void {
 			_data = data;
 			_start = start + 3;
@@ -435,7 +442,7 @@ package laya.ani.swf {
 		 * @param   atlasPath  图集路径，默认使用与swf同名的图集
 		 */
 		public function load(url:String,atlas:Boolean=false,atlasPath:String=null):void {
-			_url = url = URL.formatURL(url);
+			_url = url;
 			if(atlas) _atlasPath=atlasPath?atlasPath:url.split(".swf")[0] + ".json";	
 			stop();
 			_clear();
@@ -457,23 +464,30 @@ package laya.ani.swf {
 			{
 				event(Event.ERROR,"file not find");
 				return;
-			} 
+			}
+			if (_atlasPath && !Loader.getAtlas(_atlasPath))
+			{
+				event(Event.ERROR,"Atlas not find");
+				return;
+			}
 			this.basePath =_atlasPath?Loader.getAtlas(_atlasPath).dir:_url.split(".swf")[0] + "/image/";		
 			_initData(data);
 		}
 		
 		/**@private */
+		//TODO:coverage
 		private function _initState():void {
 			_reset();
 			_ended = false;
 			var preState:Boolean = _playing;
 			_playing = false;
 			_curIndex = 0;
-			while (!_ended) _parse(++_curIndex);
+			while (!_ended) _parseFrame(++_curIndex);
 			_playing = preState;
 		}
 		
 		/**@private */
+		//TODO:coverage
 		private function _initData(data:*):void {
 			_data = new Byte(data);
 			var i:int, len:int = _data.getUint16();

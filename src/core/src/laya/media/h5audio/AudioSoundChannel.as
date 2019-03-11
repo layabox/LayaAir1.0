@@ -31,7 +31,7 @@ package laya.media.h5audio {
 		private function __onEnd():void {
 			if (this.loops == 1) {
 				if (completeHandler) {
-					Laya.timer.once(10, this, __runComplete, [completeHandler], false);
+					Laya.systemTimer.once(10, this, __runComplete, [completeHandler], false);
 					completeHandler = null;
 				}
 				this.stop();
@@ -46,7 +46,8 @@ package laya.media.h5audio {
 		}
 		
 		private function __resumePlay():void {		
-			if(_audio) _audio.removeEventListener("canplay", _resumePlay);
+			if (_audio) _audio.removeEventListener("canplay", _resumePlay);
+			if (isStopped) return;
 			try {
 				_audio.currentTime = this.startTime;
 				Browser.container.appendChild(_audio);

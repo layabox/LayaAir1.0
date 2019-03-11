@@ -9,6 +9,7 @@ package laya.ani.bone
 		public var skinName:String;
 		public var deformSlotDataList:Vector.<DeformSlotData> = new Vector.<DeformSlotData>();
 		
+		//TODO:coverage
 		public function DeformAniData() 
 		{
 			

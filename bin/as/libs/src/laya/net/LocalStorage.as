@@ -17,13 +17,14 @@ package laya.net {
 		 */
 		public static var support:Boolean = false;
 		
-		public static function __init__():void {
+		public static function __init__():Boolean {
 			if (!_baseClass) {
 				_baseClass = Storage;
 				Storage.init();
 			}
 			items = _baseClass.items;
 			support = _baseClass.support;
+			return support;
 		}
 		
 		/**
@@ -91,7 +92,7 @@ class Storage {
 	public static var support:Boolean = false;
 	
 	public static function init():void {
-		__JS__("try{Storage.items=window.localStorage;Storage.setItem('laya', '1');Storage.removeItem('laya');Storage.support = true;} catch(e){}if(!Storage.support)console.log('LocalStorage is not supprot or browser is private mode.')");
+		__JS__("try{Storage.support = true;Storage.items=window.localStorage;Storage.setItem('laya', '1');Storage.removeItem('laya');} catch(e){Storage.support = false;}if(!Storage.support)console.log('LocalStorage is not supprot or browser is private mode.')");
 	}
 	
 	/**

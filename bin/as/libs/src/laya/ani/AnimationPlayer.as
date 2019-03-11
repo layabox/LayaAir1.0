@@ -87,10 +87,10 @@ package laya.ani {
 			
 			if (_templet !== value) {
 				_templet = value;
-				if (value.loaded)
+				//if (value.loaded)
 					_computeFullKeyframeIndices();
-				else
-					value.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [_cachePlayRate, _cacheFrameRate]);
+				//else
+					//value.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [_cachePlayRate, _cacheFrameRate]);
 			}
 		}
 		
@@ -174,10 +174,10 @@ package laya.ani {
 			if (_cachePlayRate !== value) {
 				_cachePlayRate = value;
 				if (_templet)
-					if (_templet.loaded)
+					//if (_templet.loaded)
 						_computeFullKeyframeIndices();
-					else
-						_templet.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [value, _cacheFrameRate]);
+					//else
+						//_templet.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [value, _cacheFrameRate]);
 			}
 		}
 		
@@ -198,10 +198,10 @@ package laya.ani {
 				_cacheFrameRate = value;
 				_cacheFrameRateInterval = 1000.0 / _cacheFrameRate;
 				if (_templet)
-					if (_templet.loaded)
+					//if (_templet.loaded)
 						_computeFullKeyframeIndices();
-					else
-						_templet.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [_cachePlayRate, value]);
+					//else
+						//_templet.once(Event.LOADED, this, _onTempletLoadedComputeFullKeyframeIndices, [_cachePlayRate, value]);
 			}
 		}
 		
@@ -210,7 +210,7 @@ package laya.ani {
 		 * @param	value 当前时间
 		 */
 		public function set currentTime(value:Number):void {
-			if (_currentAnimationClipIndex === -1 || !_templet || !_templet.loaded)
+			if (_currentAnimationClipIndex === -1 || !_templet /*|| !_templet.loaded*/)
 				return;
 			
 			if (value < _playStart || value > _playEnd)
@@ -219,7 +219,7 @@ package laya.ani {
 			_startUpdateLoopCount = Stat.loopCount;
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			_currentTime = value /*% playDuration*/;
-			_currentKeyframeIndex = Math.max(Math.floor(currentPlayTime / cacheFrameInterval), 0);//TODO:矫正
+			_currentKeyframeIndex = Math.floor(currentPlayTime / cacheFrameInterval);
 			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 		}
 		
@@ -304,7 +304,11 @@ package laya.ani {
 			
 			for (var i:int = 0, iNum:int = templet.getAnimationCount(); i < iNum; i++) {
 				var aniFullFrame:Array = [];
-				
+				if (!templet.getAnimation(i).nodes)
+				{
+					anifullFrames.push(aniFullFrame);
+					continue;
+				} 
 				for (var j:int = 0, jNum:int = templet.getAnimation(i).nodes.length; j < jNum; j++) {
 					var node:* = templet.getAnimation(i).nodes[j];
 					var frameCount:int = Math.floor(node.playTime / cacheFrameInterval + 0.01);
@@ -362,7 +366,7 @@ package laya.ani {
 		 */
 		private function _setPlayParams(time:Number, cacheFrameInterval:Number):void {
 			_currentTime = time;
-			_currentKeyframeIndex = Math.max(Math.floor((currentPlayTime) / cacheFrameInterval + 0.01), 0);//TODO:矫正
+			_currentKeyframeIndex = Math.floor((currentPlayTime) / cacheFrameInterval + 0.01);
 			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 		}
 		
@@ -371,7 +375,7 @@ package laya.ani {
 		 */
 		private function _setPlayParamsWhenStop(currentAniClipPlayDuration:Number, cacheFrameInterval:Number):void {
 			_currentTime = currentAniClipPlayDuration;
-			_currentKeyframeIndex = Math.max(Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01), 0);//TODO:矫正
+			_currentKeyframeIndex = Math.floor(currentAniClipPlayDuration / cacheFrameInterval + 0.01);
 			_currentFrameTime = _currentKeyframeIndex * cacheFrameInterval;
 			_currentAnimationClipIndex = -1;//动画结束	
 		}
@@ -380,7 +384,7 @@ package laya.ani {
 		 * @private
 		 */
 		public function _update(elapsedTime:Number):void {
-			if (_currentAnimationClipIndex === -1 || _paused || !_templet || !_templet.loaded)//动画停止或暂停，不更新
+			if (_currentAnimationClipIndex === -1 || _paused || !_templet /*|| !_templet.loaded*/)//动画停止或暂停，不更新
 				return;
 			
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
@@ -467,10 +471,10 @@ package laya.ani {
 			_startUpdateLoopCount = Stat.loopCount;
 			this.event(Event.PLAYED);
 			
-			if (_templet.loaded)
+			//if (_templet.loaded)
 				_calculatePlayDuration();
-			else
-				_templet.once(Event.LOADED, this, _onAnimationTempletLoaded);
+			//else
+				//_templet.once(Event.LOADED, this, _onAnimationTempletLoaded);
 			
 			_update(0);//如果分段播放,可修正帧率
 		}
@@ -500,6 +504,13 @@ package laya.ani {
 			} else {
 				_stopWhenCircleFinish = true;
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function destroy():void{
+			
 		}
 	
 	}

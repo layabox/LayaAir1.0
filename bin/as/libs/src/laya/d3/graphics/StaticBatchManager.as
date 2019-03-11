@@ -1,26 +1,33 @@
 package laya.d3.graphics {
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
+	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.scene.Scene;
-	import laya.d3.math.Matrix4x4;
+	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.core.scene.Scene3D;
 	
 	/**
-	 * @private
 	 * <code>StaticBatchManager</code> 类用于静态批处理管理的父类。
 	 */
 	public class StaticBatchManager {
-		/** @private */
-		public static var _staticBatchManagers:Vector.<StaticBatchManager> = new Vector.<StaticBatchManager>();//TODO:释放问题
+		/** @private [只读]*/
+		public static var _managers:Vector.<StaticBatchManager> = new Vector.<StaticBatchManager>();
+		
+		/**
+		 * @private
+		 */
+		public static function _registerManager(manager:StaticBatchManager):void {
+			_managers.push(manager);
+		}
 		
 		/**
 		 * @private
 		 */
 		private static function _addToStaticBatchQueue(sprite3D:Sprite3D):void {
-			if (sprite3D is RenderableSprite3D)
+			if (sprite3D is RenderableSprite3D && sprite3D.isStatic)
 				(sprite3D as RenderableSprite3D)._addToInitStaticBatchManager();
 			for (var i:int = 0, n:int = sprite3D.numChildren; i < n; i++)
-				_addToStaticBatchQueue(sprite3D._childs[i] as Sprite3D);
+				_addToStaticBatchQueue(sprite3D._children[i] as Sprite3D);
 		}
 		
 		/**
@@ -31,94 +38,126 @@ package laya.d3.graphics {
 		 * @param renderableSprite3Ds 静态批处理子节点队列。
 		 */
 		public static function combine(staticBatchRoot:Sprite3D, renderableSprite3Ds:Vector.<RenderableSprite3D> = null):void {
-			var i:int, n:int, staticBatchManager:StaticBatchManager;
+			var i:int, n:int;
 			if (renderableSprite3Ds) {
 				for (i = 0, n = renderableSprite3Ds.length; i < n; i++) {
 					var renderableSprite3D:RenderableSprite3D = renderableSprite3Ds[i];
-					renderableSprite3D._addToInitStaticBatchManager();
+					(renderableSprite3D.isStatic) && (renderableSprite3D._addToInitStaticBatchManager());
 				}
 			} else {
 				if (staticBatchRoot)
 					_addToStaticBatchQueue(staticBatchRoot);
 			}
-			for (i = 0, n = _staticBatchManagers.length; i < n; i++) {
-				staticBatchManager = _staticBatchManagers[i];
-				staticBatchManager._initStaticBatchs(staticBatchRoot);
-				staticBatchManager._finishInit();
+			for (i = 0, n = _managers.length; i < n; i++) {
+				var manager:StaticBatchManager = _managers[i];
+				manager._initStaticBatchs(staticBatchRoot);
 			}
 		}
 		
 		/** @private */
-		protected var _initBatchRenderElements:Vector.<RenderElement>;
+		protected var _batchRenderElementPool:Vector.<SubMeshRenderElement>;
 		/** @private */
-		protected var _staticBatches:*;
+		protected var _batchRenderElementPoolIndex:int;
+		/** @private */
+		protected var _initBatchSprites:Vector.<RenderableSprite3D>;
+		/** @private */
+		protected var _staticBatches:Object;
 		
 		/**
 		 * 创建一个 <code>StaticBatchManager</code> 实例。
 		 */
 		public function StaticBatchManager() {
-			_initBatchRenderElements = new Vector.<RenderElement>();
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			_initBatchSprites = new Vector.<RenderableSprite3D>();
 			_staticBatches = {};
+			_batchRenderElementPoolIndex = 0;
+			_batchRenderElementPool = new Vector.<SubMeshRenderElement>();
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function _finishInit():void {
-			for (var key:String in _staticBatches)
-				_staticBatches[key]._finishInit();
-			_initBatchRenderElements.length = 0;
+		private function _partition(items:Vector.<RenderableSprite3D>, left:int, right:int):int {
+			var pivot:RenderableSprite3D = items[Math.floor((right + left) / 2)];
+			while (left <= right) {
+				while (_compare(items[left], pivot) < 0)
+					left++;
+				while (_compare(items[right], pivot) > 0)
+					right--;
+				if (left < right) {
+					var temp:* = items[left];
+					items[left] = items[right];
+					items[right] = temp;
+					left++;
+					right--;
+				} else if (left === right) {
+					left++;
+					break;
+				}
+			}
+			return left;
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _quickSort(items:Vector.<RenderableSprite3D>, left:int, right:int):void {
+			if (items.length > 1) {
+				var index:int = _partition(items, left, right);
+				var leftIndex:int = index - 1;
+				if (left < leftIndex)
+					_quickSort(items, left, leftIndex);
+				
+				if (index < right)
+					_quickSort(items, index, right);
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		protected function _compare(left:RenderableSprite3D, right:RenderableSprite3D):int {
+			throw "StaticBatch:must override this function.";
 		}
 		
 		/**
 		 * @private
 		 */
 		protected function _initStaticBatchs(rootSprite:Sprite3D):void {
-			throw new Error("StaticBatchManager:must override this function.");
+			throw "StaticBatch:must override this function.";
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _addInitBatchSprite(renderableSprite3D:RenderableSprite3D):void {
-			var renderElements:Vector.<RenderElement> = renderableSprite3D._render._renderElements;
-			for (var i:int = 0, n:int = renderElements.length; i < n; i++)
-				_initBatchRenderElements.push(renderElements[i]);
+		public function _getBatchRenderElementFromPool():RenderElement {
+			throw "StaticBatch:must override this function.";
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _clearRenderElements():void {
-			for (var key:String in _staticBatches)
-				_staticBatches[key]._clearRenderElements();
+		public function _addBatchSprite(renderableSprite3D:RenderableSprite3D):void {
+			_initBatchSprites.push(renderableSprite3D);
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _garbageCollection(renderElement:RenderElement):void {
-			var staticBatch:StaticBatch = renderElement._staticBatch;
-			var initBatchRenderElements:Vector.<RenderElement> = staticBatch._initBatchRenderElements;
-			var index:int = initBatchRenderElements.indexOf(renderElement);
-			initBatchRenderElements.splice(index, 1);
-			if (initBatchRenderElements.length === 0) {
-				staticBatch.dispose();
-				delete _staticBatches[staticBatch._key];
-			}
+		public function _clear():void {
+			_batchRenderElementPoolIndex = 0;
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _addToRenderQueue(scene:Scene, view:Matrix4x4, projection:Matrix4x4, projectionView:Matrix4x4):void {
-			for (var key:String in _staticBatches) {
-				var staticBatch:StaticBatch = _staticBatches[key];
-				if (staticBatch._batchRenderElements.length > 0)
-					staticBatch._updateToRenderQueue(scene, projectionView);
-			}
+		public function _garbageCollection():void {
+			throw "StaticBatchManager: must override it.";
 		}
 		
+		/**
+		 * @private
+		 */
 		public function dispose():void {
 			_staticBatches = null;
 		}

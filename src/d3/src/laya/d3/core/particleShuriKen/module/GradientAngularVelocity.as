@@ -25,7 +25,7 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	separateConstant 分轴固定角速度。
 		 * @return 渐变角速度。
 		 */
-		public static function createByConstantSeparate(separateConstant:Vector4):GradientAngularVelocity {
+		public static function createByConstantSeparate(separateConstant:Vector3):GradientAngularVelocity {
 			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
 			gradientAngularVelocity._type = 0;
 			gradientAngularVelocity._separateAxes = true;
@@ -53,14 +53,13 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param	gradientZ Z轴渐变角速度。
 		 * @return  渐变角速度。
 		 */
-		public static function createByGradientSeparate(gradientX:GradientDataNumber, gradientY:GradientDataNumber, gradientZ:GradientDataNumber, gradientW:GradientDataNumber):GradientAngularVelocity {
+		public static function createByGradientSeparate(gradientX:GradientDataNumber, gradientY:GradientDataNumber, gradientZ:GradientDataNumber):GradientAngularVelocity {
 			var gradientAngularVelocity:GradientAngularVelocity = new GradientAngularVelocity();
 			gradientAngularVelocity._type = 1;
 			gradientAngularVelocity._separateAxes = true;
 			gradientAngularVelocity._gradientX = gradientX;
 			gradientAngularVelocity._gradientY = gradientY;
 			gradientAngularVelocity._gradientZ = gradientZ;
-			gradientAngularVelocity._gradientW = gradientW;
 			return gradientAngularVelocity;
 		}
 		
@@ -142,7 +141,7 @@ package laya.d3.core.particleShuriKen.module {
 		/**@private */
 		private var _constant:Number;
 		/**@private */
-		private var _constantSeparate:Vector4;
+		private var _constantSeparate:Vector3;
 		
 		/**@private */
 		private var _gradient:GradientDataNumber;
@@ -209,7 +208,7 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * 分轴固定角速度。
 		 */
-		public function get constantSeparate():Vector4 {
+		public function get constantSeparate():Vector3 {
 			return _constantSeparate;
 		}
 		

@@ -4,7 +4,7 @@ package laya.d3.math {
 	/**
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
-	public class Vector3 implements IClone {
+	public class Vector3 extends BaseVector implements IClone {
 		/**@private	*/
 		public static const _tempVector4:Vector4 = new Vector4();
 		
@@ -121,7 +121,7 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 计算标量长度。
+		 * 计算标量长度的平方。
 		 * @param	a 源三维向量。
 		 * @return 标量长度的平方。
 		 */
@@ -257,24 +257,17 @@ package laya.d3.math {
 		 * @param	result 输出三维向量。
 		 */
 		public static function transformCoordinate(coordinate:Vector3, transform:Matrix4x4, result:Vector3):void {
-			var vectorElem:Float32Array = _tempVector4.elements;
-			
 			var coordinateElem:Float32Array = coordinate.elements;
 			var coordinateX:Number = coordinateElem[0];
 			var coordinateY:Number = coordinateElem[1];
 			var coordinateZ:Number = coordinateElem[2];
 			
 			var transformElem:Float32Array = transform.elements;
-			
-			vectorElem[0] = (coordinateX * transformElem[0]) + (coordinateY * transformElem[4]) + (coordinateZ * transformElem[8]) + transformElem[12];
-			vectorElem[1] = (coordinateX * transformElem[1]) + (coordinateY * transformElem[5]) + (coordinateZ * transformElem[9]) + transformElem[13];
-			vectorElem[2] = (coordinateX * transformElem[2]) + (coordinateY * transformElem[6]) + (coordinateZ * transformElem[10]) + transformElem[14];
-			vectorElem[3] = 1.0 / ((coordinateX * transformElem[3]) + (coordinateY * transformElem[7]) + (coordinateZ * transformElem[11]) + transformElem[15]);
-			
+			var w:Number = ((coordinateX * transformElem[3]) + (coordinateY * transformElem[7]) + (coordinateZ * transformElem[11]) + transformElem[15]);
 			var resultElem:Float32Array = result.elements;
-			resultElem[0] = vectorElem[0] * vectorElem[3];
-			resultElem[1] = vectorElem[1] * vectorElem[3];
-			resultElem[2] = vectorElem[2] * vectorElem[3];
+			resultElem[0] = (coordinateX * transformElem[0]) + (coordinateY * transformElem[4]) + (coordinateZ * transformElem[8]) + transformElem[12] / w;
+			resultElem[1] = (coordinateX * transformElem[1]) + (coordinateY * transformElem[5]) + (coordinateZ * transformElem[9]) + transformElem[13] / w;
+			resultElem[2] = (coordinateX * transformElem[2]) + (coordinateY * transformElem[6]) + (coordinateZ * transformElem[10]) + transformElem[14] / w;
 		}
 		
 		/**
@@ -385,11 +378,8 @@ package laya.d3.math {
 		public static function equals(a:Vector3, b:Vector3):Boolean {
 			var ae:Float32Array = a.elements;
 			var be:Float32Array = b.elements;
-			return MathUtils3D.nearEqual(Math.abs(ae[0]), Math.abs(be[0])) && MathUtils3D.nearEqual(Math.abs(ae[1]), Math.abs(be[1])) && MathUtils3D.nearEqual(Math.abs(ae[2]), Math.abs(be[2]));
+			return MathUtils3D.nearEqual(ae[0], be[0]) && MathUtils3D.nearEqual(ae[1], be[1]) && MathUtils3D.nearEqual(ae[2], be[2]);
 		}
-		
-		/**三维向量元素数组*/
-		public var elements:Float32Array = new Float32Array(3);
 		
 		/**
 		 * 获取X轴坐标。
@@ -445,11 +435,29 @@ package laya.d3.math {
 		 * @param	y  Y轴坐标。
 		 * @param	z  Z轴坐标。
 		 */
-		public function Vector3(x:Number = 0, y:Number = 0, z:Number = 0) {
-			var v:* = elements;
+		public function Vector3(x:Number = 0, y:Number = 0, z:Number = 0, nativeElements:Float32Array = null/*[NATIVE]*/) {
+			var v:Float32Array;
+			if (nativeElements) {///*[NATIVE]*/
+				v = nativeElements;
+			} else {
+				v = new Float32Array(3);
+			}
+			elements = v;
 			v[0] = x;
 			v[1] = y;
 			v[2] = z;
+		}
+		
+		/**
+		 * 设置xyz值。
+		 * @param	x X值。
+		 * @param	y Y值。
+		 * @param	z Z值。
+		 */
+		public function setValue(x:Number, y:Number, z:Number):void {
+			elements[0] = x;
+			elements[1] = y;
+			elements[2] = z;
 		}
 		
 		/**
@@ -474,7 +482,6 @@ package laya.d3.math {
 			destE[0] = s[0];
 			destE[1] = s[1];
 			destE[2] = s[2];
-		
 		}
 		
 		/**

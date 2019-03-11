@@ -12,24 +12,26 @@ package laya.webgl.shader.d2.skinAnishader
 		
 		public static var instance:SkinMeshBuffer;
 		
+		//TODO:coverage
 		public function SkinMeshBuffer() {
 			var gl:WebGLContext = WebGL.mainContext;
 			ib = IndexBuffer2D.create(WebGLContext.DYNAMIC_DRAW);
 			vb = VertexBuffer2D.create(8);
 		}
 		
+		//TODO:coverage
 		public static function getInstance():SkinMeshBuffer
 		{
 			return instance ||= new SkinMeshBuffer();
 		}
 		
-		public function addSkinMesh(skinMesh:SkinMesh):void
+		//TODO:coverage
+		public function addSkinMesh(skinMesh:*):void
 		{
 			//skinMesh.getData(vb, ib, vb.byteLength / 32);
 			skinMesh.getData2(vb, ib, vb._byteLength / 32);
 		}
 		
-	
 		
 		public function reset():void {
 			this.vb.clear();

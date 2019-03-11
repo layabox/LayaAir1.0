@@ -2,46 +2,44 @@ package laya.resource {
 	
 	/**
 	 * @private
-	 * <code>Bitmap</code> 是图片资源类。
+	 * <code>Bitmap</code> 图片资源类。
 	 */
 	public class Bitmap extends Resource {
-		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		/**@private
-		 * HTML Image或HTML Canvas或WebGL Texture。
-		 * */
-		protected var _source:*;
-		/**@private 宽度*/
-		protected var _w:Number;
-		/**@private 高度*/
-		protected var _h:Number;
+		/**@private */
+		protected var _width:Number;
+		/**@private */
+		protected var _height:Number;
 		
-		/***
-		 * 宽度。
+		/**
+		 * 获取宽度。
 		 */
 		public function get width():Number {
-			return _w;
+			return _width;
 		}
 		
 		/***
-		 * 高度。
+		 * 获取高度。
 		 */
 		public function get height():Number {
-			return _h;
-		}
-		
-		/***
-		 * HTML Image 或 HTML Canvas 或 WebGL Texture 。
-		 */
-		public function get source():* {
-			return _source;
+			return _height;
 		}
 		
 		/**
 		 * 创建一个 <code>Bitmap</code> 实例。
 		 */
 		public function Bitmap() {
-			_w = 0;
-			_h = 0;
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			_width = -1;
+			_height = -1;
+		}
+		
+		/**
+		 * @private
+		 * 获取纹理资源。
+		 */
+		//TODO:coverage
+		public function _getSource():* {
+			throw "Bitmap: must override it.";
 		}
 	}
 }

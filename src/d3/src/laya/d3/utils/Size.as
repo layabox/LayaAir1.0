@@ -1,5 +1,5 @@
 package laya.d3.utils {
-	import laya.d3.core.render.RenderState;
+	import laya.d3.core.render.RenderContext3D;
 	
 	public class Size {
 		public static function get fullScreen():Size {
@@ -11,14 +11,14 @@ package laya.d3.utils {
 		
 		public function get width():int {
 			if (_width === -1)
-				return RenderState.clientWidth;
+				return RenderContext3D.clientWidth;
 			
 			return _width;
 		}
 		
 		public function get height():int {
 			if (_height === -1)
-				return RenderState.clientHeight;
+				return RenderContext3D.clientHeight;
 			return _height;
 		}
 		

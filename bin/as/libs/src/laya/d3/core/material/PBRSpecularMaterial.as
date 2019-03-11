@@ -1,52 +1,63 @@
-package laya.d3.core.material 
-{
-	import laya.d3.core.TransformUV;
-	import laya.d3.core.render.RenderQueue;
+package laya.d3.core.material {
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Vector4;
-	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.DataTexture2D;
-	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderDefines;
-	import laya.utils.Browser;
-	import laya.webgl.WebGLContext;
+	import laya.webgl.resource.BaseTexture;
+	
 	/**
-	 * ...
-	 * @author WuTaiLang
+	 * <code>PBRSpecularMaterial</code> 类用于实现PBR(Specular)材质。
 	 */
-	public class PBRSpecularMaterial extends BaseMaterial
-	{
-		public static const SmoothnessSource_MetallicGlossTexture_Alpha:int = 0;
-		public static const SmoothnessSource_DiffuseTexture_Alpha:int = 1;
+	public class PBRSpecularMaterial extends BaseMaterial {
 		
-		public static var SHADERDEFINE_DIFFUSETEXTURE:int;
+		/**光滑度数据源_高光贴图的Alpha通道。*/
+		public static const SmoothnessSource_SpecularTexture_Alpha:int = 0;
+		/**光滑度数据源_反射率贴图的Alpha通道。*/
+		public static const SmoothnessSource_AlbedoTexture_Alpha:int = 1;
+		
+		/**渲染状态_不透明。*/
+		public static const RENDERMODE_OPAQUE:int = 0;
+		/**渲染状态_透明测试。*/
+		public static const RENDERMODE_CUTOUT:int = 1;
+		/**渲染状态_透明混合_游戏中经常使用的透明。*/
+		public static const RENDERMODE_FADE:int = 2;
+		/**渲染状态_透明混合_物理上看似合理的透明。*/
+		public static const RENDERMODE_TRANSPARENT:int = 3;
+		
+		public static var SHADERDEFINE_ALBEDOTEXTURE:int;
 		public static var SHADERDEFINE_NORMALTEXTURE:int;
-		public static var SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA:int;
+		public static var SHADERDEFINE_SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA:int;
 		public static var SHADERDEFINE_SPECULARTEXTURE:int;
 		public static var SHADERDEFINE_OCCLUSIONTEXTURE:int;
 		public static var SHADERDEFINE_PARALLAXTEXTURE:int;
 		public static var SHADERDEFINE_EMISSION:int;
 		public static var SHADERDEFINE_EMISSIONTEXTURE:int;
 		public static var SHADERDEFINE_TILINGOFFSET:int;
+		public static var SHADERDEFINE_ALPHAPREMULTIPLY:int;
 		
-		public static const DIFFUSETEXTURE:int = 1;
-		public static const SPECULARTEXTURE:int = 2;
-		public static const NORMALTEXTURE:int = 3;
-		public static const PARALLAXTEXTURE:int = 4;
-		public static const OCCLUSIONTEXTURE:int = 5;
-		public static const EMISSIONTEXTURE:int = 6;
+		public static const ALBEDOTEXTURE:int = Shader3D.propertyNameToID("u_AlbedoTexture");
+		public static const SPECULARTEXTURE:int = Shader3D.propertyNameToID("u_SpecularTexture");
+		public static const NORMALTEXTURE:int = Shader3D.propertyNameToID("u_NormalTexture");
+		public static const PARALLAXTEXTURE:int = Shader3D.propertyNameToID("u_ParallaxTexture");
+		public static const OCCLUSIONTEXTURE:int = Shader3D.propertyNameToID("u_OcclusionTexture");
+		public static const EMISSIONTEXTURE:int = Shader3D.propertyNameToID("u_EmissionTexture");
 		
-		public static const DIFFUSECOLOR:int = 7;
-		public static const SPECULARCOLOR:int = 8;
-		public static const EMISSIONCOLOR:int = 9;
+		public static const ALBEDOCOLOR:int = Shader3D.propertyNameToID("u_AlbedoColor");
+		public static const SPECULARCOLOR:int = Shader3D.propertyNameToID("u_SpecularColor");
+		public static const EMISSIONCOLOR:int = Shader3D.propertyNameToID("u_EmissionColor");
 		
-		public static const SMOOTHNESS:int = 10;
-		public static const SMOOTHNESSSCALE:int = 11;
-		public static const SMOOTHNESSSOURCE:int = 12;
-		public static const OCCLUSIONSTRENGTH:int = 13;
-		public static const NORMALSCALE:int = 14;
-		public static const PARALLAXSCALE:int = 15;
-		public static const ENABLEEMISSION:int = 16;
-		public static const TILINGOFFSET:int = 17;
+		public static const SMOOTHNESS:int = Shader3D.propertyNameToID("u_smoothness");
+		public static const SMOOTHNESSSCALE:int = Shader3D.propertyNameToID("u_smoothnessScale");
+		public static const SMOOTHNESSSOURCE:int = -1;//TODO:
+		public static const OCCLUSIONSTRENGTH:int = Shader3D.propertyNameToID("u_occlusionStrength");
+		public static const NORMALSCALE:int = Shader3D.propertyNameToID("u_normalScale");
+		public static const PARALLAXSCALE:int = Shader3D.propertyNameToID("u_parallaxScale");
+		public static const ENABLEEMISSION:int=-1;//TODO:
+		public static const ENABLEREFLECT:int=-1;//TODO:
+		public static const TILINGOFFSET:int = Shader3D.propertyNameToID("u_TilingOffset");
+		
+		/** 默认材质，禁止修改*/
+		public static const defaultMaterial:PBRSpecularMaterial = new PBRSpecularMaterial();
 		
 		/**@private */
 		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
@@ -55,31 +66,429 @@ package laya.d3.core.material
 		 * @private
 		 */
 		public static function __init__():void {
-			SHADERDEFINE_DIFFUSETEXTURE = shaderDefines.registerDefine("DIFFUSETEXTURE");
+			SHADERDEFINE_ALBEDOTEXTURE = shaderDefines.registerDefine("ALBEDOTEXTURE");
 			SHADERDEFINE_SPECULARTEXTURE = shaderDefines.registerDefine("SPECULARTEXTURE");
-			SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA = shaderDefines.registerDefine("SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA");
+			SHADERDEFINE_SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA = shaderDefines.registerDefine("SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA");
 			SHADERDEFINE_NORMALTEXTURE = shaderDefines.registerDefine("NORMALTEXTURE");
 			SHADERDEFINE_PARALLAXTEXTURE = shaderDefines.registerDefine("PARALLAXTEXTURE");
 			SHADERDEFINE_OCCLUSIONTEXTURE = shaderDefines.registerDefine("OCCLUSIONTEXTURE");
 			SHADERDEFINE_EMISSION = shaderDefines.registerDefine("EMISSION");
 			SHADERDEFINE_EMISSIONTEXTURE = shaderDefines.registerDefine("EMISSIONTEXTURE");
 			SHADERDEFINE_TILINGOFFSET = shaderDefines.registerDefine("TILINGOFFSET");
+			SHADERDEFINE_ALPHAPREMULTIPLY = shaderDefines.registerDefine("ALPHAPREMULTIPLY");
+		}
+		
+		/**@private */
+		private var _albedoColor:Vector4;
+		/**@private */
+		private var _specularColor:Vector4;
+		/**@private */
+		private var _emissionColor:Vector4;
+		
+		/**
+		 * @private
+		 */
+		public function get _ColorR():Number {
+			return _albedoColor.elements[0];
 		}
 		
 		/**
-		 * 获取漫反射颜色。
-		 * @return 漫反射颜色。
+		 * @private
+		 */
+		public function set _ColorR(value:Number):void {
+			_albedoColor.elements[0] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _ColorG():Number {
+			return _albedoColor.elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorG(value:Number):void {
+			_albedoColor.elements[1] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _ColorB():Number {
+			return _albedoColor.elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorB(value:Number):void {
+			_albedoColor.elements[2] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private 
+		 */
+		public function get _ColorA():Number {
+			return _albedoColor.elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorA(value:Number):void {
+			_albedoColor.elements[3] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorR():Number {
+			return _specularColor.elements[0];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorR(value:Number):void {
+			_specularColor.elements[0] = value;
+			specularColor = _specularColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorG():Number {
+			return _specularColor.elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorG(value:Number):void {
+			_specularColor.elements[1] = value;
+			specularColor = _specularColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorB():Number {
+			return _specularColor.elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorB(value:Number):void {
+			_specularColor.elements[2] = value;
+			specularColor = _specularColor;
+		}
+		
+		/**
+		 * @private 
+		 */
+		public function get _SpecColorA():Number {
+			return _specularColor.elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorA(value:Number):void {
+			_specularColor.elements[3] = value;
+			specularColor = _specularColor;
+		}
+		
+		/**
+		 * @private 
+		 */
+		public function get _Glossiness():Number {
+			return _shaderValues.getNumber(SMOOTHNESS);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _Glossiness(value:Number):void {
+			_shaderValues.setNumber(SMOOTHNESS, value);
+		}
+		
+		/**
+		 * @private 
+		 */
+		public function get _GlossMapScale():Number {
+			return _shaderValues.getNumber(SMOOTHNESSSCALE);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _GlossMapScale(value:Number):void {
+			_shaderValues.setNumber(SMOOTHNESSSCALE, value);
+		}
+		
+		
+		/**
+		 * @private 
+		 */
+		public function get _BumpScale():Number {
+			return _shaderValues.getNumber(NORMALSCALE);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _BumpScale(value:Number):void {
+			_shaderValues.setNumber(NORMALSCALE, value);
+		}
+		
+		/**@private */
+		public function get _Parallax():Number {
+			return _shaderValues.getNumber(PARALLAXSCALE);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _Parallax(value:Number):void {
+			_shaderValues.setNumber(PARALLAXSCALE, value);
+		}
+		
+		/**@private */
+		public function get _OcclusionStrength():Number {
+			return _shaderValues.getNumber(OCCLUSIONSTRENGTH);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _OcclusionStrength(value:Number):void {
+			_shaderValues.setNumber(OCCLUSIONSTRENGTH, value);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _EmissionColorR():Number {
+			return _emissionColor.elements[0];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _EmissionColorR(value:Number):void {
+			_emissionColor.elements[0] = value;
+			emissionColor = _emissionColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _EmissionColorG():Number {
+			return _emissionColor.elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _EmissionColorG(value:Number):void {
+			_emissionColor.elements[1] = value;
+			emissionColor = _emissionColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _EmissionColorB():Number {
+			return _emissionColor.elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _EmissionColorB(value:Number):void {
+			_emissionColor.elements[2] = value;
+			emissionColor = _emissionColor;
+		}
+		
+		/**
+		 * @private 
+		 */
+		public function get _EmissionColorA():Number {
+			return _emissionColor.elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _EmissionColorA(value:Number):void {
+			_emissionColor.elements[3] = value;
+			emissionColor = _emissionColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STX():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[0];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STX(x:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[0] = x;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STY():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STY(y:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[1] = y;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STZ():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STZ(z:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[2] = z;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STW():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STW(w:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[3] = w;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _Cutoff():Number {
+			return alphaTestValue;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _Cutoff(value:Number):void {
+			alphaTestValue = value;
+		}
+		
+		/**
+		 * 获取反射率颜色R分量。
+		 * @return 反射率颜色R分量。
+		 */
+		public function get albedoColorR():Number {
+			return _ColorR;
+		}
+		
+		/**
+		 * 设置反射率颜色R分量。
+		 * @param value 反射率颜色R分量。
+		 */
+		public function set albedoColorR(value:Number):void {
+			_ColorR = value;
+		}
+		
+		/**
+		 * 获取反射率颜色G分量。
+		 * @return 反射率颜色G分量。
+		 */
+		public function get albedoColorG():Number {
+			return _ColorG;
+		}
+		
+		/**
+		 * 设置反射率颜色G分量。
+		 * @param value 反射率颜色G分量。
+		 */
+		public function set albedoColorG(value:Number):void {
+			_ColorG = value;
+		}
+		
+		/**
+		 * 获取反射率颜色B分量。
+		 * @return 反射率颜色B分量。
+		 */
+		public function get albedoColorB():Number {
+			return _ColorB;
+		}
+		
+		/**
+		 * 设置反射率颜色B分量。
+		 * @param value 反射率颜色B分量。
+		 */
+		public function set albedoColorB(value:Number):void {
+			_ColorB = value;
+		}
+		
+		/**
+		 * 获取反射率颜色A分量。
+		 * @return 反射率颜色A分量。
+		 */
+		public function get albedoColorA():Number {
+			return _ColorA;
+		}
+		
+		/**
+		 * 设置反射率颜色A分量。
+		 * @param value 反射率颜色A分量。
+		 */
+		public function set albedoColorA(value:Number):void {
+			_ColorA = value;
+		}
+		
+		/**
+		 * 获取反射率颜色。
+		 * @return 反射率颜色。
 		 */
 		public function get albedoColor():Vector4 {
-			return _getColor(DIFFUSECOLOR);
+			return _albedoColor;
 		}
 		
 		/**
-		 * 设置漫反射颜色。
-		 * @param value 漫反射颜色。
+		 * 设置反射率颜色。
+		 * @param value 反射率颜色。
 		 */
 		public function set albedoColor(value:Vector4):void {
-			_setColor(DIFFUSECOLOR, value);
+			_albedoColor = value;
+			_shaderValues.setVector(ALBEDOCOLOR, value);
 		}
 		
 		/**
@@ -87,7 +496,7 @@ package laya.d3.core.material
 		 * @return 漫反射贴图。
 		 */
 		public function get albedoTexture():BaseTexture {
-			return _getTexture(DIFFUSETEXTURE);
+			return _shaderValues.getTexture(ALBEDOTEXTURE);
 		}
 		
 		/**
@@ -95,11 +504,13 @@ package laya.d3.core.material
 		 * @param value 漫反射贴图。
 		 */
 		public function set albedoTexture(value:BaseTexture):void {
-			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_DIFFUSETEXTURE);
-			else
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_DIFFUSETEXTURE);
-			_setTexture(DIFFUSETEXTURE, value);
+			if (value){
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_ALBEDOTEXTURE);
+			}
+			else{
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_ALBEDOTEXTURE);
+			}
+			_shaderValues.setTexture(ALBEDOTEXTURE, value);
 		}
 		
 		/**
@@ -107,7 +518,7 @@ package laya.d3.core.material
 		 * @return 法线贴图。
 		 */
 		public function get normalTexture():BaseTexture {
-			return _getTexture(NORMALTEXTURE);
+			return _shaderValues.getTexture(NORMALTEXTURE);
 		}
 		
 		/**
@@ -115,11 +526,13 @@ package laya.d3.core.material
 		 * @param value 法线贴图。
 		 */
 		public function set normalTexture(value:BaseTexture):void {
-			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE);
-			else
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE);
-			_setTexture(NORMALTEXTURE, value);
+			if (value){
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE);
+			}
+			else{
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE);
+			}
+			_shaderValues.setTexture(NORMALTEXTURE, value);
 		}
 		
 		/**
@@ -127,7 +540,7 @@ package laya.d3.core.material
 		 * @return 法线贴图缩放系数。
 		 */
 		public function get normalTextureScale():Number {
-			return _getNumber(NORMALSCALE);
+			return _BumpScale;
 		}
 		
 		/**
@@ -135,7 +548,7 @@ package laya.d3.core.material
 		 * @param value 法线贴图缩放系数。
 		 */
 		public function set normalTextureScale(value:Number):void {
-			_setNumber(NORMALSCALE, value);
+			_BumpScale = value;
 		}
 		
 		/**
@@ -143,7 +556,7 @@ package laya.d3.core.material
 		 * @return 视察贴图。
 		 */
 		public function get parallaxTexture():BaseTexture {
-			return _getTexture(PARALLAXTEXTURE);
+			return _shaderValues.getTexture(PARALLAXTEXTURE);
 		}
 		
 		/**
@@ -151,11 +564,13 @@ package laya.d3.core.material
 		 * @param value 视察贴图。
 		 */
 		public function set parallaxTexture(value:BaseTexture):void {
-			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE);
-			else
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE);
-			_setTexture(PARALLAXTEXTURE, value);
+			if (value){
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE);
+			}
+			else{
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE);
+			}
+			_shaderValues.setTexture(PARALLAXTEXTURE, value);
 		}
 		
 		/**
@@ -163,7 +578,7 @@ package laya.d3.core.material
 		 * @return 视差缩放系数。
 		 */
 		public function get parallaxTextureScale():Number {
-			return _getNumber(PARALLAXSCALE);
+			return _Parallax;
 		}
 		
 		/**
@@ -171,8 +586,7 @@ package laya.d3.core.material
 		 * @param value 视差缩放系数。
 		 */
 		public function set parallaxTextureScale(value:Number):void {
-			value = Math.max(0.005, Math.min(0.08, value));
-			_setNumber(PARALLAXSCALE, value);
+			_Parallax = Math.max(0.005, Math.min(0.08, value));
 		}
 		
 		/**
@@ -180,7 +594,7 @@ package laya.d3.core.material
 		 * @return 遮挡贴图。
 		 */
 		public function get occlusionTexture():BaseTexture {
-			return _getTexture(OCCLUSIONTEXTURE);
+			return _shaderValues.getTexture(OCCLUSIONTEXTURE);
 		}
 		
 		/**
@@ -188,11 +602,13 @@ package laya.d3.core.material
 		 * @param value 遮挡贴图。
 		 */
 		public function set occlusionTexture(value:BaseTexture):void {
-			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE);
-			else
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE);
-			_setTexture(OCCLUSIONTEXTURE, value);
+			if (value){
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE);
+			}
+			else{
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE);
+			}
+			_shaderValues.setTexture(OCCLUSIONTEXTURE, value);
 		}
 		
 		/**
@@ -200,7 +616,7 @@ package laya.d3.core.material
 		 * @return 遮挡贴图强度,范围为0到1。
 		 */
 		public function get occlusionTextureStrength():Number {
-			return _getNumber(OCCLUSIONSTRENGTH);
+			return _OcclusionStrength;
 		}
 		
 		/**
@@ -208,32 +624,15 @@ package laya.d3.core.material
 		 * @param value 遮挡贴图强度,范围为0到1。
 		 */
 		public function set occlusionTextureStrength(value:Number):void {
-			value = Math.max(0.0, Math.min(1.0, value));
-			_setNumber(OCCLUSIONSTRENGTH, value);
+			_OcclusionStrength = Math.max(0.0, Math.min(1.0, value));
 		}
-		
-		///**
-		 //* 获取反射贴图。
-		 //* @return 反射贴图。
-		 //*/
-		//public function get reflectTexture():BaseTexture {
-			//return _getTexture(REFLECTTEXTURE);
-		//}
-		//
-		///**
-		 //* 设置反射贴图。
-		 //* @param value 反射贴图。
-		 //*/
-		//public function set reflectTexture(value:BaseTexture):void {
-			//_setTexture(REFLECTTEXTURE, value);
-		//}
 		
 		/**
 		 * 获取高光贴图。
 		 * @return 高光贴图。
 		 */
 		public function get specularTexture():BaseTexture {
-			return _getTexture(SPECULARTEXTURE);
+			return _shaderValues.getTexture(SPECULARTEXTURE);
 		}
 		
 		/**
@@ -241,11 +640,77 @@ package laya.d3.core.material
 		 * @param value 高光贴图。
 		 */
 		public function set specularTexture(value:BaseTexture):void {
-			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE);
-			else
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE);
-			_setTexture(SPECULARTEXTURE, value);
+			if (value){
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE);
+			}
+			else{
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE);
+			}
+			_shaderValues.setTexture(SPECULARTEXTURE, value);
+		}
+		
+		/**
+		 * 获取高光颜色R分量。
+		 * @return 高光颜色R分量。
+		 */
+		public function get specularColorR():Number {
+			return _SpecColorR;
+		}
+		
+		/**
+		 * 设置高光颜色R分量。
+		 * @param value 高光颜色R分量。
+		 */
+		public function set specularColorR(value:Number):void {
+			_SpecColorR = value;
+		}
+		
+		/**
+		 * 获取高光颜色G分量。
+		 * @return 高光颜色G分量。
+		 */
+		public function get specularColorG():Number {
+			return _SpecColorG;
+		}
+		
+		/**
+		 * 设置高光颜色G分量。
+		 * @param value 高光颜色G分量。
+		 */
+		public function set specularColorG(value:Number):void {
+			_SpecColorG = value;
+		}
+		
+		/**
+		 * 获取高光颜色B分量。
+		 * @return 高光颜色B分量。
+		 */
+		public function get specularColorB():Number {
+			return _SpecColorB;
+		}
+		
+		/**
+		 * 设置高光颜色B分量。
+		 * @param value 高光颜色B分量。
+		 */
+		public function set specularColorB(value:Number):void {
+			_SpecColorB = value;
+		}
+		
+		/**
+		 * 获取高光颜色A分量。
+		 * @return 高光颜色A分量。
+		 */
+		public function get specularColorA():Number {
+			return _SpecColorA;
+		}
+		
+		/**
+		 * 设置高光颜色A分量。
+		 * @param value 高光颜色A分量。
+		 */
+		public function set specularColorA(value:Number):void {
+			_SpecColorA = value;
 		}
 		
 		/**
@@ -253,7 +718,7 @@ package laya.d3.core.material
 		 * @return 高光颜色。
 		 */
 		public function get specularColor():Vector4 {
-			return _getColor(SPECULARCOLOR);
+			return _shaderValues.getVector(SPECULARCOLOR) as Vector4;
 		}
 		
 		/**
@@ -261,7 +726,7 @@ package laya.d3.core.material
 		 * @param value 高光颜色。
 		 */
 		public function set specularColor(value:Vector4):void {
-			_setColor(SPECULARCOLOR, value);
+			_shaderValues.setVector(SPECULARCOLOR, value);
 		}
 		
 		/**
@@ -269,7 +734,7 @@ package laya.d3.core.material
 		 * @return 光滑度,范围为0到1。
 		 */
 		public function get smoothness():Number {
-			return _getNumber(SMOOTHNESS);
+			return _Glossiness;
 		}
 		
 		/**
@@ -277,8 +742,7 @@ package laya.d3.core.material
 		 * @param value 光滑度,范围为0到1。
 		 */
 		public function set smoothness(value:Number):void {
-			value = Math.max(0.0, Math.min(1.0, value));
-			_setNumber(SMOOTHNESS, value);
+			_Glossiness = Math.max(0.0, Math.min(1.0, value));
 		}
 		
 		/**
@@ -286,7 +750,7 @@ package laya.d3.core.material
 		 * @return 光滑度缩放系数,范围为0到1。
 		 */
 		public function get smoothnessTextureScale():Number {
-			return _getNumber(SMOOTHNESSSCALE);
+			return _GlossMapScale;
 		}
 		
 		/**
@@ -294,8 +758,7 @@ package laya.d3.core.material
 		 * @param value 光滑度缩放系数,范围为0到1。
 		 */
 		public function set smoothnessTextureScale(value:Number):void {
-			value = Math.max(0.0, Math.min(1.0, value));
-			_setNumber(SMOOTHNESSSCALE, value);
+			_GlossMapScale = Math.max(0.0, Math.min(1.0, value));
 		}
 		
 		/**
@@ -303,7 +766,7 @@ package laya.d3.core.material
 		 * @return 光滑滑度数据源,0或1。
 		 */
 		public function get smoothnessSource():int {
-			return _getNumber(SMOOTHNESSSOURCE);
+			return _shaderValues.getInt(SMOOTHNESSSOURCE);
 		}
 		
 		/**
@@ -311,21 +774,22 @@ package laya.d3.core.material
 		 * @param value 光滑滑度数据源,0或1。
 		 */
 		public function set smoothnessSource(value:int):void {
-			if (value == 1)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA);
-			else{
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_DIFFUSETEXTURE_ALPHA);
-				value = 0;
+			if (value){
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA);
+				_shaderValues.setInt(SMOOTHNESSSOURCE, 1);
 			}
-			_setNumber(SMOOTHNESSSOURCE, value);
-		}	
+			else {
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA);
+				_shaderValues.setInt(SMOOTHNESSSOURCE, 0);
+			}
+		}
 		
 		/**
 		 * 获取是否激活放射属性。
 		 * @return 是否激活放射属性。
 		 */
 		public function get enableEmission():Boolean {
-			return _getBool(ENABLEEMISSION);
+			return _shaderValues.getBool(ENABLEEMISSION);
 		}
 		
 		/**
@@ -334,11 +798,11 @@ package laya.d3.core.material
 		 */
 		public function set enableEmission(value:Boolean):void {
 			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_EMISSION);
-			else{
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_EMISSION);
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_EMISSION);
+			else {
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_EMISSION);
 			}
-			_setBool(ENABLEEMISSION, value);
+			_shaderValues.setBool(ENABLEEMISSION, value);
 		}
 		
 		/**
@@ -346,7 +810,7 @@ package laya.d3.core.material
 		 * @return 放射颜色。
 		 */
 		public function get emissionColor():Vector4 {
-			return _getColor(EMISSIONCOLOR);
+			return _shaderValues.getVector(EMISSIONCOLOR) as Vector4;
 		}
 		
 		/**
@@ -354,7 +818,7 @@ package laya.d3.core.material
 		 * @param value 放射颜色。
 		 */
 		public function set emissionColor(value:Vector4):void {
-			_setColor(EMISSIONCOLOR, value);
+			_shaderValues.setVector(EMISSIONCOLOR, value);
 		}
 		
 		/**
@@ -362,7 +826,7 @@ package laya.d3.core.material
 		 * @return 放射贴图。
 		 */
 		public function get emissionTexture():BaseTexture {
-			return _getTexture(EMISSIONTEXTURE);
+			return _shaderValues.getTexture(EMISSIONTEXTURE);
 		}
 		
 		/**
@@ -371,10 +835,94 @@ package laya.d3.core.material
 		 */
 		public function set emissionTexture(value:BaseTexture):void {
 			if (value)
-				_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_EMISSIONTEXTURE);
+				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_EMISSIONTEXTURE);
 			else
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_EMISSIONTEXTURE);
-			_setTexture(EMISSIONTEXTURE, value);
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_EMISSIONTEXTURE);
+			_shaderValues.setTexture(EMISSIONTEXTURE, value);
+		}
+		
+		/**
+		 * 获取是否开启反射。
+		 * @return 是否开启反射。
+		 */
+		public function get enableReflection():Boolean {
+			return _shaderValues.getBool(ENABLEREFLECT);
+		}
+		
+		/**
+		 * 设置是否开启反射。
+		 * @param value 是否开启反射。
+		 */
+		public function set enableReflection(value:Boolean):void {
+			_shaderValues.setBool(ENABLEREFLECT, true);
+			if (value)
+				_disablePublicDefineDatas.remove(Scene3D.SHADERDEFINE_REFLECTMAP);
+			else
+				_disablePublicDefineDatas.add(Scene3D.SHADERDEFINE_REFLECTMAP);
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移X分量。
+		 * @return 纹理平铺和偏移X分量。
+		 */
+		public function get tilingOffsetX():Number {
+			return _MainTex_STX;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移X分量。
+		 * @param x 纹理平铺和偏移X分量。
+		 */
+		public function set tilingOffsetX(x:Number):void {
+			_MainTex_STX = x;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Y分量。
+		 * @return 纹理平铺和偏移Y分量。
+		 */
+		public function get tilingOffsetY():Number {
+			return _MainTex_STY;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Y分量。
+		 * @param y 纹理平铺和偏移Y分量。
+		 */
+		public function set tilingOffsetY(y:Number):void {
+			_MainTex_STY = y;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Z分量。
+		 * @return 纹理平铺和偏移Z分量。
+		 */
+		public function get tilingOffsetZ():Number {
+			return _MainTex_STZ;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Z分量。
+		 * @param z 纹理平铺和偏移Z分量。
+		 */
+		public function set tilingOffsetZ(z:Number):void {
+			_MainTex_STZ = z;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移W分量。
+		 * @return 纹理平铺和偏移W分量。
+		 */
+		public function get tilingOffsetW():Number {
+			return _MainTex_STW;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移W分量。
+		 * @param w 纹理平铺和偏移W分量。
+		 */
+		public function set tilingOffsetW(w:Number):void {
+			_MainTex_STW = w;
 		}
 		
 		/**
@@ -382,43 +930,111 @@ package laya.d3.core.material
 		 * @return 纹理平铺和偏移。
 		 */
 		public function get tilingOffset():Vector4 {
-			return _getColor(TILINGOFFSET);
+			return _shaderValues.getVector(TILINGOFFSET) as Vector4;
 		}
 		
 		/**
-		 * 设置纹理平铺和偏移。
+		 * 获取纹理平铺和偏移。
 		 * @param value 纹理平铺和偏移。
 		 */
 		public function set tilingOffset(value:Vector4):void {
 			if (value) {
 				var valueE:Float32Array = value.elements;
 				if (valueE[0] != 1 || valueE[1] != 1 || valueE[2] != 0 || valueE[3] != 0)
-					_addShaderDefine(PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET);
+					_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET);
 				else
-					_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET);
+					_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET);
 			} else {
-				_removeShaderDefine(PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET);
+				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_TILINGOFFSET);
 			}
-			_setColor(TILINGOFFSET, value);
+			_shaderValues.setVector(TILINGOFFSET, value);
 		}
 		
+		/**
+		 * 设置渲染模式。
+		 * @return 渲染模式。
+		 */
+		public function set renderMode(value:int):void {
+			var renderState:RenderState = getRenderState();
+			switch (value) {
+			case RENDERMODE_OPAQUE: 
+				alphaTest = false;
+				renderQueue = BaseMaterial.RENDERQUEUE_OPAQUE;
+				renderState.depthWrite = true;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_DISABLE;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				_defineDatas.remove(SHADERDEFINE_ALPHAPREMULTIPLY);
+				break;
+			case RENDERMODE_CUTOUT: 
+				renderQueue = BaseMaterial.RENDERQUEUE_ALPHATEST;
+				alphaTest = true;
+				renderState.depthWrite = true;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_DISABLE;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				_defineDatas.remove(SHADERDEFINE_ALPHAPREMULTIPLY);
+				break;
+			case RENDERMODE_FADE: 
+				renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
+				alphaTest = false;
+				renderState.depthWrite = false;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_ENABLE_ALL;
+				renderState.srcBlend = RenderState.BLENDPARAM_SRC_ALPHA;
+				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				_defineDatas.remove(SHADERDEFINE_ALPHAPREMULTIPLY);
+				break;
+				break;
+			case RENDERMODE_TRANSPARENT: 
+				renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
+				alphaTest = false;
+				renderState.depthWrite = false;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_ENABLE_ALL;
+				renderState.srcBlend = RenderState.BLENDPARAM_ONE;
+				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				_defineDatas.add(SHADERDEFINE_ALPHAPREMULTIPLY);
+				break;
+			default: 
+				throw new Error("PBRSpecularMaterial : renderMode value error.");
+			}
+		}
+		
+		/**
+		 * 创建一个 <code>PBRSpecularMaterial</code> 实例。
+		 */
 		public function PBRSpecularMaterial() {
 			super();
 			setShaderName("PBRSpecular");
-			_setColor(DIFFUSECOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
-			_setColor(EMISSIONCOLOR, new Vector4(0.0, 0.0, 0.0, 0.0));
-			_setColor(SPECULARCOLOR, new Vector4(0.2, 0.2, 0.2, 0.2));
-			_setNumber(SMOOTHNESS, 0.5);
-			_setNumber(SMOOTHNESSSCALE, 1.0);
-			_setNumber(SMOOTHNESSSOURCE, 0);
-			_setNumber(OCCLUSIONSTRENGTH, 1.0);
-			_setNumber(NORMALSCALE, 1.0);
-			_setNumber(PARALLAXSCALE, 0.001);
-			_setBool(ENABLEEMISSION, false);
-			_setNumber(ALPHATESTVALUE, 0.5);
+			_albedoColor = new Vector4(1.0, 1.0, 1.0, 1.0);
+			_shaderValues.setVector(ALBEDOCOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
+			_emissionColor = new Vector4(0.0, 0.0, 0.0, 0.0);
+			_shaderValues.setVector(EMISSIONCOLOR, new Vector4(0.0, 0.0, 0.0, 0.0));
+			_specularColor = new Vector4(0.2, 0.2, 0.2, 0.2);
+			_shaderValues.setVector(SPECULARCOLOR, new Vector4(0.2, 0.2, 0.2, 0.2));
+			_shaderValues.setNumber(SMOOTHNESS, 0.5);
+			_shaderValues.setNumber(SMOOTHNESSSCALE, 1.0);
+			_shaderValues.setNumber(SMOOTHNESSSOURCE, 0);
+			_shaderValues.setNumber(OCCLUSIONSTRENGTH, 1.0);
+			_shaderValues.setNumber(NORMALSCALE, 1.0);
+			_shaderValues.setNumber(PARALLAXSCALE, 0.001);
+			_shaderValues.setBool(ENABLEEMISSION, false);
+			_shaderValues.setNumber(ALPHATESTVALUE, 0.5);
 		}
 		
-		
+		/**
+		 * @inheritDoc
+		 */
+		override public function cloneTo(destObject:*):void {
+			super.cloneTo(destObject);
+			var destMaterial:PBRSpecularMaterial = destObject as PBRSpecularMaterial;
+			_albedoColor.cloneTo(destMaterial._albedoColor);
+			_specularColor.cloneTo(destMaterial._specularColor);
+			_emissionColor.cloneTo(destMaterial._emissionColor);
+		}
 	}
 
 }

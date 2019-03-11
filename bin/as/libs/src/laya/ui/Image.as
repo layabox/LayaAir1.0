@@ -3,7 +3,7 @@ package laya.ui {
 	import laya.net.Loader;
 	import laya.resource.Texture;
 	import laya.ui.AutoBitmap;
-	import laya.ui.Component;
+	import laya.ui.UIComponent;
 	import laya.ui.UIUtils;
 	import laya.utils.Handler;
 	
@@ -85,7 +85,7 @@ package laya.ui {
 	 * }
 	 * @see laya.ui.AutoBitmap
 	 */
-	public class Image extends Component {
+	public class Image extends UIComponent {
 		/**@private */
 		public var _bitmap:AutoBitmap;
 		/**@private */
@@ -153,7 +153,7 @@ package laya.ui {
 			return _bitmap.source;
 		}
 		
-		public function set source(value:Texture):void {
+		public function set source(value:*):void {
 			if (!_bitmap) return;
 			_bitmap.source = value;
 			event(Event.LOADED);
@@ -185,12 +185,12 @@ package laya.ui {
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			return _bitmap.width;
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			return _bitmap.height;
 		}
 		

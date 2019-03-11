@@ -4,7 +4,7 @@ package laya.d3.math {
 	/**
 	 * <code>Quaternion</code> 类用于创建四元数。
 	 */
-	public class Quaternion implements IClone{
+	public class Quaternion implements IClone {
 		/**@private */
 		public static var TEMPVector30:Vector3 = new Vector3();
 		/**@private */
@@ -23,7 +23,49 @@ package laya.d3.math {
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Quaternion =/*[STATIC SAFE]*/ new Quaternion();
 		/**无效矩阵,禁止修改*/
-		public static const NAN:Quaternion = new Quaternion(NaN, NaN, NaN,NaN);
+		public static const NAN:Quaternion = new Quaternion(NaN, NaN, NaN, NaN);
+		
+		/**
+		 * @private
+		 */
+		public static function _dotArray(l:Float32Array, r:Float32Array):Number {			
+			return l[0] * r[0] + l[1] * r[1] + l[2] * r[2] + l[3] * r[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _normalizeArray(f:Float32Array, o:Float32Array):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var x:Number = f[0], y:Number = f[1], z:Number = f[2], w:Number = f[3];
+			var len:Number = x * x + y * y + z * z + w * w;
+			if (len > 0) {
+				len = 1 / Math.sqrt(len);
+				o[0] = x * len;
+				o[1] = y * len;
+				o[2] = z * len;
+				o[3] = w * len;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _lerpArray(l:Float32Array, r:Float32Array, amount:Number, o:Float32Array):void {
+			var inverse:Number = 1.0 - amount;
+			if (_dotArray(l, r) >= 0) {
+				o[0] = (inverse * l[0]) + (amount * r[0]);
+				o[1] = (inverse * l[1]) + (amount * r[1]);
+				o[2] = (inverse * l[2]) + (amount * r[2]);
+				o[3] = (inverse * l[3]) + (amount * r[3]);
+			} else {
+				o[0] = (inverse * l[0]) - (amount * r[0]);
+				o[1] = (inverse * l[1]) - (amount * r[1]);
+				o[2] = (inverse * l[2]) - (amount * r[2]);
+				o[3] = (inverse * l[3]) - (amount * r[3]);
+			}
+			_normalizeArray(o, o);
+		}
 		
 		/**
 		 *  从欧拉角生成四元数（顺序为Yaw、Pitch、Roll）
@@ -274,16 +316,8 @@ package laya.d3.math {
 		 * @param	t 插值比例
 		 * @param	out 输出四元数
 		 */
-		public static function lerp(left:Quaternion, right:Quaternion, t:Number, out:Quaternion):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = left.elements;
-			var g:Float32Array = right.elements;
-			
-			var ax:Number = f[0], ay:Number = f[1], az:Number = f[2], aw:Number = f[3];
-			e[0] = ax + t * (g[0] - ax);
-			e[1] = ay + t * (g[1] - ay);
-			e[2] = az + t * (g[2] - az);
-			e[3] = aw + t * (g[3] - aw);
+		public static function lerp(left:Quaternion, right:Quaternion, amount:Number, out:Quaternion):void {
+			_lerpArray(left.elements, right.elements, amount, out.elements);
 		}
 		
 		/**
@@ -310,14 +344,11 @@ package laya.d3.math {
 		 * @return  点积
 		 */
 		public static function dot(left:Quaternion, right:Quaternion):Number {
-			var f:Float32Array = left.elements;
-			var g:Float32Array = right.elements;
-			
-			return f[0] * g[0] + f[1] * g[1] + f[2] * g[2] + f[3] * g[3];
+			return _dotArray(left.elements,right.elements);
 		}
 		
 		/**四元数元素数组*/
-		public var elements:Float32Array = new Float32Array(4);
+		public var elements:Float32Array;
 		
 		/**
 		 * 获取四元数的x值
@@ -354,11 +385,19 @@ package laya.d3.math {
 		 * @param	z 四元数的z值
 		 * @param	w 四元数的w值
 		 */
-		public function Quaternion(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 1) {
-			elements[0] = x;
-			elements[1] = y;
-			elements[2] = z;
-			elements[3] = w;
+		public function Quaternion(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 1, nativeElements:Float32Array = null/*[NATIVE]*/) {
+			var v:Float32Array;
+			if (nativeElements) {///*[NATIVE]*/
+				v = nativeElements;
+			} else {
+				v = new Float32Array(4);
+			}
+			
+			v[0] = x;
+			v[1] = y;
+			v[2] = z;
+			v[3] = w;
+			elements = v;	
 		}
 		
 		/**
@@ -382,18 +421,7 @@ package laya.d3.math {
 		 */
 		public function normalize(out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var e:Float32Array = out.elements;
-			var f:Float32Array = this.elements;
-			
-			var x:Number = f[0], y:Number = f[1], z:Number = f[2], w:Number = f[3];
-			var len:Number = x * x + y * y + z * z + w * w;
-			if (len > 0) {
-				len = 1 / Math.sqrt(len);
-				e[0] = x * len;
-				e[1] = y * len;
-				e[2] = z * len;
-				e[3] = w * len;
-			}
+			_normalizeArray(elements, out.elements);
 		}
 		
 		/**
@@ -561,7 +589,6 @@ package laya.d3.math {
 			elements[3] = array[offset + 3];
 		}
 		
-
 		/**
 		 * 克隆。
 		 * @param	destObject 克隆源。
@@ -589,7 +616,7 @@ package laya.d3.math {
 			return dest;
 		}
 		
-		public function equals(b:Quaternion):Boolean{
+		public function equals(b:Quaternion):Boolean {
 			
 			var ae:Float32Array = this.elements;
 			var be:Float32Array = b.elements;
@@ -619,38 +646,36 @@ package laya.d3.math {
 			rotationMatrix(_tempMatrix3x3, out);
 		}
 		
-		
 		/**
 		 * 计算长度的平方。
 		 * @return 长度的平方。
 		 */
-	    public function lengthSquared():Number{
+		public function lengthSquared():Number {
 			var x:Number = elements[0];
 			var y:Number = elements[1];
 			var z:Number = elements[2];
 			var w:Number = elements[3];
-            return (x * x) + (y * y) + (z * z) + (w * w);
-        }
-		
+			return (x * x) + (y * y) + (z * z) + (w * w);
+		}
 		
 		/**
 		 * 计算四元数的逆四元数。
 		 * @param	value 四元数。
 		 * @param	out 逆四元数。
 		 */
-		public static function invert(value:Quaternion, out:Quaternion):void{
+		public static function invert(value:Quaternion, out:Quaternion):void {
 			var vE:Float32Array = value.elements;
 			var oE:Float32Array = out.elements;
-            var lengthSq:Number = value.lengthSquared();
-            if (!MathUtils3D.isZero(lengthSq)){
-                lengthSq = 1.0 / lengthSq;
-
-                oE[0] = -vE[0] * lengthSq;
-                oE[1] = -vE[1] * lengthSq;
-                oE[2] = -vE[2] * lengthSq;
-                oE[3] = vE[3] * lengthSq;
-            }
-        }
+			var lengthSq:Number = value.lengthSquared();
+			if (!MathUtils3D.isZero(lengthSq)) {
+				lengthSq = 1.0 / lengthSq;
+				
+				oE[0] = -vE[0] * lengthSq;
+				oE[1] = -vE[1] * lengthSq;
+				oE[2] = -vE[2] * lengthSq;
+				oE[3] = vE[3] * lengthSq;
+			}
+		}
 		
 		/**
 		 * 通过一个3x3矩阵创建一个四元数

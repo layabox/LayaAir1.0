@@ -1,4 +1,5 @@
 package laya.d3.core.particleShuriKen.module {
+	import laya.d3.core.Gradient;
 	import laya.d3.core.IClone;
 	import laya.d3.math.Vector4;
 	
@@ -21,7 +22,7 @@ package laya.d3.core.particleShuriKen.module {
 		 * 通过渐变颜色创建一个 <code>GradientColor</code> 实例。
 		 * @param gradient 渐变色。
 		 */
-		public static function createByGradient(gradient:GradientDataColor):GradientColor {
+		public static function createByGradient(gradient:Gradient):GradientColor {
 			var gradientColor:GradientColor = new GradientColor();
 			gradientColor._type = 1;
 			gradientColor._gradient = gradient;
@@ -46,7 +47,7 @@ package laya.d3.core.particleShuriKen.module {
 		 * @param minGradient 最小渐变颜色。
 		 * @param maxGradient 最大渐变颜色。
 		 */
-		public static function createByRandomTwoGradient(minGradient:GradientDataColor, maxGradient:GradientDataColor):GradientColor {
+		public static function createByRandomTwoGradient(minGradient:Gradient, maxGradient:Gradient):GradientColor {
 			var gradientColor:GradientColor = new GradientColor();
 			gradientColor._type = 3;
 			gradientColor._gradientMin = minGradient;
@@ -64,11 +65,11 @@ package laya.d3.core.particleShuriKen.module {
 		/**@private */
 		private var _constantMax:Vector4;
 		/**@private */
-		private var _gradient:GradientDataColor;
+		private var _gradient:Gradient;
 		/**@private */
-		private var _gradientMin:GradientDataColor;
+		private var _gradientMin:Gradient;
 		/**@private */
-		private var _gradientMax:GradientDataColor;
+		private var _gradientMax:Gradient;
 		
 		/**
 		 *生命周期颜色类型,0为固定颜色模式,1渐变模式,2为随机双固定颜色模式,3随机双渐变模式。
@@ -101,21 +102,21 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * 渐变颜色。
 		 */
-		public function get gradient():GradientDataColor {
+		public function get gradient():Gradient {
 			return _gradient;
 		}
 		
 		/**
 		 * 最小渐变颜色。
 		 */
-		public function get gradientMin():GradientDataColor {
+		public function get gradientMin():Gradient {
 			return _gradientMin;
 		}
 		
 		/**
 		 * 最大渐变颜色。
 		 */
-		public function get gradientMax():GradientDataColor {
+		public function get gradientMax():Gradient {
 			return _gradientMax;
 		}
 		

@@ -5,25 +5,19 @@ package laya.webgl.canvas.save {
 	public class SaveTranslate implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
-		private static var _no:* = SaveBase._createArray();
-		
-		public var _x:Number;
-		public var _y:Number;
-		
+		private static var POOL:* =/*[STATIC SAFE]*/ SaveBase._createArray();
+		public var _mat:Matrix=new Matrix();
 		public function isSaveMark():Boolean { return false; }
 		
 		public function restore(context:WebGLContext2D):void {
-			var mat:Matrix = context._curMat;
-			context._x = _x;
-			context._y = _y;
-			_no[_no._length++] = this;
+			_mat.copyTo(context._curMat);
+			POOL[POOL._length++] = this;
 		}
 		
 		public static function save(context:WebGLContext2D):void {
-			var no:* = _no;
+			var no:* = POOL;
 			var o:SaveTranslate = no._length > 0 ? no[--no._length] : (new SaveTranslate());
-			o._x = context._x;
-			o._y = context._y;
+			context._curMat.copyTo(o._mat);
 			var _save:Array = context._save;
 			_save[_save._length++] = o;
 		}

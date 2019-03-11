@@ -1,18 +1,13 @@
 /*[IF-FLASH]*/
-package  
-{
+package {
+	
 	/**
-	 * ...
-	 * @author laoxie
+	 * @private
 	 */
-	public class Promise 
-	{
+	public class Promise {
 		
-		public function Promise(a:*,b:*=null)
-		{
-			
-		}
+		public function Promise(a:*, b:* = null) {
 		
+		}	
 	}
-
 }

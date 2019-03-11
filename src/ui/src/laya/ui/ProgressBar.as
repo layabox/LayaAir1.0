@@ -1,6 +1,7 @@
 package laya.ui {
 	import laya.events.Event;
-	import laya.ui.Component;
+	import laya.net.Loader;
+	import laya.ui.UIComponent;
 	import laya.ui.Image;
 	import laya.utils.Handler;
 	
@@ -108,7 +109,7 @@ package laya.ui {
 	 *     }
 	 * }
 	 */
-	public class ProgressBar extends Component {
+	public class ProgressBar extends UIComponent {
 		/**
 		 * 当 <code>ProgressBar</code> 实例的 <code>value</code> 属性发生变化时的函数处理器。
 		 * <p>默认返回参数<code>value</code> 属性（进度值）。</p>
@@ -157,19 +158,32 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				_bg.skin = _skin;
-				_bar.skin = _skin.replace(".png", "$bar.png");
-				callLater(changeValue);
+				if (_skin&&!Loader.getRes(_skin))
+				{
+					Laya.loader.load(_skin, Handler.create(this, _skinLoaded), null, Loader.IMAGE,1);
+				}else
+				{
+					_skinLoaded();
+				}
 			}
 		}
 		
+		protected function _skinLoaded():void
+		{
+			_bg.skin = _skin;
+			_bar.skin = _skin.replace(".png", "$bar.png");
+			callLater(changeValue);
+			_sizeChanged();
+			event(Event.LOADED);
+		}
+		
 		/**@inheritDoc */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			return _bg.width;
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			return _bg.height;
 		}
 		

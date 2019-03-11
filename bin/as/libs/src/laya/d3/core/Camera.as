@@ -1,18 +1,23 @@
 package laya.d3.core {
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.render.RenderQueue;
+	import laya.d3.core.scene.Scene3D;
+	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.OrientedBoundBox;
+	import laya.d3.math.Plane;
 	import laya.d3.math.Ray;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	import laya.d3.math.Viewport;
 	import laya.d3.resource.RenderTexture;
+	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.ShaderData;
+	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.d3.utils.Picker;
-	import laya.d3.utils.Size;
 	import laya.events.Event;
+	import laya.layagl.LayaGL;
+	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	
 	/**
@@ -20,6 +25,7 @@ package laya.d3.core {
 	 */
 	public class Camera extends BaseCamera {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+		/** @private */
 		private static var _tempVector20:Vector2 = new Vector2();
 		
 		/** @private */
@@ -35,11 +41,17 @@ package laya.d3.core {
 		/** @private */
 		private var _projectionViewMatrix:Matrix4x4;
 		/** @private */
-		private var _boundFrustumUpdate:Boolean;
+		public var _projectionViewMatrixNoTranslateScale:Matrix4x4;
 		/** @private */
 		private var _boundFrustum:BoundFrustum;
 		/** @private */
-		private var _orientedBoundBox:OrientedBoundBox;
+		private var _updateViewMatrix:Boolean = true;
+		
+		/** @private [NATIVE]*/
+		public var _boundFrustumBuffer:Float32Array;
+		
+		/**是否允许渲染。*/
+		public var enableRender:Boolean = true;
 		
 		/**
 		 * 获取横纵比。
@@ -69,16 +81,21 @@ package laya.d3.core {
 		 * @return 屏幕空间的视口。
 		 */
 		public function get viewport():Viewport {
-			if (_viewportExpressedInClipSpace) {
-				var nVp:Viewport = _normalizedViewport;
-				var size:Size = renderTargetSize;
-				var sizeW:int = size.width;
-				var sizeH:int = size.height;
-				_viewport.x = nVp.x * sizeW;
-				_viewport.y = nVp.y * sizeH;
-				_viewport.width = nVp.width * sizeW;
-				_viewport.height = nVp.height * sizeH;
+			var width:int;
+			var height:int;
+			if (_renderTarget) {
+				width = _renderTarget.width;
+				height = _renderTarget.height;
+			} else {
+				width = RenderContext3D.clientWidth;
+				height = RenderContext3D.clientHeight;
 			}
+			if (width !== _canvasWidth || height !== _canvasHeight) {
+				_calculationViewport(_normalizedViewport, width, height);
+				_canvasWidth = width;
+				_canvasHeight = height;
+			}
+			
 			return _viewport;
 		}
 		
@@ -87,10 +104,20 @@ package laya.d3.core {
 		 * @param 屏幕空间的视口。
 		 */
 		public function set viewport(value:Viewport):void {
-			if (renderTarget != null && (value.x < 0 || value.y < 0 || value.width == 0 || value.height == 0))
-				throw new Error("Camera: viewport size invalid.", "value");
-			_viewportExpressedInClipSpace = false;
-			_viewport = value;
+			var width:int;
+			var height:int;
+			if (_renderTarget) {
+				width = _canvasWidth = _renderTarget.width;
+				height = _canvasHeight = _renderTarget.height;
+			} else {
+				width = _canvasWidth = RenderContext3D.clientWidth;
+				height = _canvasHeight = RenderContext3D.clientHeight;
+			}
+			_normalizedViewport.x = value.x / width;
+			_normalizedViewport.y = value.y / height;
+			_normalizedViewport.width = value.width / width;
+			_normalizedViewport.height = value.height / height;
+			_calculationViewport(_normalizedViewport, width, height);
 			_calculateProjectionMatrix();
 		}
 		
@@ -99,16 +126,6 @@ package laya.d3.core {
 		 * @return 裁剪空间的视口。
 		 */
 		public function get normalizedViewport():Viewport {
-			if (!_viewportExpressedInClipSpace) {
-				var vp:Viewport = _viewport;
-				var size:Size = renderTargetSize;
-				var sizeW:int = size.width;
-				var sizeH:int = size.height;
-				_normalizedViewport.x = vp.x / sizeW;
-				_normalizedViewport.y = vp.y / sizeH;
-				_normalizedViewport.width = vp.width / sizeW;
-				_normalizedViewport.height = vp.height / sizeH;
-			}
 			return _normalizedViewport;
 		}
 		
@@ -117,31 +134,18 @@ package laya.d3.core {
 		 * @return 裁剪空间的视口。
 		 */
 		public function set normalizedViewport(value:Viewport):void {
-			if (value.x < 0) {
-				value.x = 0;
-				console.warn("Camera: viewport.x must large than 0.0.");
+			var width:int;
+			var height:int;
+			if (_renderTarget) {
+				width = _canvasWidth = _renderTarget.width;
+				height = _canvasHeight = _renderTarget.height;
+			} else {
+				width = _canvasWidth = RenderContext3D.clientWidth;
+				height = _canvasHeight = RenderContext3D.clientHeight;
 			}
-			if (value.y < 0) {
-				value.y = 0;
-				console.warn("Camera: viewport.y must large than 0.0.");
-			}
-			if (value.x + value.width > 1.0) {
-				value.width = 1.0 - value.x;
-				console.warn("Camera: viewport.width + viewport.x must less than 1.0.");
-			}
-			if ((value.y + value.height) > 1.0) {
-				value.height = 1.0 - value.y;
-				console.warn("Camera: viewport.height + viewport.y must less than 1.0.");
-			}
-			_viewportExpressedInClipSpace = true;
 			_normalizedViewport = value;
-			
+			_calculationViewport(value, width, height);
 			_calculateProjectionMatrix();
-		}
-		
-		public function get needViewport():Boolean {
-			var nVp:Viewport = normalizedViewport;
-			return nVp.x === 0 && nVp.y === 0 && nVp.width === 1 && nVp.height === 1;
 		}
 		
 		/**
@@ -149,7 +153,26 @@ package laya.d3.core {
 		 * @return 视图矩阵。
 		 */
 		public function get viewMatrix():Matrix4x4 {
-			transform.worldMatrix.invert(_viewMatrix);
+			if (_updateViewMatrix) {
+				var scale:Vector3 = transform.scale;
+				var scaleX:Number = scale.x;
+				var scaleY:Number = scale.y;
+				var scaleZ:Number = scale.z;
+				var viewMatE:Float32Array = _viewMatrix.elements;
+				
+				transform.worldMatrix.cloneTo(_viewMatrix)
+				viewMatE[0] /= scaleX;//忽略缩放
+				viewMatE[1] /= scaleX;
+				viewMatE[2] /= scaleX;
+				viewMatE[4] /= scaleY;
+				viewMatE[5] /= scaleY;
+				viewMatE[6] /= scaleY;
+				viewMatE[8] /= scaleZ;
+				viewMatE[9] /= scaleZ;
+				viewMatE[10] /= scaleZ;
+				_viewMatrix.invert(_viewMatrix);
+				_updateViewMatrix = false;
+			}
 			return _viewMatrix;
 		}
 		
@@ -177,8 +200,28 @@ package laya.d3.core {
 		 * 获取摄像机视锥。
 		 */
 		public function get boundFrustum():BoundFrustum {
-			if (_boundFrustumUpdate)
-				_boundFrustum.matrix = projectionViewMatrix;
+			_boundFrustum.matrix = projectionViewMatrix;
+			if (Render.isConchApp) {
+				var near:Plane = _boundFrustum.near;
+				var far:Plane = _boundFrustum.far;
+				var left:Plane = _boundFrustum.left;
+				var right:Plane = _boundFrustum.right;
+				var top:Plane = _boundFrustum.top;
+				var bottom:Plane = _boundFrustum.bottom;
+				var nearNE:Float32Array = near.normal.elements;
+				var farNE:Float32Array = far.normal.elements;
+				var leftNE:Float32Array = left.normal.elements;
+				var rightNE:Float32Array = right.normal.elements;
+				var topNE:Float32Array = top.normal.elements;
+				var bottomNE:Float32Array = bottom.normal.elements;
+				var buffer:Float32Array = _boundFrustumBuffer;
+				buffer[0] = nearNE[0], buffer[1] = nearNE[1], buffer[2] = nearNE[2], buffer[3] = near.distance;
+				buffer[4] = farNE[0], buffer[5] = farNE[1], buffer[6] = farNE[2], buffer[7] = far.distance;
+				buffer[8] = leftNE[0], buffer[9] = leftNE[1], buffer[10] = leftNE[2], buffer[11] = left.distance;
+				buffer[12] = rightNE[0], buffer[13] = rightNE[1], buffer[14] = rightNE[2], buffer[15] = right.distance;
+				buffer[16] = topNE[0], buffer[17] = topNE[1], buffer[18] = topNE[2], buffer[19] = top.distance;
+				buffer[20] = bottomNE[0], buffer[21] = bottomNE[1], buffer[22] = bottomNE[2], buffer[23] = bottom.distance;
+			}
 			
 			return _boundFrustum;
 		}
@@ -193,29 +236,42 @@ package laya.d3.core {
 			_viewMatrix = new Matrix4x4();
 			_projectionMatrix = new Matrix4x4();
 			_projectionViewMatrix = new Matrix4x4();
+			_projectionViewMatrixNoTranslateScale = new Matrix4x4();
 			_viewport = new Viewport(0, 0, 0, 0);
 			_normalizedViewport = new Viewport(0, 0, 1, 1);
 			_aspectRatio = aspectRatio;
-			_boundFrustumUpdate = true;
 			_boundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
+			if (Render.isConchApp)
+				_boundFrustumBuffer = new Float32Array(24);
+			
 			super(nearPlane, farPlane);
-			transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChanged);
+			transform.on(Event.TRANSFORM_CHANGED, this, _onTransformChanged);
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onWorldMatrixChanged():void {
-			_boundFrustumUpdate = true;
+		public function _onTransformChanged(flag:int):void {
+			flag &= Transform3D.TRANSFORM_WORLDMATRIX;//过滤有用TRANSFORM标记
+			(flag) && (_updateViewMatrix = true);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _calculationViewport(normalizedViewport:Viewport, width:int, height:int):void {
+			_viewport.x = normalizedViewport.x * width;//不应限制x范围
+			_viewport.y = normalizedViewport.y * height;//不应限制y范围
+			_viewport.width = Math.min(Math.max(normalizedViewport.width * width, 0), width);
+			_viewport.height = Math.min(Math.max(normalizedViewport.height * height, 0), height);
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
-			var color:Array = customProps.clearColor;
-			clearColor = new Vector4(color[0], color[1], color[2], color[3]);
-			var viewport:Array = customProps.viewport;
+		override public function _parse(data:Object):void {
+			super._parse(data);
+			var viewport:Array = data.viewport;
 			normalizedViewport = new Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 		}
 		
@@ -232,50 +288,67 @@ package laya.d3.core {
 					Matrix4x4.createPerspective(3.1416 * fieldOfView / 180.0, aspectRatio, nearPlane, farPlane, _projectionMatrix);
 				}
 			}
-			_boundFrustumUpdate = true;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override public function _update(state:RenderState):void {
-			if (conchModel) {//NATIVE
-				conchModel.setViewMatrix(viewMatrix.elements);
-				conchModel.setProjectMatrix(projectionMatrix.elements);
+		override public function render(shader:Shader3D = null, replacementTag:String = null):void {
+			var gl:WebGLContext = LayaGL.instance;
+			var context:RenderContext3D = RenderContext3D._instance;
+			var scene:Scene3D = context.scene = _scene as Scene3D;
+			if (!scene) //自定义相机渲染需要加保护判断是否在场景中,否则报错,TODO:
+				return;
+			if (scene.parallelSplitShadowMaps[0]) {//TODO:SM
+				ShaderData.setRuntimeValueMode(false);
+				var parallelSplitShadowMap:ParallelSplitShadowMap = scene.parallelSplitShadowMaps[0];
+				parallelSplitShadowMap._calcAllLightCameraInfo(this);
+				scene._defineDatas.add(Scene3D.SHADERDEFINE_CAST_SHADOW);//增加宏定义
+				for (var i:int = 0, n:int = parallelSplitShadowMap.shadowMapCount; i < n; i++) {
+					var smCamera:Camera = parallelSplitShadowMap.cameras[i];
+					context.camera = smCamera;
+					context.projectionViewMatrix = smCamera.projectionViewMatrix;//TODO:重复计算浪费
+					FrustumCulling.renderObjectCulling(smCamera, scene, context, scene._castShadowRenders);
+					
+					var shadowMap:RenderTexture = parallelSplitShadowMap.cameras[i + 1].renderTarget;
+					shadowMap.start();
+					context.camera = smCamera;
+					context.viewport = smCamera.viewport;
+					smCamera._prepareCameraToRender();
+					smCamera._prepareCameraViewProject(smCamera.viewMatrix, smCamera.projectionMatrix, smCamera._projectionViewMatrixNoTranslateScale);
+					scene._clear(gl, context);
+					var queue:RenderQueue = scene._opaqueQueue;//阴影均为非透明队列
+					queue._render(context, false);//TODO:临时改为False
+					shadowMap.end();
+				}
+				scene._defineDatas.remove(Scene3D.SHADERDEFINE_CAST_SHADOW);//去掉宏定义
+				ShaderData.setRuntimeValueMode(true);
 			}
-			super._update(state);
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function _renderCamera(gl:WebGLContext, state:RenderState, scene:Scene):void {
-			(scene.parallelSplitShadowMaps[0]) && (scene._renderShadowMap(gl, state, this));//TODO:SM
-			state.camera = this;
-			_prepareCameraToRender();
-			scene._preRenderUpdateComponents(state);
+			
+			context.camera = this;
+			
+			scene._preRenderScript();//TODO:duo相机是否重复
 			
 			var viewMat:Matrix4x4, projectMat:Matrix4x4;
-			viewMat = state._viewMatrix = viewMatrix;
+			viewMat = context.viewMatrix = viewMatrix;
 			var renderTar:RenderTexture = _renderTarget;
 			if (renderTar) {
 				renderTar.start();
 				Matrix4x4.multiply(_invertYScaleMatrix, _projectionMatrix, _invertYProjectionMatrix);
 				Matrix4x4.multiply(_invertYScaleMatrix, projectionViewMatrix, _invertYProjectionViewMatrix);
-				projectMat = state._projectionMatrix = _invertYProjectionMatrix;//TODO:
-				state._projectionViewMatrix = _invertYProjectionViewMatrix;//TODO:
+				projectMat = context.projectionMatrix = _invertYProjectionMatrix;//TODO:
+				context.projectionViewMatrix = _invertYProjectionViewMatrix;//TODO:
 			} else {
-				projectMat = state._projectionMatrix = _projectionMatrix;//TODO:
-				state._projectionViewMatrix = projectionViewMatrix;//TODO:
+				projectMat = context.projectionMatrix = _projectionMatrix;//TODO:
+				context.projectionViewMatrix = projectionViewMatrix;//TODO:
 			}
-			
-			_prepareCameraViewProject(viewMat, projectMat);
-			state._viewport = viewport;
-			scene._preRenderScene(gl, state, boundFrustum);
-			scene._clear(gl, state);
-			scene._renderScene(gl, state);
-			scene._postRenderUpdateComponents(state);
-			
+			context.viewport = viewport;
+			_prepareCameraToRender();
+			_prepareCameraViewProject(viewMat, projectMat, _projectionViewMatrixNoTranslateScale);
+			scene._preCulling(context, this);
+			scene._clear(gl, context);
+			scene._renderScene(gl, context, shader, replacementTag);
+			scene._postRenderScript();//TODO:duo相机是否重复
 			(renderTar) && (renderTar.end());
 		}
 		
@@ -315,10 +388,10 @@ package laya.d3.core {
 			var outE:Float32Array = out.elements;
 			//if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			//{
-				//outE[0] = outE[1] = outE[2] = NaN;
+			//outE[0] = outE[1] = outE[2] = NaN;
 			//} else {
-				outE[0] = outE[0] / Laya.stage.clientScaleX;
-				outE[1] = outE[1] / Laya.stage.clientScaleY;
+			outE[0] = outE[0] / Laya.stage.clientScaleX;
+			outE[1] = outE[1] / Laya.stage.clientScaleY;
 			//}
 		}
 		
@@ -333,10 +406,10 @@ package laya.d3.core {
 			var outE:Float32Array = out.elements;
 			//if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			//{
-				//outE[0] = outE[1] = outE[2] = NaN;
+			//outE[0] = outE[1] = outE[2] = NaN;
 			//} else {
-				outE[0] = outE[0] / Laya.stage.clientScaleX;
-				outE[1] = outE[1] / Laya.stage.clientScaleY;
+			outE[0] = outE[0] / Laya.stage.clientScaleX;
+			outE[1] = outE[1] / Laya.stage.clientScaleY;
 			//}
 		}
 		
@@ -348,8 +421,8 @@ package laya.d3.core {
 		 */
 		public function convertScreenCoordToOrthographicCoord(source:Vector3, out:Vector3):Boolean {//TODO:是否应该使用viewport宽高
 			if (_orthographic) {
-				var clientWidth:int = RenderState.clientWidth;
-				var clientHeight:int = RenderState.clientHeight;
+				var clientWidth:int = RenderContext3D.clientWidth;
+				var clientHeight:int = RenderContext3D.clientHeight;
 				var ratioX:Number = orthographicVerticalSize * aspectRatio / clientWidth;
 				var ratioY:Number = orthographicVerticalSize / clientHeight;
 				var sE:Array = source.elements;
@@ -362,6 +435,14 @@ package laya.d3.core {
 			} else {
 				return false;
 			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function destroy(destroyChild:Boolean = true):void {
+			transform.off(Event.TRANSFORM_CHANGED, this, _onTransformChanged);
+			super.destroy(destroyChild);
 		}
 	}
 }

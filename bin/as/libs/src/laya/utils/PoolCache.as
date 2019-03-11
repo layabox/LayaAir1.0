@@ -6,6 +6,7 @@ package laya.utils {
 	 */
 	public class PoolCache {
 		
+		//TODO:
 		/**
 		 * 对象在Pool中的标识
 		 */
@@ -48,7 +49,7 @@ package laya.utils {
 			cache = new PoolCache();
 			cache.sign = sign;
 			cache.maxCount = maxCount;
-			CacheManager.regCacheByFunction(Utils.bind(cache.tryDispose, cache), Utils.bind(cache.getCacheList, cache));
+			CacheManger.regCacheByFunction(Utils.bind(cache.tryDispose, cache), Utils.bind(cache.getCacheList, cache));
 		}
 	}
 }

@@ -1,9 +1,13 @@
 package laya.net {
+	import laya.d3.core.scene.Scene3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
+	import laya.renders.Render;
 	import laya.resource.ICreateResource;
+	import laya.resource.Resource;
 	import laya.resource.Texture;
+	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
 	
@@ -55,6 +59,18 @@ package laya.net {
 		private var _maxPriority:int = 5;
 		/**@private */
 		private var _failRes:Object = {};
+		/**@private */
+		private var _statInfo:Object = {count: 1, loaded: 1};
+		
+		/**@private */
+		public function getProgress():Number {
+			return _statInfo.loaded / _statInfo.count;
+		}
+		
+		/**@private */
+		public function resetProgress():void {
+			_statInfo.count = _statInfo.loaded = 1;
+		}
 		
 		/**
 		 * <p>创建一个新的 <code>LoaderManager</code> 实例。</p>
@@ -71,13 +87,21 @@ package laya.net {
 		 * @param	url			资源地址或者数组。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：[{url:xx,clas:xx,priority:xx,params:xx},{url:xx,clas:xx,priority:xx,params:xx}]。
 		 * @param	complete	加载结束回调。根据url类型不同分为2种情况：1. url为String类型，也就是单个资源地址，如果加载成功，则回调参数值为加载完成的资源，否则为null；2. url为数组类型，指定了一组要加载的资源，如果全部加载成功，则回调参数值为true，否则为false。
 		 * @param	progress	资源加载进度回调，回调参数值为当前资源加载的进度信息(0-1)。
-		 * @param	clas		资源类名。如果url和clas同时指定了资源类型，优先使用url指定的资源类型。参数形如：Texture。
-		 * @param	params		资源构造参数。
+		 * @param	type	资源类型。
+		 * @param	constructParams		资源构造函数参数。
+		 * @param	propertyParams		资源属性参数。
 		 * @param	priority	(default = 1)加载的优先级，优先级高的优先加载。有0-4共5个优先级，0最高，4最低。
 		 * @param	cache		是否缓存加载的资源。
 		 * @return	如果url为数组，返回true；否则返回指定的资源类对象。
 		 */
-		public function create(url:*, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true, group:String = null):* {
+		public function create(url:*, complete:Handler = null, progress:Handler = null, type:String = null, constructParams:Array = null, propertyParams:Object = null, priority:int = 1, cache:Boolean = true):void {
+			_create(url, true, complete, progress, type, constructParams, propertyParams, priority, cache);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _create(url:*, mainResou:Boolean, complete:Handler = null, progress:Handler = null, type:String = null, constructParams:Array = null, propertyParams:Object = null, priority:int = 1, cache:Boolean = true):void {
 			if (url is Array) {
 				var items:Array = url as Array;
 				var itemCount:int = items.length;
@@ -85,9 +109,10 @@ package laya.net {
 				if (progress) {
 					var progress2:Handler = Handler.create(progress.caller, progress.method, progress.args, false);
 				}
+				
 				for (var i:int = 0; i < itemCount; i++) {
 					var item:* = items[i];
-					if (item is String) 
+					if (item is String)
 						item = items[i] = {url: item};
 					item.progress = 0;
 				}
@@ -95,7 +120,7 @@ package laya.net {
 					item = items[i];
 					var progressHandler:Handler = progress ? Handler.create(null, onProgress, [item], false) : null;
 					var completeHandler:Handler = (progress || complete) ? Handler.create(null, onComplete, [item]) : null;
-					_create(item.url, completeHandler, progressHandler, item.clas || clas, item.params || params, item.priority || priority, cache, item.group || group);
+					_createOne(item.url, mainResou, completeHandler, progressHandler, item.type || type, item.constructParams || constructParams, item.propertyParams || propertyParams, item.priority || priority, cache);
 				}
 				function onComplete(item:Object, content:* = null):void {
 					loadedCount++;
@@ -115,51 +140,50 @@ package laya.net {
 					var v:Number = num / itemCount;
 					progress2.runWith(v);
 				}
-				return true;
-			} else return _create(url, complete, progress, clas, params, priority, cache, group);
+			} else {
+				_createOne(url, mainResou, complete, progress, type, constructParams, propertyParams, priority, cache);
+			}
 		}
 		
-		private function _create(url:String, complete:Handler = null, progress:Handler = null, clas:Class = null, params:Array = null, priority:int = 1, cache:Boolean = true, group:String = null):* {
-			var formarUrl:String = URL.formatURL(url);
-			var item:* = getRes(formarUrl);
+		/**
+		 * @private
+		 */
+		private function _createOne(url:String, mainResou:Boolean, complete:Handler = null, progress:Handler = null, type:String = null, constructParams:Array = null, propertyParams:Object = null, priority:int = 1, cache:Boolean = true):void {
+			var item:* = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
-				var creatItem:Array = createMap[extension];
-				if (!creatItem)
-					throw new Error("LoaderManager:unknown file(" + url + ") extension with: " + extension + ".");
-				if (!clas) clas = creatItem[0];
-				var type:String = creatItem[1];
-				if (extension == "atlas") {
+				(type) || (type = createMap[extension] ? createMap[extension][0] : null);
+				
+				if (!type) {
 					load(url, complete, progress, type, priority, cache);
-				} else {
-					if (clas === Texture) type = "htmlimage";
-					item = clas ? new clas() : null;
-					if (item.hasOwnProperty("_loaded"))
-						item._loaded = false;
-					item._setUrl(url);
-					(group) && (item._setGroup(group));
-					_createLoad(item, url, Handler.create(null, onLoaded), progress, type, priority, false, group, true);
-					function onLoaded(data:*):void {
-						(item && !item.destroyed && data) && (item.onAsynLoaded.call(item, url, data, params));//TODO:精灵如何处理
-						if (complete) complete.run();
-						Laya.loader.event(url);
+					return;
+				}
+				var parserMap:Object = Loader.parserMap;
+				if (!parserMap[type]) {//not custom parse type
+					load(url, complete, progress, type, priority, cache);
+					return;
+				}
+				_createLoad(url, Handler.create(null, onLoaded), progress, type, constructParams, propertyParams, priority, cache, true);
+				function onLoaded(createRes:ICreateResource):void {//加载失败createRes为空
+					if (createRes) {
+						if (!mainResou && createRes is Resource)
+							(createRes as Resource)._addReference();
+						createRes._setCreateURL(url);
 					}
-					(cache) && (cacheRes(formarUrl, item));
-				}
+					complete && complete.runWith(createRes);
+					Laya.loader.event(url);
+				};
 			} else {
-				if (!item.hasOwnProperty("loaded") || item.loaded) {
-					progress && progress.runWith(1);
-					complete && complete.run();
-				} else if (complete) {
-					Laya.loader._createListener(url, complete.caller, complete.method, complete.args, true, false);
-				}
+				if (!mainResou && item is Resource)
+					item._addReference();
+				progress && progress.runWith(1);
+				complete && complete.runWith(item);
 			}
-			return item;
 		}
 		
 		/**
 		 * <p>加载资源。资源加载错误时，本对象会派发 Event.ERROR 事件，事件回调参数值为加载出错的资源地址。</p>
-		 * <p>因为返回值为 LoaderManager 对象本身，所以可以使用如下语法：Laya.loader.load(...).load(...);</p>
+		 * <p>因为返回值为 LoaderManager 对象本身，所以可以使用如下语法：loaderManager.load(...).load(...);</p>
 		 * @param	url			要加载的单个资源地址或资源信息数组。比如：简单数组：["a.png","b.png"]；复杂数组[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]。
 		 * @param	complete	加载结束回调。根据url类型不同分为2种情况：1. url为String类型，也就是单个资源地址，如果加载成功，则回调参数值为加载完成的资源，否则为null；2. url为数组类型，指定了一组要加载的资源，如果全部加载成功，则回调参数值为true，否则为false。
 		 * @param	progress	加载进度回调。回调参数值为当前资源的加载进度信息(0-1)。
@@ -168,20 +192,29 @@ package laya.net {
 		 * @param	cache		是否缓存加载结果。
 		 * @param	group		分组，方便对资源进行管理。
 		 * @param	ignoreCache	是否忽略缓存，强制重新加载。
+		 * @param	useWorkerLoader(default = false)是否使用worker加载（只针对IMAGE类型和ATLAS类型，并且浏览器支持的情况下生效）
 		 * @return 此 LoaderManager 对象本身。
 		 */
-		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):LoaderManager {
+		public function load(url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false, useWorkerLoader:Boolean = false):LoaderManager {
 			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache, group);
 			var content:* = Loader.getRes(url);
-			if (content != null) {
-				//增加延迟回掉
-				Laya.timer.frameOnce(1, null, function():void {
+			if (!ignoreCache && content != null) {
+				//增加延迟回掉，防止快速回掉导致执行顺序错误
+				Laya.systemTimer.frameOnce(1, null, function():void {
 					progress && progress.runWith(1);
 					complete && complete.runWith(content);
 					//判断是否全部加载，如果是则抛出complete事件
 					_loaderCount || event(Event.COMPLETE);
 				});
 			} else {
+				var original:String;
+				original = url;
+				url = AtlasInfoManager.getFileLoadPath(url);
+				if (url != original && type !== "nativeimage") {
+					type = Loader.ATLAS;
+				} else {
+					original = null;
+				}
 				var info:ResInfo = _resMap[url];
 				if (!info) {
 					info = _infoPool.length ? _infoPool.pop() : new ResInfo();
@@ -190,29 +223,43 @@ package laya.net {
 					info.cache = cache;
 					info.group = group;
 					info.ignoreCache = ignoreCache;
+					info.useWorkerLoader = useWorkerLoader;
+					info.originalUrl = original;
 					complete && info.on(Event.COMPLETE, complete.caller, complete.method, complete.args);
 					progress && info.on(Event.PROGRESS, progress.caller, progress.method, progress.args);
 					_resMap[url] = info;
 					priority = priority < this._maxPriority ? priority : this._maxPriority - 1;
 					this._resInfos[priority].push(info);
+					_statInfo.count++;
+					event(Event.PROGRESS, getProgress());
 					_next();
 				} else {
-					complete && info._createListener(Event.COMPLETE, complete.caller, complete.method, complete.args, false, false);
+					if (complete) {
+						if (original) {
+							complete && info._createListener(Event.COMPLETE, this, _resInfoLoaded, [original, complete], false, false);
+						} else {
+							complete && info._createListener(Event.COMPLETE, complete.caller, complete.method, complete.args, false, false);
+						}
+					}
 					progress && info._createListener(Event.PROGRESS, progress.caller, progress.method, progress.args, false, false);
 				}
 			}
 			return this;
 		}
 		
+		private function _resInfoLoaded(original:String, complete:Handler):void {
+			complete.runWith(Loader.getRes(original));
+		}
+		
 		/**
 		 * @private
 		 */
-		public function _createLoad(item:*, url:*, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):LoaderManager {
-			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache, group);
+		public function _createLoad(url:*, complete:Handler = null, progress:Handler = null, type:String = null, constructParams:Array = null, propertyParams:Object = null, priority:int = 1, cache:Boolean = true, ignoreCache:Boolean = false):LoaderManager {
+			if (url is Array) return _loadAssets(url as Array, complete, progress, type, priority, cache);
 			var content:* = Loader.getRes(url);
 			if (content != null) {
 				//增加延迟回掉
-				Laya.timer.frameOnce(1, null, function():void {
+				Laya.systemTimer.frameOnce(1, null, function():void {
 					progress && progress.runWith(1);
 					complete && complete.runWith(content);
 					//判断是否全部加载，如果是则抛出complete事件
@@ -223,16 +270,21 @@ package laya.net {
 				if (!info) {
 					info = _infoPool.length ? _infoPool.pop() : new ResInfo();
 					info.url = url;
-					info.clas = item;
 					info.type = type;
-					info.cache = cache;
-					info.group = group;
+					info.cache = false;
 					info.ignoreCache = ignoreCache;
+					info.originalUrl = null;
+					
+					info.createCache = cache;
+					info.createConstructParams = constructParams;
+					info.createPropertyParams = propertyParams;
 					complete && info.on(Event.COMPLETE, complete.caller, complete.method, complete.args);
 					progress && info.on(Event.PROGRESS, progress.caller, progress.method, progress.args);
 					_resMap[url] = info;
 					priority = priority < this._maxPriority ? priority : this._maxPriority - 1;
 					this._resInfos[priority].push(info);
+					_statInfo.count++;
+					event(Event.PROGRESS, getProgress());
 					_next();
 				} else {
 					complete && info._createListener(Event.COMPLETE, complete.caller, complete.method, complete.args, false, false);
@@ -265,19 +317,21 @@ package laya.net {
 				onLoaded(null);
 			});
 			
-			var _this:LoaderManager = this;
+			var _me:LoaderManager = this;
 			function onLoaded(data:* = null):void {
 				loader.offAll();
 				loader._data = null;
 				loader._customParse = false;
-				_this._loaders.push(loader);
-				_this._endLoad(resInfo, data is Array ? [data] : data);
-				_this._loaderCount--;
-				_this._next();
+				_me._loaders.push(loader);
+				_me._endLoad(resInfo, data is Array ? [data] : data);
+				_me._loaderCount--;
+				_me._next();
 			}
 			
-			loader._class = resInfo.clas;
-			loader.load(resInfo.url, resInfo.type, resInfo.cache, resInfo.group, resInfo.ignoreCache);
+			loader._constructParams = resInfo.createConstructParams;
+			loader._propertyParams = resInfo.createPropertyParams;
+			loader._createCache = resInfo.createCache;
+			loader.load(resInfo.url, resInfo.type, resInfo.cache, resInfo.group, resInfo.ignoreCache, resInfo.useWorkerLoader);
 		}
 		
 		private function _endLoad(resInfo:ResInfo, content:*):void {
@@ -288,18 +342,24 @@ package laya.net {
 				if (errorCount < this.retryNum) {
 					console.warn("[warn]Retry to load:", url);
 					this._failRes[url] = errorCount + 1;
-					Laya.timer.once(retryDelay, this, _addReTry, [resInfo], false);
+					Laya.systemTimer.once(retryDelay, this, _addReTry, [resInfo], false);
 					return;
 				} else {
+					Loader.clearRes(url);//使用create加载失败需要清除资源
 					console.warn("[error]Failed to load:", url);
 					event(Event.ERROR, url);
 				}
 			}
 			if (_failRes[url]) _failRes[url] = 0;
 			delete _resMap[url];
+			if (resInfo.originalUrl) {
+				content = Loader.getRes(resInfo.originalUrl);
+			}
 			resInfo.event(Event.COMPLETE, content);
 			resInfo.offAll();
 			_infoPool.push(resInfo);
+			_statInfo.loaded++;
+			event(Event.PROGRESS, getProgress());
 		}
 		
 		private function _addReTry(resInfo:ResInfo):void {
@@ -310,10 +370,20 @@ package laya.net {
 		/**
 		 * 清理指定资源地址缓存。
 		 * @param	url 资源地址。
-		 * @param	forceDispose 是否强制销毁，有些资源是采用引用计数方式销毁，如果forceDispose=true，则忽略引用计数，直接销毁，比如Texture，默认为false
 		 */
-		public function clearRes(url:String, forceDispose:Boolean = false):void {
-			Loader.clearRes(url, forceDispose);
+		public function clearRes(url:String):void {
+			Loader.clearRes(url);
+		}
+		
+		/**
+		 * 销毁Texture使用的图片资源，保留texture壳，如果下次渲染的时候，发现texture使用的图片资源不存在，则会自动恢复
+		 * 相比clearRes，clearTextureRes只是清理texture里面使用的图片资源，并不销毁texture，再次使用到的时候会自动恢复图片资源
+		 * 而clearRes会彻底销毁texture，导致不能再使用；clearTextureRes能确保立即销毁图片资源，并且不用担心销毁错误，clearRes则采用引用计数方式销毁
+		 * 【注意】如果图片本身在自动合集里面（默认图片小于512*512），内存是不能被销毁的，此图片被大图合集管理器管理
+		 * @param	url	图集地址或者texture地址，比如 Loader.clearTextureRes("res/atlas/comp.atlas"); Loader.clearTextureRes("hall/bg.jpg");
+		 */
+		public function clearTextureRes(url:String):void {
+			Loader.clearTextureRes(url);
 		}
 		
 		/**
@@ -332,17 +402,6 @@ package laya.net {
 		 */
 		public function cacheRes(url:String, data:*):void {
 			Loader.cacheRes(url, data);
-		}
-		
-		/**
-		 * 销毁Texture使用的图片资源，保留texture壳，如果下次渲染的时候，发现texture使用的图片资源不存在，则会自动恢复
-		 * 相比clearRes，clearTextureRes只是清理texture里面使用的图片资源，并不销毁texture，再次使用到的时候会自动恢复图片资源
-		 * 而clearRes会彻底销毁texture，导致不能再使用；clearTextureRes能确保立即销毁图片资源，并且不用担心销毁错误，clearRes则采用引用计数方式销毁
-		 * 【注意】如果图片本身在自动合集里面（默认图片小于512*512），内存是不能被销毁的，此图片被大图合集管理器管理
-		 * @param	url	图集地址或者texture地址，比如 Loader.clearTextureRes("res/atlas/comp.atlas"); Loader.clearTextureRes("hall/bg.jpg");
-		 */
-		public function clearTextureRes(url:String):void {
-			Loader.clearTextureRes(url);
 		}
 		
 		/**
@@ -423,7 +482,7 @@ package laya.net {
 		/**
 		 * @private
 		 * 加载数组里面的资源。
-		 * @param arr 简单：["a.png","b.png"]，复杂[{url:"a.png",type:Loader.IMAGE,size:100,priority:1},{url:"b.json",type:Loader.JSON,size:50,priority:1}]*/
+		 * @param arr 简单：["a.png","b.png"]，复杂[{url:"a.png",type:Loader.IMAGE,size:100,priority:1,useWorkerLoader:true},{url:"b.json",type:Loader.JSON,size:50,priority:1}]*/
 		private function _loadAssets(arr:Array, complete:Handler = null, progress:Handler = null, type:String = null, priority:int = 1, cache:Boolean = true, group:String = null):LoaderManager {
 			var itemCount:int = arr.length;
 			var loadedCount:int = 0;
@@ -439,7 +498,7 @@ package laya.net {
 				items.push(item);
 				var progressHandler:* = progress ? Handler.create(null, loadProgress, [item], false) : null;
 				var completeHandler:* = (complete || progress) ? Handler.create(null, loadComplete, [item]) : null;
-				load(item.url, completeHandler, progressHandler, item.type, item.priority || 1, cache, item.group || group);
+				load(item.url, completeHandler, progressHandler, item.type, item.priority || 1, cache, item.group || group, false, item.useWorkerLoader);
 			}
 			
 			function loadComplete(item:Object, content:* = null):void {
@@ -465,6 +524,44 @@ package laya.net {
 			}
 			return this;
 		}
+		
+		/**
+		 * 解码Texture或者图集
+		 * @param	urls texture地址或者图集地址集合
+		 */
+		//TODO:TESTs
+		public function decodeBitmaps(urls:Array):void {
+			var i:int, len:int = urls.length;
+			var ctx:*;
+			//ctx = Browser.context;
+			ctx = Render._context;
+			//经测试需要画到主画布上才能只解码一次
+			//当前用法下webgl模式会报错
+			for (i = 0; i < len; i++) {
+				var atlas:Array;
+				atlas = Loader.getAtlas(urls[i]);
+				if (atlas) {
+					_decodeTexture(atlas[0], ctx);
+				} else {
+					var tex:Texture;
+					tex = getRes(urls[i]);
+					if (tex && tex is Texture) {
+						_decodeTexture(tex, ctx);
+					}
+				}
+			}
+		}
+		
+		private function _decodeTexture(tex:Texture, ctx:*):void {
+			var bitmap:* = tex.bitmap;
+			if (!tex || !bitmap) return;
+			var tImg:* = bitmap.source || bitmap.image;
+			if (!tImg) return;
+			if (tImg is Browser.window.HTMLImageElement) {
+				ctx.drawImage(tImg, 0, 0, 1, 1);
+				var info:* = ctx.getImageData(0, 0, 1, 1);
+			}
+		}
 	}
 }
 import laya.events.EventDispatcher;
@@ -475,5 +572,10 @@ class ResInfo extends EventDispatcher {
 	public var cache:Boolean;
 	public var group:String;
 	public var ignoreCache:Boolean;
-	public var clas:*;
+	public var useWorkerLoader:Boolean;
+	public var originalUrl:String;
+	
+	public var createCache:Boolean;
+	public var createConstructParams:Array;
+	public var createPropertyParams:Object;
 }

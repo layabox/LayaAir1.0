@@ -1,18 +1,23 @@
 #ifdef FSHIGHPRECISION
-precision highp float;
+	precision highp float;
 #else
-precision mediump float;
+	precision mediump float;
 #endif
+
 //precision highp float;
 varying vec2 v_texcoord;
 uniform sampler2D texture;
 uniform float alpha;
 uniform vec4 u_TexRange;
 uniform vec2 u_offset;
-#include?BLUR_FILTER  "parts/BlurFilter_ps_uniform.glsl";
-#include?COLOR_FILTER "parts/ColorFilter_ps_uniform.glsl";
-#include?GLOW_FILTER "parts/GlowFilter_ps_uniform.glsl";
-#include?COLOR_ADD "parts/ColorAdd_ps_uniform.glsl";
+
+#import?BLUR_FILTER  "parts/BlurFilter_ps_uniform.glsl";
+
+#import?COLOR_FILTER "parts/ColorFilter.glsl" with ColorFilter_ps_uniform;
+
+#import?GLOW_FILTER "parts/GlowFilter_ps_uniform.glsl";
+
+#import?COLOR_ADD "parts/ColorAdd.glsl" with ColorAdd_ps_uniform;
 
 void main() {
    vec2 newTexCoord;
@@ -21,8 +26,12 @@ void main() {
    vec4 color= texture2D(texture, newTexCoord);
    color.a*=alpha;
    gl_FragColor=color;
-   #include?COLOR_ADD "parts/ColorAdd_ps_logic.glsl";   
-   #include?BLUR_FILTER  "parts/BlurFilter_ps_logic.glsl";
-   #include?COLOR_FILTER "parts/ColorFilter_ps_logic.glsl";
-   #include?GLOW_FILTER "parts/GlowFilter_ps_logic.glsl";
+   
+   #import?COLOR_ADD "parts/ColorAdd.glsl" with ColorAdd_ps_logic;
+   
+   #import?BLUR_FILTER  "parts/BlurFilter_ps_logic.glsl";
+   
+   #import?COLOR_FILTER "parts/ColorFilter.glsl" with ColorFilter_ps_logic;
+   
+   #import?GLOW_FILTER "parts/GlowFilter_ps_logic.glsl";
 }

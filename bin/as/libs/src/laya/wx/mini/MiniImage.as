@@ -33,8 +33,36 @@ package laya.wx.mini {
 					}else
 					{
 						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						var tempUrl:String = url;
 						if(tempStr != "")
 							url = url.split(tempStr)[1];//去掉http头
+						if(!url)
+						{
+							url = tempUrl;
+						}
+					}
+					
+				}
+				if (MiniAdpter.subNativeFiles && MiniAdpter.subNativeheads.length == 0)
+				{
+					for (var key:* in MiniAdpter.subNativeFiles)
+					{
+						var tempArr:Array = MiniAdpter.subNativeFiles[key];
+						MiniAdpter.subNativeheads = MiniAdpter.subNativeheads.concat(tempArr);
+						for (var aa:int = 0; aa < tempArr.length;aa++)
+						{
+							MiniAdpter.subMaps[tempArr[aa]] = key + "/" + tempArr[aa];
+						}
+					}
+				}
+				//判断当前的url是否为分包映射路径
+				if(MiniAdpter.subNativeFiles && url.indexOf("/") != -1)
+				{
+					var curfileHead:String = url.split("/")[0] + "/";//文件头
+					if(curfileHead && MiniAdpter.subNativeheads.indexOf(curfileHead) != -1)
+					{
+						var newfileHead:String = MiniAdpter.subMaps[curfileHead];
+						url = url.replace(curfileHead,newfileHead);
 					}
 				}
 			}
@@ -97,7 +125,17 @@ package laya.wx.mini {
 						fileNativeUrl = MiniFileMgr.getFileNativePath(fileMd5Name);
 					}
 				} else
-					fileNativeUrl = sourceUrl;
+					if(MiniAdpter.isZiYu)
+					{
+						//子域里需要读取主域透传过来的信息，然后这里获取一个本地磁盘图片路径，然后赋值给fileNativeUrl
+						var tempUrl:String = URL.formatURL(sourceUrl);
+						if(MiniFileMgr.ziyuFileTextureData[tempUrl])
+						{
+							fileNativeUrl = MiniFileMgr.ziyuFileTextureData[tempUrl];
+						}else
+							fileNativeUrl = sourceUrl;
+					}else
+						fileNativeUrl = sourceUrl;
 			}else
 			{
 				if(!isLocal)
@@ -105,37 +143,52 @@ package laya.wx.mini {
 				else
 					fileNativeUrl = sourceUrl;
 			}
-			if (thisLoader.imgCache == null)
-				thisLoader.imgCache = {};
+			if (thisLoader._imgCache == null)
+				thisLoader._imgCache = {};
+				
+			//sourceUrl = URL.formatURL(url);
 			var image:*;
 			function clear():void {
-				image.onload = null;
-				image.onerror = null;
-				delete thisLoader.imgCache[sourceUrl]
+				var img:* = thisLoader._imgCache[fileNativeUrl];
+				if (img) {
+					img.onload = null;
+					img.onerror = null;
+					delete thisLoader._imgCache[fileNativeUrl];
+				}
 			}
-			var onload:Function = function():void {
-				clear();
-				thisLoader._url = URL.formatURL(thisLoader._url);
-				thisLoader.onLoaded(image);
-			};
+			
 			var onerror:Function = function():void {
 				clear();
 				thisLoader.event(Event.ERROR, "Load image failed");
 			}
 			if (thisLoader._type == "nativeimage") {
+				var onload:Function = function():void {
+					clear();
+					thisLoader._url = URL.formatURL(thisLoader._url);
+					thisLoader.onLoaded(image);
+				};
 				image = new Browser.window.Image();
 				image.crossOrigin = "";
 				image.onload = onload;
 				image.onerror = onerror;
 				image.src = fileNativeUrl;
 				//增加引用，防止垃圾回收
-				thisLoader.imgCache[sourceUrl] = image;
+				thisLoader._imgCache[fileNativeUrl] = image;
 			} else {
-				new HTMLImage.create(fileNativeUrl, {onload: onload, onerror: onerror, onCreate: function(img:*):void {
-					image = img;
-					//增加引用，防止垃圾回收
-					thisLoader.imgCache[sourceUrl] = img;
-				}});
+				var imageSource:* = new Browser.window.Image();
+				onload = function():void {
+					thisLoader._url = URL.formatURL(thisLoader._url);
+					image = HTMLImage.create(imageSource.width, imageSource.height);
+					image.loadImageSource(imageSource, true);
+					image._setCreateURL(fileNativeUrl);
+					clear();
+					thisLoader.onLoaded(image);
+				};
+				imageSource.crossOrigin = "";
+				imageSource.onload = onload;
+				imageSource.onerror = onerror;
+				imageSource.src = fileNativeUrl;
+				thisLoader._imgCache[fileNativeUrl] = imageSource;//增加引用，防止垃圾回收
 			}
 		}
 	}

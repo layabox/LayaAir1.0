@@ -1,13 +1,14 @@
 package laya.ani.bone {
 	
+	import laya.ani.bone.canvasmesh.SkinMeshForGraphic;
 	import laya.ani.GraphicsAni;
-	import laya.ani.bone.canvasmesh.SimpleSkinMeshCanvas;
-	import laya.ani.bone.canvasmesh.SkinMeshCanvas;
 	import laya.display.Graphics;
 	import laya.maths.Matrix;
 	import laya.renders.Render;
 	import laya.resource.Texture;
 	import laya.utils.RunDriver;
+	import laya.display.Sprite;
+	import laya.utils.Utils;
 	
 	/**
 	 * @private
@@ -35,6 +36,8 @@ package laya.ani.bone {
 		
 		/** 显示皮肤的索引 */
 		public var displayIndex:int = -1;
+		/** @private */
+		public var originalIndex:int = -1;
 		
 		/** 用户自定义的皮肤 */
 		private var _diyTexture:Texture;
@@ -100,7 +103,7 @@ package laya.ani.bone {
 		{
 			if (!currSlotData) return;
 			_replaceDic[tarIndex] = newIndex;
-			if (displayIndex == tarIndex)
+			if (originalIndex == tarIndex)
 			{
 				showDisplayByIndex(tarIndex);
 			}
@@ -111,6 +114,7 @@ package laya.ani.bone {
 		 * @param	index
 		 */
 		public function showDisplayByIndex(index:int):void {
+			originalIndex = index;
 			if (_replaceDic[index]!=null) index = _replaceDic[index];
 			if (currSlotData && index > -1 && index < currSlotData.displayArr.length) {
 				displayIndex = index;
@@ -122,7 +126,7 @@ package laya.ani.bone {
 					//{
 						//currTexture = currDisplayData.createTexture(currTexture);
 					//}
-					if (currTexture && !Render.isConchApp && currDisplayData.type == 0 && currDisplayData.uvs)
+					if (currTexture && currDisplayData.type == 0 && currDisplayData.uvs)
 					{
 						currTexture = currDisplayData.createTexture(currTexture);
 					}
@@ -152,32 +156,73 @@ package laya.ani.bone {
 		 * 保存父矩阵的索引
 		 * @param	parentMatrix
 		 */
+		//TODO:coverage
 		public function setParentMatrix(parentMatrix:Matrix):void {
 			_parentMatrix = parentMatrix;
 		}
 		
 		private var _mVerticleArr:Array;
 		private static var _tempMatrix:Matrix = new Matrix();
+		
+		//TODO:coverage
 		public static function createSkinMesh():*
 		{
-			if (Render.isWebGL || Render.isConchApp)
+			return new SkinMeshForGraphic();
+		}
+		
+		//TODO:coverage
+		private static function isSameArr(arrA:Array, arrB:Array):Boolean
+		{
+			if (arrA.length != arrB.length) return false;
+			var i:int, len:int;
+			len = arrA.length;
+			for (i = 0; i < len; i++)
 			{
-				return RunDriver.skinAniSprite();
+				if (arrA[i] != arrB[i]) return false;
+			}
+			return true;
+		}
+		private static var _tempResultMatrix:Matrix = new Matrix();
+		
+		private var _preGraphicVerticle:Array;
+		
+		//TODO:coverage
+		private function getSaveVerticle(tArr:Array):Array
+		{
+			if (useSameMatrixAndVerticle&&_preGraphicVerticle && isSameArr(tArr,_preGraphicVerticle))
+			{
+				tArr = _preGraphicVerticle;
 			}else
 			{
-				if (!Render.isWebGL)
-				{
-					if (Skeleton.useSimpleMeshInCanvas)
-					{
-						return new SimpleSkinMeshCanvas();
-					}else
-					{
-						return new SkinMeshCanvas();
-					}
-					
-				}	
+				tArr=Utils.copyArray([], tArr);
+				_preGraphicVerticle = tArr;
 			}
-			return null;
+			return tArr;
+		}
+	
+		//TODO:coverage
+		public static function isSameMatrix(mtA:Matrix, mtB:Matrix):Boolean
+		{
+			return mtA.a == mtB.a && mtA.b == mtB.b && mtA.c == mtB.c && mtA.d == mtB.d && Math.abs(mtA.tx -mtB.tx)<0.00001 && Math.abs(mtA.ty -mtB.ty)<0.00001;
+		}
+		
+		private var _preGraphicMatrix:Matrix;
+		
+		private static var useSameMatrixAndVerticle:Boolean=true;
+		
+		//TODO:coverage
+		private function getSaveMatrix(tResultMatrix:Matrix):Matrix
+		{
+			if (useSameMatrixAndVerticle&&_preGraphicMatrix && isSameMatrix(tResultMatrix, _preGraphicMatrix))
+			{
+				tResultMatrix = _preGraphicMatrix;
+			}else
+			{
+				var newMatrix:Matrix = tResultMatrix.clone();
+				tResultMatrix = newMatrix;
+				_preGraphicMatrix = tResultMatrix;
+			}
+			return tResultMatrix;
 		}
 		/**
 		 * 把纹理画到Graphics上
@@ -207,9 +252,10 @@ package laya.ani.bone {
 									if (_resultMatrix == null) _resultMatrix = new Matrix();
 									tResultMatrix = _resultMatrix;
 								} else {
-									tResultMatrix = new Matrix();
+									//tResultMatrix = new Matrix();
+									tResultMatrix = _tempResultMatrix;
 								}
-								if ((!Render.isWebGL && currDisplayData.uvs) || (Render.isWebGL && _diyTexture && currDisplayData.uvs))
+								if ((!Render.isWebGL && !Render.isConchApp && currDisplayData.uvs) || ((Render.isWebGL || Render.isConchApp ) && _diyTexture && currDisplayData.uvs))
 								{
 									var tTestMatrix:Matrix = _tempMatrix;
 									tTestMatrix.identity();
@@ -229,6 +275,12 @@ package laya.ani.bone {
 								}else {
 									Matrix.TEMP.copyTo(tResultMatrix);
 								}
+								
+								if (!noUseSave)
+								{
+									tResultMatrix = getSaveMatrix(tResultMatrix);
+								}
+								tResultMatrix._checkTransform();
 								if (tRotateKey)
 								{
 									graphics.drawTexture(tTexture, -currDisplayData.height / 2, -currDisplayData.width / 2, currDisplayData.height, currDisplayData.width, tResultMatrix);
@@ -286,8 +338,17 @@ package laya.ani.bone {
 						var tTriangleNum:int = currDisplayData.triangles.length / 3;
 	
 						tIBArray = currDisplayData.triangles;
+						
 
-						tSkinSprite.init2(tTexture, null , tIBArray,_mVerticleArr,tUVs);
+						
+						if (deformData)
+						{
+							if (!noUseSave)
+							{
+								_mVerticleArr = getSaveVerticle(_mVerticleArr);
+							}
+						}
+						tSkinSprite.init2(tTexture, tIBArray,_mVerticleArr,tUVs);
 						
 						var tCurrentMatrix2:Matrix = getDisplayMatrix();
 						if (_parentMatrix) {
@@ -298,10 +359,15 @@ package laya.ani.bone {
 									if (_resultMatrix == null) _resultMatrix = new Matrix();
 									tResultMatrix2 = _resultMatrix;
 								} else {
-									tResultMatrix2 = new Matrix();
+									tResultMatrix2 = _tempResultMatrix;
 								}
 								Matrix.TEMP.copyTo(tResultMatrix2);
-								tSkinSprite.transform = tResultMatrix2;
+								
+								if (!noUseSave)
+								{
+									tResultMatrix2 = getSaveMatrix(tResultMatrix2);
+								}
+								tSkinSprite.transform = tResultMatrix2;		
 							}
 						}
 					}else {
@@ -331,6 +397,7 @@ package laya.ani.bone {
 			}
 		}
 		
+		private static var _tempVerticleArr:Array = [];
 		/**
 		 * 显示蒙皮动画
 		 * @param	boneMatrixArray 当前帧的骨骼矩阵
@@ -369,12 +436,14 @@ package laya.ani.bone {
 			var tY:Number;
 			var tB:Number = 0;
 			var tWeight:Number = 0;
-			var tVertices:Array = [];
+			var tVertices:Array;
 			var i:int = 0, j:int = 0, n:int = 0;
 			var tRed:Number = 1;
 			var tGreed:Number = 1;
 			var tBlue:Number = 1;
 			var tAlpha:Number = alpha;
+			_tempVerticleArr.length = 0;
+			tVertices = _tempVerticleArr;
 			if (deformData && deformData.length > 0) {
 				var f:Number = 0;
 				for (i = 0, n = tBones.length; i < n;)
@@ -413,7 +482,8 @@ package laya.ani.bone {
 			}
 			_mVerticleArr = tVertices;
 			tIBArray = tTriangles;
-			skinSprite.init2(tTexture, null, tIBArray, _mVerticleArr,tUvs);
+			_mVerticleArr = getSaveVerticle(_mVerticleArr);
+			skinSprite.init2(tTexture, tIBArray, _mVerticleArr,tUvs);
 		}
 		
 		/**
@@ -430,6 +500,7 @@ package laya.ani.bone {
 		 * 得到显示对象的矩阵
 		 * @return
 		 */
+		//TODO:coverage
 		private function getDisplayMatrix():Matrix {
 			if (currDisplayData) {
 				return currDisplayData.transform.getMatrix();

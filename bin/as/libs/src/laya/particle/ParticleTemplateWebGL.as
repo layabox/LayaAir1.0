@@ -1,13 +1,19 @@
 package laya.particle {
+	import laya.renders.Render;
+	import laya.webgl.canvas.WebGLContext2D;
 	import laya.webgl.utils.Buffer;
+	import laya.webgl.utils.MeshParticle2D;
 	
 	/**
 	 *  @private
 	 */
 	public class ParticleTemplateWebGL extends ParticleTemplateBase {
 		protected var _vertices:Float32Array;
-		protected var _vertexBuffer:Buffer;
-		protected var _indexBuffer:Buffer;
+		//protected var _vertexBuffer:Buffer;
+		//protected var _indexBuffer:Buffer;
+		protected var _mesh:MeshParticle2D;
+		protected var _conchMesh:*;
+		
 		protected var _floatCountPerVertex:uint = 29;//0~3为CornerTextureCoordinate,4~6为Position,7~9Velocity,10到13为StartColor,14到17为EndColor,18到20位SizeRotation，21到22位Radius,23到26位Radian，27为DurationAddScaleShaderValue,28为Time
 		
 		protected var _firstActiveElement:int;
@@ -22,10 +28,24 @@ package laya.particle {
 			settings = parSetting;
 		}
 		
+		public function reUse(context:WebGLContext2D, pos:int):int{
+			return 0;
+		}
+		
 		protected function initialize():void {
-			_vertices = new Float32Array(settings.maxPartices * _floatCountPerVertex * 4);
-			
-			var particleOffset:int;
+			var floatStride:Number = 0;
+			if ( Render.isConchApp )
+			{
+				_vertices = _conchMesh._float32Data;
+				floatStride = MeshParticle2D.const_stride / 4;
+			}
+			else
+			{
+				_vertices = _mesh._vb.getFloat32Array();
+				floatStride = _mesh._stride / 4;
+			}
+			var bufi:int = 0;
+			var bufStart:int = 0;
 			for (var i:int = 0; i < settings.maxPartices; i++) {
 				var random:Number = Math.random();
 				var cornerYSegement:Number = settings.textureCount ? 1.0 / settings.textureCount : 1.0;
@@ -35,30 +55,30 @@ package laya.particle {
 					if (random < cornerY + cornerYSegement)
 						break;
 				}
-				particleOffset = i * _floatCountPerVertex * 4;
-				_vertices[particleOffset + _floatCountPerVertex * 0 + 0] = -1;
-				_vertices[particleOffset + _floatCountPerVertex * 0 + 1] = -1;
-				_vertices[particleOffset + _floatCountPerVertex * 0 + 2] = 0;
-				_vertices[particleOffset + _floatCountPerVertex * 0 + 3] = cornerY;
+				_vertices[bufi++] = -1;
+				_vertices[bufi++] = -1;
+				_vertices[bufi++] = 0;
+				_vertices[bufi++] = cornerY;
+				bufi = (bufStart += floatStride);
 				
-				_vertices[particleOffset + _floatCountPerVertex * 1 + 0] = 1;
-				_vertices[particleOffset + _floatCountPerVertex * 1 + 1] = -1;
-				_vertices[particleOffset + _floatCountPerVertex * 1 + 2] = 1;
-				_vertices[particleOffset + _floatCountPerVertex * 1 + 3] = cornerY;
+				_vertices[bufi++] = 1;
+				_vertices[bufi++] = -1;
+				_vertices[bufi++] = 1;
+				_vertices[bufi++] = cornerY;
+				bufi = bufStart += floatStride;
 				
-				_vertices[particleOffset + _floatCountPerVertex * 2 + 0] = 1;
-				_vertices[particleOffset + _floatCountPerVertex * 2 + 1] = 1;
-				_vertices[particleOffset + _floatCountPerVertex * 2 + 2] = 1;
-				_vertices[particleOffset + _floatCountPerVertex * 2 + 3] = cornerY + cornerYSegement;
+				_vertices[bufi++] = 1;
+				_vertices[bufi++] = 1;
+				_vertices[bufi++] = 1;
+				_vertices[bufi++] = cornerY + cornerYSegement;
+				bufi = bufStart += floatStride;
 				
-				_vertices[particleOffset + _floatCountPerVertex * 3 + 0] = -1;
-				_vertices[particleOffset + _floatCountPerVertex * 3 + 1] = 1;
-				_vertices[particleOffset + _floatCountPerVertex * 3 + 2] = 0;
-				_vertices[particleOffset + _floatCountPerVertex * 3 + 3] = cornerY + cornerYSegement;
+				_vertices[bufi++] = -1;
+				_vertices[bufi++] = 1;
+				_vertices[bufi++] = 0;
+				_vertices[bufi++] = cornerY + cornerYSegement;
+				bufi = bufStart += floatStride;
 			}
-		}
-		
-		protected function loadContent():void {
 		}
 		
 		public function update(elapsedTime:int):void {
@@ -110,8 +130,8 @@ package laya.particle {
 		public function addNewParticlesToVertexBuffer():void {
 		}
 		
-		public override function addParticleArray(position:Float32Array, velocity:Float32Array):void//由于循环队列判断算法，当下一个freeParticle等于retiredParticle时不添加例子，意味循环队列中永远有一个空位。（由于此判断算法快速、简单，所以放弃了使循环队列饱和的复杂算法（需判断freeParticle在retiredParticle前、后两种情况并不同处理））
-		{
+		//由于循环队列判断算法，当下一个freeParticle等于retiredParticle时不添加例子，意味循环队列中永远有一个空位。（由于此判断算法快速、简单，所以放弃了使循环队列饱和的复杂算法（需判断freeParticle在retiredParticle前、后两种情况并不同处理））
+		public override function addParticleArray(position:Float32Array, velocity:Float32Array):void {
 			var nextFreeParticle:int = _firstFreeElement + 1;
 			
 			if (nextFreeParticle >= settings.maxPartices)
@@ -120,6 +140,10 @@ package laya.particle {
 			if (nextFreeParticle === _firstRetiredElement)
 				return;
 			
+			//计算vb数据，填入 _vertices
+			/**
+			 * _mesh.addParticle(settings, position, velocity, _currentTime)
+			 */
 			var particleData:ParticleData = ParticleData.Create(settings, position, velocity, _currentTime);
 			
 			var startIndex:int = _firstFreeElement * _floatCountPerVertex * 4;

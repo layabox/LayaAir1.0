@@ -1,5 +1,6 @@
 package laya.net {
 	import laya.events.Event;
+	import laya.renders.Render;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.utils.RunDriver;
@@ -8,10 +9,6 @@ package laya.net {
 	 * @private
 	 */
 	public class TTFLoader {
-		
-		public function TTFLoader() {
-		
-		}
 		private static const _testString:String = "LayaTTFFont";
 		public var fontName:String;
 		public var complete:Handler;
@@ -22,11 +19,12 @@ package laya.net {
 		private var _txtWidth:Number;
 		private var _http:HttpRequest;
 		
+		//TODO:coverage
 		public function load(fontPath:String):void {
 			_url = fontPath;
 			var tArr:Array = fontPath.split(".ttf")[0].split("/");
 			fontName = tArr[tArr.length - 1];
-			if (Browser.window.conch)
+			if (Render.isConchApp)
 			{
 				_loadConch();
 			}else
@@ -38,6 +36,7 @@ package laya.net {
 			}
 		}
 		
+		//TODO:coverage
 		private function _loadConch():void
 		{
 			_http = new HttpRequest();
@@ -46,13 +45,15 @@ package laya.net {
 			_http.send(_url, null, "get", Loader.BUFFER);
 		}
 		
+		//TODO:coverage
 		private function _onHttpLoaded(data:* = null):void
 		{
-			Browser.window.conch.setFontFaceFromBuffer(fontName, data);
+			Browser.window["conchTextCanvas"].setFontFaceFromBuffer(fontName, data);
 			_clearHttp();
 			_complete();
 		}
 		
+		//TODO:coverage
 		private function _clearHttp():void
 		{
 			if (_http)
@@ -63,6 +64,7 @@ package laya.net {
 			}
 		}
 		
+		//TODO:coverage
 		private function _onErr():void
 		{
 			_clearHttp();
@@ -73,9 +75,10 @@ package laya.net {
 			}
 		}
 		
+		//TODO:coverage
 		private function _complete():void {
-			Laya.timer.clear(this, _complete);
-			Laya.timer.clear(this, _checkComplete);
+			Laya.systemTimer.clear(this, _complete);
+			Laya.systemTimer.clear(this, _checkComplete);
 			if (_div && _div.parentNode) {
 				
 				_div.parentNode.removeChild(_div);
@@ -87,12 +90,14 @@ package laya.net {
 			}
 		}
 		
+		//TODO:coverage
 		private function _checkComplete():void {
 			if (RunDriver.measureText(_testString, _fontTxt).width != _txtWidth) {
 				_complete();
 			}
 		}
 		
+		//TODO:coverage
 		private function _loadWithFontFace():void {
 				
 			var fontFace:* = new Browser.window.FontFace(fontName, "url('" + _url + "')");
@@ -106,6 +111,7 @@ package laya.net {
 		
 		}
 		
+		//TODO:coverage
 		private function _createDiv():void {
 			_div = Browser.createElement("div");
 			_div.innerHTML = "laya";
@@ -117,6 +123,7 @@ package laya.net {
 			Browser.document.body.appendChild(_div);
 		}
 		
+		//TODO:coverage
 		private function _loadWithCSS():void {
 			
 			var fontStyle:* = Browser.createElement("style");
@@ -128,9 +135,9 @@ package laya.net {
 			
 			var self:TTFLoader = this;
 			fontStyle.onload = function():void {
-				Laya.timer.once(10000, self, _complete);
+				Laya.systemTimer.once(10000, self, _complete);
 			};
-			Laya.timer.loop(20, this, _checkComplete);
+			Laya.systemTimer.loop(20, this, _checkComplete);
 			
 			_createDiv();
 		

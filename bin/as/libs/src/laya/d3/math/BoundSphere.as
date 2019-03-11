@@ -98,7 +98,7 @@ package laya.d3.math {
 		 * @return 距离交叉点的距离，-1表示不交叉。
 		 */
 		public function intersectsRayDistance(ray:Ray):Number {
-			return Collision.intersectsRayAndSphereRD(ray, this);
+			return CollisionUtils.intersectsRayAndSphereRD(ray, this);
 		}
 		
 		/**
@@ -108,7 +108,7 @@ package laya.d3.math {
 		 * @return  距离交叉点的距离，-1表示不交叉。
 		 */
 		public function intersectsRayPoint(ray:Ray, outPoint:Vector3):Number {
-			return Collision.intersectsRayAndSphereRP(ray, this, outPoint);
+			return CollisionUtils.intersectsRayAndSphereRP(ray, this, outPoint);
 		}
 		
 		/**

@@ -6,17 +6,20 @@ package laya.display {
 	
 	/**
 	 * <code>BitmapFont</code> 是位图字体类，用于定义位图字体信息。
+	 * 字体制作及使用方法，请参考文章
+	 * @see http://ldc2.layabox.com/doc/?nav=ch-js-1-2-5
 	 */
 	public class BitmapFont {
-		protected var _texture:Texture;
-		protected var _fontCharDic:Object = {};
-		protected var _fontWidthMap:Object = {};
-		protected var _complete:Handler;
-		protected var _path:String;
-		protected var _maxWidth:Number = 0;
-		protected var _spaceWidth:Number = 10;
-		protected var _padding:Array;
-		/**当前位图字体字号。*/
+		private var _texture:Texture;
+		private var _fontCharDic:Object = {};
+		private var _fontWidthMap:Object = {};
+		private var _complete:Handler;
+		private var _path:String;
+		private var _maxWidth:Number = 0;
+		private var _spaceWidth:Number = 10;
+		private var _padding:Array;
+		
+		/**当前位图字体字号，使用时，如果字号和设置不同，并且autoScaleSize=true，则按照设置字号比率进行缩放显示。*/
 		public var fontSize:Number = 12;
 		/**表示是否根据实际使用的字体大小缩放位图字体大小。*/
 		public var autoScaleSize:Boolean = false;
@@ -26,21 +29,25 @@ package laya.display {
 		/**
 		 * 通过指定位图字体文件路径，加载位图字体文件，加载完成后会自动解析。
 		 * @param	path		位图字体文件的路径。
-		 * @param	complete	加载并解析完成的回调。如果成功返回this,如果失败返回null
+		 * @param	complete	加载并解析完成的回调。
 		 */
 		public function loadFont(path:String, complete:Handler):void {
 			_path = path;
 			_complete = complete;
 			
-			Laya.loader.load([{url: _path, type: Loader.XML}, {url: _path.replace(".fnt", ".png"), type: Loader.IMAGE}], Handler.create(this, onLoaded));
+			if (!path || path.indexOf(".fnt") === -1) {
+				console.error('Bitmap font configuration information must be a ".fnt" file');
+				return;
+			}
+			Laya.loader.load([{url: path, type: Loader.XML}, {url: path.replace(".fnt", ".png"), type: Loader.IMAGE}], Handler.create(this, _onLoaded));
 		}
 		
 		/**
 		 * @private
 		 */
-		protected function onLoaded():void {
+		private function _onLoaded():void {
 			this.parseFont(Loader.getRes(_path), Loader.getRes(_path.replace(".fnt", ".png")));
-			_complete && _complete.runWith(_texture?this:null);
+			_complete && _complete.run();
 		}
 		
 		/**
@@ -90,7 +97,6 @@ package laya.display {
 		}
 		
 		/**
-		 * @private
 		 * 解析字体文件。
 		 * @param	xml			字体文件XML。
 		 * @param	texture		字体的纹理。
@@ -153,6 +159,8 @@ package laya.display {
 				_fontCharDic = null;
 				_fontWidthMap = null;
 				_texture = null;
+				_complete = null;
+				_padding = null;
 			}
 		}
 		
@@ -172,7 +180,7 @@ package laya.display {
 		public function getCharWidth(char:String):Number {
 			var code:Number = char.charCodeAt(0);
 			if (_fontWidthMap[code]) return _fontWidthMap[code] + letterSpacing;
-			if (char == " ") return _spaceWidth + letterSpacing;
+			if (char === " ") return _spaceWidth + letterSpacing;
 			return 0;
 		}
 		
@@ -207,18 +215,18 @@ package laya.display {
 		 * @private
 		 * 将指定的文本绘制到指定的显示对象上。
 		 */
-		public function drawText(text:String, sprite:Sprite, drawX:Number, drawY:Number, align:String, width:Number):void {
+		public function _drawText(text:String, sprite:Sprite, drawX:Number, drawY:Number, align:String, width:Number):void {
 			var tWidth:int = getTextWidth(text);
 			var tTexture:Texture;
 			var dx:Number = 0;
 			align === "center" && (dx = (width - tWidth) / 2);
 			align === "right" && (dx = (width - tWidth));
-			var tX:Number = 0;
+			var tx:Number = 0;
 			for (var i:int = 0, n:int = text.length; i < n; i++) {
 				tTexture = getCharTexture(text.charAt(i));
 				if (tTexture) {
-					sprite.graphics.drawTexture(tTexture, drawX + tX + dx, drawY);
-					tX += getCharWidth(text.charAt(i));
+					sprite.graphics.drawImage(tTexture, drawX + tx + dx, drawY);
+					tx += getCharWidth(text.charAt(i));
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 package laya.d3.core.particleShuriKen.module.shape {
-	import laya.d3.core.render.RenderState;
+	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.Rand;
 	import laya.d3.math.Vector3;

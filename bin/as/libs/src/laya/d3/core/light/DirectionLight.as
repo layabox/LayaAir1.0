@@ -1,12 +1,10 @@
 package laya.d3.core.light {
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.scene.Scene;
-	import laya.d3.math.Matrix4x4;
+	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Vector3;
-	import laya.d3.shader.ShaderCompile3D;
-	import laya.d3.shader.ValusArray;
+	import laya.d3.shader.DefineDatas;
+	import laya.d3.shader.ShaderData;
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
-	import laya.events.Event;
 	
 	/**
 	 * <code>DirectionLight</code> 类用于创建平行光。
@@ -30,9 +28,7 @@ package laya.d3.core.light {
 		 */
 		public function DirectionLight() {
 			super();
-			_updateDirection = false;
 			_direction = new Vector3();
-			transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatrixChange);
 		}
 		
 		/**
@@ -46,94 +42,52 @@ package laya.d3.core.light {
 				Vector3.normalize(_direction, _direction);
 				_parallelSplitShadowMap.setInfo(scene, _shadowFarPlane, _direction, _shadowMapSize, _shadowMapCount, _shadowMapPCFType);
 			} else {
+				var defineDatas:DefineDatas = (_scene as Scene3D)._defineDatas;
 				var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap> = scene.parallelSplitShadowMaps;
 				parallelSplitShadowMaps.splice(parallelSplitShadowMaps.indexOf(_parallelSplitShadowMap), 1);
 				_parallelSplitShadowMap.disposeAllRenderTarget();
 				_parallelSplitShadowMap = null;
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM1);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM2);
-				scene.removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_SHADOW_PSSM3);
+				defineDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM1);
+				defineDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM2);
+				defineDatas.remove(Scene3D.SHADERDEFINE_SHADOW_PSSM3);
 			}
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _addSelfRenderObjects():void {
-			super._addSelfRenderObjects();
+		override protected function _onActive():void {
+			super._onActive();
 			_shadow && (_initShadow());
+			(_lightmapBakedType!==LightSprite.LIGHTMAPBAKEDTYPE_BAKED)&&((_scene as Scene3D)._defineDatas.add(Scene3D.SHADERDEFINE_DIRECTIONLIGHT));
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _clearSelfRenderObjects():void {
-			var scene:Scene = this.scene;
-			var shaderValue:ValusArray = scene._shaderValues;
-			shaderValue.setValue(Scene.LIGHTDIRCOLOR, null);
-			shaderValue.setValue(Scene.LIGHTDIRECTION, null);
-			scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+		override protected function _onInActive():void {
+			super._onInActive();
+			(_lightmapBakedType!==LightSprite.LIGHTMAPBAKEDTYPE_BAKED)&&((_scene as Scene3D)._defineDatas.remove(Scene3D.SHADERDEFINE_DIRECTIONLIGHT));
 		}
 		
 		/**
 		 * 更新平行光相关渲染状态参数。
 		 * @param state 渲染状态参数。
 		 */
-		public override function _prepareToScene(state:RenderState):Boolean {
-			var scene:Scene = state.scene;
-			if (scene.enableLight && _activeInHierarchy) {
-				var shaderValue:ValusArray = scene._shaderValues;
-				scene.addShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+		public override function _prepareToScene():Boolean {
+			var scene:Scene3D = _scene as Scene3D;
+			if (scene.enableLight && activeInHierarchy) {
+				var defineDatas:DefineDatas = scene._defineDatas;
+				var shaderValue:ShaderData = scene._shaderValues;
 				Vector3.scale(color, _intensity, _intensityColor);
-				shaderValue.setValue(Scene.LIGHTDIRCOLOR, _intensityColor.elements);
+				shaderValue.setVector(Scene3D.LIGHTDIRCOLOR, _intensityColor);
 				transform.worldMatrix.getForward(_direction);
 				Vector3.normalize(_direction, _direction);
-				shaderValue.setValue(Scene.LIGHTDIRECTION, _direction.elements);
+				shaderValue.setVector(Scene3D.LIGHTDIRECTION, _direction);
 				return true;
 			} else {
-				scene.removeShaderDefine(ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 				return false;
 			}
 		}
-		
-		//------------------------------------兼容代码-------------------------------------------------
-		/** @private */
-		private var _updateDirection:Boolean;
-		
-		/**
-		 * @private
-		 */
-		private function _onWorldMatrixChange():void {
-			_updateDirection = true;
-		}
-		
-		/**
-		 * 获取平行光的方向。
-		 * @return 平行光的方向。
-		 */
-		public function get direction():Vector3 {
-			trace("Warning: discard property,please use transform's property instead.");
-			if (_updateDirection) {
-				transform.worldMatrix.getForward(_direction);
-				Vector3.normalize(_direction, _direction);
-				_updateDirection = false;
-			}
-			return _direction;
-		}
-		
-		/**
-		 * 设置平行光的方向。
-		 * @param value 平行光的方向。
-		 */
-		public function set direction(value:Vector3):void {
-			trace("Warning: discard property,please use transform's property instead.");
-			var worldMatrix:Matrix4x4 = transform.worldMatrix;
-			worldMatrix.setForward(value);
-			transform.worldMatrix = worldMatrix;
-			Vector3.normalize(value, value);
-			_direction = value;
-			(shadow && _parallelSplitShadowMap) && (_parallelSplitShadowMap._setGlobalParallelLightDir(_direction));
-		}
-		//------------------------------------兼容代码-------------------------------------------------
 	}
 }

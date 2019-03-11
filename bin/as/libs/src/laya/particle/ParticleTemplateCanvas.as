@@ -2,10 +2,10 @@ package laya.particle
 {
 
 	import laya.events.Event;
-	import laya.particle.particleUtils.PicTool;
 	import laya.particle.particleUtils.CMDParticle;
 	import laya.particle.particleUtils.CanvasShader;
-	import laya.renders.RenderContext;
+	import laya.particle.particleUtils.PicTool;
+	import laya.resource.Context;
 	import laya.resource.Texture;
 	import laya.utils.Utils;
 
@@ -78,7 +78,7 @@ package laya.particle
 			settings = particleSetting;
 			_maxNumParticles = particleSetting.maxPartices;
 			texture=new Texture();
-			texture.on(Event.LOADED,this,_textureLoaded);
+			texture.on(Event.READY,this,_textureLoaded);
 			texture.load(particleSetting.textureName);		
 		}
 		private function _textureLoaded(e:Event):void
@@ -215,7 +215,7 @@ package laya.particle
 			}
 		}
 		
-		public function render(context:RenderContext, x:Number, y:Number):void
+		public function render(context:Context, x:Number, y:Number):void
 		{
 			if(!_ready) return;
 			if(activeParticles.length<1) return;
@@ -231,7 +231,7 @@ package laya.particle
 		}
 		
 		
-		public  function noColorRender(context:RenderContext, x:Number, y:Number):void
+		public  function noColorRender(context:Context, x:Number, y:Number):void
 		{
 			//以下为渲染部分
 			var particleList:Array=activeParticles;
@@ -247,7 +247,7 @@ package laya.particle
 			var preAlpha:Number;
 			
 			context.translate(x, y);
-			preAlpha=context.ctx.globalAlpha;			
+			preAlpha=context.globalAlpha;			
 			for(i=0;i<len;i++)
 			{
 				tcmd=particleList[i];
@@ -255,13 +255,13 @@ package laya.particle
 				tParam = tcmd.cmds[tI];	
 				if (!tParam) continue;
 				if ( (tAlpha = tParam[1]) <= 0.01) continue;			
-				context.setAlpha(preAlpha*tAlpha);
-				context.drawTextureWithTransform(texture,px,py,pw,ph,tParam[2],1);			
+				context.globalAlpha=preAlpha*tAlpha;
+				context.drawTextureWithTransform(texture,px,py,pw,ph,tParam[2],0,0,1,null);			
 			}
-			context.setAlpha(preAlpha);
+			context.globalAlpha = preAlpha;
 			context.translate(-x, -y);
 		}
-		public  function canvasRender(context:RenderContext, x:Number, y:Number):void
+		public  function canvasRender(context:Context, x:Number, y:Number):void
 		{			
 			//以下为渲染部分
 			var particleList:Array=activeParticles;
@@ -279,11 +279,10 @@ package laya.particle
 			var preB:String;
 			//			context.save();
 			context.translate(x, y);
-			preAlpha=context.ctx.globalAlpha;
-			preB=context.ctx.globalCompositeOperation;
+			preAlpha=context.globalAlpha;
+			preB=context.globalCompositeOperation;
 			
-			
-			context.blendMode("lighter");
+			context.globalCompositeOperation = "lighter";
 			
 			for(i=0;i<len;i++)
 			{
@@ -294,31 +293,31 @@ package laya.particle
 				if ( (tAlpha = tParam[1]) <= 0.01) continue;
 				
 				context.save();
-				context.transformByMatrix(tParam[2]);
+				context.transformByMatrix(tParam[2],0,0);
 				
 				if(tParam[3]>0.01)
 				{
-					context.setAlpha(preAlpha*tParam[3]);
+					context.globalAlpha = preAlpha * tParam[3];
 					context.drawTexture(textureList[0],px,py,pw,ph);
 				}
 				
 				if(tParam[4]>0.01)
 				{
-					context.setAlpha(preAlpha*tParam[4]);
+					context.globalAlpha = preAlpha * tParam[4];
 					context.drawTexture(textureList[1],px,py,pw,ph);
 				} 
 				
 				if(tParam[5]>0.01)
 				{
-					context.setAlpha(preAlpha*tParam[5]);
+					context.globalAlpha = preAlpha * tParam[5];
 					context.drawTexture(textureList[2],px,py,pw,ph);
 				}
 				
 				context.restore();
 			}
-			context.setAlpha(preAlpha);
+			context.globalAlpha = preAlpha;
 			context.translate(-x, -y);
-			context.blendMode(preB);
+			context.globalCompositeOperation = preB;
 			//			context.restore();
 		}
 	}

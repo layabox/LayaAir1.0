@@ -94,7 +94,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
-		public static function create(particleSystem:ShurikenParticleSystem, particleRender:ShurikenParticleRender, transform:Transform3D):void {
+		public static function create(particleSystem:ShurikenParticleSystem, particleRender:ShurikenParticleRenderer, transform:Transform3D):void {
 			var autoRandomSeed:Boolean = particleSystem.autoRandomSeed;
 			var rand:Rand = particleSystem._rand;
 			var randomSeeds:Uint32Array = particleSystem._randomSeeds;
@@ -234,6 +234,8 @@ package laya.d3.core.particleShuriKen {
 							startRotation[2] = randomRotationE[2];
 					} else {
 						startRotation[0] = _randomInvertRoation(particleSystem.startRotationConstant, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
+						startRotation[1] = 0;
+						startRotation[2] = 0;
 					}
 					break;
 				case 2: 

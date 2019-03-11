@@ -118,7 +118,7 @@ package laya.events {
 				preO.tar = ele;
 			}
 			if (Browser.onMobile)
-				sendEvents(arrs, Event.MOUSE_OVER, touchID);
+				sendEvents(arrs, Event.MOUSE_OVER);
 			
 			var preDowns:Array;
 			preDowns = isLeft ? this.preDowns : this.preRightDowns;
@@ -131,7 +131,7 @@ package laya.events {
 				preO.tar = ele;
 				
 			}
-			sendEvents(arrs, isLeft ? Event.MOUSE_DOWN : Event.RIGHT_MOUSE_DOWN, touchID);
+			sendEvents(arrs, isLeft ? Event.MOUSE_DOWN : Event.RIGHT_MOUSE_DOWN);
 			_clearTempArrs();
 		
 		}
@@ -140,9 +140,8 @@ package laya.events {
 		 * 派发事件。
 		 * @param eles		对象列表。
 		 * @param type		事件类型。
-		 * @param touchID	（可选）touchID，默认为0。
 		 */
-		private function sendEvents(eles:Array, type:String, touchID:int = 0):void {
+		private function sendEvents(eles:Array, type:String):void {
 			var i:int, len:int;
 			len = eles.length;
 			_event._stoped = false;
@@ -192,10 +191,10 @@ package laya.events {
 			var i:int, len:int;
 			if (elePre.contains(eleNew)) {
 				arrs = getEles(eleNew, elePre, _tEleArr);
-				sendEvents(arrs, Event.MOUSE_OVER, touchID);
+				sendEvents(arrs, Event.MOUSE_OVER);
 			} else if (eleNew.contains(elePre)) {
 				arrs = getEles(elePre, eleNew, _tEleArr);
-				sendEvents(arrs, Event.MOUSE_OUT, touchID);
+				sendEvents(arrs, Event.MOUSE_OUT);
 			} else {
 				//arrs = getEles(elePre);
 				arrs = _tEleArr;
@@ -218,11 +217,11 @@ package laya.events {
 					}
 				}
 				if (arrs.length > 0) {
-					sendEvents(arrs, Event.MOUSE_OUT, touchID);
+					sendEvents(arrs, Event.MOUSE_OUT);
 				}
 				
 				if (newArr.length > 0) {
-					sendEvents(newArr, Event.MOUSE_OVER, touchID);
+					sendEvents(newArr, Event.MOUSE_OVER);
 				}
 			}
 		}
@@ -245,7 +244,7 @@ package laya.events {
 			if (!preO) {
 				//理论上不会发生，因为必然先有touchstart再有touchMove
 				arrs = getEles(ele, null, _tEleArr);
-				sendEvents(arrs, Event.MOUSE_OVER, touchID);
+				sendEvents(arrs, Event.MOUSE_OVER);
 				preOvers.push(createTouchO(ele, touchID));
 			} else {
 				checkMouseOutAndOverOfMove(ele, preO.tar);
@@ -253,7 +252,7 @@ package laya.events {
 				arrs = getEles(ele, null, _tEleArr);
 			}
 			
-			sendEvents(arrs, Event.MOUSE_MOVE, touchID);
+			sendEvents(arrs, Event.MOUSE_MOVE);
 			_clearTempArrs();
 		}
 		
@@ -271,7 +270,7 @@ package laya.events {
 			var lastOvers:Array;
 			lastOvers = getLastOvers();
 			preOvers.length = 0;
-			sendEvents(lastOvers, Event.MOUSE_OUT, 0);
+			sendEvents(lastOvers, Event.MOUSE_OUT);
 		}
 		
 		/**
@@ -295,7 +294,7 @@ package laya.events {
 			
 			//处理up
 			arrs = getEles(ele, null, _tEleArr);
-			sendEvents(arrs, isLeft ? Event.MOUSE_UP : Event.RIGHT_MOUSE_UP, touchID);
+			sendEvents(arrs, isLeft ? Event.MOUSE_UP : Event.RIGHT_MOUSE_UP);
 			
 			//处理click
 			var preDowns:Array;
@@ -324,10 +323,10 @@ package laya.events {
 				}
 				
 				if (sendArr.length > 0) {
-					sendEvents(sendArr, isLeft ? Event.CLICK : Event.RIGHT_CLICK, touchID);
+					sendEvents(sendArr, isLeft ? Event.CLICK : Event.RIGHT_CLICK);
 				}
 				if (isLeft && isDouble) {
-					sendEvents(sendArr, Event.DOUBLE_CLICK, touchID);
+					sendEvents(sendArr, Event.DOUBLE_CLICK);
 				}
 				removeTouchFromArr(touchID, preDowns);
 				preO.tar = null;
@@ -342,7 +341,7 @@ package laya.events {
 				if (onMobile) {
 					sendArr = getEles(preO.tar, null, sendArr);
 					if (sendArr && sendArr.length > 0) {
-						sendEvents(sendArr, Event.MOUSE_OUT, touchID);
+						sendEvents(sendArr, Event.MOUSE_OUT);
 					}
 					removeTouchFromArr(touchID, preOvers);
 					preO.tar = null;

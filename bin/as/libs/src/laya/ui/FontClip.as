@@ -179,18 +179,19 @@ package laya.ui {
 				var index:int = _indexMap[_valueArr.charAt(i)];
 				if (!this.sources[index]) continue;
 				texture = this.sources[index];
-				if (isHorizontal) this.graphics.drawTexture(texture, dX+i * (texture.sourceWidth + spaceX), 0, texture.sourceWidth, texture.sourceHeight);
-				else this.graphics.drawTexture(texture, 0+dX, i * (texture.sourceHeight + spaceY), texture.sourceWidth, texture.sourceHeight);
+				if (isHorizontal) this.graphics.drawImage(texture, dX+i * (texture.sourceWidth + spaceX), 0, texture.sourceWidth, texture.sourceHeight);
+				else this.graphics.drawImage(texture, 0+dX, i * (texture.sourceHeight + spaceY), texture.sourceWidth, texture.sourceHeight);
 			}
 			if (!_width)
 			{
-				resetLayoutX();
-				callLater(changeSize);
+				
+				this._widget.resetLayoutX();
+				callLater(_sizeChanged);
 			}
 			if (!_height)
 			{
-				resetLayoutY();
-				callLater(changeSize);
+				this._widget.resetLayoutY();
+				callLater(_sizeChanged);
 			}
 		}
 		override public function set width(value:Number):void 
@@ -205,12 +206,12 @@ package laya.ui {
 			callLater(changeValue);
 		}
 		
-		override protected function get measureWidth():Number 
+		override protected function measureWidth():Number 
 		{
 			return _wordsW;
 		}
 		
-		override protected function get measureHeight():Number 
+		override protected function measureHeight():Number 
 		{
 			return _wordsH;
 		}

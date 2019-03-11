@@ -10,6 +10,7 @@ package laya.system {
 		 * @param	name 属性名。
 		 * @param	classObj 属性值。
 		 */
+		//TODO:coverage
 		public static function changeDefinition(name:String, classObj:*):void {
 			Laya[name] = classObj;
 			var str:String = name + "=classObj";
@@ -21,11 +22,6 @@ package laya.system {
 		 * 初始化。
 		 */
 		public static function __init__():void {
-	
-			if (Render.isConchApp) {
-				__JS__("conch.disableConchResManager()");
-				__JS__("conch.disableConchAutoRestoreLostedDevice()");
-			}
 		}
 	}
 }

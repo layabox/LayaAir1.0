@@ -6,9 +6,11 @@ package laya.webgl.shader.d2.skinAnishader {
 	import laya.webgl.utils.CONST3D2D;
 	public class SkinSV extends Value2D {
 		public var texcoord:*;
+		public var position:*;
 		public var offsetX:Number = 300;
 		public var offsetY:Number = 0;
 		
+		//TODO:coverage
 		public function SkinSV(type:*) {
 			super(ShaderDefines2D.SKINMESH, 0);
 			var _vlen:int = 8 * CONST3D2D.BYTES_PE;

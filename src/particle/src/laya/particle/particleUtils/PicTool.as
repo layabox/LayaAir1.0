@@ -7,7 +7,7 @@ package laya.particle.particleUtils {
 		
 		public static function getCanvasPic(img:*, color:int):* {
 			img = img.bitmap;
-			var canvas:HTMLCanvas = new HTMLCanvas("2D");
+			var canvas:HTMLCanvas = new HTMLCanvas();
 			var ctx:* = canvas.getContext('2d');
 			canvas.size(img.width, img.height);
 		    var red:int = (color >> 16 & 0xFF);
@@ -17,7 +17,7 @@ package laya.particle.particleUtils {
 			{
 				ctx.setFilter(red/255,green/255,blue/255,0);
 			}
-			ctx.drawImage(img.source, 0, 0);
+			ctx.drawImage(img.source||img._source, 0, 0);
 			if (!Render.isConchApp)
 			{
 				var imgdata:* = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -26,9 +26,9 @@ package laya.particle.particleUtils {
 				
 				for (var i:int = 0, n:int = data.length; i < n; i += 4) {
 					if (data[i + 3] == 0) continue;
-					data[i] *= red/255;
-					data[i + 1] *= green/255;
-					data[i + 2] *= blue/255;
+					data[i] = red;
+					data[i + 1] = green;
+					data[i + 2] = blue;
 				}
 				ctx.putImageData(imgdata, 0, 0);
 			}

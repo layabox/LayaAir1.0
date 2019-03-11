@@ -6,13 +6,14 @@ package laya.d3.animation {
 	import laya.d3.utils.Utils3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.renders.Render;
 	
 	/**
-	 * <code>Transform3D</code> 类用于实现3D变换。
+	 * <code>AnimationTransform3D</code> 类用于实现3D变换。
 	 */
 	public class AnimationTransform3D extends EventDispatcher {
 		/**@private */
-		private static var _tempVector3:Float32Array = new Float32Array(3);
+		private static var _tempVector3:Vector3 = new Vector3();
 		/**@private */
 		private static const _angleToRandin:Number = 180 / Math.PI;
 		
@@ -20,13 +21,12 @@ package laya.d3.animation {
 		private var _localMatrix:Float32Array;
 		/** @private */
 		private var _worldMatrix:Float32Array;
-		
 		/** @private */
-		private var _localPosition:Float32Array;
+		private var _localPosition:Vector3;
 		/** @private */
-		private var _localRotation:Float32Array;
+		private var _localRotation:Quaternion;
 		/** @private */
-		private var _localScale:Float32Array;
+		private var _localScale:Vector3;
 		/** @private */
 		private var _localQuaternionUpdate:Boolean;
 		/** @private */
@@ -36,27 +36,36 @@ package laya.d3.animation {
 		/** @private */
 		private var _parent:AnimationTransform3D;
 		/** @private */
-		private var _childs:Vector.<AnimationTransform3D>;
+		private var _children:Vector.<AnimationTransform3D>;
 		
 		/**@private */
-		public var _localRotationEuler:Float32Array;
+		public var _localRotationEuler:Vector3;
 		/**@private */
 		public var _owner:AnimationNode;
 		/** @private */
 		public var _worldUpdate:Boolean;
 		
-		/**@private */
-		public var _entity:Transform3D;
-		
 		/**
 		 * 创建一个 <code>Transform3D</code> 实例。
 		 * @param owner 所属精灵。
 		 */
-		public function AnimationTransform3D(owner:AnimationNode) {
+		public function AnimationTransform3D(owner:AnimationNode, localPosition:Float32Array = null/*[NATIVE]*/, localRotation:Float32Array = null/*[NATIVE]*/, localScale:Float32Array = null/*[NATIVE]*/, worldMatrix:Float32Array = null/*[NATIVE]*/) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_owner = owner;
-			_childs = new Vector.<AnimationTransform3D>();
+			_children = new Vector.<AnimationTransform3D>();
+			
 			_localMatrix = new Float32Array(16);
+			if (Render.isConchApp) {//[NATIVE]
+				_localPosition = new Vector3(0,0,0,localPosition);
+				_localRotation = new Quaternion(0,0,0,1,localRotation);
+				_localScale = new Vector3(0,0,0,localScale);
+				_worldMatrix = worldMatrix;
+			} else {
+				_localPosition = new Vector3();
+				_localRotation = new Quaternion();
+				_localScale = new Vector3();
+				_worldMatrix = new Float32Array(16);
+			}
 			_localQuaternionUpdate = false;
 			_locaEulerlUpdate = false;
 			_localUpdate = false;
@@ -68,7 +77,7 @@ package laya.d3.animation {
 		 */
 		private function _getlocalMatrix():Float32Array {
 			if (_localUpdate) {
-				Utils3D._createAffineTransformationArray(_localPosition, _localRotation, _localScale, _localMatrix);
+				Utils3D._createAffineTransformationArray(_localPosition.elements, _localRotation.elements, _localScale.elements, _localMatrix);
 				_localUpdate = false;
 			}
 			return _localMatrix;
@@ -80,148 +89,76 @@ package laya.d3.animation {
 		private function _onWorldTransform():void {
 			if (!_worldUpdate) {
 				_worldUpdate = true;
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldTransform();
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldTransform();
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _setWorldMatrixAndUpdate(matrix:Float32Array):void {
-			_worldMatrix = matrix;
-			if (_parent == null) {
-				throw new Error("don't need to set worldMatrix to root Node.");
-			} else {
-				if (_parent._parent == null) {
-					var locMat:Float32Array = _getlocalMatrix();
-					for (var i:int = 0; i < 16; ++i)
-						_worldMatrix[i] = locMat[i];
-				} else {
-					Utils3D.matrix4x4MultiplyFFF(_parent.getWorldMatrix(), _getlocalMatrix(), _worldMatrix);
-				}
-			}
-			_worldUpdate = false;
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _setWorldMatrixNoUpdate(matrix:Float32Array):void {
-			_worldMatrix = matrix;
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _setWorldMatrixIgnoreUpdate(matrix:Float32Array):void {
-			_worldMatrix = matrix;
-			_worldUpdate = false;
-		}
-		
-		/**
-		 * 获取局部位置。
-		 * @return	局部位置。
-		 */
-		public function getLocalPosition():Float32Array {
+		public function get localPosition():Vector3 {
 			return _localPosition;
 		}
 		
 		/**
-		 * 设置局部位置。
-		 * @param value 局部位置。
+		 * @private
 		 */
-		public function setLocalPosition(value:Float32Array):void {
-			if (_parent) {
-				_localPosition = value;
-				_localUpdate = true;
-				_onWorldTransform();
-			} else {
-				var entityTransform:Transform3D = _entity.owner._transform;
-				var entityPosition:Vector3 = _entity.localPosition;
-				var entityPositionE:Float32Array = entityPosition.elements;
-				entityPositionE[0] = value[0];
-				entityPositionE[1] = value[1];
-				entityPositionE[2] = value[2];
-				entityTransform.localPosition = entityPosition;
-			}
+		public function set localPosition(value:Vector3):void {
+			_localPosition = value;
+			_localUpdate = true;
+			_onWorldTransform();
 		}
 		
 		/**
-		 * 获取局部旋转。
-		 * @return	局部旋转。
+		 * @private
 		 */
-		public function getLocalRotation():Float32Array {
+		public function get localRotation():Quaternion {
 			if (_localQuaternionUpdate) {
-				var eulerE:Float32Array = _localRotationEuler;
-				Utils3D._quaternionCreateFromYawPitchRollArray(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
+				var eulerE:Float32Array = _localRotationEuler.elements;
+				Quaternion.createFromYawPitchRoll(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
 				_localQuaternionUpdate = false;
 			}
 			return _localRotation;
 		}
 		
-		/**
-		 * 设置局部旋转。
-		 * @param value	局部旋转。
+		/*
+		 * @private
 		 */
-		public function setLocalRotation(value:Float32Array):void {
-			if (_parent) {
-				_localRotation = value;
-				Utils3D.quaterionNormalize(_localRotation, _localRotation);
-				_locaEulerlUpdate = true;
-				_localQuaternionUpdate = false;
-				_localUpdate = true;
-				_onWorldTransform();
-			} else {
-				var entityTransform:Transform3D = _entity.owner._transform;
-				var entityRotation:Quaternion = _entity.localRotation;
-				var entityRotationE:Float32Array = entityRotation.elements;
-				entityRotationE[0] = value[0];
-				entityRotationE[1] = value[1];
-				entityRotationE[2] = value[2];
-				entityRotationE[3] = value[3];
-				entityTransform.localRotation = entityRotation;
-			}
+		public function set localRotation(value:Quaternion):void {
+			_localRotation = value;
+			//Utils3D.quaterionNormalize(_localRotation, _localRotation);
+			_locaEulerlUpdate = true;
+			_localQuaternionUpdate = false;
+			_localUpdate = true;
+			_onWorldTransform();
 		}
 		
 		/**
-		 * 获取局部缩放。
-		 * @return	局部缩放。
+		 * @private
 		 */
-		public function getLocalScale():Float32Array {
+		public function get localScale():Vector3 {
 			return _localScale;
 		}
 		
 		/**
-		 * 设置局部缩放。
-		 * @param	value 局部缩放。
+		 * @private
 		 */
-		public function setLocalScale(value:Float32Array):void {
-			if (_parent) {
-				_localScale = value;
-				_localUpdate = true;
-				_onWorldTransform();
-			} else {
-				var entityTransform:Transform3D = _entity.owner._transform;
-				var entityScale:Vector3 = _entity.localScale;
-				var entityScaleE:Float32Array = entityScale.elements;
-				entityScaleE[0] = value[0];
-				entityScaleE[1] = value[1];
-				entityScaleE[2] = value[2];
-				entityTransform.localScale = entityScale;
-			}
+		public function set localScale(value:Vector3):void {
+			_localScale = value;
+			_localUpdate = true;
+			_onWorldTransform();
 		}
 		
 		/**
-		 * 获取局部空间的旋转角度。
-		 * @return	欧拉角的旋转值，顺序为x、y、z。
+		 * @private
 		 */
-		public function getLocalRotationEuler():Float32Array {
+		public function get localRotationEuler():Vector3 {
 			if (_locaEulerlUpdate) {
-				Utils3D.getYawPitchRoll(_localRotation, _tempVector3);
-				var eulerE:Float32Array = _tempVector3;
-				var localRotationEulerE:Float32Array = _localRotationEuler;
-				localRotationEulerE[0] = eulerE[1] *_angleToRandin;
+				_localRotation.getYawPitchRoll(_tempVector3);
+				var eulerE:Float32Array = _tempVector3.elements;
+				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
+				localRotationEulerE[0] = eulerE[1] * _angleToRandin;
 				localRotationEulerE[1] = eulerE[0] * _angleToRandin;
 				localRotationEulerE[2] = eulerE[2] * _angleToRandin;
 				_locaEulerlUpdate = false;
@@ -230,26 +167,14 @@ package laya.d3.animation {
 		}
 		
 		/**
-		 * 设置局部空间的旋转角度。
-		 * @param	value 欧拉角的旋转值，顺序为x、y、z。
+		 * @private
 		 */
-		public function setLocalRotationEuler(value:Float32Array):void {
-			if (_parent) {
-				Utils3D._quaternionCreateFromYawPitchRollArray(value[1] / _angleToRandin, value[0] / _angleToRandin, value[2] / _angleToRandin, _localRotation);
-				_localRotationEuler = value;
-				_locaEulerlUpdate = false;
-				_localQuaternionUpdate = false;
-				_localUpdate = true;
-				_onWorldTransform();
-			} else {
-				var entityTransform:Transform3D = _entity.owner._transform;
-				var entityLocalRotationEuler:Vector3 = _entity.localRotationEuler;
-				var elements:Float32Array = entityLocalRotationEuler.elements;
-				elements[0] = value[0];
-				elements[1] = value[1];
-				elements[2] = value[2];
-				entityTransform.localRotationEuler = entityLocalRotationEuler;
-			}
+		public function set localRotationEuler(value:Vector3):void {
+			_localRotationEuler = value;
+			_locaEulerlUpdate = false;
+			_localQuaternionUpdate = true;
+			_localUpdate = true;
+			_onWorldTransform();
 		}
 		
 		/**
@@ -257,8 +182,8 @@ package laya.d3.animation {
 		 * @return	世界矩阵。
 		 */
 		public function getWorldMatrix():Float32Array {
-			if (_worldUpdate) {
-				if (_parent._parent != null) {
+			if (!Render.isConchApp && _worldUpdate) {
+				if (_parent != null) {
 					Utils3D.matrix4x4MultiplyFFF(_parent.getWorldMatrix(), _getlocalMatrix(), _worldMatrix);
 				} else {
 					var locMat:Float32Array = _getlocalMatrix();
@@ -277,12 +202,12 @@ package laya.d3.animation {
 		public function setParent(value:AnimationTransform3D):void {
 			if (_parent !== value) {
 				if (_parent) {
-					var parentChilds:Vector.<AnimationTransform3D> = _parent._childs;
+					var parentChilds:Vector.<AnimationTransform3D> = _parent._children;
 					var index:int = parentChilds.indexOf(this);
 					parentChilds.splice(index, 1);
 				}
 				if (value) {
-					value._childs.push(this);
+					value._children.push(this);
 					(value) && (_onWorldTransform());
 				}
 				_parent = value;

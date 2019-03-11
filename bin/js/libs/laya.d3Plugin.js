@@ -2,12 +2,11 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var Component3D=laya.d3.component.Component3D,ComponentNode=laya.d3.core.ComponentNode,MeshTerrainSprite3D=laya.d3.core.MeshTerrainSprite3D;
-	var Sprite3D=laya.d3.core.Sprite3D;
+	var Component=laya.components.Component,MeshTerrainSprite3D=laya.d3.core.MeshTerrainSprite3D,Sprite3D=laya.d3.core.Sprite3D;
 /**
 *<code>PathFinding</code> 类用于创建寻路。
 */
-//class laya.d3.component.PathFind extends laya.d3.component.Component3D
+//class laya.d3.component.PathFind extends laya.components.Component
 var PathFind=(function(_super){
 	function PathFind(){
 		/**@private */
@@ -28,11 +27,10 @@ var PathFind=(function(_super){
 	*初始化载入蒙皮动画组件。
 	*@param owner 所属精灵对象。
 	*/
-	__proto._load=function(owner){
-		if (! (owner instanceof laya.d3.core.MeshTerrainSprite3D ))
+	__proto._onAdded=function(){
+		if (! (this.owner instanceof laya.d3.core.MeshTerrainSprite3D ))
 			throw new Error("PathFinding: The owner must MeshTerrainSprite3D!");
-		_super.prototype._load.call(this,owner);
-		this._meshTerrainSprite3D=owner;
+		this._meshTerrainSprite3D=this.owner;
 	}
 
 	/**
@@ -99,19 +97,8 @@ var PathFind=(function(_super){
 	});
 
 	return PathFind;
-})(Component3D)
+})(Component)
 
 
 
 })(window,document,Laya);
-
-if (typeof define === 'function' && define.amd){
-	define('laya.core', ['require', "exports"], function(require, exports) {
-        'use strict';
-        Object.defineProperty(exports, '__esModule', { value: true });
-        for (var i in Laya) {
-			var o = Laya[i];
-            o && o.__isclass && (exports[i] = o);
-        }
-    });
-}

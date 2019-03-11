@@ -43,6 +43,7 @@ package laya.net {
 		 * @return 格式化后的新路径。
 		 */
 		public static function addVersionPrefix(originURL:String):String {
+			originURL = URL.getAdptedFilePath(originURL);
 			if (manifest && manifest[originURL]) {
 				if (type == FILENAME_VERSION) return manifest[originURL];
 				return manifest[originURL] + "/" + originURL;

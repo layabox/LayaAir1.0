@@ -1,6 +1,4 @@
 package laya.utils {
-	/*[IF-FLASH]*/
-	import flash.utils.Dictionary;
 	
 	/**
 	 * <code>Timer</code> 是时钟管理类。它是一个单例，不要手动实例化此类，应该通过 Laya.timer 访问。
@@ -9,26 +7,22 @@ package laya.utils {
 		
 		/**@private */
 		private static var _pool:Array = [];
+		/**@private */
+		public static var _mid:int = 1;
 		
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		/** 两帧之间的时间间隔,单位毫秒。*/
-		private var _delta:int = 0;
 		/** 时针缩放。*/
 		public var scale:Number = 1;
 		/** 当前帧开始的时间。*/
-		public var currTimer:Number = _now();
+		public var currTimer:Number = Browser.now();
 		/** 当前的帧数。*/
 		public var currFrame:int = 0;
+		/**@private 两帧之间的时间间隔,单位毫秒。*/
+		public var _delta:int = 0;
 		/**@private */
-		private var _lastTimer:Number = _now();
+		public var _lastTimer:Number = Browser.now();
 		/**@private */
-		private var _mid:int = 1;
-		/**@private */
-		/*[IF-FLASH]*/
-		private var _map:flash.utils.Dictionary = new flash.utils.Dictionary(true);
-		//[IF-JS] private var _map:Array = [];
-		/**@private */
-		private var _laters:Array = [];
+		private var _map:Array = [];
 		/**@private */
 		private var _handlers:Array = [];
 		/**@private */
@@ -37,27 +31,15 @@ package laya.utils {
 		private var _count:int = 0;
 		
 		/**
-		 *两帧之间的时间间隔,单位毫秒。
-		 */
-		public function get delta():int {
-			return _delta;
-		}
-		
-		/**
 		 * 创建 <code>Timer</code> 类的一个实例。
 		 */
-		public function Timer() {
-			_init();
+		public function Timer(autoActive:Boolean = true) {
+			autoActive && Laya.systemTimer && Laya.systemTimer.frameLoop(1, this, _update);
 		}
 		
-		/**@private */
-		protected function _init():void {
-			Laya.timer && Laya.timer.frameLoop(1, this, _update);
-		}
-		
-		/**@private */
-		protected function _now():Number {
-			return __JS__('Date.now()');
+		/**两帧之间的时间间隔,单位毫秒。*/
+		public function get delta():int {
+			return _delta;
 		}
 		
 		/**
@@ -66,11 +48,11 @@ package laya.utils {
 		 */
 		public function _update():void {
 			if (scale <= 0) {
-				_lastTimer =_now();
+				_lastTimer = Browser.now();
 				return;
 			}
 			var frame:int = this.currFrame = this.currFrame + scale;
-			var now:Number = _now();
+			var now:Number = Browser.now();
 			_delta = (now - _lastTimer) * scale;
 			var timer:Number = this.currTimer = this.currTimer + _delta;
 			_lastTimer = now;
@@ -78,8 +60,8 @@ package laya.utils {
 			//处理handler
 			var handlers:Array = this._handlers;
 			_count = 0;
-			for (i = 0, n = handlers.length; i < n; i++) {
-				handler = handlers[i];
+			for (var i:int = 0, n:int = handlers.length; i < n; i++) {
+				var handler:TimerHandler = handlers[i];
 				if (handler.method !== null) {
 					var t:int = handler.userFrame ? frame : timer;
 					if (t >= handler.exeTime) {
@@ -107,21 +89,6 @@ package laya.utils {
 			}
 			
 			if (_count > 30 || frame % 200 === 0) _clearHandlers();
-			
-			//处理callLater
-			var laters:Array = this._laters;
-			for (var i:int = 0, n:int = laters.length - 1; i <= n; i++) {
-				var handler:TimerHandler = laters[i];
-				if (handler.method !== null) {
-					/*[IF-FLASH]*/
-					_map[handler.method] = null;
-					//[IF-SCRIPT]_map[handler.key] = null;
-					handler.run(false);
-				}
-				_recoverHandler(handler);
-				i === n && (n = laters.length - 1);
-			}
-			laters.length = 0;
 		}
 		
 		/** @private */
@@ -133,15 +100,13 @@ package laya.utils {
 				else _recoverHandler(handler);
 			}
 			this._handlers = _temp;
+			handlers.length = 0;
 			_temp = handlers;
-			_temp.length = 0;
 		}
 		
 		/** @private */
 		private function _recoverHandler(handler:TimerHandler):void {
-			/*[IF-FLASH]*/
-			if (_map[handler.method] == handler) _map[handler.method] = null;
-			//[IF-SCRIPT]if(_map[handler.key]==handler) _map[handler.key] = null;
+			if (_map[handler.key] == handler) _map[handler.key] = null;
 			handler.clear();
 			_pool.push(handler);
 		}
@@ -164,7 +129,7 @@ package laya.utils {
 					handler.caller = caller;
 					handler.method = method;
 					handler.args = args;
-					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + _now() - _lastTimer);
+					handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + Browser.now() - _lastTimer);
 					return handler;
 				}
 			}
@@ -177,7 +142,7 @@ package laya.utils {
 			handler.caller = caller;
 			handler.method = method;
 			handler.args = args;
-			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + _now() - _lastTimer) + 1;
+			handler.exeTime = delay + (useFrame ? this.currFrame : this.currTimer + Browser.now() - _lastTimer);
 			
 			//索引handler
 			_indexHandler(handler);
@@ -190,10 +155,6 @@ package laya.utils {
 		
 		/** @private */
 		private function _indexHandler(handler:TimerHandler):void {
-			/*[IF-FLASH]*/
-			_map[handler.method] = handler;
-			/*[IF-FLASH]*/
-			return;
 			var caller:* = handler.caller;
 			var method:* = handler.method;
 			var cid:int = caller ? caller.$_GID || (caller.$_GID = Utils.getGID()) : 0;
@@ -254,7 +215,7 @@ package laya.utils {
 		
 		/** 返回统计信息。*/
 		public function toString():String {
-			return "callLater:" + _laters.length + " handlers:" + _handlers.length + " pool:" + _pool.length;
+			return " handlers:" + _handlers.length + " pool:" + _pool.length;
 		}
 		
 		/**
@@ -265,9 +226,8 @@ package laya.utils {
 		public function clear(caller:*, method:Function):void {
 			var handler:TimerHandler = _getHandler(caller, method);
 			if (handler) {
-				//[IF-JS] _map[handler.key] = null;handler.key = 0;
-				/*[IF-FLASH]*/
-				_map[handler.method] = null;
+				_map[handler.key] = null;
+				handler.key = 0;
 				handler.clear();
 			}
 		}
@@ -281,9 +241,8 @@ package laya.utils {
 			for (var i:int = 0, n:int = _handlers.length; i < n; i++) {
 				var handler:TimerHandler = _handlers[i];
 				if (handler.caller === caller) {
-					//[IF-JS] _map[handler.key] = null;handler.key = 0;
-					/*[IF-FLASH]*/
-					_map[handler.method] = null;
+					_map[handler.key] = null;
+					handler.key = 0;
 					handler.clear();
 				}
 			}
@@ -291,8 +250,6 @@ package laya.utils {
 		
 		/** @private */
 		private function _getHandler(caller:*, method:*):TimerHandler {
-			/*[IF-FLASH]*/
-			return _map[method];
 			var cid:int = caller ? caller.$_GID || (caller.$_GID = Utils.getGID()) : 0;
 			var mid:int = method.$_TID || (method.$_TID = (_mid++) * 100000);
 			return _map[cid + mid];
@@ -305,21 +262,7 @@ package laya.utils {
 		 * @param	args 回调参数。
 		 */
 		public function callLater(caller:*, method:Function, args:Array = null):void {
-			if (_getHandler(caller, method) == null) {
-				//trace(caller, method);
-				//找到一个空闲的timerHandler
-				if (_pool.length)
-					var handler:TimerHandler = _pool.pop();
-				else handler = new TimerHandler();
-				//设置属性
-				handler.caller = caller;
-				handler.method = method;
-				handler.args = args;
-				//索引handler
-				_indexHandler(handler);
-				//插入队列
-				_laters.push(handler);
-			}
+			CallLater.I.callLater(caller, method, args);
 		}
 		
 		/**
@@ -328,13 +271,7 @@ package laya.utils {
 		 * @param	method 定时器回调函数。
 		 */
 		public function runCallLater(caller:*, method:Function):void {
-			var handler:TimerHandler = _getHandler(caller, method);
-			if (handler && handler.method != null) {
-				//[IF-JS] _map[handler.key] = null;
-				/*[IF-FLASH]*/
-				_map[handler.method] = null;
-				handler.run(true);
-			}
+			CallLater.I.runCallLater(caller, method);
 		}
 		
 		/**
@@ -343,11 +280,28 @@ package laya.utils {
 		 * @param	method 定时器回调函数。
 		 */
 		public function runTimer(caller:*, method:Function):void {
-			runCallLater(caller, method);
+			var handler:TimerHandler = _getHandler(caller, method);
+			if (handler && handler.method != null) {
+				_map[handler.key] = null;
+				handler.run(true);
+			}
+		}
+		
+		/**
+		 * 暂停时钟
+		 */
+		public function pause():void {
+			this.scale = 0;
+		}
+		
+		/**
+		 * 恢复时钟
+		 */
+		public function resume():void {
+			this.scale = 1;
 		}
 	}
 }
-import laya.display.Node;
 
 /** @private */
 class TimerHandler {
@@ -369,11 +323,7 @@ class TimerHandler {
 	
 	public function run(withClear:Boolean):void {
 		var caller:* = this.caller;
-		/*[IF-FLASH]*/
-		if ((caller is Node) && caller.destroyed)
-			/*[IF-FLASH]*/
-			return clear();
-		//[IF-SCRIPT] if (caller && caller.destroyed) return clear();
+		if (caller && caller.destroyed) return clear();
 		var method:Function = this.method;
 		var args:Array = this.args;
 		withClear && clear();

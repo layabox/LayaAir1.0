@@ -1,8 +1,7 @@
 /*[IF-FLASH]*/
 package {
-	/**微信小程序API接口*/
+	/**微信小程序API接口，只有在微信内才生效*/
 	public var wx:WX;
-
 }
 
 /**

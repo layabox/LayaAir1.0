@@ -15,20 +15,15 @@ package laya.d3.terrain {
 	 */
 	public class TerrainChunk extends RenderableSprite3D {
 		
-		/**
-		 * 加载网格模板,注意:不缓存。
-		 * @param url 模板地址。
-		 */
-		public static function load(url:String):TerrainChunk {
-			return Laya.loader.create(url, null, null, TerrainChunk, null, 1, false);
-		}
+		/** @private */
+		private var _terrainFilter:TerrainFilter;
 		
 		/**
 		 * 获取地形过滤器。
 		 * @return  地形过滤器。
 		 */
 		public function get terrainFilter():TerrainFilter {
-			return _geometryFilter as TerrainFilter;
+			return _terrainFilter;
 		}
 		
 		/**
@@ -46,7 +41,7 @@ package laya.d3.terrain {
 		 */
 		public function TerrainChunk(chunkOffsetX:int, chunkOffsetZ:int, girdSize:Number, terrainHeightData:Float32Array, heightDataWidth:int, heightDataHeight:int, cameraCoordinateInverse:Boolean, name:String = null) {
 			super(name);
-			_geometryFilter = new TerrainFilter(this, chunkOffsetX, chunkOffsetZ, girdSize, terrainHeightData, heightDataWidth, heightDataHeight, cameraCoordinateInverse);
+			_terrainFilter = new TerrainFilter(this, chunkOffsetX, chunkOffsetZ, girdSize, terrainHeightData, heightDataWidth, heightDataHeight, cameraCoordinateInverse);
 			_render = new TerrainRender(this);
 		}
 		
@@ -71,47 +66,12 @@ package laya.d3.terrain {
 			}
 			
 			var renderElement:RenderElement = new RenderElement();
-			renderElement._mainSortID = 0;
-			renderElement._sprite3D = this;
-			renderElement.renderObj = _geometryFilter as TerrainFilter;
-			renderElement._material = terrainMaterial;
-			_render._materials.push(terrainMaterial);
+			renderElement.setTransform(_transform);
+			renderElement.render = _render;
+			renderElement.setGeometry(_terrainFilter);
 			_render._renderElements.push(renderElement);
-		}
-		
-		/**
-		 * @private
-		 */
-		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render);
-		/*
-		   if (scene.conchModel) {//NATIVE
-		   scene.conchModel.removeChild(_render._conchRenderObject);
-		   }
-		 */
-		}
-		
-		/**
-		 * @private
-		 */
-		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render);
-		/*
-		   if (scene.conchModel) {//NATIVE
-		   scene.conchModel.addChildAt(_render._conchRenderObject);
-		   }
-		 */
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _applyMeshMaterials(mesh:Mesh):void {
-			var shaderMaterials:Vector.<BaseMaterial> = _render.sharedMaterials;
-			var meshMaterials:Vector.<BaseMaterial> = mesh.materials;
-			for (var i:int = 0, n:int = meshMaterials.length; i < n; i++)
-				(shaderMaterials[i]) || (shaderMaterials[i] = meshMaterials[i]);
-			_render.sharedMaterials = shaderMaterials;
+			_render.sharedMaterial = terrainMaterial;
+			
 		}
 		
 		override public function cloneTo(destObject:*):void {
@@ -122,7 +82,8 @@ package laya.d3.terrain {
 			if (destroyed)
 				return;
 			super.destroy(destroyChild);
-			(_geometryFilter as TerrainFilter)._destroy();
+			_terrainFilter.destroy();
+			_terrainFilter = null;
 		}
 	
 	}

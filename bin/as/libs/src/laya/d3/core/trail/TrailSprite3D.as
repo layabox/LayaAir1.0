@@ -1,33 +1,24 @@
 package laya.d3.core.trail {
-	import laya.d3.core.ComponentNode;
+	import laya.d3.core.FloatKeyframe;
+	import laya.d3.core.Gradient;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.BlinnPhongMaterial;
-	import laya.d3.core.render.IRenderable;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.RenderState;
-	import laya.d3.core.trail.module.Color;
-	import laya.d3.core.trail.module.Gradient;
-	import laya.d3.core.trail.module.GradientAlphaKey;
-	import laya.d3.core.trail.module.GradientColorKey;
-	import laya.d3.core.trail.module.TrailKeyFrame;
+	import laya.d3.math.Color;
+	import laya.d3.shader.Shader3D;
 	import laya.d3.shader.ShaderDefines;
-	import laya.events.Event;
 	import laya.net.Loader;
-	import laya.utils.Stat;
 	
 	/**
-	 * ...
-	 * @author ...
+	 * <code>TrailSprite3D</code> 类用于创建拖尾渲染精灵。
 	 */
 	public class TrailSprite3D extends RenderableSprite3D {
 		
-		public static const CURTIME:int = 3;
-		public static const LIFETIME:int = 4;
-		public static const WIDTHCURVE:int = 5;
-		public static const WIDTHCURVEKEYLENGTH:int = 6;
-		public static const GRADIENTCOLORKEY:int = 7;
-		public static const GRADIENTALPHAKEY:int = 8;
+		public static var CURTIME:int=Shader3D.propertyNameToID("u_CurTime");
+		public static var LIFETIME:int=Shader3D.propertyNameToID("u_LifeTime");
+		public static var WIDTHCURVE:int=Shader3D.propertyNameToID("u_WidthCurve");
+		public static var WIDTHCURVEKEYLENGTH:int=Shader3D.propertyNameToID("u_WidthCurveKeyLength");
+		public static var GRADIENTCOLORKEY:int=Shader3D.propertyNameToID("u_GradientColorkey");
+		public static var GRADIENTALPHAKEY:int=Shader3D.propertyNameToID("u_GradientAlphakey");
 		
 		public static var SHADERDEFINE_GRADIENTMODE_BLEND:int;
 		
@@ -41,6 +32,9 @@ package laya.d3.core.trail {
 			SHADERDEFINE_GRADIENTMODE_BLEND = shaderDefines.registerDefine("GRADIENTMODE_BLEND");
 		}
 		
+		/** @private */
+		private var _geometryFilter:TrailFilter;
+		
 		/**
 		 * 获取Trail过滤器。
 		 * @return  Trail过滤器。
@@ -53,164 +47,107 @@ package laya.d3.core.trail {
 		 * 获取Trail渲染器。
 		 * @return  Trail渲染器。
 		 */
-		public function get trailRender():TrailRenderer {
+		public function get trailRenderer():TrailRenderer {
 			return _render as TrailRenderer;
 		}
 		
 		public function TrailSprite3D() {
-			
-			_geometryFilter = new TrailFilter(this);
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			super(name);
 			_render = new TrailRenderer(this);
-			
-			_changeRenderObjectsByMaterial(_render as TrailRenderer, 0, TrailMaterial.defaultMaterial);
-			
-			_render.on(Event.MATERIAL_CHANGED, this, _changeRenderObjectsByMaterial);
-			_geometryFilter.on(Event.TRAIL_FILTER_CHANGE, this, _changeRenderObjectsByRenderElement);
-		}
-		
-		public function _changeRenderObjectsByMaterial(sender:TrailRenderer, index:int, material:BaseMaterial):void {
-			
-			var renderElementsCount:int = (_geometryFilter as TrailFilter).getRenderElementsCount();
-			_render._renderElements.length = renderElementsCount;
-			for (var i:int = 0; i < renderElementsCount; i++){
-				_changeRenderObjectByMaterial(i, material);
-			}
-		}
-		
-		private function _changeRenderObjectByMaterial(index:int, material:BaseMaterial):void {
-			
-			var renderObjects:Vector.<RenderElement> = _render._renderElements;
-			(material) || (material = TrailMaterial.defaultMaterial);
-			var renderElement:RenderElement = renderObjects[index];
-			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._sprite3D = this as TrailSprite3D;
-			renderElement.renderObj = (_geometryFilter as TrailFilter).getRenderElement(index) as TrailRenderElement;
-			renderElement._render = _render as TrailRenderer;
-			renderElement._material = material as TrailMaterial;
-		}
-		
-		public function _changeRenderObjectsByRenderElement(index:int, trailRenderElement:TrailRenderElement):void {
-			
-			var renderObjects:Vector.<RenderElement> = _render._renderElements;
-			var renderElement:RenderElement = renderObjects[index];
-			(renderElement) || (renderElement = renderObjects[index] = new RenderElement());
-			renderElement._sprite3D = this as TrailSprite3D;
-			renderElement.renderObj = trailRenderElement;
-			renderElement._render = _render as TrailRenderer;
-			renderElement._material = _render.sharedMaterial;
-		}
-		
-		/** @private */
-		override protected function _clearSelfRenderObjects():void {
-			scene.removeFrustumCullingObject(_render);
-		}
-		
-		/** @private */
-		override protected function _addSelfRenderObjects():void {
-			scene.addFrustumCullingObject(_render);
-		}
-		
-		override public function _update(state:RenderState):void {
-			super._update(state);
-			(_geometryFilter as TrailFilter)._update(state);
+			_geometryFilter = new TrailFilter(this);
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
+		override public function _parse(data:Object):void {
+			super._parse(data);
 			var render:TrailRenderer = _render as TrailRenderer;
 			var filter:TrailFilter = _geometryFilter as TrailFilter;
 			var i:int, j:int;
-			//material
-			var materials:Array = customProps.materials;
+			var materials:Array = data.materials;
 			if (materials) {
 				var sharedMaterials:Vector.<BaseMaterial> = render.sharedMaterials;
 				var materialCount:int = materials.length;
 				sharedMaterials.length = materialCount;
 				for (i = 0; i < materialCount; i++)
-					sharedMaterials[i] = Loader.getRes(innerResouMap[materials[i].path]);
+					sharedMaterials[i] = Loader.getRes(materials[i].path);
 				render.sharedMaterials = sharedMaterials;
 			}
-			var props:Object = json.props;
-			filter.time = props.time;
-			filter.minVertexDistance = props.minVertexDistance;
-			filter.widthMultiplier = props.widthMultiplier;
-			filter.textureMode = props.textureMode;
+			filter.time = data.time;
+			filter.minVertexDistance = data.minVertexDistance;
+			filter.widthMultiplier = data.widthMultiplier;
+			filter.textureMode = data.textureMode;
+			(data.alignment != null) && (filter.alignment = data.alignment);
 			//widthCurve
-			var _widthCurve:Vector.<TrailKeyFrame> = new Vector.<TrailKeyFrame>();
-			var widthCurve:Array = customProps.widthCurve;
-			for (i = 0, j = widthCurve.length; i < j; i++ ){
-				var trailkeyframe:TrailKeyFrame = new TrailKeyFrame();
-				trailkeyframe.time = widthCurve[i].time;
-				trailkeyframe.inTangent = widthCurve[i].inTangent;
-				trailkeyframe.outTangent = widthCurve[i].outTangent;
-				trailkeyframe.value = widthCurve[i].value;
-				_widthCurve.push(trailkeyframe);
+			var widthCurve:Vector.<FloatKeyframe> = new Vector.<FloatKeyframe>();
+			var widthCurveData:Array = data.widthCurve;
+			for (i = 0, j = widthCurveData.length; i < j; i++) {
+				var trailkeyframe:FloatKeyframe = new FloatKeyframe();
+				trailkeyframe.time = widthCurveData[i].time;
+				trailkeyframe.inTangent = widthCurveData[i].inTangent;
+				trailkeyframe.outTangent = widthCurveData[i].outTangent;
+				trailkeyframe.value = widthCurveData[i].value;
+				widthCurve.push(trailkeyframe);
 			}
-			filter.widthCurve = _widthCurve;
+			filter.widthCurve = widthCurve;
 			//colorGradient
-			var colorGradientNode:Object = customProps.colorGradient;
-			var _colorGradient:Gradient = new Gradient();
-			_colorGradient.mode = colorGradientNode.mode;
-			var colorKeys:Vector.<GradientColorKey> = new Vector.<GradientColorKey>();
-			var colorKey:GradientColorKey;
-			var _colorKeys:Array = colorGradientNode.colorKeys;
-			var _colorKey:Object;
-			for (i = 0, j = _colorKeys.length; i < j; i++ ){
-				_colorKey = _colorKeys[i];
-				colorKey = new GradientColorKey(new Color(_colorKey.value[0], _colorKey.value[1], _colorKey.value[2], 1.0), _colorKey.time);
-				colorKeys.push(colorKey);
+			var colorGradientData:Object = data.colorGradient;
+			var colorKeys:Array = colorGradientData.colorKeys;
+			var alphaKeys:Array = colorGradientData.alphaKeys;
+			var colorGradient:Gradient = new Gradient(colorKeys.length, alphaKeys.length);
+			colorGradient.mode = colorGradientData.mode;
+			
+			for (i = 0, j = colorKeys.length; i < j; i++) {
+				var colorKey:Object = colorKeys[i];
+				colorGradient.addColorRGB(colorKey.time, new Color(colorKey.value[0], colorKey.value[1], colorKey.value[2], 1.0));
 			}
-			var alphaKeys:Vector.<GradientAlphaKey> = new Vector.<GradientAlphaKey>();
-			var alphaKey:GradientAlphaKey;
-			var _alphaKeys:Array = colorGradientNode.alphaKeys;
-			var _alphaKey:Object;
-			for (i = 0, j = _alphaKeys.length; i < j; i++ ){
-				_alphaKey = _alphaKeys[i];
-				alphaKey = new GradientAlphaKey(_alphaKey.value, _alphaKey.time);
-				alphaKeys.push(alphaKey);
+			
+			for (i = 0, j = alphaKeys.length; i < j; i++) {
+				var alphaKey:Object = alphaKeys[i];
+				colorGradient.addColorAlpha(alphaKey.time, alphaKey.value);
 			}
-			_colorGradient.setKeys(colorKeys, alphaKeys);
-			filter.colorGradient = _colorGradient;
+			filter.colorGradient = colorGradient;
 		}
 		
-		public function reset():void{
-			trailFilter.reset();
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onActive():void {
+			super._onActive();
+			_transform.position.cloneTo(_geometryFilter._lastPosition);//激活时需要重置上次位置
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override public function cloneTo(destObject:*):void {
-			
 			super.cloneTo(destObject);
 			var i:int, j:int;
-			var _trailSprite3D:TrailSprite3D = destObject as TrailSprite3D;
+			var destTrailSprite3D:TrailSprite3D = destObject as TrailSprite3D;
 			
-			var _trailFilter:TrailFilter = _trailSprite3D.trailFilter;
+			var destTrailFilter:TrailFilter = destTrailSprite3D.trailFilter;
+			destTrailFilter.time = trailFilter.time;
+			destTrailFilter.minVertexDistance = trailFilter.minVertexDistance;
+			destTrailFilter.widthMultiplier = trailFilter.widthMultiplier;
+			destTrailFilter.textureMode = trailFilter.textureMode;
 			
-			_trailFilter.time = trailFilter.time;
-			_trailFilter.minVertexDistance = trailFilter.minVertexDistance;
-			_trailFilter.widthMultiplier = trailFilter.widthMultiplier;
-			
-			var widthCurve:Vector.<TrailKeyFrame> = trailFilter.widthCurve;
-			var _widthCurve:Vector.<TrailKeyFrame> = new Vector.<TrailKeyFrame>();
-			for (i = 0, j = widthCurve.length; i < j; i++){
-				var _keyFrame:TrailKeyFrame = new TrailKeyFrame();
-				widthCurve[i].cloneTo(_keyFrame);
-				_widthCurve.push(_keyFrame);
+			var widthCurveData:Vector.<FloatKeyframe> = trailFilter.widthCurve;
+			var widthCurve:Vector.<FloatKeyframe> = new Vector.<FloatKeyframe>();
+			for (i = 0, j = widthCurveData.length; i < j; i++) {
+				var keyFrame:FloatKeyframe = new FloatKeyframe();
+				widthCurveData[i].cloneTo(keyFrame);
+				widthCurve.push(keyFrame);
 			}
-			_trailFilter.widthCurve = _widthCurve;
+			destTrailFilter.widthCurve = widthCurve;
 			
-			var _colorGradient:Gradient = new Gradient();
-			trailFilter.colorGradient.cloneTo(_colorGradient);
-			_trailFilter.colorGradient = _colorGradient;
+			var destColorGradient:Gradient = new Gradient(trailFilter.colorGradient.maxColorRGBKeysCount, trailFilter.colorGradient.maxColorAlphaKeysCount);
+			trailFilter.colorGradient.cloneTo(destColorGradient);
+			destTrailFilter.colorGradient = destColorGradient;
 			
-			_trailFilter.textureMode = trailFilter.textureMode;
-			
-			var _trailRender:TrailRenderer = _trailSprite3D.trailRender;
-			_trailRender.sharedMaterial = trailRender.sharedMaterial;
+			var destTrailRender:TrailRenderer = destTrailSprite3D.trailRenderer;
+			destTrailRender.sharedMaterial = trailRenderer.sharedMaterial;
 		}
 		
 		/**
@@ -221,7 +158,7 @@ package laya.d3.core.trail {
 			if (destroyed)
 				return;
 			super.destroy(destroyChild);
-			(_geometryFilter as TrailFilter)._destroy();
+			(_geometryFilter as TrailFilter).destroy();
 			_geometryFilter = null;
 		}
 	}

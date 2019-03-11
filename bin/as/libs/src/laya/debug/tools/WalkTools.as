@@ -43,7 +43,7 @@ package laya.debug.tools
 			var len:int;
 			var tChild:Node;
 			var childs:Array;
-			childs = target._childs;
+			childs = target._children;
 			len=childs.length;
 			for(i=0;i<len;i++)
 			{

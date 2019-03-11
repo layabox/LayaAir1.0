@@ -2,6 +2,12 @@ package laya.ui {
 	import laya.ui.Button;
 	
 	/**
+	 * 当按钮的选中状态（ <code>selected</code> 属性）发生改变时调度。
+	 * @eventType laya.events.Event
+	 */
+	[Event(name = "change", type = "laya.events.Event")]
+	
+	/**
 	 * <code>CheckBox</code> 组件显示一个小方框，该方框内可以有选中标记。
 	 * <code>CheckBox</code> 组件还可以显示可选的文本标签，默认该标签位于 CheckBox 右侧。
 	 * <p><code>CheckBox</code> 使用 <code>dataSource</code>赋值时的的默认属性是：<code>selected</code>。</p>

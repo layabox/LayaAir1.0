@@ -1,6 +1,5 @@
 package laya.map {
 	import laya.display.Sprite;
-	import laya.renders.Render;
 	import laya.utils.Browser;
 	
 	/**
@@ -35,28 +34,6 @@ package laya.map {
 			isAloneObject = objectKey;
 		}
 		
-		/**@private */
-		override public function _setDisplay(value:Boolean):void {
-			if (!value) {
-				var cc:* = _$P.cacheCanvas;
-				//如果从显示列表移除，则销毁cache缓存
-				if (cc && cc.ctx) {
-					cc.ctx.canvas.destroy();
-					//cc.ctx.canvas.clear();
-					cc.ctx = null;
-				}
-				var fc:* = _$P._filterCache;
-				//fc && (fc.destroy(), fc.recycle(), this._set$P('_filterCache', null));
-				if (fc) {
-					fc.destroy();
-					fc.recycle();
-					this._set$P('_filterCache', null);
-				}
-				_$P._isHaveGlowFilter && this._set$P('_isHaveGlowFilter', false);
-			}
-			super._setDisplay(value);
-		}
-		
 		/**
 		 * 把一个动画对象绑定到当前GridSprite
 		 * @param	sprite 动画的显示对象
@@ -72,21 +49,8 @@ package laya.map {
 		 * 显示当前GridSprite，并把上面的动画全部显示
 		 */
 		public function show():void {
-			if (!this.visible) {
+			if (!this._visible) {
 				this.visible = true;
-				if (!isAloneObject)
-				{
-					var tParent:MapLayer;
-					tParent = parent as MapLayer;
-					if (tParent)
-					{
-						tParent.showGridSprite(this);
-					}
-				}
-				if (!Render.isWebGL&&_map.autoCache)
-				{
-					this.cacheAs = _map.autoCacheType;
-				}
 				if (aniSpriteArray == null) {
 					return;
 				}
@@ -102,21 +66,8 @@ package laya.map {
 		 * 隐藏当前GridSprite，并把上面绑定的动画全部移除
 		 */
 		public function hide():void {
-			if (this.visible) {
+			if (this._visible) {
 				this.visible = false;
-				if (!isAloneObject)
-				{
-					var tParent:MapLayer;
-					tParent = parent as MapLayer;
-					if (tParent)
-					{
-						tParent.hideGridSprite(this);
-					}
-				}
-				if (!Render.isWebGL&&_map.autoCache)
-				{
-					this.cacheAs = "none";
-				}
 				if (aniSpriteArray == null) {
 					return;
 				}
@@ -134,18 +85,18 @@ package laya.map {
 		public function updatePos():void {
 			if (isAloneObject) {
 				if (_map) {
-					this.x = this.relativeX;
-					this.y = this.relativeY;
+					this.x = this.relativeX - _map._viewPortX;
+					this.y = this.relativeY - _map._viewPortY;
 				}
-				if (this.x < 0 || this.x > _map.viewPortWidth || this.y < 0 || this.y > _map.viewPortHeight) {
+				if (this._x < 0 || this._x > _map.viewPortWidth || this._y < 0 || this._y > _map.viewPortHeight) {
 					hide();
 				} else {
 					show();
 				}
 			} else {
 				if (_map) {
-					this.x = this.relativeX;
-					this.y = this.relativeY;
+					this.x = this.relativeX - _map._viewPortX;
+					this.y = this.relativeY - _map._viewPortY;
 				}
 			}
 		}
@@ -158,14 +109,16 @@ package laya.map {
 				_map = null;
 			}
 			this.visible = false;
-			if (aniSpriteArray == null) {
-				return;
-			}
+			
 			var tAniSprite:TileAniSprite;
-			for (var i:int = 0; i < aniSpriteArray.length; i++) {
-				tAniSprite = aniSpriteArray[i];
-				tAniSprite.clearAll();
+			
+			if (aniSpriteArray != null) {
+				for (var i:int = 0; i < aniSpriteArray.length; i++) {
+					tAniSprite = aniSpriteArray[i];
+					tAniSprite.clearAll();
+				}
 			}
+			
 			this.destroy();
 			relativeX = 0;
 			relativeY = 0;

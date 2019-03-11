@@ -1,21 +1,21 @@
 package laya.utils {
-	import laya.display.css.CSSStyle;
-	import laya.display.ILayout;
-	import laya.display.Sprite;
 	
 	/**
 	 * @private
 	 * <code>HTMLChar</code> 是一个 HTML 字符类。
 	 */
-	public class HTMLChar implements ILayout {
+	public class HTMLChar {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _isWordRegExp:RegExp =/*[STATIC SAFE]*/ new RegExp("[\\w\.]", "");
 		
-		private var _sprite:Sprite;
-		private var _x:Number;
-		private var _y:Number;
-		private var _w:Number;
-		private var _h:Number;
+		/** x坐标*/
+		public var x:Number;
+		/** y坐标*/
+		public var y:Number;
+		/** 宽*/
+		public var width:Number;
+		/** 高*/
+		public var height:Number;
 		/** 表示是否是正常单词(英文|.|数字)。*/
 		public var isWord:Boolean;
 		/** 字符。*/
@@ -23,7 +23,14 @@ package laya.utils {
 		/** 字符数量。*/
 		public var charNum:Number;
 		/** CSS 样式。*/
-		public var style:CSSStyle;
+		public var style:*;
+		
+		/**
+		 * 创建实例
+		 */
+		public function HTMLChar() {
+			reset();
+		}
 		
 		/**
 		 * 根据指定的字符、宽高、样式，创建一个 <code>HTMLChar</code> 类的实例。
@@ -32,82 +39,42 @@ package laya.utils {
 		 * @param	h 高度。
 		 * @param	style CSS 样式。
 		 */
-		public function HTMLChar(char:String, w:Number, h:Number, style:CSSStyle) {
+		public function setData(char:String, w:Number, h:Number, style:*):HTMLChar {
 			this.char = char;
 			this.charNum = char.charCodeAt(0);
-			_x = _y = 0;
+			x = y = 0;
 			this.width = w;
 			this.height = h;
 			this.style = style;
 			this.isWord = !_isWordRegExp.test(char);
+			return this;
 		}
 		
 		/**
-		 * 设置与此对象绑定的显示对象 <code>Sprite</code> 。
-		 * @param	sprite 显示对象 <code>Sprite</code> 。
+		 * 重置
 		 */
-		public function setSprite(sprite:Sprite):void {
-			_sprite = sprite;
+		public function reset():HTMLChar {
+			x = y = width = height = 0;
+			isWord = false;
+			char = null;
+			charNum = 0;
+			style = null;
+			return this;
 		}
 		
 		/**
-		 * 获取与此对象绑定的显示对象 <code>Sprite</code>。
-		 * @return
+		 * 回收
 		 */
-		public function getSprite():Sprite {
-			return _sprite;
+		//TODO:coverage
+		public function recover():void {
+			Pool.recover("HTMLChar", reset());
 		}
 		
 		/**
-		 * 此对象存储的 X 轴坐标值。
-		 * 当设置此值时，如果此对象有绑定的 Sprite 对象，则改变 Sprite 对象的属性 x 的值。
+		 * 创建
 		 */
-		public function get x():Number {
-			return _x;
-		}
-		
-		public function set x(value:Number):void {
-			if (_sprite) {
-				_sprite.x = value;
-			}
-			_x = value;
-		}
-		
-		/**
-		 * 此对象存储的 Y 轴坐标值。
-		 * 当设置此值时，如果此对象有绑定的 Sprite 对象，则改变 Sprite 对象的属性 y 的值。
-		 */
-		public function get y():Number {
-			return _y;
-		}
-		
-		public function set y(value:Number):void {
-			if (_sprite) {
-				_sprite.y = value;
-			}
-			_y = value;
-		}
-		
-		/**
-		 * 宽度。
-		 */
-		public function get width():Number {
-			return _w;
-		}
-		
-		public function set width(value:Number):void {
-			_w = value;
-		}
-		
-		/**
-		 * 高度。
-		 */
-		public function get height():Number {
-			return _h;
-		}
-		
-		public function set height(value:Number):void {
-			_h = value;
+		public static function create():HTMLChar {
+			return Pool.getItemByClass("HTMLChar", HTMLChar);
 		}
 		
 		/** @private */
@@ -116,9 +83,8 @@ package laya.utils {
 		}
 		
 		/** @private */
-		public function _getCSSStyle():CSSStyle {
+		public function _getCSSStyle():* {
 			return style;
 		}
 	}
-
 }

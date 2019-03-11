@@ -39,11 +39,15 @@ package laya.device.media
 		public function Video(width:int = 320, height:int = 240)
 		{
 			super();
-			
-			if (Render.isWebGL)
+						
+			if (Render.isConchApp || Render.isWebGL)
+			{
 				htmlVideo = new WebGLVideo();
+			}
 			else
+			{
 				htmlVideo = new HtmlVideo();
+			}
 
 			videoElement = htmlVideo.getVideo();
 			videoElement.layaTarget = this;
@@ -125,8 +129,10 @@ package laya.device.media
 		
 		private function onPlayComplete(e:*):void
 		{
-			Laya.timer.clear(this, renderCanvas);
 			this.event("ended");
+			if(!Render.isConchApp || !videoElement.loop)
+				Laya.timer.clear(this, renderCanvas);
+	
 		}
 		
 		/**
@@ -201,8 +207,8 @@ package laya.device.media
 		{
 			if (readyState === 0)
 				return;
-			
-			if (Render.isWebGL)
+							
+			if (Render.isConchApp || Render.isWebGL)
 				htmlVideo['updateTexture']();
 			
 			this.graphics.clear();
@@ -327,6 +333,33 @@ package laya.device.media
 		}
 		
 		/**
+		 * 设置视频的x坐标
+		 */
+		public override function set x(val:Number):void
+		{
+			super.x = val;
+			if (Render.isConchApp)
+			{
+				var transform:Object = Utils.getTransformRelativeToWindow(this, 0, 0);
+				videoElement.style.left = transform.x;
+			}
+		}
+		
+		/**
+		 * 设置视频的y坐标
+		 */
+		public override function set y(val:Number):void
+		{
+			super.y = val;
+			if (Render.isConchApp)
+			{
+				var transform:Object = Utils.getTransformRelativeToWindow(this, 0, 0);
+				videoElement.style.top = transform.y;
+			}
+		}
+		 
+		
+		/**
 		 * playbackRate 属性设置或返回音频/视频的当前播放速度。如：
 		 * <ul>
 		 * <li>1.0 正常速度</li>
@@ -403,17 +436,19 @@ package laya.device.media
 			return videoElement.seeking;
 		}
 		
-		override public function set height(value:Number):void
-		{
-			super.height = value;
-			if (paused) renderCanvas();
-		}
-		
 		override public function size(width:Number, height:Number):Sprite
 		{
 			super.size(width, height)
 			
-			videoElement.width = width / Browser.pixelRatio;
+			if (Render.isConchApp)
+			{
+				var transform:Object = Utils.getTransformRelativeToWindow(this, 0, 0);
+				videoElement.width = width * transform.scaleX; 	
+			}
+			else
+			{
+				videoElement.width = width / Browser.pixelRatio;
+			}
 			
 			if (paused) renderCanvas();
 			return this;
@@ -421,9 +456,33 @@ package laya.device.media
 		
 		override public function set width(value:Number):void
 		{
-			videoElement.width = width / Browser.pixelRatio;
+			if (Render.isConchApp)
+			{
+				var transform:Object = Utils.getTransformRelativeToWindow(this, 0, 0);
+				videoElement.width = value * transform.scaleX; 
+			}
+			else
+			{
+				videoElement.width = width / Browser.pixelRatio;
+			}
+			
 			super.width = value;
 			if (paused) renderCanvas();
+		}
+		
+		override public function set height(value:Number):void
+		{
+			if (Render.isConchApp)
+			{
+				var transform:Object = Utils.getTransformRelativeToWindow(this, 0, 0);
+				videoElement.height = value * transform.scaleY; 
+
+			}
+			else
+			{
+				videoElement.height = height / Browser.pixelRatio;
+			}
+			super.height = value;
 		}
 		
 		/**
@@ -457,7 +516,9 @@ package laya.device.media
 			videoElement.removeEventListener("ended", onPlayComplete);
 			
 			pause();
+			videoElement.layaTarget = null
 			videoElement = null;
+			htmlVideo.destroy();
 		}
 		
 		private function syncVideoPosition():void

@@ -19,6 +19,7 @@ package laya.ani.bone
 		 * @param	smallUV 大图图集中的UV
 		 * @return 相对于某个大图的UV
 		 */
+		//TODO:coverage
 		public static function getRelativeUV(bigUV:Array, smallUV:Array,rst:Array=null):Array
 		{
 			var startX:Number = bigUV[0];
@@ -44,6 +45,7 @@ package laya.ani.bone
 		 * @param	smallUV 相对于某个大图的UV
 		 * @return 相对于大图图集的UV
 		 */
+		//TODO:coverage
 		public static function getAbsoluteUV(bigUV:Array, smallUV:Array,rst:Array=null):Array
 		{
 			if (bigUV[0] == 0 && bigUV[1] == 0 && bigUV[4] == 1 && bigUV[5] == 1)

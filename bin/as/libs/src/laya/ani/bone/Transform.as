@@ -16,6 +16,7 @@ package laya.ani.bone {
 		public var skewY:Number = 0;
 		private var mMatrix:Matrix;
 		
+		//TODO:coverage
 		public function initData(data:*):void {
 			if (data.x != undefined) {
 				x = data.x;
@@ -37,6 +38,7 @@ package laya.ani.bone {
 			}
 		}
 		
+		//TODO:coverage
 		public function getMatrix():Matrix {
 			var tMatrix:Matrix;
 			if (mMatrix) {
@@ -56,7 +58,7 @@ package laya.ani.bone {
 			return tMatrix;
 		}
 		
-		
+		//TODO:coverage
 		public function skew(m:Matrix,x:Number, y:Number):Matrix {
 			var sinX:Number = Math.sin(y);
 			var cosX:Number = Math.cos(y);

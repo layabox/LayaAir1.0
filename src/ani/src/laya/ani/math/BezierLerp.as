@@ -15,6 +15,8 @@ package laya.ani.math
 		}
 		private static var _bezierResultCache:Object = { };
 		private static var _bezierPointsCache:Object = { };
+		
+		//TODO:coverage
 		public static function getBezierRate(t:Number, px0:Number, py0:Number, px1:Number, py1:Number):Number
 		{
 			var key:Number = _getBezierParamKey(px0, py0, px1, py1);
@@ -34,10 +36,14 @@ package laya.ani.math
 			_bezierResultCache[vKey] = 1;
 			return 1;
 		}
+		
+		//TODO:coverage
 		private static function _getBezierParamKey(px0:Number, py0:Number, px1:Number, py1:Number):Number
 		{
 			return (((px0 * 100 + py0) * 100 + px1) * 100 + py1) * 100;
 		}	
+		
+		//TODO:coverage
 		private static function _getBezierPoints(px0:Number, py0:Number, px1:Number, py1:Number,key:Number):Array
 		{
 			if (_bezierPointsCache[key]) return _bezierPointsCache[key];

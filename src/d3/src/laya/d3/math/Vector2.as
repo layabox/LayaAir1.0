@@ -4,14 +4,11 @@ package laya.d3.math {
 	/**
 	 * <code>Vector2</code> 类用于创建二维向量。
 	 */
-	public class Vector2 implements IClone {
+	public class Vector2 extends BaseVector implements IClone {
 		/**零向量,禁止修改*/
 		public static const ZERO:Vector2 = new Vector2(0.0, 0.0);
 		/**一向量,禁止修改*/
 		public static const ONE:Vector2 = new Vector2(1.0, 1.0);
-		
-		/**二维向量元素数组*/
-		public var elements:* = new Float32Array(2);
 		
 		/**
 		 * 获取X轴坐标。
@@ -51,7 +48,7 @@ package laya.d3.math {
 		 * @param	y  Y轴坐标。
 		 */
 		public function Vector2(x:Number = 0, y:Number = 0) {
-			var v:Float32Array = elements;
+			var v:Float32Array = elements = new Float32Array(2);
 			v[0] = x;
 			v[1] = y;
 		}
@@ -89,6 +86,47 @@ package laya.d3.math {
 			var s:Float32Array = this.elements;
 			destE[0] = s[0];
 			destE[1] = s[1];
+		}
+		
+		/**
+		 * 求两个二维向量的点积。
+		 * @param	a left向量。
+		 * @param	b right向量。
+		 * @return   点积。
+		 */
+		public static function dot(a:Vector2, b:Vector2):Number {
+			var ae:Float32Array = a.elements;
+			var be:Float32Array = b.elements;
+			var r:Number = (ae[0] * be[0]) + (ae[1] * be[1]);
+			return r;
+		}
+		
+		/**
+		 * 归一化二维向量。
+		 * @param	s 源三维向量。
+		 * @param	out 输出三维向量。
+		 */
+		public static function normalize(s:Vector2, out:Vector2):void {
+			var se:Float32Array = s.elements;
+			var oe:Float32Array = out.elements;
+			var x:Number = se[0], y:Number = se[1];
+			var len:Number = x * x + y * y;
+			if (len > 0) {
+				len = 1 / Math.sqrt(len);
+				oe[0] = se[0] * len;
+				oe[1] = se[1] * len;
+			}
+		}
+		
+		/**
+		 * 计算标量长度。
+		 * @param	a 源三维向量。
+		 * @return 标量长度。
+		 */
+		public static function scalarLength(a:Vector2):Number {
+			var f:Float32Array = a.elements;
+			var x:Number = f[0], y:Number = f[1];
+			return Math.sqrt(x * x + y * y);
 		}
 		
 		/**

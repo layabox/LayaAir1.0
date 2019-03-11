@@ -25,7 +25,7 @@ package laya.ui {
 	 * @see laya.ui.HSlider
 	 * @see laya.ui.VSlider
 	 */
-	public class Slider extends Component {
+	public class Slider extends UIComponent {
 		
 		/** @private 获取对 <code>Slider</code> 组件所包含的 <code>Label</code> 组件的引用。*/
 		public static var label:Label = new Label();
@@ -57,7 +57,7 @@ package laya.ui {
 		/**@private */
 		protected var _tick:Number = 1;
 		/**@private */
-		public var _value:Number = 0;
+		protected var _value:Number = 0;
 		/**@private */
 		protected var _skin:String;
 		/**@private */
@@ -139,11 +139,11 @@ package laya.ui {
 				addChild(label);
 				label.textField.changeText(_value + "");
 				if (isVertical) {
-					label.x = _bar.x + 20;
-					label.y = (_bar.height - label.height) * 0.5 + _bar.y;
+					label.x = _bar._x + 20;
+					label.y = (_bar.height - label.height) * 0.5 + _bar._y;
 				} else {
-					label.y = _bar.y - 20;
-					label.x = (_bar.width - label.width) * 0.5 + _bar.x;
+					label.y = _bar._y - 20;
+					label.x = (_bar.width - label.width) * 0.5 + _bar._x;
 				}
 			}
 		}
@@ -174,23 +174,27 @@ package laya.ui {
 			var oldValue:Number = _value;
 			if (isVertical) {
 				_bar.y += (Laya.stage.mouseY - _ty) / _globalSacle.y;
-				if (_bar.y > _maxMove) _bar.y = _maxMove;
-				else if (_bar.y < 0) _bar.y = 0;
-				_value = _bar.y / _maxMove * (_max - _min) + _min;
-				if(_progress) _progress.height = _bar.y+0.5*_bar.height;
+				if (_bar._y > _maxMove) _bar.y = _maxMove;
+				else if (_bar._y < 0) _bar.y = 0;
+				_value = _bar._y / _maxMove * (_max - _min) + _min;
+				if(_progress) _progress.height = _bar._y+0.5*_bar.height;
 			} else {
 				_bar.x += (Laya.stage.mouseX - _tx) / _globalSacle.x;
-				if (_bar.x > _maxMove) _bar.x = _maxMove;
-				else if (_bar.x < 0) _bar.x = 0;
-				_value = _bar.x / _maxMove * (_max - _min) + _min;
-				if(_progress) _progress.width = _bar.x+0.5*_bar.width;
+				if (_bar._x > _maxMove) _bar.x = _maxMove;
+				else if (_bar._x < 0) _bar.x = 0;
+				_value = _bar._x / _maxMove * (_max - _min) + _min;
+				if(_progress) _progress.width = _bar._x+0.5*_bar.width;
 			}
 			
 			_tx = Laya.stage.mouseX;
 			_ty = Laya.stage.mouseY;
 			
-			var pow:Number = Math.pow(10, (_tick + "").length - 1);
-			_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			if (_tick != 0)
+			{
+				var pow:Number = Math.pow(10, (_tick + "").length - 1);
+				_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			}
+			
 			if (_value != oldValue) {
 				sendChangeEvent();
 			}
@@ -215,22 +219,35 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				_bg.skin = _skin;
-				_bar.skin = _skin.replace(".png", "$bar.png");
-				var progressSkin:String = _skin.replace(".png", "$progress.png");
-				if (Loader.getRes(progressSkin))
+				if (_skin&&!Loader.getRes(_skin))
 				{
-					if (!_progress)
-					{
-						addChild(_progress = new Image());
-						_progress.sizeGrid = _bar.sizeGrid;
-						setChildIndex(_progress, 1);
-					}
-					_progress.skin = progressSkin;
-				} 
-				setBarPoint();
-				callLater(changeValue);
+					Laya.loader.load([_skin,_skin.replace(".png", "$bar.png")], Handler.create(this, _skinLoaded));
+				}else
+				{
+					_skinLoaded();
+				}
 			}
+		}
+		
+		protected function _skinLoaded():void
+		{
+			_bg.skin = _skin;
+			_bar.skin = _skin.replace(".png", "$bar.png");
+			var progressSkin:String = _skin.replace(".png", "$progress.png");
+			if (Loader.getRes(progressSkin))
+			{
+				if (!_progress)
+				{
+					addChild(_progress = new Image());
+					_progress.sizeGrid = _bar.sizeGrid;
+					setChildIndex(_progress, 1);
+				}
+				_progress.skin = progressSkin;
+			} 
+			setBarPoint();
+			callLater(changeValue);
+			_sizeChanged();
+			event(Event.LOADED);
 		}
 		
 		/**
@@ -243,18 +260,18 @@ package laya.ui {
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureWidth():Number {
+		override protected function measureWidth():Number {
 			return Math.max(_bg.width, _bar.width);
 		}
 		
 		/**@inheritDoc */
-		override protected function get measureHeight():Number {
+		override protected function measureHeight():Number {
 			return Math.max(_bg.height, _bar.height);
 		}
 		
 		/**@inheritDoc */
-		override protected function changeSize():void {
-			super.changeSize();
+		override protected function _sizeChanged():void {
+			super._sizeChanged();
 			if (isVertical) _bg.height = height;
 			else _bg.width = width;
 			setBarPoint();
@@ -309,9 +326,10 @@ package laya.ui {
 		 * 改变滑块的位置值。
 		 */
 		public function changeValue():void {
-			//_value = Math.round(_value / _tick) * _tick;			
-			var pow:Number = Math.pow(10, (_tick + "").length - 1);
-			_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			if (tick != 0){
+				var pow:Number = Math.pow(10, (_tick + "").length - 1);
+				_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			}
 			
 			_value = _value > _max ? _max : _value < _min ? _min : _value;
 			var num:Number = _max - _min;
@@ -319,12 +337,12 @@ package laya.ui {
 			if (isVertical)
 			{
 				_bar.y = (_value - _min) / num * (height - _bar.height);
-				if(_progress) _progress.height = _bar.y+0.5*_bar.height;
+				if(_progress) _progress.height = _bar._y+0.5*_bar.height;
 			} 
 			else
 			{
 				_bar.x = (_value - _min) / num * (width - _bar.width);
-				if(_progress) _progress.width = _bar.x+0.5*_bar.width;
+				if(_progress) _progress.width = _bar._x+0.5*_bar.width;
 			}
 			
 		}

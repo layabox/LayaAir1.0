@@ -10,6 +10,7 @@ package laya.ani.bone {
 	import laya.utils.Browser;
 	import laya.utils.Byte;
 	import laya.utils.Handler;
+	import laya.utils.Timer;
 	
 	/**动画开始播放调度
 	 * @eventType Event.PLAYED
@@ -225,7 +226,7 @@ package laya.ani.bone {
 				
 			} else {
 				tFactory = new Templet();
-				tFactory._setUrl(_aniPath);
+				tFactory._setCreateURL(_aniPath);
 				Templet.TEMPLET_DICTIONARY[_aniPath] = tFactory;
 				tFactory.on(Event.COMPLETE, this, _parseComplete);
 				tFactory.on(Event.ERROR, this, _parseFail);
@@ -276,7 +277,7 @@ package laya.ani.bone {
 					}
 				}
 			}
-			_eventIndex = 0;
+			//_eventIndex = 0;
 			_drawOrder = null;
 			this.event(Event.STOPPED);
 		}
@@ -402,6 +403,15 @@ package laya.ani.bone {
 							_createGraphics(i);
 						}
 					}
+					//理论上不会出现，但是实际运行出现了
+					tGraphics = _templet.getGrahicsDataWithCache(_aniClipIndex, _clipIndex);
+					if (tGraphics) {
+						if (this.graphics != tGraphics) {
+							this.graphics = tGraphics;
+						}
+						return;
+					}
+					
 				}
 			} else if (_aniMode == 1) {
 				tGraphics = _getGrahicsDataWithCache(_aniClipIndex, _clipIndex);
@@ -702,9 +712,26 @@ package laya.ani.bone {
 			}
 			if (_aniMode == 0) {
 				_templet.setGrahicsDataWithCache(_aniClipIndex, _clipIndex, tGraphics);
+				_checkIsAllParsed(_aniClipIndex);
 			} else if (_aniMode == 1) {
 				_setGrahicsDataWithCache(_aniClipIndex, _clipIndex, tGraphics);
 			}
+		}
+		
+		private function _checkIsAllParsed(_aniClipIndex:int):void
+		{
+			var i:int, len:int;
+			len = Math.floor(0.01+_templet.getAniDuration(_aniClipIndex) / 1000 * _player.cacheFrameRate);
+			for ( i= 0; i < len; i++)
+			{
+				if (!_templet.getGrahicsDataWithCache(_aniClipIndex, i)) return;
+			}
+			if (!_templet.getGrahicsDataWithCache(_aniClipIndex, len))
+			{
+				_createGraphics(len);
+				return;
+			}
+			_templet.deleteAniData(_aniClipIndex);
 		}
 		
 		/**

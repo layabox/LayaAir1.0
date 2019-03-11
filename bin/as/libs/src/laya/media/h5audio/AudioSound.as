@@ -14,6 +14,7 @@ package laya.media.h5audio {
 	 */
 	public class AudioSound extends EventDispatcher {
 		
+		/**@private */
 		private static var _audioCache:Object = {};
 		/**
 		 * 声音URL
@@ -35,8 +36,11 @@ package laya.media.h5audio {
 		 */
 		public function dispose():void {
 			var ad:Audio = _audioCache[url];
+			Pool.clearBySign("audio:" + url);
 			if (ad) {
-				ad.src = "";
+				if (!Render.isConchApp) {
+					ad.src = "";
+				}
 				delete _audioCache[url];	
 			}
 		}
@@ -75,7 +79,7 @@ package laya.media.h5audio {
 			url = URL.formatURL(url);
 			this.url = url;
 			var ad:Audio;
-			if (url == SoundManager._tMusic)
+			if (url == SoundManager._bgMusic)
 			{
 				_initMusicAudio();
 				ad = _musicAudio;
@@ -93,7 +97,7 @@ package laya.media.h5audio {
 				return;
 			}
 			if (!ad) {
-				if (url == SoundManager._tMusic)
+				if (url == SoundManager._bgMusic)
 				{
 					_initMusicAudio();
 					ad = _musicAudio;
@@ -145,7 +149,7 @@ package laya.media.h5audio {
 			//trace("playAudioSound");
 			if (!url) return null;
 			var ad:Audio;
-			if (url == SoundManager._tMusic)
+			if (url == SoundManager._bgMusic)
 			{
 				ad = _musicAudio;
 			}else
@@ -165,7 +169,7 @@ package laya.media.h5audio {
 				}
 			}
 			else {
-				if (url == SoundManager._tMusic)
+				if (url == SoundManager._bgMusic)
 				{
 					_initMusicAudio();
 					tAd = _musicAudio;		

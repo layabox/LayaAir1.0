@@ -1,0 +1,13 @@
+#ifdef HIGHPRECISION
+	precision highp float;
+#else
+	precision mediump float;
+#endif
+
+uniform vec4 u_PickColor;
+
+void main()
+{
+  gl_FragColor = u_PickColor; 
+}
+

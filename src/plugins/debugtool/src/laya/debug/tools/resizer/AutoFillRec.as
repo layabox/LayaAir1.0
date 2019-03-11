@@ -3,14 +3,13 @@ package laya.debug.tools.resizer
 
 	
 	import laya.display.Graphics;
-	import laya.ui.Box;
-	import laya.ui.Component;
+	import laya.display.Sprite;
 
 	/**
 	 * 自动根据大小填充自己全部区域的显示对象
 	 * @author ww
 	 */
-	public class AutoFillRec extends Component
+	public class AutoFillRec extends Sprite
 	{
 		public var type:int;
 		public function AutoFillRec(type:String) 
@@ -18,10 +17,24 @@ package laya.debug.tools.resizer
 			//super(type);
 		}
 		
-		override protected function changeSize():void
+
+		
+		override public function set width(value:Number):void 
+		{
+			super.width = value;
+			changeSize();
+		}
+		
+		
+		override public function set height(value:Number):void 
+		{
+			super.height = value;
+			changeSize();
+		}
+		protected function changeSize():void
 		{
 			// TODO Auto Generated method stub
-			super.changeSize();
+			
 			var g:Graphics = graphics;
 			g.clear();
 			g.drawRect(0, 0, width, height, "#33c5f5");

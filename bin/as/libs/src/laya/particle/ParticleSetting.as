@@ -8,7 +8,7 @@ package laya.particle {
 		public var textureName:String = null;
 		/**贴图个数,默认为1可不设置*/
 		public var textureCount:int = 1;
-		/**最大同屏粒子个数，最大饱和粒子数为maxPartices-1。注意:WebGL模式下释放粒子时间为最大声明周期，可能会出现释放延迟,实际看到的同屏粒子数小于该数值，如连续喷发出现中断，请调大该数值。*/
+		/**由于循环队列判断算法，最大饱和粒子数为maxPartices-1*/
 		public var maxPartices:int = 100;
 		/**粒子持续时间(单位:秒）*/
 		public var duration:Number = 1;
@@ -158,6 +158,11 @@ package laya.particle {
 					setting[key] = _defaultSetting[key];
 				}
 			}
+			//强转一下防止出错。这几个变量会直接传给shader，如果不是数字的话，有的runtime受不了（例如微信）
+			setting.endVelocity = +setting.endVelocity;
+			setting.gravity[0] =+setting.gravity[0];
+			setting.gravity[1] =+setting.gravity[1];
+			setting.gravity[2] =+setting.gravity[2];
 		}
 	
 	}

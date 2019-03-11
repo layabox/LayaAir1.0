@@ -1,24 +1,20 @@
 ﻿package {
-	import laya.display.Graphics;
 	import laya.display.Input;
 	import laya.display.Sprite;
 	import laya.display.Stage;
-	import laya.display.css.Font;
-	import laya.display.css.Style;
 	import laya.events.KeyBoardManager;
 	import laya.events.MouseManager;
 	import laya.media.SoundManager;
 	import laya.net.LoaderManager;
-	import laya.net.LocalStorage;
 	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.renders.RenderSprite;
 	import laya.resource.Context;
-	import laya.resource.ResourceManager;
 	import laya.runtime.ICPlatformClass;
 	import laya.runtime.IMarket;
 	import laya.utils.Browser;
-	import laya.utils.CacheManager;
+	import laya.utils.CacheManger;
+	import laya.utils.RunDriver;
 	import laya.utils.Timer;
 	import laya.utils.WeakObject;
 	
@@ -30,14 +26,22 @@
 		/*[COMPILER OPTIONS:normal]*/
 		/** 舞台对象的引用。*/
 		public static var stage:Stage = null;
-		/** 逻辑时间管理器的引用，不允许缩放。*/
+		/**@private 系统时钟管理器，引擎内部使用*/
+		public static var systemTimer:Timer = null;
+		/**@private 组件的start时钟管理器*/
+		public static var startTimer:Timer = null;
+		/**@private 组件的物理时钟管理器*/
+		public static var physicsTimer:Timer = null;
+		/**@private 组件的update时钟管理器*/
+		public static var updateTimer:Timer = null;
+		/**@private 组件的lateUpdate时钟管理器*/
+		public static var lateTimer:Timer = null;
+		/**游戏主时针，同时也是管理场景，动画，缓动等效果时钟，通过控制本时针缩放，达到快进慢播效果*/
 		public static var timer:Timer = null;
-		/** 表现时间管理器，可以用来控制渲染表现，可以通过scale缩放，来表现慢镜头*/
-		public static var scaleTimer:Timer = null;
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "1.7.18";
+		public static var version:String = "2.0.0";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -48,8 +52,10 @@
 		public static var PlatformClass:ICPlatformClass = __JS__("window.PlatformClass");
 		/**@private */
 		private static var _isinit:Boolean = false;
-		/**@private */
-		public static var MiniAdpter:Object = /*[STATIC SAFE]*/__JS__('{ init:function() { if (window.navigator && window.navigator.userAgent  && window.navigator.userAgent.indexOf("MiniGame") >-1) console.error("请先引用小游戏适配库laya.wxmini.js,详细教程：https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0") }};');
+		/**是否是微信小游戏子域，默认为false**/
+		public static var isWXOpenDataContext:Boolean = false;
+		/**微信小游戏是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false**/
+		public static var isWXPosMsg:Boolean = false;
 		
 		/**
 		 * 初始化引擎。使用引擎需要先初始化引擎，否则可能会报错。
@@ -60,48 +66,52 @@
 		 */
 		public static function init(width:Number, height:Number, ... plugins):* {
 			if (_isinit) return;
-			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
 			_isinit = true;
+			ArrayBuffer.prototype.slice || (ArrayBuffer.prototype.slice = _arrayBufferSlice);
+			
 			Browser.__init__();
-			Context.__init__();
-			Graphics.__init__();
-			timer = new Timer();
-			scaleTimer = new Timer();
+			
+			if (!Render.isConchApp) {
+				Context.__init__();
+			}
+			systemTimer = new Timer(false);
+			startTimer = new Timer(false);
+			physicsTimer = new Timer(false);
+			updateTimer = new Timer(false);
+			lateTimer = new Timer(false);
+			timer = new Timer(false);
+			
 			loader = new LoaderManager();
-			/*[IF-FLASH]*/
-			width = Browser.clientWidth;
-			/*[IF-FLASH]*/
-			height = Browser.clientHeight;
 			WeakObject.__init__();
 			
+			var isWebGLEnabled:Boolean = false;
 			for (var i:int = 0, n:int = plugins.length; i < n; i++) {
-				if (plugins[i].enable) plugins[i].enable();
+				if (plugins[i] && plugins[i].enable) {
+					plugins[i].enable();
+					if (typeof plugins[i] === "WebGL") isWebGLEnabled = true;
+				}
 			}
-			Font.__init__();
-			Style.__init__();
-			ResourceManager.__init__();
-			CacheManager.beginCheck();
+			//必须在webgl.enable之后
+			if (Render.isConchApp) {
+				if (!isWebGLEnabled) __JS__("laya.webgl.WebGL.enable()");
+				RunDriver.enableNative();
+			}
+			CacheManger.beginCheck();
 			_currentStage = stage = new Stage();
-			stage.conchModel && stage.conchModel.setRootNode();
-			
-			//forxiaochengxu
-			getUrlPath();
-			
-			/*[IF-FLASH]*/
-			render = new Render(50, 50);
-			//[IF-JS]render = new Render(0, 0);
+			_getUrlPath();
+			render = new Render(0, 0);
 			stage.size(width, height);
+			window.stage = stage;
 			RenderSprite.__init__();
 			KeyBoardManager.__init__();
 			MouseManager.instance.__init__(stage, Render.canvas);
 			Input.__init__();
 			SoundManager.autoStopMusic = true;
-			LocalStorage.__init__();
 			return Render.canvas;
 		}
 		
-		public static function getUrlPath():void
-		{
+		/**@private */
+		private static function _getUrlPath():void {
 			var location:* = Browser.window.location;
 			var pathName:String = location.pathname;
 			// 索引为2的字符如果是':'就是windows file协议
@@ -111,11 +121,11 @@
 		
 		/**@private */
 		private static function _arrayBufferSlice(start:int, end:int):ArrayBuffer {
-			var arr:*= __JS__("this");
-			var arrU8List:Uint8Array = new Uint8Array(arr,start,end-start);
-			var newU8List:Uint8Array=new Uint8Array(arrU8List.length);
+			var arr:* = __JS__("this");
+			var arrU8List:Uint8Array = new Uint8Array(arr, start, end - start);
+			var newU8List:Uint8Array = new Uint8Array(arrU8List.length);
 			newU8List.set(arrU8List);
-			return newU8List.buffer;	
+			return newU8List.buffer;
 		}
 		
 		/**
@@ -127,17 +137,35 @@
 			if (value) {
 				Browser.window.onerror = function(msg:String, url:String, line:String, column:String, detail:*):void {
 					if (erralert++ < 5 && detail)
-						alert("出错啦，请把此信息截图给研发商\n" + msg + "\n" + detail.stack||detail);
+						alert("出错啦，请把此信息截图给研发商\n" + msg + "\n" + detail.stack);
 				}
 			} else {
 				Browser.window.onerror = null;
 			}
 		}
 		
+		private static var _evcode:String = "eva" + "l";
+		
 		/**@private */
-		public static function _runScript(script:String):*
-		{
-			return Browser.window["e"+String.fromCharCode(100+10+8)+"a"+"l"](script);
+		public static function _runScript(script:String):* {
+			return Browser.window[_evcode](script);
+		}
+		
+		/**
+		 * 开启DebugPanel
+		 * @param	debugJsPath laya.debugtool.js文件路径
+		 */
+		public static function enableDebugPanel(debugJsPath:String = "libs/laya.debugtool.js"):void {
+			if (!Laya["DebugPanel"]) {
+				var script:* = Browser.createElement("script");
+				script.onload = function():void {
+					Laya["DebugPanel"].enable();
+				}
+				script.src = debugJsPath;
+				Browser.document.body.appendChild(script);
+			} else {
+				Laya["DebugPanel"].enable();
+			}
 		}
 	}
 }

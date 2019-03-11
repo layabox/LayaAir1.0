@@ -1,4 +1,5 @@
 package laya.maths {
+	import laya.utils.Pool;
 	
 	/**
 	 * <code>Point</code> 对象表示二维坐标系统中的某个位置，其中 x 表示水平轴，y 表示垂直轴。
@@ -26,6 +27,13 @@ package laya.maths {
 		}
 		
 		/**
+		 * 从对象池创建
+		 */
+		public static function create():Point {
+			return Pool.getItemByClass("Point", Point);
+		}
+		
+		/**
 		 * 将 <code>Point</code> 的成员设置为指定值。
 		 * @param	x 水平坐标。
 		 * @param	y 垂直坐标。
@@ -35,6 +43,21 @@ package laya.maths {
 			this.x = x;
 			this.y = y;
 			return this;
+		}
+		
+		/**
+		 * 重置
+		 */
+		public function reset():Point {
+			this.x = this.y = 0;
+			return this;
+		}
+		
+		/**
+		 * 回收到对象池，方便复用
+		 */
+		public function recover():void {
+			Pool.recover("Point", reset());
 		}
 		
 		/**
@@ -62,6 +85,14 @@ package laya.maths {
 				x *= id;
 				y *= id;
 			}
+		}
+		
+		/**
+		 * copy point坐标
+		 * @param	point 需要被copy的point
+		 */
+		public function copy(point:Point):Point {
+			return setTo(point.x, point.y);
 		}
 	}
 }

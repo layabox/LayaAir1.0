@@ -311,22 +311,22 @@ package laya.d3.math {
 				switch (i) {
 				
 				case 0: 
-					planeResult = Collision.intersectsPlaneAndPoint(_near, point);
+					planeResult = CollisionUtils.intersectsPlaneAndPoint(_near, point);
 					break;
 				case 1: 
-					planeResult = Collision.intersectsPlaneAndPoint(_far, point);
+					planeResult = CollisionUtils.intersectsPlaneAndPoint(_far, point);
 					break;
 				case 2: 
-					planeResult = Collision.intersectsPlaneAndPoint(_left, point);
+					planeResult = CollisionUtils.intersectsPlaneAndPoint(_left, point);
 					break;
 				case 3: 
-					planeResult = Collision.intersectsPlaneAndPoint(_right, point);
+					planeResult = CollisionUtils.intersectsPlaneAndPoint(_right, point);
 					break;
 				case 4: 
-					planeResult = Collision.intersectsPlaneAndPoint(_top, point);
+					planeResult = CollisionUtils.intersectsPlaneAndPoint(_top, point);
 					break;
 				case 5: 
-					planeResult = Collision.intersectsPlaneAndPoint(_bottom, point);
+					planeResult = CollisionUtils.intersectsPlaneAndPoint(_bottom, point);
 					break;
 				}
 				
@@ -359,10 +359,10 @@ package laya.d3.math {
 				plane = getPlane(i);
 				_getBoxToPlanePVertexNVertex(box, plane.normal, p, n);
 				
-				if (Collision.intersectsPlaneAndPoint(plane, p) === Plane.PlaneIntersectionType_Back)
+				if (CollisionUtils.intersectsPlaneAndPoint(plane, p) === Plane.PlaneIntersectionType_Back)
 					return ContainmentType.Disjoint;
 				
-				if (Collision.intersectsPlaneAndPoint(plane, n) === Plane.PlaneIntersectionType_Back)
+				if (CollisionUtils.intersectsPlaneAndPoint(plane, n) === Plane.PlaneIntersectionType_Back)
 					result = ContainmentType.Intersects;
 			}
 			
@@ -381,22 +381,22 @@ package laya.d3.math {
 				
 				switch (i) {
 				case 0: 
-					planeResult = Collision.intersectsPlaneAndSphere(_near, sphere);
+					planeResult = CollisionUtils.intersectsPlaneAndSphere(_near, sphere);
 					break;
 				case 1: 
-					planeResult = Collision.intersectsPlaneAndSphere(_far, sphere);
+					planeResult = CollisionUtils.intersectsPlaneAndSphere(_far, sphere);
 					break;
 				case 2: 
-					planeResult = Collision.intersectsPlaneAndSphere(_left, sphere);
+					planeResult = CollisionUtils.intersectsPlaneAndSphere(_left, sphere);
 					break;
 				case 3: 
-					planeResult = Collision.intersectsPlaneAndSphere(_right, sphere);
+					planeResult = CollisionUtils.intersectsPlaneAndSphere(_right, sphere);
 					break;
 				case 4: 
-					planeResult = Collision.intersectsPlaneAndSphere(_top, sphere);
+					planeResult = CollisionUtils.intersectsPlaneAndSphere(_top, sphere);
 					break;
 				case 5: 
-					planeResult = Collision.intersectsPlaneAndSphere(_bottom, sphere);
+					planeResult = CollisionUtils.intersectsPlaneAndSphere(_bottom, sphere);
 					break;
 				}
 				

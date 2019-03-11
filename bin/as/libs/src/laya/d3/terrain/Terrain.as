@@ -1,11 +1,11 @@
 package laya.d3.terrain {
-	import laya.d3.core.ComponentNode;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.terrain.unit.ChunkInfo;
+	import laya.display.Node;
 	import laya.events.Event;
 	import laya.net.Loader;
 	
@@ -17,16 +17,14 @@ package laya.d3.terrain {
 		public static var LOD_TOLERANCE_VALUE:Number = 4;
 		public static var LOD_DISTANCE_FACTOR:Number = 2.0;
 		public static var __VECTOR3__:Vector3;
+		//地形资源
 		private var _terrainRes:TerrainRes = null;
 		private var _lightmapScaleOffset:Vector4;
 		
 		public function set terrainRes(value:TerrainRes):void {
 			if (value) {
 				_terrainRes = value;
-				if (value.loaded)
-					buildTerrain(value);
-				else
-					value.once(Event.LOADED, this, buildTerrain);
+				buildTerrain(value);
 			}
 		}
 		
@@ -34,8 +32,8 @@ package laya.d3.terrain {
 		 * 加载网格模板,注意:不缓存。
 		 * @param url 模板地址。
 		 */
-		public static function load(url:String):Terrain {
-			return Laya.loader.create(url, null, null, Terrain, null, 1, false);
+		public static function load(url:String):void {
+			Laya.loader.create(url, null, null, Laya3D.TERRAINRES, null, null, 1, false);
 		}
 		
 		/**
@@ -44,34 +42,33 @@ package laya.d3.terrain {
 		 * @param name 名字。
 		 */
 		public function Terrain(terrainRes:TerrainRes = null) {
+
 			_lightmapScaleOffset = new Vector4(1, 1, 0, 0);
 			if (terrainRes) {
 				_terrainRes = terrainRes;
-				if (terrainRes.loaded)
-					buildTerrain(terrainRes);
-				else
-					terrainRes.once(Event.LOADED, this, buildTerrain);
+				buildTerrain(terrainRes);
 			}
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override protected function _parseCustomProps(rootNode:ComponentNode, innerResouMap:Object, customProps:Object, json:Object):void {
-			terrainRes = Loader.getRes(innerResouMap[customProps.dataPath]);
+		override public function _parse(data:Object):void {
+			super._parse(data);
+			terrainRes = Loader.getRes(data.dataPath);
 			
-			var lightmapIndex:* = customProps.lightmapIndex;
+			var lightmapIndex:* = data.lightmapIndex;
 			if (lightmapIndex != null)
 				setLightmapIndex(lightmapIndex);
 			
-			var lightmapScaleOffsetArray:Array = customProps.lightmapScaleOffset;
+			var lightmapScaleOffsetArray:Array = data.lightmapScaleOffset;
 			if (lightmapScaleOffsetArray)
 				setLightmapScaleOffset(new Vector4(lightmapScaleOffsetArray[0], lightmapScaleOffsetArray[1], lightmapScaleOffsetArray[2], lightmapScaleOffsetArray[3]));
 		}
 		
 		public function setLightmapIndex(value:int):void {
-			for (var i:int = 0; i < _childs.length; i++) {
-				var terrainChunk:TerrainChunk = _childs[i];
+			for (var i:int = 0; i < _children.length; i++) {
+				var terrainChunk:TerrainChunk = _children[i];
 				terrainChunk.terrainRender.lightmapIndex = value;
 			}
 		}
@@ -79,22 +76,22 @@ package laya.d3.terrain {
 		public function setLightmapScaleOffset(value:Vector4):void {
 			if (!value) return;
 			value.cloneTo(_lightmapScaleOffset);
-			for (var i:int = 0; i < _childs.length; i++) {
-				var terrainChunk:TerrainChunk = _childs[i];
+			for (var i:int = 0; i < _children.length; i++) {
+				var terrainChunk:TerrainChunk = _children[i];
 				terrainChunk.terrainRender.lightmapScaleOffset = _lightmapScaleOffset;
 			}
 		}
 		
 		public function disableLight():void {
-			for (var i:int = 0, n:int = _childs.length; i < n; i++) {
-				var terrainChunk:TerrainChunk = _childs[i];
+			for (var i:int = 0, n:int = _children.length; i < n; i++) {
+				var terrainChunk:TerrainChunk = _children[i];
 				for (var j:int = 0, m:int = terrainChunk._render.sharedMaterials.length; j < m; j++) {
 					var terrainMaterial:TerrainMaterial = terrainChunk._render.sharedMaterials[j] as TerrainMaterial;
 					terrainMaterial.disableLight();
 				}
 			}
 		}
-		
+		//建筑地形
 		public function buildTerrain(terrainRes:TerrainRes):void {
 			var chunkNumX:int = terrainRes._chunkNumX;
 			var chunkNumZ:int = terrainRes._chunkNumZ;
@@ -146,7 +143,7 @@ package laya.d3.terrain {
 		 * @param z Z轴坐标。
 		 */
 		public function getHeightXZ(x:Number, z:Number):Number {
-			if (!_terrainRes || !_terrainRes.loaded)
+			if (!_terrainRes)
 				return NaN;
 			
 			x -= transform.position.x;

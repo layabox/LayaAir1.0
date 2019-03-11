@@ -1,4 +1,5 @@
 package laya.maths {
+	import laya.utils.Pool;
 	
 	/**
 	 * <p> <code>Matrix</code> 类表示一个转换矩阵，它确定如何将点从一个坐标空间映射到另一个坐标空间。</p>
@@ -8,10 +9,10 @@ package laya.maths {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**@private 一个初始化的 <code>Matrix</code> 对象，不允许修改此对象内容。*/
 		public static var EMPTY:Matrix =/*[STATIC SAFE]*/ new Matrix();
-		/** 用于中转使用的 <code>Matrix</code> 对象。*/
+		/**用于中转使用的 <code>Matrix</code> 对象。*/
 		public static var TEMP:Matrix =/*[STATIC SAFE]*/ new Matrix();
 		/**@private */
-		public static var _cache:* = [];
+		public static var _createFun:Function = null;
 		
 		/**缩放或旋转图像时影响像素沿 x 轴定位的值。*/
 		public var a:Number;
@@ -25,11 +26,8 @@ package laya.maths {
 		public var tx:Number;
 		/**沿 y 轴平移每个点的距离。*/
 		public var ty:Number;
-		
-		/**@private 表示此对象是否在对象池中。*/
-		public var inPool:Boolean = false;
-		/**@private 是否有改变矩阵的值。*/
-		public var bTransform:Boolean = false;
+		/**@private 是否有旋转缩放操作*/
+		public var _bTransform:Boolean = false;
 		
 		/**
 		 * 使用指定参数创建新的 <code>Matrix</code> 对象。
@@ -40,7 +38,10 @@ package laya.maths {
 		 * @param tx	（可选）沿 x 轴平移每个点的距离。
 		 * @param ty	（可选）沿 y 轴平移每个点的距离。
 		 */
-		public function Matrix(a:Number = 1, b:Number = 0, c:Number = 0, d:Number = 1, tx:Number = 0, ty:Number = 0) {
+		public function Matrix(a:Number = 1, b:Number = 0, c:Number = 0, d:Number = 1, tx:Number = 0, ty:Number = 0, nums:Number = 0) {
+			if (_createFun != null) {
+				__JS__("return Matrix._createFun(a, b, c, d, tx, ty, nums);")
+			}
 			this.a = a;
 			this.b = b;
 			this.c = c;
@@ -57,13 +58,13 @@ package laya.maths {
 		public function identity():Matrix {
 			this.a = this.d = 1;
 			this.b = this.tx = this.ty = this.c = 0;
-			bTransform = false;
+			_bTransform = false;
 			return this;
 		}
 		
 		/**@private */
 		public function _checkTransform():Boolean {
-			return bTransform = (a !== 1 || b !== 0 || c !== 0 || d !== 1);
+			return _bTransform = (a !== 1 || b !== 0 || c !== 0 || d !== 1);
 		}
 		
 		/**
@@ -94,22 +95,25 @@ package laya.maths {
 		 * 对矩阵应用缩放转换。
 		 * @param	x 用于沿 x 轴缩放对象的乘数。
 		 * @param	y 用于沿 y 轴缩放对象的乘数。
+		 * @return	返回矩阵对象本身
 		 */
-		public function scale(x:Number, y:Number):void {
+		public function scale(x:Number, y:Number):Matrix {
 			this.a *= x;
 			this.d *= y;
 			this.c *= x;
 			this.b *= y;
 			this.tx *= x;
 			this.ty *= y;
-			bTransform = true;
+			_bTransform = true;
+			return this;
 		}
 		
 		/**
 		 * 对 Matrix 对象应用旋转转换。
 		 * @param	angle 以弧度为单位的旋转角度。
+		 * @return	返回矩阵对象本身
 		 */
-		public function rotate(angle:Number):void {
+		public function rotate(angle:Number):Matrix {
 			var cos:Number = Math.cos(angle);
 			var sin:Number = Math.sin(angle);
 			var a1:Number = this.a;
@@ -122,7 +126,8 @@ package laya.maths {
 			this.d = c1 * sin + this.d * cos;
 			this.tx = tx1 * cos - this.ty * sin;
 			this.ty = tx1 * sin + this.ty * cos;
-			bTransform = true;
+			_bTransform = true;
+			return this;
 		}
 		
 		/**
@@ -184,40 +189,6 @@ package laya.maths {
 		}
 		
 		/**
-		 * @private
-		 * 将 Matrix 对象表示的几何转换应用于指定点。
-		 * @param	data 点集合。
-		 * @param	out 存储应用转化的点的列表。
-		 * @return	返回out数组
-		 */
-		public function transformPointArray(data:Array, out:Array):Array {
-			var len:int = data.length;
-			for (var i:int; i < len; i += 2) {
-				var x:Number = data[i], y:Number = data[i + 1];
-				out[i] = a * x + c * y + tx;
-				out[i + 1] = b * x + d * y + ty;
-			}
-			return out;
-		}
-		
-		/**
-		 * @private
-		 * 将 Matrix 对象表示的几何缩放转换应用于指定点。
-		 * @param	data 点集合。
-		 * @param	out 存储应用转化的点的列表。
-		 * @return	返回out数组
-		 */
-		public function transformPointArrayScale(data:Array, out:Array):Array {
-			var len:int = data.length;
-			for (var i:int; i < len; i += 2) {
-				var x:Number = data[i], y:Number = data[i + 1];
-				out[i] = a * x + c * y;
-				out[i + 1] = b * x + d * y;
-			}
-			return out;
-		}
-		
-		/**
 		 * 获取 X 轴缩放值。
 		 * @return  X 轴缩放值。
 		 */
@@ -271,7 +242,7 @@ package laya.maths {
 		/**
 		 * 将指定矩阵与当前矩阵连接，从而将这两个矩阵的几何效果有效地结合在一起。
 		 * @param	matrix 要连接到源矩阵的矩阵。
-		 * @return 当前矩阵。
+		 * @return	当前矩阵。
 		 */
 		public function concat(matrix:Matrix):Matrix {
 			var a:Number = this.a;
@@ -291,7 +262,7 @@ package laya.maths {
 		 * @param	m1 矩阵一。
 		 * @param	m2 矩阵二。
 		 * @param	out 输出对象。
-		 * @return 结果输出对象 out。
+		 * @return	结果输出对象 out。
 		 */
 		public static function mul(m1:Matrix, m2:Matrix, out:Matrix):Matrix {
 			var aa:Number = m1.a, ab:Number = m1.b, ac:Number = m1.c, ad:Number = m1.d, atx:Number = m1.tx, aty:Number = m1.ty;
@@ -361,7 +332,7 @@ package laya.maths {
 				this.c = 0 * ba;
 				this.d = y * bd;
 			}
-			bTransform = true;
+			_bTransform = true;
 		}
 		
 		/**
@@ -384,81 +355,7 @@ package laya.maths {
 				this.c = -sin * ba;
 				this.d = cos * bd;
 			}
-			bTransform = true;
-		}
-		
-		/**@private */
-		public static function mulPre(m1:Matrix, ba:Number, bb:Number, bc:Number, bd:Number, btx:Number, bty:Number, out:Matrix):Matrix {
-			var aa:Number = m1.a, ab:Number = m1.b, ac:Number = m1.c, ad:Number = m1.d, atx:Number = m1.tx, aty:Number = m1.ty;
-			if (bb !== 0 || bc !== 0) {
-				out.a = aa * ba + ab * bc;
-				out.b = aa * bb + ab * bd;
-				out.c = ac * ba + ad * bc;
-				out.d = ac * bb + ad * bd;
-				out.tx = ba * atx + bc * aty + btx;
-				out.ty = bb * atx + bd * aty + bty;
-			} else {
-				out.a = aa * ba;
-				out.b = ab * bd;
-				out.c = ac * ba;
-				out.d = ad * bd;
-				out.tx = ba * atx + btx;
-				out.ty = bd * aty + bty;
-			}
-			return out;
-		}
-		
-		/**@private */
-		public static function mulPos(m1:Matrix, aa:Number, ab:Number, ac:Number, ad:Number, atx:Number, aty:Number, out:Matrix):Matrix {
-			var ba:Number = m1.a, bb:Number = m1.b, bc:Number = m1.c, bd:Number = m1.d, btx:Number = m1.tx, bty:Number = m1.ty;
-			if (bb !== 0 || bc !== 0) {
-				out.a = aa * ba + ab * bc;
-				out.b = aa * bb + ab * bd;
-				out.c = ac * ba + ad * bc;
-				out.d = ac * bb + ad * bd;
-				out.tx = ba * atx + bc * aty + btx;
-				out.ty = bb * atx + bd * aty + bty;
-			} else {
-				out.a = aa * ba;
-				out.b = ab * bd;
-				out.c = ac * ba;
-				out.d = ad * bd;
-				out.tx = ba * atx + btx;
-				out.ty = bd * aty + bty;
-			}
-			return out;
-		}
-		
-		/**@private */
-		public static function preMul(parent:Matrix, self:Matrix, out:Matrix):Matrix {
-			var pa:Number = parent.a, pb:Number = parent.b, pc:Number = parent.c, pd:Number = parent.d;
-			var na:Number = self.a, nb:Number = self.b, nc:Number = self.c, nd:Number = self.d, ntx:Number = self.tx, nty:Number = self.ty;
-			out.a = na * pa;
-			out.b = out.c = 0;
-			out.d = nd * pd;
-			out.tx = ntx * pa + parent.tx;
-			out.ty = nty * pd + parent.ty;
-			if (nb !== 0 || nc !== 0 || pb !== 0 || pc !== 0) {
-				out.a += nb * pc;
-				out.d += nc * pb;
-				out.b += na * pb + nb * pd;
-				out.c += nc * pa + nd * pc;
-				out.tx += nty * pc;
-				out.ty += ntx * pb;
-			}
-			return out;
-		}
-		
-		/**@private */
-		public static function preMulXY(parent:Matrix, x:Number, y:Number, out:Matrix):Matrix {
-			var pa:Number = parent.a, pb:Number = parent.b, pc:Number = parent.c, pd:Number = parent.d;
-			out.a = pa;
-			out.b = pb;
-			out.c = pc;
-			out.d = pd;
-			out.tx = x * pa + parent.tx + y * pc;
-			out.ty = y * pd + parent.ty + x * pb;
-			return out;
+			_bTransform = true;
 		}
 		
 		/**
@@ -473,14 +370,14 @@ package laya.maths {
 			dec.d = d;
 			dec.tx = tx;
 			dec.ty = ty;
-			dec.bTransform = bTransform;
+			dec._bTransform = _bTransform;
 			return dec;
 		}
 		
 		/**
 		 * 将当前 Matrix 对象中的所有矩阵数据复制到指定的 Matrix 对象中。
 		 * @param	dec 要复制当前矩阵数据的 Matrix 对象。
-		 * @return 已复制当前矩阵数据的 Matrix 对象。
+		 * @return	已复制当前矩阵数据的 Matrix 对象。
 		 */
 		public function copyTo(dec:Matrix):Matrix {
 			dec.a = a;
@@ -489,7 +386,7 @@ package laya.maths {
 			dec.d = d;
 			dec.tx = tx;
 			dec.ty = ty;
-			dec.bTransform = bTransform;
+			dec._bTransform = _bTransform;
 			return dec;
 		}
 		
@@ -501,19 +398,18 @@ package laya.maths {
 			return a + "," + b + "," + c + "," + d + "," + tx + "," + ty;
 		}
 		
-		//内存管理应该是数学计算以外的事情不能放到这里哎
 		/**
 		 * 销毁此对象。
 		 */
 		public function destroy():void {
-			if (inPool) return;
-			var cache:* = _cache;
-			inPool = true;
-			cache._length || (cache._length = 0);
-			cache[cache._length++] = this;
-			a = d = 1;
-			b = c = tx = ty = 0;
-			bTransform = false;
+			recover();
+		}
+		
+		/**
+		 * 回收到对象池，方便复用
+		 */
+		public function recover():void {
+			Pool.recover("Matrix", identity());
 		}
 		
 		/**
@@ -521,10 +417,7 @@ package laya.maths {
 		 * @return <code>Matrix</code> 对象。
 		 */
 		public static function create():Matrix {
-			var cache:* = _cache;
-			var mat:Matrix = !cache._length ? (new Matrix()) : cache[--cache._length];
-			mat.inPool = false;
-			return mat;
+			return Pool.getItemByClass("Matrix", Matrix);
 		}
 	}
 }

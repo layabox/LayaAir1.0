@@ -6,7 +6,7 @@ package laya.map {
 	import laya.maths.Rectangle;
 	import laya.net.Loader;
 	import laya.renders.Render;
-	import laya.renders.RenderContext;
+	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
 	import laya.resource.Texture;
 	import laya.utils.Handler;
@@ -82,7 +82,6 @@ package laya.map {
 		private var _completeHandler:Handler = null; //地图创建完成的回调函数
 		//用来裁剪块的区域（有当前视口和上次视口显示多少的块，就能哪些儿块需要显示或隐藏
 		private var _mapRect:GRect = new GRect(); //当前视口显示的块范围
-		private var _mapLogicRect:GRect = new GRect(); //当前视口显示的范围
 		private var _mapLastRect:GRect = new GRect(); //上次视口显示的块范围
 		private var _index:int = 0;
 		private var _animationDic:Object = {}; //需要创建的动画数据
@@ -115,10 +114,6 @@ package laya.map {
 		//把地图限制在显示区域
 		private var _limitRange:Boolean = false;
 		/**
-		 * 快速更新模式是否不可用 
-		 */		
-		private var _fastDirty:Boolean = true;
-		/**
 		 * 是否自动缓存没有动画的地块
 		 */
 		public var autoCache:Boolean = true;
@@ -150,7 +145,7 @@ package laya.map {
 		public var cacheAllAfterInit:Boolean = false;
 		
 		public function TiledMap() {
-			_mapSprite = new Sprite();
+		
 		}
 		
 		/**
@@ -203,7 +198,8 @@ package laya.map {
 		 * @param	e JSON数据
 		 */
 		private function onJsonComplete(e:*):void {
-
+			_mapSprite = new Sprite();
+			Laya.stage.addChild(_mapSprite);
 			var tJsonData:* = _jsonData = e;
 			
 			_properties = tJsonData.properties;
@@ -232,7 +228,6 @@ package laya.map {
 				tileset = tArray[i];
 				tTileSet = new TileSet();
 				tTileSet.init(tileset);
-				
 				if (tTileSet.properties && tTileSet.properties.ignore) continue;
 				_tileProperties[i] = tTileSet.tileproperties;
 				addTileProperties(tTileSet.tileproperties);
@@ -386,8 +381,6 @@ package laya.map {
 		private function initMap():void {
 			var i:int, n:int;
 			for (var p:*in _animationDic) {
-				
-				
 				var tAniData:TileMapAniData = _animationDic[p];
 				var gStart:int;
 				gStart = _texutreStartDic[tAniData.image];
@@ -475,7 +468,7 @@ package laya.map {
 				cacheAllGrid();
 			}
 			moveViewPort(this._rect.x, this._rect.y);
-			Laya.stage.addChild(mapSprite());
+			
 			if (_completeHandler != null) {
 				_completeHandler.run();
 			}
@@ -604,7 +597,7 @@ package laya.map {
 						tGridSprite.addChild(tAnimationSprite);
 					}
 					else {
-						tGridSprite.graphics.drawTexture(tTileTexSet.texture, 0, 0, width, height);
+						tGridSprite.graphics.drawImage(tTileTexSet.texture, 0, 0, width, height);
 					}
 					tGridSprite.drawImageNum++;
 				}
@@ -621,7 +614,6 @@ package laya.map {
 		public function setViewPortPivotByScale(scaleX:Number, scaleY:Number):void {
 			_pivotScaleX = scaleX;
 			_pivotScaleY = scaleY;
-			_fastDirty = true;
 		}
 		
 		/**
@@ -653,23 +645,9 @@ package laya.map {
 		public function moveViewPort(moveX:Number, moveY:Number):void {
 			_x = -moveX;
 			_y = -moveY;
-			if (_fastDirty)
-			{
-				//不能快速更新
-				_rect.x = moveX;
-				_rect.y = moveY;
-				updateViewPort();
-			}else
-			{
-				//快速更新模式,减少计算
-				var dx:Number, dy:Number;
-				dx = moveX - _rect.x;
-				dy = moveY - _rect.y;
-				_rect.x = moveX;
-				_rect.y = moveY;
-				updateViewPortFast(dx, dy);
-			}
-			
+			_rect.x = moveX;
+			_rect.y = moveY;
+			updateViewPort();
 		}
 		
 		/**
@@ -681,12 +659,6 @@ package laya.map {
 		 */
 		public function changeViewPort(moveX:Number, moveY:Number, width:Number, height:Number):void {
 			if (moveX == _rect.x && moveY == _rect.y && width == _rect.width && height == _rect.height) return;
-			if (width == _rect.width && height == _rect.height)
-			{
-				moveViewPort(moveX, moveY);
-				return;
-			}
-			_fastDirty = true;
 			_x = -moveX;
 			_y = -moveY;
 			_rect.x = moveX;
@@ -720,85 +692,22 @@ package laya.map {
 		}
 		
 		/**
-		 * 快速更新视口 ,只有在视口大小和各种缩放信息没有改变时才可以使用这个函数更新
-		 * @param dx 视口偏移x
-		 * @param dy 视口偏移y
-		 */		
-		private function updateViewPortFast(dx:Number, dy:Number):void
-		{
-			//_rect.x和rect.y是内部坐标，会自动叠加缩放
-			_centerX +=dx ;
-			_centerY +=dy ;
-			_viewPortX +=dx;
-			_viewPortY += dy;
-			var posChanged:Boolean=false;
-			
-			var dyG:Number = dy / _gridHeight;
-			var dxG:Number = dx / _gridWidth;
-			
-			_mapLogicRect.top += dyG;
-			_mapLogicRect.bottom += dyG;
-			_mapLogicRect.left += dxG;
-			_mapLogicRect.right += dxG;
-			
-			_mapRect.top = 0|_mapLogicRect.top;
-			_mapRect.bottom = 0|_mapLogicRect.bottom;
-			_mapRect.left = 0|_mapLogicRect.left;
-			_mapRect.right = 0|_mapLogicRect.right;
-			if (_mapRect.top != _mapLastRect.top || _mapRect.bottom != _mapLastRect.bottom || _mapRect.left != _mapLastRect.left || _mapRect.right != _mapLastRect.right)
-			{
-				clipViewPort();
-				_mapLastRect.top = _mapRect.top;
-				_mapLastRect.bottom = _mapRect.bottom;
-				_mapLastRect.left = _mapRect.left;
-				_mapLastRect.right = _mapRect.right;
-				posChanged = true;
-			};
-			
-			
-			posChanged ||= (dx != 0 || dy != 0);
-			if (!posChanged) return;
-		
-			updateMapLayersPos();
-		}
-		
-		/**
-		 * 刷新地图层坐标
-		 */
-		private function updateMapLayersPos():void
-		{
-			var tMapLayer:MapLayer;
-			var len:int = _renderLayerArray.length;
-			for (var i:int = 0; i < len; i++) {
-				tMapLayer = this._renderLayerArray[i];
-				if (tMapLayer._gridSpriteArray.length > 0)
-				{
-					tMapLayer.updateAloneObject();
-					tMapLayer.pos(-_viewPortX, -_viewPortY);
-				}	
-			}
-		}
-		
-		/**
 		 * 刷新视口
 		 */
 		private function updateViewPort():void {
-			_fastDirty = false;
-			var dw:Number = _rect.width * _pivotScaleX;
-			var dh:Number =_rect.height * _pivotScaleY;
 			//_rect.x和rect.y是内部坐标，会自动叠加缩放
-			_centerX = _rect.x + dw;
-			_centerY = _rect.y + dh;
+			_centerX = _rect.x + _rect.width * _pivotScaleX;
+			_centerY = _rect.y + _rect.height * _pivotScaleY;
 			var posChanged:Boolean = false;
 			var preValue:Number = _viewPortX;
-			_viewPortX = _centerX -dw / _scale;
+			_viewPortX = _centerX - _rect.width * _pivotScaleX / _scale;
 			if (preValue != _viewPortX)
 			{
 				posChanged = true;
 			}else {
 				preValue = _viewPortY;
 			}
-			_viewPortY = _centerY - dh/ _scale;
+			_viewPortY = _centerY - _rect.height * _pivotScaleY / _scale;
 			if (!posChanged && preValue != _viewPortY)
 			{
 				posChanged = true;
@@ -820,16 +729,10 @@ package laya.map {
 				}
 			}
 			var tPaddingRect:Rectangle = _paddingRect;
-			_mapLogicRect.top = (_viewPortY - tPaddingRect.y) / _gridHeight;
-			_mapLogicRect.bottom = (_viewPortY + _viewPortHeight + tPaddingRect.height + tPaddingRect.y) / _gridHeight;
-			_mapLogicRect.left = (_viewPortX - tPaddingRect.x) / _gridWidth;
-			_mapLogicRect.right = (_viewPortX + _viewPortWidth + tPaddingRect.width + tPaddingRect.x) / _gridWidth;
-			
-			_mapRect.top = 0|_mapLogicRect.top;
-			_mapRect.bottom = 0|_mapLogicRect.bottom;
-			_mapRect.left = 0|_mapLogicRect.left;
-			_mapRect.right = 0|_mapLogicRect.right;
-			
+			_mapRect.top = Math.floor((_viewPortY - tPaddingRect.y) / _gridHeight);
+			_mapRect.bottom = Math.floor((_viewPortY + _viewPortHeight + tPaddingRect.height + tPaddingRect.y) / _gridHeight);
+			_mapRect.left = Math.floor((_viewPortX - tPaddingRect.x) / _gridWidth);
+			_mapRect.right = Math.floor((_viewPortX + _viewPortWidth + tPaddingRect.width + tPaddingRect.x) / _gridWidth);
 			if (_mapRect.top != _mapLastRect.top || _mapRect.bottom != _mapLastRect.bottom || _mapRect.left != _mapLastRect.left || _mapRect.right != _mapLastRect.right)
 			{
 				clipViewPort();
@@ -842,7 +745,13 @@ package laya.map {
 			
 			if (!posChanged) return;
 		
-			updateMapLayersPos();
+			var tMapLayer:MapLayer;
+			var len:int = _renderLayerArray.length;
+			for (var i:int = 0; i < len; i++) {
+				tMapLayer = this._renderLayerArray[i];
+				if (tMapLayer._gridSpriteArray.length > 0)
+				tMapLayer.updateGridPos();
+			}
 		}
 		
 		/**
@@ -967,7 +876,7 @@ package laya.map {
 					var tLayerSprite:Sprite = _layerArray[i];
 					if (tLayerSprite && tTempArray[i]) {
 						tGridSprite = tTempArray[i];
-						if (tGridSprite.visible == false && tGridSprite.drawImageNum > 0) {
+						if (tGridSprite._visible == false && tGridSprite.drawImageNum > 0) {
 							tGridSprite.show();
 						}
 					}
@@ -989,16 +898,23 @@ package laya.map {
 			}
 			
 		}
-		
-		private static var _tempContext:RenderContext;
+		private static var _tempCanvas:*;
 		private function cacheGridsArray(arr:Array):void
 		{
 			var canvas:*;
-			if (!_tempContext)
+			if (!_tempCanvas)
 			{
-				_tempContext = new RenderContext(1, 1, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
+				_tempCanvas=new HTMLCanvas();
+				var tx:Context = _tempCanvas.context;
+				if (!tx)
+				{
+					tx=_tempCanvas.getContext('2d');	//如果是webGL的话，这个会返回WebGLContext2D
+					
+					tx.__tx = 0;
+					tx.__ty = 0;
+				}		
 			}
-			canvas = _tempContext.canvas;
+			canvas = _tempCanvas;
 			canvas.context.asBitmap = false
 
 		
@@ -1010,7 +926,7 @@ package laya.map {
 				tGrid = arr[i];
 				canvas.clear();
 				canvas.size(1, 1);
-				tGrid.render(_tempContext, 0, 0);
+				tGrid.render(canvas.context, 0, 0);
 				tGrid.hide();
 			}
 			canvas.clear();
@@ -1199,8 +1115,6 @@ package laya.map {
 					if (!enableMergeLayer) {
 						if (tGridSprite.drawImageNum > 0) {
 							tLayer.addChild(tGridSprite);
-							tGridSprite.visible = false;
-							tGridSprite.show();
 						}
 						if (_showGridKey) {
 							tGridSprite.graphics.drawRect(0, 0, tGridWidth, tGridHeight, null, tColorStr);
@@ -1210,13 +1124,11 @@ package laya.map {
 						if (tTGridSprite && tTGridSprite.drawImageNum > 0&&tDrawMapLayer)
 						{
 							tDrawMapLayer.addChild(tTGridSprite);
-							tTGridSprite.visible = false;
-							tTGridSprite.show();
 						}
 					}
 					
+					
 				}
-				
 				if (enableMergeLayer&&showGridTextureCount)
 				{
 					if (tTGridSprite)

@@ -1,13 +1,20 @@
 package laya.renders {
+	import laya.Const;
 	import laya.display.Sprite;
-	import laya.display.css.CSSStyle;
-	import laya.display.css.Style;
+	import laya.display.SpriteConst;
+	import laya.display.Stage;
+	import laya.display.css.CacheStyle;
+	import laya.display.css.SpriteStyle;
+	import laya.display.css.TextStyle;
 	import laya.filters.Filter;
 	import laya.maths.Matrix;
+	import laya.maths.Point;
 	import laya.maths.Rectangle;
+	import laya.renders.LayaGLQuickRunner;
+	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
+	import laya.resource.Texture;
 	import laya.utils.Browser;
-	import laya.utils.HTMLChar;
 	import laya.utils.Pool;
 	import laya.utils.RunDriver;
 	import laya.utils.Stat;
@@ -18,29 +25,29 @@ package laya.renders {
 	 */
 	public class RenderSprite {
 		/** @private */
-		public static const IMAGE:int = 0x01;
+		//public static const IMAGE:int = 0x01;
 		/** @private */
-		public static const ALPHA:int = 0x02;
+		//public static const ALPHA:int = 0x02;
 		/** @private */
-		public static const TRANSFORM:int = 0x04;
+		//public static const TRANSFORM:int = 0x04;
 		/** @private */
-		public static const BLEND:int = 0x08;
+		//public static const BLEND:int = 0x08;
 		/** @private */
-		public static const CANVAS:int = 0x10;
+		//public static const CANVAS:int = 0x10;
 		/** @private */
-		public static const FILTERS:int = 0x20;
+		//public static const FILTERS:int = 0x20;
 		/** @private */
-		public static const MASK:int = 0x40;
+		//public static const MASK:int = 0x40;
 		/** @private */
-		public static const CLIP:int = 0x80;
+		//public static const CLIP:int = 0x80;
 		/** @private */
-		public static const STYLE:int = 0x100;
+		//public static const STYLE:int = 0x100;
 		/** @private */
-		public static const GRAPHICS:int = 0x200;
+		//public static const GRAPHICS:int = 0x200;
 		/** @private */
-		public static const CUSTOM:int = 0x400;
+		//public static const CUSTOM:int = 0x400;
 		/** @private */
-		public static const CHILDS:int = 0x800;
+		//public static const CHILDS:int = 0x800;
 		/** @private */
 		public static const INIT:int = 0x11111;
 		/** @private */
@@ -53,10 +60,11 @@ package laya.renders {
 		public var _fun:Function;
 		
 		public static function __init__():void {
+			LayaGLQuickRunner.__init__();
 			var i:int, len:int;
 			var initRender:RenderSprite;
 			initRender = RunDriver.createRenderSprite(INIT, null);
-			len = renders.length = CHILDS * 2;
+			len = renders.length = SpriteConst.CHILDS * 2;
 			for (i = 0; i < len; i++)
 				renders[i] = initRender;
 			
@@ -69,24 +77,25 @@ package laya.renders {
 					renders[n] = o;
 				}
 			}
-			
-			_initSame([IMAGE, GRAPHICS, TRANSFORM, ALPHA], new RenderSprite(IMAGE, null));
-			
-			renders[IMAGE | GRAPHICS] = RunDriver.createRenderSprite(IMAGE | GRAPHICS, null);
-			
-			renders[IMAGE | TRANSFORM | GRAPHICS] = new RenderSprite(IMAGE | TRANSFORM | GRAPHICS, null);
+		
+			//_initSame([SpriteConst.IMAGE, SpriteConst.GRAPHICS, SpriteConst.TRANSFORM, SpriteConst.ALPHA], RunDriver.createRenderSprite(SpriteConst.IMAGE, null));
+			//
+			//renders[SpriteConst.IMAGE | SpriteConst.GRAPHICS] = RunDriver.createRenderSprite(SpriteConst.IMAGE | SpriteConst.GRAPHICS, null);
+			//
+			//renders[SpriteConst.IMAGE | SpriteConst.TRANSFORM | SpriteConst.GRAPHICS] = RunDriver.createRenderSprite(SpriteConst.IMAGE | SpriteConst.TRANSFORM | SpriteConst.GRAPHICS, null);
 		}
 		
-		private static function _initRenderFun(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		private static function _initRenderFun(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			var type:int = sprite._renderType;
 			var r:RenderSprite = renders[type] = _getTypeRender(type);
 			r._fun(sprite, context, x, y);
 		}
 		
 		private static function _getTypeRender(type:int):RenderSprite {
+			if (LayaGLQuickRunner.map[type]) return RunDriver.createRenderSprite(type, null);
 			var rst:RenderSprite = null;
-			var tType:int = CHILDS;
-			while (tType > 1) {
+			var tType:int = SpriteConst.CHILDS;
+			while (tType > 0) {
 				if (tType & type)
 					rst = RunDriver.createRenderSprite(tType, rst);
 				tType = tType >> 1;
@@ -94,58 +103,70 @@ package laya.renders {
 			return rst;
 		}
 		
+
+		
 		public function RenderSprite(type:int, next:RenderSprite) {
+			
+			if (LayaGLQuickRunner.map[type]) {
+				_fun = LayaGLQuickRunner.map[type];
+				_next = NORENDER;
+				return;
+			}
 			_next = next || NORENDER;
 			switch (type) {
 			case 0: 
 				_fun = this._no;
 				return;
-			case IMAGE: 
-				_fun = this._image;
-				return;
-			case ALPHA: 
+			//case SpriteConst.IMAGE: 
+			//_fun = this._image;
+			//return;
+			case SpriteConst.ALPHA: 
 				_fun = this._alpha;
 				return;
-			case TRANSFORM: 
+			case SpriteConst.TRANSFORM: 
 				_fun = this._transform;
 				return;
-			case BLEND: 
+			case SpriteConst.BLEND: 
 				_fun = this._blend;
 				return;
-			case CANVAS: 
+			case SpriteConst.CANVAS: 
 				_fun = this._canvas;
 				return;
-			case MASK: 
+			case SpriteConst.MASK: 
 				_fun = this._mask;
 				return;
-			case CLIP: 
+			case SpriteConst.CLIP: 
 				_fun = this._clip;
 				return;
-			case STYLE: 
+			case SpriteConst.STYLE: 
 				_fun = this._style;
 				return;
-			case GRAPHICS: 
+			case SpriteConst.GRAPHICS: 
 				_fun = this._graphics;
 				return;
-			case CHILDS: 
-				_fun = this._childs;
+			case SpriteConst.CHILDS: 
+				_fun = this._children;
 				return;
-			case CUSTOM: 
+			case SpriteConst.CUSTOM: 
 				_fun = this._custom;
 				return;
-			case IMAGE | GRAPHICS: 
-				_fun = this._image2;
+			case SpriteConst.TEXTURE: 
+				_fun = this._texture;
 				return;
-			case IMAGE | TRANSFORM | GRAPHICS: 
-				_fun = this._image2;
-				return;
-			case FILTERS: 
+			//case SpriteConst.IMAGE | SpriteConst.GRAPHICS: 
+			//_fun = this._image2;
+			//return;
+			//case SpriteConst.IMAGE | SpriteConst.TRANSFORM | SpriteConst.GRAPHICS: 
+			//_fun = this._image2;
+			//return;
+			case SpriteConst.FILTERS: 
 				_fun = Filter._filter;
 				return;
 			case INIT: 
 				_fun = _initRenderFun;
 				return;
 			}
+			
 			onCreate(type);
 		}
 		
@@ -153,87 +174,102 @@ package laya.renders {
 		
 		}
 		
-		public function _style(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			sprite._style.render(sprite, context, x, y);
+		public function _style(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			//现在只有Text会走这里，Html已经不走这里了
+			var style:TextStyle = sprite._style as TextStyle;
+			if (style.render != null) style.render(sprite, context, x, y);
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 		}
 		
-		public function _no(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		public function _no(sprite:Sprite, context:Context, x:Number, y:Number):void {
 		}
 		
-		public function _custom(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		//TODO:coverage
+		public function _custom(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			sprite.customRender(context, x, y);
-			var tf:Object = sprite._style._tf;
-			_next._fun.call(_next, sprite, context, x - tf.translateX, y - tf.translateY);
+			_next._fun.call(_next, sprite, context, x-sprite.pivotX, y-sprite.pivotY);
 		}
 		
-		public function _clip(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		public function _clip(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			var next:RenderSprite = this._next;
 			if (next == NORENDER) return;
 			var r:Rectangle = sprite._style.scrollRect;
-			context.ctx.save();
-			context.ctx.clipRect(x, y, r.width, r.height);
+			context.save();
+			context.clipRect(x, y, r.width, r.height);
 			next._fun.call(next, sprite, context, x - r.x, y - r.y);
-			context.ctx.restore();
+			context.restore();
 		}
 		
-		public function _blend(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var style:Style = sprite._style;
+		//TODO:coverage
+		public function _blend(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			var style:SpriteStyle = sprite._style;
 			if (style.blendMode) {
-				context.ctx.globalCompositeOperation = style.blendMode;
+				context.globalCompositeOperation = style.blendMode;
 			}
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
-			context.ctx.globalCompositeOperation = "source-over";
+			context.globalCompositeOperation = "source-over";
 		}
 		
-		public function _mask(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		//TODO:coverage
+		public function _mask(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 			var mask:Sprite = sprite.mask;
 			if (mask) {
-				context.ctx.globalCompositeOperation = "destination-in";
+				context.globalCompositeOperation = "destination-in";
 				if (mask.numChildren > 0 || !mask.graphics._isOnlyOne()) {
-					mask.cacheAsBitmap = true;
+					mask.cacheAs = "bitmap";
 				}
-				mask.render(context, x-sprite.pivotX, y-sprite.pivotY);
+				mask.render(context, x - sprite._style.pivotX, y - sprite._style.pivotY);
 			}
-			context.ctx.globalCompositeOperation = "source-over";
+			context.globalCompositeOperation = "source-over";
 		}
 		
-		public function _graphics(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var tf:Object = sprite._style._tf;
-			sprite._graphics && sprite._graphics._render(sprite, context, x - tf.translateX, y - tf.translateY);
+		public function _texture(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			var tex:Texture = sprite.texture;
+			if(tex._getSource())
+			context.drawTexture(tex, x-sprite.pivotX+tex.offsetX, y-sprite.pivotY+tex.offsetY, sprite._width || tex.width, sprite._height || tex.height);
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 		}
 		
-		public function _image(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var style:Style = sprite._style;
-			context.ctx.drawTexture2(x, y, style._tf.translateX, style._tf.translateY, sprite.transform, style.alpha, style.blendMode, sprite._graphics._one);
+		public function _graphics(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			sprite._graphics && sprite._graphics._render(sprite, context, x-sprite.pivotX, y-sprite.pivotY);
+			var next:RenderSprite = this._next;
+			next._fun.call(next, sprite, context, x, y);
 		}
 		
-		public function _image2(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var tf:Object = sprite._style._tf;
-			context.ctx.drawTexture2(x, y, tf.translateX, tf.translateY, sprite.transform, 1, null, sprite._graphics._one);
+		//TODO:coverage
+		public function _image(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			var style:SpriteStyle = sprite._style;
+			context.drawTexture2(x, y, style.pivotX, style.pivotY, sprite.transform, sprite._graphics._one);
 		}
 		
-		public function _alpha(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		//TODO:coverage
+		public function _image2(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			var style:SpriteStyle = sprite._style;
+			context.drawTexture2(x, y, style.pivotX, style.pivotY, sprite.transform, sprite._graphics._one);
+		}
+		
+		//TODO:coverage
+		public function _alpha(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var style:Style = sprite._style;
+			var style:SpriteStyle = sprite._style;
 			var alpha:Number;
 			if ((alpha = style.alpha) > 0.01 || sprite._needRepaint()) {
-				var temp:Number = context.ctx.globalAlpha;
-				context.ctx.globalAlpha *= alpha;
+				var temp:Number = context.globalAlpha;
+				context.globalAlpha *= alpha;
 				var next:RenderSprite = this._next;
 				next._fun.call(next, sprite, context, x, y);
-				context.ctx.globalAlpha = temp;
+				context.globalAlpha = temp;
 			}
 		}
 		
-		public function _transform(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		public function _transform(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			var transform:Matrix = sprite.transform, _next:RenderSprite = this._next;
+			var style:SpriteStyle = sprite._style;
 			if (transform && _next != NORENDER) {
 				context.save();
 				context.transform(transform.a, transform.b, transform.c, transform.d, transform.tx + x, transform.ty + y);
@@ -243,36 +279,14 @@ package laya.renders {
 				_next._fun.call(_next, sprite, context, x, y);
 		}
 		
-		
-		private function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			var style:* = sprite._style;
-			var tf:*= style._tf;
-			x = x -tf.translateX + style.paddingLeft;
-			y = y -tf.translateY + style.paddingTop;
-			/*[IF-FLASH]*/if (style.hasOwnProperty("_calculation")) {
-			//[IF-JS]if (style._calculation) {
-				var words:Vector.<HTMLChar> = sprite._getWords();
-				if (words)
-				{
-					
-					var tStyle:CSSStyle = style as CSSStyle;
-					if (tStyle)
-					{
-						if (tStyle.stroke)
-						{
-							context.fillBorderWords(words, x, y, tStyle.font, tStyle.color,tStyle.strokeColor,tStyle.stroke);
-						}else
-						{
-							context.fillWords(words, x, y, tStyle.font, tStyle.color,tStyle.underLine);
-						}
-					}
-					
-				}
-			}
-			
-			var childs:Array = sprite._childs, n:int = childs.length, ele:*;
-			if (sprite.viewport || (sprite.optimizeScrollRect && sprite._style.scrollRect)) {
-				var rect:Rectangle = sprite.viewport || sprite._style.scrollRect;
+		public function _children(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			var style:SpriteStyle = sprite._style;
+			var childs:Array = sprite._children, n:int = childs.length, ele:*;
+			x = x - sprite.pivotX;
+			y = y - sprite.pivotY;
+			var textLastRender:Boolean = sprite._getBit(Const.DRAWCALL_OPTIMIZE) && context.drawCallOptimize(true);
+			if (style.viewport) {
+				var rect:Rectangle = style.viewport;
 				var left:Number = rect.x;
 				var top:Number = rect.y;
 				var right:Number = rect.right;
@@ -280,180 +294,167 @@ package laya.renders {
 				var _x:Number, _y:Number;
 				
 				for (i = 0; i < n; ++i) {
-				/*[IF-FLASH]*/ if ((ele = childs[i] as Sprite).visible && ((_x = ele.x) < right && (_x + ele.width) > left && (_y = ele.y) < bottom && (_y + ele.height) > top)) {
-				//[IF-JS] if ((ele = childs[i] as Sprite).visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
+					if ((ele = childs[i] as Sprite)._visible && ((_x = ele._x) < right && (_x + ele.width) > left && (_y = ele._y) < bottom && (_y + ele.height) > top)) {
 						ele.render(context, x, y);
 					}
 				}
 			} else {
 				for (var i:int = 0; i < n; ++i)
-					(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
-			}			
+					(ele = (childs[i] as Sprite))._visible && ele.render(context, x, y);
+			}
+			textLastRender && context.drawCallOptimize(false);
 		}
 		
-		//public function _childs(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			//if (sprite._childRenderMax)
-			//{
-				//_childs_max(sprite, context, x, y);
-				//return;
-			//}
-			//var childs:Array = sprite._childs, n:int = childs.length, ele:*;
-			//
-			//for (var i:int = 0; i < n; ++i)			
-				//(ele = (childs[i] as Sprite))._style.visible && ele.render(context, x, y);
-		//}
-		
-		public function _canvas(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
+		public function _canvas(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var _cacheCanvas:* = sprite._$P.cacheCanvas;
-			if (!_cacheCanvas) {
-				this._next._fun.call(this._next, sprite, context, x, y);
-				return;
-			}
-			
-			_cacheCanvas.type === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
-			var tx:RenderContext = _cacheCanvas.ctx;
-			
-			if (sprite._needRepaint() || !tx)
-			{
-				_canvas_repaint(sprite,context, x, y);
-			}
-			else
-			{
-				var tRec:Rectangle = _cacheCanvas._cacheRec;
-				context.drawCanvas(tx.canvas, x + tRec.x, y + tRec.y, tRec.width, tRec.height);
-			}
-		}
-		
-		private function _canvas_repaint(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var _cacheCanvas:* = sprite._$P.cacheCanvas;
+			var _cacheStyle:CacheStyle = sprite._cacheStyle;
 			var _next:RenderSprite = this._next;
-			if (!_cacheCanvas) {
-				_next._fun.call(_next, sprite, tx, x, y);
+			
+			if (!_cacheStyle.enableCanvasRender) {
+				_next._fun.call(_next, sprite, context, x, y);
 				return;
 			}
-			var tx:RenderContext = _cacheCanvas.ctx;
-			var _repaint:Boolean = sprite._needRepaint() || (!tx);
-			var canvas:HTMLCanvas;
+			_cacheStyle.cacheAs === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
+			
+			//检查保存的文字是否失效了
+			var cacheNeedRebuild:Boolean = false;
+			var textNeedRestore:Boolean = false;
+			
+			if (Render.isWebGL && _cacheStyle.canvas) {
+				// 检查文字是否被释放了，以及clip是否改变了，需要重新cache了
+				var canv:* = _cacheStyle.canvas;
+				var ctx:* = canv.context;
+				var charRIs:Array =  canv.touches;
+				if ( charRIs ) {
+					for ( var ci:int = 0; ci < charRIs.length; ci++) {
+						if ( charRIs[ci].deleted) {
+							textNeedRestore = true;
+							break;
+						}
+					}
+				}
+				cacheNeedRebuild =  canv.isCacheValid && !canv.isCacheValid();
+			}
+			
+			if (sprite._needRepaint() || (!_cacheStyle.canvas) || textNeedRestore ||cacheNeedRebuild || Laya.stage.isGlobalRepaint()) {
+				if (Render.isWebGL && _cacheStyle.cacheAs === 'normal') {
+					if (__JS__('context._targets') ){// 如果有target说明父节点已经是一个cacheas bitmap了，就不再走cacheas normal的流程了
+						_next._fun.call(_next, sprite, context, x, y);
+						return;	//不再继续
+					}else{
+						_canvas_webgl_normal_repaint(sprite, context);
+					}
+				}else{
+					_canvas_repaint(sprite, context, x,y);
+				}
+			} 
+			/*
+			var src:RenderTexture = window.__scope_src;
+			var out:RenderTexture = window.__scope_out;
+			var spctx:WebGLContext2D = _cacheStyle.canvas.context as WebGLContext2D;
+			if (src && out) {
+				//window.mainctx._drawRenderTexture(out, 500, 300, out.width, out.height, null, 1.0, RenderTexture.defuv);	
+				//window.mainctx._drawRenderTexture(src, 300, 300, src.width, src.height, null, 1.0, RenderTexture.flipyuv);	
+				//window.mainctx._drawRenderTexture(spctx._targets, 300, 600, src.width, src.height, null, 1.0, RenderTexture.flipyuv);	
+			}
+			*/
+			var tRec:Rectangle = _cacheStyle.cacheRect;
+			//Stage._dbgSprite.graphics.drawRect(x, y, 30,30, null, 'red');
+			context.drawCanvas(_cacheStyle.canvas, x + tRec.x, y + tRec.y, tRec.width, tRec.height);
+		}
+		
+		public function _canvas_repaint(sprite:Sprite, context:Context, x:int, y:int):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var _cacheStyle:CacheStyle = sprite._cacheStyle;
+			var _next:RenderSprite = this._next;
+			var tx:Context;
+			var canvas:HTMLCanvas=_cacheStyle.canvas;
 			var left:Number;
 			var top:Number;
 			var tRec:Rectangle;
-			var tCacheType:String = _cacheCanvas.type;
+			var tCacheType:String = _cacheStyle.cacheAs;
 			
-			tCacheType === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
-			if (_repaint) {
-				if (!_cacheCanvas._cacheRec)
-					_cacheCanvas._cacheRec = new Rectangle();
-				var w:Number, h:Number;
-				if (!Render.isWebGL || tCacheType === "bitmap")
-				{
-					tRec = sprite.getSelfBounds();
-					tRec.x = tRec.x - sprite.pivotX;				
-					tRec.y = tRec.y - sprite.pivotY;
-					tRec.x = tRec.x - 16;
-					tRec.y = tRec.y - 16;
-					tRec.width = tRec.width + 32;
-					tRec.height = tRec.height + 32;
-					tRec.x = Math.floor(tRec.x + x) - x;
-					tRec.y = Math.floor(tRec.y + y) - y;
-					tRec.width = Math.floor(tRec.width);
-					tRec.height = Math.floor(tRec.height);
-					_cacheCanvas._cacheRec.copyFrom(tRec);
-				}else
-				{
-					_cacheCanvas._cacheRec.setTo(-sprite.pivotX,-sprite.pivotY,1,1);
-				}
+			var w:Number, h:Number;
+			var scaleX:Number, scaleY:Number;
+			
+			var scaleInfo:Point;
+			scaleInfo = _cacheStyle._calculateCacheRect(sprite, tCacheType, x, y);
+			scaleX = scaleInfo.x;
+			scaleY = scaleInfo.y;
 				
-				tRec = _cacheCanvas._cacheRec;
-				var scaleX:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleX;
-				var scaleY:Number = Render.isWebGL ? 1 : Browser.pixelRatio * Laya.stage.clientScaleY;
-				
-				if (!Render.isWebGL) {//||_cacheCanvas.type === 'bitmap'
-					var chainScaleX:Number = 1;
-					var chainScaleY:Number = 1;
-					var tar:Sprite;
-					tar = sprite;
-					while (tar && tar != Laya.stage) {
-						chainScaleX *= tar.scaleX;
-						chainScaleY *= tar.scaleY;
-						tar = tar.parent as Sprite;
-					}
-					if (Render.isWebGL) {
-						if (chainScaleX < 1) scaleX *= chainScaleX;
-						if (chainScaleY < 1) scaleY *= chainScaleY;
-					} else {
-						if (chainScaleX > 1) scaleX *= chainScaleX;
-						if (chainScaleY > 1) scaleY *= chainScaleY;
-					}
-					
-				}
-				if (sprite.scrollRect)
-				{
-					var scrollRect:Rectangle = sprite.scrollRect;
-					tRec.x -= scrollRect.x;
-					tRec.y -= scrollRect.y;
-				}
-				w = tRec.width * scaleX;
-				h = tRec.height * scaleY;
-				left = tRec.x;
-				top = tRec.y;
-				
-				if (Render.isWebGL && tCacheType === 'bitmap' && (w > 2048 || h > 2048)) {
-					console.warn("cache bitmap size larger than 2048,cache ignored");
-					if (_cacheCanvas.ctx) {
-						Pool.recover("RenderContext", _cacheCanvas.ctx);
-						_cacheCanvas.ctx.canvas.size(0, 0);
-						_cacheCanvas.ctx = null;
-					}
-					_next._fun.call(_next, sprite, context, x, y);
-					return;
-				}
-				if (!tx) {
-				    tx = _cacheCanvas.ctx = Pool.getItem("RenderContext") || new RenderContext(w, h, HTMLCanvas.create(HTMLCanvas.TYPEAUTO));
-				}
-				tx.ctx.sprite = sprite;
-		
-				
-				canvas = tx.canvas;
-				canvas.clear();
-				(canvas.width != w || canvas.height != h) && canvas.size(w, h);
-				if (tCacheType === 'bitmap') canvas.context.asBitmap = true;
-				else if(tCacheType === 'normal')canvas.context.asBitmap = false;
-				
-				var t:*;
-				//TODO:测试webgl下是否有缓存模糊问题
-				if (scaleX != 1 || scaleY != 1) {
-					var ctx:* = RenderContext(tx).ctx;
-					ctx.save();
-					ctx.scale(scaleX, scaleY);
-					if (!Render.isConchWebGL && Render.isConchApp) {
-						t = sprite._$P.cf;
-						t && ctx.setFilterMatrix && ctx.setFilterMatrix(t._mat, t._alpha);
-					}
-					_next._fun.call(_next, sprite, tx, -left, -top);
-					ctx.restore();
-					if (!Render.isConchApp || Render.isConchWebGL) sprite._applyFilters();
-				} else {
-					ctx = RenderContext(tx).ctx;
-					if (!Render.isConchWebGL && Render.isConchApp) {
-						t = sprite._$P.cf;
-						t && ctx.setFilterMatrix && ctx.setFilterMatrix(t._mat, t._alpha);
-					}
-					_next._fun.call(_next, sprite, tx, -left, -top);
-					if (!Render.isConchApp || Render.isConchWebGL) sprite._applyFilters();
-				}
-				
-				if (sprite._$P.staticCache) _cacheCanvas.reCache = false;
-				Stat.canvasReCache++;
-			} else {
-				tRec = _cacheCanvas._cacheRec;
-				left = tRec.x;
-				top = tRec.y;
-				canvas = tx.canvas;
+			//显示对象实际的绘图区域
+			tRec = _cacheStyle.cacheRect;
+			
+			//计算cache画布的大小
+			w = tRec.width * scaleX;
+			h = tRec.height * scaleY;
+			left = tRec.x;
+			top = tRec.y;
+			
+			if (Render.isWebGL && tCacheType === 'bitmap' && (w > 2048 || h > 2048)) {
+				console.warn("cache bitmap size larger than 2048,cache ignored");
+				_cacheStyle.releaseContext();
+				_next._fun.call(_next, sprite, context, x, y);
+				return;
 			}
-			context.drawCanvas(canvas, x + left, y + top, tRec.width, tRec.height);
-			//trace(x + left, y + top,tRec.width,tRec.height);
+			if (!canvas) {
+				_cacheStyle.createContext();
+				canvas = _cacheStyle.canvas;
+			}
+			tx = canvas.context;
+			
+			//WebGL用
+			tx.sprite = sprite;
+			
+			(canvas.width != w || canvas.height != h) && canvas.size(w, h);//asbitmap需要合理的大小，所以size放到前面
+			
+			if (tCacheType === 'bitmap') tx.asBitmap = true;
+			else if (tCacheType === 'normal') tx.asBitmap = false;
+			
+			//清理画布。之前记录的submit会被全部清掉
+			tx.clear();
+			
+			//TODO:测试webgl下是否有缓存模糊
+			if (scaleX != 1 || scaleY != 1) {
+				var ctx:* = tx;
+				ctx.save();
+				ctx.scale(scaleX, scaleY);
+				_next._fun.call(_next, sprite, tx, -left, -top);
+				ctx.restore();
+				sprite._applyFilters();
+			} else {
+				ctx = tx;
+				_next._fun.call(_next, sprite, tx, -left, -top);
+				sprite._applyFilters();
+			}
+			
+			if (_cacheStyle.staticCache) _cacheStyle.reCache = false;
+			Stat.canvasReCache++;
+		}
+		
+		public function _canvas_webgl_normal_repaint(sprite:Sprite, context:Context):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var _cacheStyle:CacheStyle = sprite._cacheStyle;
+			var _next:RenderSprite = this._next;
+			var canvas:HTMLCanvas=_cacheStyle.canvas;
+			
+			var tCacheType:String = _cacheStyle.cacheAs;
+			var scaleInfo:Point = _cacheStyle._calculateCacheRect(sprite, tCacheType, 0, 0);
+			
+			if (!canvas) {
+				canvas = _cacheStyle.canvas = __JS__('new Laya.WebGLCacheAsNormalCanvas(context, sprite)');
+			}
+			var tx:Context = canvas.context;
+			
+			
+			canvas['startRec']();
+			_next._fun.call(_next, sprite, tx, sprite.pivotX, sprite.pivotY);	// 由于后面的渲染会减去pivot，而cacheas normal并不希望这样，只希望创建一个原始的图像。所以在这里补偿。
+			sprite._applyFilters();
+			
+			Stat.canvasReCache++;
+			canvas['endRec']();
+			
+			//context.drawCanvas(canvas, x , y , 1, 1); // 这种情况下宽高没用
 		}
 	}
 }

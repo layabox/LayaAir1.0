@@ -1,5 +1,6 @@
 package laya.d3.graphics {
-	import laya.renders.Render;
+	import laya.layagl.LayaGL;
+	import laya.webgl.BufferStateBase;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.utils.Buffer;
 	
@@ -7,23 +8,10 @@ package laya.d3.graphics {
 	 * <code>IndexBuffer3D</code> 类用于创建索引缓冲。
 	 */
 	public class IndexBuffer3D extends Buffer {
-		
 		/** 8位ubyte无符号索引类型。*/
 		public static const INDEXTYPE_UBYTE:String = "ubyte";
 		/** 16位ushort无符号索引类型。*/
 		public static const INDEXTYPE_USHORT:String = "ushort";
-		
-		/**
-		 * 创建IndexBuffer3D。
-		 * @param	indexType 索引类型。
-		 * @param	indexCount 索引个数。
-		 * @param	bufferUsage IndexBuffer3D用途类型。
-		 * @param	canRead 是否可读。
-		 * @return	    索引缓冲。
-		 */
-		public static var create:Function = function(indexType:String, indexCount:int, bufferUsage:int = WebGLContext.STATIC_DRAW, canRead:Boolean = false):IndexBuffer3D {
-			return new IndexBuffer3D(indexType, indexCount, bufferUsage, canRead);
-		}
 		
 		/** @private */
 		private var _indexType:String;
@@ -73,7 +61,7 @@ package laya.d3.graphics {
 		 * @param	bufferUsage IndexBuffer3D用途类型。
 		 * @param	canRead 是否可读。
 		 */
-		public function IndexBuffer3D(indexType:String, indexCount:int, bufferUsage:int = WebGLContext.STATIC_DRAW, canRead:Boolean = false) {
+		public function IndexBuffer3D(indexType:String, indexCount:int, bufferUsage:int = 0x88E4/*WebGLContext.STATIC_DRAW*/, canRead:Boolean = false) {
 			super();
 			_indexType = indexType;
 			_indexCount = indexCount;
@@ -93,19 +81,55 @@ package laya.d3.graphics {
 			
 			_byteLength = byteLength;
 			
-			_bind();
-			_gl.bufferData(_bufferType, byteLength, _bufferUsage);
+			var curBufSta:BufferStateBase = BufferStateBase._curBindedBufferState;
+			if (curBufSta) {
+				if (curBufSta._bindedIndexBuffer === this) {
+					LayaGL.instance.bufferData(_bufferType, byteLength, _bufferUsage);
+				} else {
+					curBufSta.unBind();//避免影响VAO
+					bind();
+					LayaGL.instance.bufferData(_bufferType, byteLength, _bufferUsage);
+					curBufSta.bind();
+				}
+			} else {
+				bind();
+				LayaGL.instance.bufferData(_bufferType, byteLength, _bufferUsage);
+			}
 			
 			if (canRead) {
 				if (indexType == IndexBuffer3D.INDEXTYPE_USHORT)
 					_buffer = new Uint16Array(indexCount);
 				else if (indexType == IndexBuffer3D.INDEXTYPE_UBYTE)
 					_buffer = new Uint8Array(indexCount);
-				memorySize = byteLength * 2;//可读内存CPU、GPU各占一份
-			} else {
-				memorySize = byteLength;
 			}
+		}
 		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _bindForVAO():void {
+			if (BufferStateBase._curBindedBufferState) {
+				LayaGL.instance.bindBuffer(WebGLContext.ELEMENT_ARRAY_BUFFER, _glBuffer);
+			} else {
+				throw "IndexBuffer3D: must bind current BufferState.";
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function bind():Boolean {
+			if (BufferStateBase._curBindedBufferState) {
+				throw "IndexBuffer3D: must unbind current BufferState.";
+			} else {
+				if (_bindedIndexBuffer !== _glBuffer) {
+					LayaGL.instance.bindBuffer(WebGLContext.ELEMENT_ARRAY_BUFFER, _glBuffer);
+					_bindedIndexBuffer = _glBuffer;
+					return true;
+				} else {
+					return false;
+				}
+			}
 		}
 		
 		/**
@@ -127,8 +151,20 @@ package laya.d3.graphics {
 					data = new Uint8Array(data.buffer, dataStartIndex * byteCount, dataCount);
 			}
 			
-			_bind();
-			_gl.bufferSubData(_bufferType, bufferOffset * byteCount, data);//offset==0情况下，某些特殊设备或情况下直接bufferData速度是否优于bufferSubData
+			var curBufSta:BufferStateBase = BufferStateBase._curBindedBufferState;
+			if (curBufSta) {
+				if (curBufSta._bindedIndexBuffer === this) {
+					LayaGL.instance.bufferSubData(_bufferType, bufferOffset * byteCount, data);//offset==0情况下，某些特殊设备或情况下直接bufferData速度是否优于bufferSubData
+				} else {
+					curBufSta.unBind();//避免影响VAO
+					bind();
+					LayaGL.instance.bufferSubData(_bufferType, bufferOffset * byteCount, data);
+					curBufSta.bind();
+				}
+			} else {
+				bind();
+				LayaGL.instance.bufferSubData(_bufferType, bufferOffset * byteCount, data);
+			}
 			
 			if (_canRead) {
 				if (bufferOffset !== 0 || dataStartIndex !== 0 || dataCount !== 4294967295/*uint.MAX_VALUE*/) {
@@ -157,10 +193,9 @@ package laya.d3.graphics {
 		/**
 		 * @inheritDoc
 		 */
-		override protected function disposeResource():void {
-			super.disposeResource();
+		override public function destroy():void {
+			super.destroy();
 			_buffer = null;
-			memorySize = 0;//还有release没判断
 		}
 	
 	}

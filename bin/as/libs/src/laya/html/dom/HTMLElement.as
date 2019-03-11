@@ -1,176 +1,225 @@
-package laya.html.dom
-{
-	import laya.display.Node;
-	import laya.display.Sprite;
-	import laya.display.css.CSSStyle;
-	import laya.display.Text;
-	import laya.events.Event;
+package laya.html.dom {
+	import laya.display.Graphics;
+	import laya.html.utils.HTMLStyle;
+	import laya.html.utils.ILayout;
 	import laya.html.utils.Layout;
 	import laya.net.URL;
-	import laya.renders.Render;
-	import laya.renders.RenderSprite;
 	import laya.utils.HTMLChar;
+	import laya.utils.Pool;
 	import laya.utils.Utils;
 	
 	/**
 	 * @private
 	 */
-	public class HTMLElement extends Sprite
-	{
+	public class HTMLElement {
+		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		private static var _EMPTYTEXT:Object = /*[STATIC SAFE]*/ {text: null, words: null};
 		
-		private var _text:Object = _EMPTYTEXT;
-		
 		public var URI:URL;
+		public var parent:HTMLElement;
+		public var _style:HTMLStyle;
 		
-		private var _href:String = null;
+		protected var _text:Object;
+		protected var _children:Array;
+		protected var _x:Number;
+		protected var _y:Number;
+		protected var _width:Number;
+		protected var _height:Number;
 		
-		public function HTMLElement()
-		{
-			//_childRenderMax = true;
-			setStyle(new CSSStyle(this));
-			//设置CSS默认属性
-			this._getCSSStyle().valign = "middle";
-			mouseEnabled = true;
-		}
 		/**
-		 * @private
+		 * 格式化指定的地址并返回。
+		 * @param	url 地址。
+		 * @param	base 基础路径，如果没有，则使用basePath。
+		 * @return	格式化处理后的地址。
 		 */
-		public function layaoutCallNative():void
-		{
-			var n:int = 0;
-			if (_childs &&(n= _childs.length) > 0)
-			{
-				for (var i:int = 0; i < n; i++ )
-				{
-					_childs[i].layaoutCallNative && _childs[i].layaoutCallNative();
+		public static function formatURL1(url:String,basePath:String=null):String {
+			if (!url) return "null path";
+			if (!basePath) basePath = URL.basePath;
+			//如果是全路径，直接返回，提高性能
+			if (url.indexOf(":") > 0) return url;
+			//自定义路径格式化
+			if (URL.customFormat != null) url = URL.customFormat(url);			
+			//如果是全路径，直接返回，提高性能
+			if (url.indexOf(":") > 0) return url;
+			
+			var char1:String = url.charAt(0);
+			if (char1 === ".") {
+				return URL._formatRelativePath (basePath + url);
+			} else if (char1 === '~') {
+				return URL.rootPath + url.substring(1);
+			} else if (char1 === "d") {
+				if (url.indexOf("data:image") === 0) return url;
+			} else if (char1 === "/") {
+				return url;
+			}
+			return basePath + url;
+		}
+		
+		public function HTMLElement() {
+			_creates();
+			reset();
+		}
+		
+		protected function _creates():void {
+			_style = HTMLStyle.create();
+		}
+		
+		/**
+		 * 重置
+		 */
+		public function reset():HTMLElement {
+			URI = null;
+			parent = null;
+			_style.reset();
+			_style.ower = this;
+			_style.valign = "middle";
+			if (_text && _text.words) {
+				var words:Array = _text.words;
+				var i:int, len:int;
+				len = words.length;
+				var tChar:HTMLChar;
+				for (i = 0; i < len; i++) {
+					tChar = words[i];
+					if (tChar) tChar.recover();
 				}
 			}
-			var word:Vector.<HTMLChar> = _getWords();
-			word ? HTMLElement.fillWords(this,word,0,0,this.style.font,this.style.color,this.style.underLine) : this.graphics.clear();
-			
+			_text = _EMPTYTEXT;
+			if (_children) _children.length = 0;
+			_x = _y = _width = _height = 0;
+			return this;
 		}
 		
-		public function set id(value:String):void
-		{
+		/**@private */
+		public function _getCSSStyle():HTMLStyle {
+			return _style as HTMLStyle;
+		}
+		
+		/**@private */
+		public function _addChildsToLayout(out:Vector.<ILayout>):Boolean {
+			var words:Vector.<HTMLChar> = _getWords();
+			if (words == null && (!_children || _children.length == 0))
+				return false;
+			if (words) {
+				for (var i:int = 0, n:int = words.length; i < n; i++) {
+					out.push(words[i]);
+				}
+			}
+			if (_children)
+				_children.forEach(function(o:HTMLElement, index:int, array:Array):void {
+					var _style:HTMLStyle = o._style as HTMLStyle;
+					_style._enableLayout && _style._enableLayout() && o._addToLayout(out);
+				});
+			return true;
+		}
+		
+		/**@private */
+		public function _addToLayout(out:Vector.<ILayout>):void {
+			if (!_style) return;
+			var style:HTMLStyle = _style as HTMLStyle;
+			if (style.absolute) return;
+			style.block ? out.push(this) : (_addChildsToLayout(out) && (x = y = 0));
+		}
+		
+		public function set id(value:String):void {
 			HTMLDocument.document.setElementById(value, this);
 		}
 		
-		public function set text(value:String):void
-		{
-			if (_text == _EMPTYTEXT)
-			{
+		public function repaint(recreate:Boolean = false):void {
+			parentRepaint(recreate);
+		}
+		
+		public function parentRepaint(recreate:Boolean = false):void {
+			if (parent) parent.repaint(recreate);
+		}
+		
+		public function set innerTEXT(value:String):void {
+			if (_text === _EMPTYTEXT) {
 				_text = {text: value, words: null};
-			}
-			else
-			{
+			} else {
 				_text.text = value;
 				_text.words && (_text.words.length = 0);
 			}
-			Render.isConchApp && this.layaoutCallNative();
-			_renderType |= RenderSprite.CHILDS;
 			repaint();
-			updateHref();
 		}
 		
-		public function get text():String
-		{
+		public function get innerTEXT():String {
 			return _text.text;
 		}
 		
-		public function set innerTEXT(value:String):void
-		{
-			text = value;
-		}
-		
-		public function get innerTEXT():String
-		{
-			return _text.text;
-		}
-				
-		override public function set parent(value:Node):void
-		{
-			if (value is HTMLElement)
-			{
+		protected function _setParent(value:HTMLElement):void {
+			if (value is HTMLElement) {
 				var p:HTMLElement = value as HTMLElement;
 				URI || (URI = p.URI);
-				style.inherit(p.style);
+				if (style)
+					style.inherit(p.style);
 			}
-			
-			super.parent = value;
 		}
 		
-		public function appendChild(c:HTMLElement):HTMLElement
-		{
+		public function appendChild(c:HTMLElement):HTMLElement {
 			return addChild(c) as HTMLElement;
 		}
 		
-		public function get style():CSSStyle
-		{
-			return _style as CSSStyle;
-		}
-
-		/**
-		 * rtl模式的getWords函數 
-		 */		
-		public function _getWords2():Vector.<HTMLChar>
-		{
-			var txt:String = _text.text;
-			if (!txt || txt.length === 0)
-				return null;
-			var i:int = 0, n:int;
-			var realWords:Array;
-			var drawWords:Array;
-			if (!_text.drawWords)
-			{
-				realWords = txt.split(" ");
-				n = realWords.length-1;
-				
-				drawWords = [];
-				for (i = 0; i < n; i++)
-				{
-					drawWords.push(realWords[i]," ")
-				}
-				if(n>=0)
-				drawWords.push(realWords[n]);
-				_text.drawWords = drawWords;
-			}else
-			{
-				drawWords = _text.drawWords;
-			}
-				
-			var words:Vector.<HTMLChar> = _text.words;
-			if (words && words.length === drawWords.length)
-				return words as Vector.<HTMLChar>;
-			words === null && (_text.words = words = new Vector.<HTMLChar>());
-			words.length = drawWords.length;
-			
-			var size:Object;
-			var style:CSSStyle = this.style;
-			var fontStr:String = style.font;
-
-			for (i= 0, n = drawWords.length; i < n; i++)
-			{
-				size = Utils.measureText(drawWords[i], fontStr);
-				
-				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(drawWords[i], size.width, size.height || style.fontSize, style);
-				if (tHTMLChar.char.length > 1)
-				{
-					tHTMLChar.charNum = tHTMLChar.char as Number;
-				}
-				if (href)
-				{
-					var tSprite:Sprite = new Sprite();
-					addChild(tSprite);
-					tHTMLChar.setSprite(tSprite);
-				}
-			}
-			return words;
+		public function addChild(c:HTMLElement):HTMLElement {
+			if (c.parent) c.parent.removeChild(c);
+			if (!_children) _children = [];
+			_children.push(c);
+			c.parent = this;
+			c._setParent(this);
+			repaint();
+			return c;
 		}
 		
-		override public function _getWords():Vector.<HTMLChar>
-		{
-			if (!Text.CharacterCache) return _getWords2();
+		public function removeChild(c:HTMLElement):HTMLElement {
+			if (!_children) return null;
+			var i:int, len:int;
+			len = _children.length;
+			for (i = 0; i < len; i++) {
+				if (_children[i] == c) {
+					_children.splice(i, 1);
+					return c;
+				}
+			}
+			return null;
+		}
+		
+		public static function getClassName(tar:Object):String {
+			if (tar is Function) return tar.name;
+			return tar["constructor"].name;
+		}
+		
+		/**
+		 * <p>销毁此对象。destroy对象默认会把自己从父节点移除，并且清理自身引用关系，等待js自动垃圾回收机制回收。destroy后不能再使用。</p>
+		 * <p>destroy时会移除自身的事情监听，自身的timer监听，移除子对象及从父节点移除自己。</p>
+		 * @param destroyChild	（可选）是否同时销毁子节点，若值为true,则销毁子节点，否则不销毁子节点。
+		 */
+		public function destroy():void {
+			//销毁子节点
+			if (_children) {
+				destroyChildren();
+				this._children.length = 0;
+			}
+			Pool.recover(getClassName(this), reset());
+		}
+		
+		/**
+		 * 销毁所有子对象，不销毁自己本身。
+		 */
+		public function destroyChildren():void {
+			//销毁子节点
+			if (_children) {
+				for (var i:int = this._children.length - 1; i > -1; i--) {
+					this._children[i].destroy();
+				}
+				_children.length = 0;
+			}
+		}
+		
+		public function get style():HTMLStyle {
+			return _style as HTMLStyle;
+		}
+		
+		public function _getWords():Vector.<HTMLChar> {
+			if (!_text) return null;
 			var txt:String = _text.text;
 			if (!txt || txt.length === 0)
 				return null;
@@ -180,166 +229,200 @@ package laya.html.dom
 				return words as Vector.<HTMLChar>;
 			words === null && (_text.words = words = new Vector.<HTMLChar>());
 			words.length = txt.length;
-			
 			var size:Object;
-			var style:CSSStyle = this.style;
+			var style:HTMLStyle = this.style;
 			var fontStr:String = style.font;
-			
-			var startX:int = 0;
-			for (var i:int = 0, n:int = txt.length; i < n; i++)
-			{
+			for (var i:int = 0, n:int = txt.length; i < n; i++) {
 				size = Utils.measureText(txt.charAt(i), fontStr);
-				var tHTMLChar:HTMLChar = words[i] = new HTMLChar(txt.charAt(i), size.width, size.height||style.fontSize, style);
-				if (href)
-				{
-					var tSprite:Sprite = new Sprite();
-					addChild(tSprite);
-					tHTMLChar.setSprite(tSprite);
-				}
+				words[i] = HTMLChar.create().setData(txt.charAt(i), size.width, size.height || style.fontSize, style);
 			}
 			return words;
 		}
 		
-		public function showLinkSprite():void
-		{
-			var words:Vector.<HTMLChar> = _text.words;
-			if (words)
-			{
-				var tLinkSpriteList:Vector.<Sprite> = new Vector.<Sprite>();
-				var tSprite:Sprite;
-				var tHtmlChar:HTMLChar;
-				for (var i:int = 0; i < words.length; i++)
-				{
-					tHtmlChar = words[i];
-					tSprite = new Sprite();
-					tSprite.graphics.drawRect(0, 0, tHtmlChar.width, tHtmlChar.height,"#ff0000");
-					tSprite.width = tHtmlChar.width;
-					tSprite.height = tHtmlChar.height;
-					addChild(tSprite);
-					tLinkSpriteList.push(tSprite);
-				}
-			}
+		//TODO:coverage
+		public function _isChar():Boolean {
+			return false;
 		}
 		
-		public override function _layoutLater():void
-		{
-			var style:CSSStyle = this.style;
+		public function _layoutLater():void {
+			var style:HTMLStyle = this.style;
 			
-			if ( (style._type & CSSStyle.ADDLAYOUTED)) return;
+			if ((style._type & HTMLStyle.ADDLAYOUTED))
+				return;
 			
-			if ( style.widthed(this) && (_childs.length>0 || _getWords()!=null) && style.block )
-			{
+			if (style.widthed(this) && ((_children && _children.length > 0) || _getWords() != null) && style.block) {
 				Layout.later(this);
-				style._type |= CSSStyle.ADDLAYOUTED;
-			}
-			else
-			{
-				parent && (parent as Sprite)._layoutLater();
+				style._type |= HTMLStyle.ADDLAYOUTED;
+			} else {
+				parent && parent._layoutLater();
 			}
 		}
 		
-		public function set onClick(value:String):void
-		{
-			var fn:Function;
-			Laya._runScript("fn=function(event){" + value+";}");
-			on(Event.CLICK, this, fn);
-		}
-		
-		override public function _setAttributes(name:String, value:String):void
-		{
-			switch (name)
-			{
-				case 'style': 
-					style.cssText(value);
-					return;
-				case 'class': 
-					className = value;
-					return;
-			}
-			super._setAttributes(name, value);
-		}
-		
-		public function set href(url:String):void
-		{
-			_href = url;
-			if (url != null)
-			{
-				_getCSSStyle().underLine = 1;
-				updateHref();
+		public function set x(v:Number):void {
+			if (_x != v) {
+				_x = v;
+				parentRepaint();
 			}
 		}
 		
-		private function updateHref():void
-		{
-			if (_href != null)
-			{
-				var words:Vector.<HTMLChar> = _getWords() as Vector.<HTMLChar>;
-				if (words)
-				{
-					var tHTMLChar:HTMLChar;
-					var tSprite:Sprite;
-					for (var i:int = 0; i < words.length; i++)
-					{
-						tHTMLChar = words[i];
-						tSprite = tHTMLChar.getSprite();
-						if (tSprite)
-						{
-							//tSprite.graphics.drawRect(0, 0, tHTMLChar.width, tHTMLChar.height, null, '#ff0000');
-							//var tHeight:Number = tHTMLChar.height - 1;
-							//var dX:Number = tHTMLChar.style.letterSpacing*0.5;
-							//if (!dX) dX = 0;
-							//tSprite.graphics.drawLine(0-dX, tHeight, tHTMLChar.width+dX, tHeight, tHTMLChar._getCSSStyle().color);
-							tSprite.size(tHTMLChar.width, tHTMLChar.height);
-							tSprite.on(Event.CLICK, this, onLinkHandler);
-						}
-					}
-				}
+		public function get x():Number {
+			return _x;
+		}
+		
+		public function set y(v:Number):void {
+			if (_y != v) {
+				_y = v;
+				parentRepaint();
 			}
 		}
 		
-		private function onLinkHandler(e:Event):void
-		{
-			switch(e.type)
-			{
-				case Event.CLICK:					
-					var target:Sprite = this;
-					while (target){
-						target.event(Event.LINK, [href]);
-						target = target.parent as Sprite;
-					}
-					break;
+		public function get y():Number {
+			return _y;
+		}
+		
+		public function get width():Number {
+			return this._width;
+		}
+		
+		public function set width(value:Number):void {
+			if (this._width !== value) {
+				this._width = value;
+				repaint();
 			}
 		}
 		
-		public function get href():String
-		{
-			return _href;
+		public function get height():Number {
+			return this._height;
+		
 		}
 		
-		public function formatURL(url:String):String
-		{
+		public function set height(value:Number):void {
+			if (this._height !== value) {
+				this._height = value;
+				repaint();
+			}
+		}
+		
+		public function _setAttributes(name:String, value:String):void {
+			switch (name) {
+			case 'style': 
+				style.cssText(value);
+				break;
+			case 'class': 
+				className = value;
+				break;
+			case 'x': 
+				x = parseFloat(value);
+				break;
+			case 'y': 
+				y = parseFloat(value);
+				break;
+			case 'width': 
+				width = parseFloat(value);
+				break;
+			case 'height': 
+				height = parseFloat(value);
+				break;
+			default: 
+				this[name] = value;
+			}
+		}
+		
+		public function set href(url:String):void {
+			if (!_style) return;
+			if (url != _style.href) {
+				_style.href = url;
+				repaint();
+			}
+		}
+		
+		public function get href():String {
+			if (!_style) return null;
+			return _style.href;
+		}
+		
+		public function formatURL(url:String):String {
 			if (!URI) return url;
-			return URL.formatURL(url, URI ? URI.path : null);
+			return formatURL1(url, URI ? URI.path : null);
 		}
 		
-		public function set color(value:String):void
-		{
+		public function set color(value:String):void {
 			style.color = value;
 		}
 		
-		public function set className(value:String):void
-		{
+		public function set className(value:String):void {
 			style.attrs(HTMLDocument.document.styleSheets['.' + value]);
 		}
 		
-		/*** @private */
-		public static function fillWords(ele:HTMLElement, words:Vector.<HTMLChar>, x:Number, y:Number, font:String, color:String,underLine:int):void {
-			ele.graphics.clear();
-			for (var i:int = 0, n:int = words.length; i < n; i++) {
-				var a:* = words[i];
-				ele.graphics.fillText(a.char, a.x + x, a.y + y, font, color, 'left',underLine);
+		public function drawToGraphic(graphic:Graphics, gX:int, gY:int, recList:Array):void {
+			gX += this.x;
+			gY += this.y;
+			var cssStyle:HTMLStyle = this.style;
+			if (cssStyle.paddingLeft) {
+				gX += cssStyle.paddingLeft;
+			}
+			if (cssStyle.paddingTop) {
+				gY += cssStyle.paddingTop;
+			}
+			if (cssStyle.bgColor != null || cssStyle.borderColor) {
+				graphic.drawRect(gX, gY, this.width, this.height, cssStyle.bgColor, cssStyle.borderColor, 1);
+			}
+			
+			renderSelfToGraphic(graphic, gX, gY, recList);
+			var i:int, len:int;
+			var tChild:HTMLElement;
+			if (_children && _children.length > 0) {
+				len = _children.length;
+				for (i = 0; i < len; i++) {
+					tChild = _children[i];
+					if (tChild.drawToGraphic != null)
+						tChild.drawToGraphic(graphic, gX, gY, recList);
+				}
+			}
+		}
+		
+		public function renderSelfToGraphic(graphic:Graphics, gX:int, gY:int, recList:Array):void {
+			var cssStyle:HTMLStyle = this.style;
+			var words:Vector.<HTMLChar> = this._getWords();
+			var i:int, len:int;
+			
+			if (words) {
+				len = words.length;
+				var a:HTMLChar;
+				if (cssStyle) {
+					var font:String = cssStyle.font;
+					var color:String = cssStyle.color;
+					if (cssStyle.stroke) {
+						var stroke:* = cssStyle.stroke;
+						stroke = parseInt(stroke);
+						var strokeColor:String = cssStyle.strokeColor;
+						//for (i = 0; i < len; i++) {
+						//a = words[i];
+						//graphic.strokeText(a.char, a.x + gX, a.y + gY, font, strokeColor, stroke, 'left');
+						//graphic.fillText(a.char, a.x + gX, a.y + gY, font, color, 'left');
+						//}
+						graphic.fillBorderWords(words as Array, gX, gY, font, color, strokeColor, stroke);
+					} else {
+						//for (i = 0; i < len; i++) {
+						//a = words[i];
+						//graphic.fillText(a.char, a.x + gX, a.y + gY, font, color, 'left');
+						//}
+						graphic.fillWords(words as Array, gX, gY, font, color);
+					}
+					if (href) {
+						var lastIndex:int = words.length - 1;
+						var lastWords:HTMLChar = words[lastIndex];
+						var lineY:Number = lastWords.y + lastWords.height;
+						if(cssStyle.textDecoration!="none")
+						graphic.drawLine(words[0].x, lineY, lastWords.x + lastWords.width, lineY, color, 1);
+						var hitRec:HTMLHitRect = HTMLHitRect.create();
+						hitRec.rec.setTo(words[0].x, lastWords.y, lastWords.x + lastWords.width - words[0].x, lastWords.height);
+						hitRec.href = href;
+						recList.push(hitRec);
+					}
+				}
+				
 			}
 		}
 	}
-
 }

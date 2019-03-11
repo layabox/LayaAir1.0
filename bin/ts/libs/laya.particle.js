@@ -2,235 +2,12 @@
 (function(window,document,Laya){
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
-	var BlendMode=laya.webgl.canvas.BlendMode,Event=laya.events.Event,HTMLCanvas=laya.resource.HTMLCanvas;
-	var Handler=laya.utils.Handler,IndexBuffer2D=laya.webgl.utils.IndexBuffer2D,Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil;
-	var Matrix=laya.maths.Matrix,Render=laya.renders.Render,RenderContext=laya.renders.RenderContext,RenderSprite=laya.renders.RenderSprite;
+	var BlendMode=laya.webgl.canvas.BlendMode,Context=laya.resource.Context,DrawParticleCmd=laya.display.cmd.DrawParticleCmd;
+	var Event=laya.events.Event,Graphics=laya.display.Graphics,HTMLCanvas=laya.resource.HTMLCanvas,Handler=laya.utils.Handler;
+	var Loader=laya.net.Loader,MathUtil=laya.maths.MathUtil,Matrix=laya.maths.Matrix,MeshParticle2D=laya.webgl.utils.MeshParticle2D;
+	var Render=laya.renders.Render,RenderSprite=laya.renders.RenderSprite,RenderState2D=laya.webgl.utils.RenderState2D;
 	var Shader=laya.webgl.shader.Shader,Sprite=laya.display.Sprite,Stat=laya.utils.Stat,Texture=laya.resource.Texture;
-	var Utils=laya.utils.Utils,Value2D=laya.webgl.shader.d2.value.Value2D,VertexBuffer2D=laya.webgl.utils.VertexBuffer2D;
-	var WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
-/**
-*<code>EmitterBase</code> 类是粒子发射器类
-*/
-//class laya.particle.emitter.EmitterBase
-var EmitterBase=(function(){
-	function EmitterBase(){
-		/**
-		*积累的帧时间
-		*/
-		this._frameTime=0;
-		/**
-		*粒子发射速率
-		*/
-		this._emissionRate=60;
-		/**
-		*当前剩余发射时间
-		*/
-		this._emissionTime=0;
-		/**
-		*发射粒子最小时间间隔
-		*/
-		this.minEmissionTime=1 / 60;
-		/**@private */
-		this._particleTemplate=null;
-	}
-
-	__class(EmitterBase,'laya.particle.emitter.EmitterBase');
-	var __proto=EmitterBase.prototype;
-	/**
-	*开始发射粒子
-	*@param duration 发射持续的时间(秒)
-	*/
-	__proto.start=function(duration){
-		(duration===void 0)&& (duration=2147483647);
-		if (this._emissionRate !=0)
-			this._emissionTime=duration;
-	}
-
-	/**
-	*停止发射粒子
-	*@param clearParticles 是否清理当前的粒子
-	*/
-	__proto.stop=function(){
-		this._emissionTime=0;
-	}
-
-	/**
-	*清理当前的活跃粒子
-	*@param clearTexture 是否清理贴图数据,若清除贴图数据将无法再播放
-	*/
-	__proto.clear=function(){
-		this._emissionTime=0;
-	}
-
-	/**
-	*发射一个粒子
-	*
-	*/
-	__proto.emit=function(){}
-	/**
-	*时钟前进
-	*@param passedTime 前进时间
-	*
-	*/
-	__proto.advanceTime=function(passedTime){
-		(passedTime===void 0)&& (passedTime=1);
-		this._emissionTime-=passedTime;
-		if (this._emissionTime < 0)return;
-		this._frameTime+=passedTime;
-		if (this._frameTime < this.minEmissionTime)return;
-		while (this._frameTime > this.minEmissionTime){
-			this._frameTime-=this.minEmissionTime;
-			this.emit();
-		}
-	}
-
-	/**
-	*设置粒子粒子模板
-	*@param particleTemplate 粒子模板
-	*
-	*/
-	__getset(0,__proto,'particleTemplate',null,function(particleTemplate){
-		this._particleTemplate=particleTemplate;
-	});
-
-	/**
-	*设置粒子发射速率
-	*@param emissionRate 粒子发射速率 (个/秒)
-	*/
-	/**
-	*获取粒子发射速率
-	*@return 发射速率 粒子发射速率 (个/秒)
-	*/
-	__getset(0,__proto,'emissionRate',function(){
-		return this._emissionRate;
-		},function(_emissionRate){
-		if (_emissionRate <=0)return;
-		this._emissionRate=_emissionRate;
-		(_emissionRate > 0)&& (this.minEmissionTime=1 / _emissionRate);
-	});
-
-	return EmitterBase;
-})()
-
-
-/**
-*@private
-*/
-//class laya.particle.ParticleData
-var ParticleData=(function(){
-	function ParticleData(){
-		this.position=null;
-		this.velocity=null;
-		this.startColor=null;
-		this.endColor=null;
-		this.sizeRotation=null;
-		this.radius=null;
-		this.radian=null;
-		this.durationAddScale=NaN;
-		this.time=NaN;
-	}
-
-	__class(ParticleData,'laya.particle.ParticleData');
-	ParticleData.Create=function(settings,position,velocity,time){
-		var particleData=new ParticleData();
-		particleData.position=position;
-		MathUtil.scaleVector3(velocity,settings.emitterVelocitySensitivity,ParticleData._tempVelocity);
-		var horizontalVelocity=MathUtil.lerp(settings.minHorizontalVelocity,settings.maxHorizontalVelocity,Math.random());
-		var horizontalAngle=Math.random()*Math.PI *2;
-		ParticleData._tempVelocity[0]+=horizontalVelocity *Math.cos(horizontalAngle);
-		ParticleData._tempVelocity[2]+=horizontalVelocity *Math.sin(horizontalAngle);
-		ParticleData._tempVelocity[1]+=MathUtil.lerp(settings.minVerticalVelocity,settings.maxVerticalVelocity,Math.random());
-		particleData.velocity=ParticleData._tempVelocity;
-		particleData.startColor=ParticleData._tempStartColor;
-		particleData.endColor=ParticleData._tempEndColor;
-		var i=0;
-		if (settings.disableColor){
-			for (i=0;i < 4;i++){
-				particleData.startColor[i]=1;
-				particleData.endColor[i]=1;
-			}
-		}
-		else{
-			if (settings.colorComponentInter){
-				for (i=0;i < 4;i++){
-					particleData.startColor[i]=MathUtil.lerp(settings.minStartColor[i],settings.maxStartColor[i],Math.random());
-					particleData.endColor[i]=MathUtil.lerp(settings.minEndColor[i],settings.maxEndColor[i],Math.random());
-				}
-				}else {
-				MathUtil.lerpVector4(settings.minStartColor,settings.maxStartColor,Math.random(),particleData.startColor);
-				MathUtil.lerpVector4(settings.minEndColor,settings.maxEndColor,Math.random(),particleData.endColor);
-			}
-		}
-		particleData.sizeRotation=ParticleData._tempSizeRotation;
-		var sizeRandom=Math.random();
-		particleData.sizeRotation[0]=MathUtil.lerp(settings.minStartSize,settings.maxStartSize,sizeRandom);
-		particleData.sizeRotation[1]=MathUtil.lerp(settings.minEndSize,settings.maxEndSize,sizeRandom);
-		particleData.sizeRotation[2]=MathUtil.lerp(settings.minRotateSpeed,settings.maxRotateSpeed,Math.random());
-		particleData.radius=ParticleData._tempRadius;
-		var radiusRandom=Math.random();
-		particleData.radius[0]=MathUtil.lerp(settings.minStartRadius,settings.maxStartRadius,radiusRandom);
-		particleData.radius[1]=MathUtil.lerp(settings.minEndRadius,settings.maxEndRadius,radiusRandom);
-		particleData.radian=ParticleData._tempRadian;
-		particleData.radian[0]=MathUtil.lerp(settings.minHorizontalStartRadian,settings.maxHorizontalStartRadian,Math.random());
-		particleData.radian[1]=MathUtil.lerp(settings.minVerticalStartRadian,settings.maxVerticalStartRadian,Math.random());
-		var useEndRadian=settings.useEndRadian;
-		particleData.radian[2]=useEndRadian?MathUtil.lerp(settings.minHorizontalEndRadian,settings.maxHorizontalEndRadian,Math.random()):particleData.radian[0];
-		particleData.radian[3]=useEndRadian?MathUtil.lerp(settings.minVerticalEndRadian,settings.maxVerticalEndRadian,Math.random()):particleData.radian[1];
-		particleData.durationAddScale=settings.ageAddScale *Math.random();
-		particleData.time=time;
-		return particleData;
-	}
-
-	__static(ParticleData,
-	['_tempVelocity',function(){return this._tempVelocity=new Float32Array(3);},'_tempStartColor',function(){return this._tempStartColor=new Float32Array(4);},'_tempEndColor',function(){return this._tempEndColor=new Float32Array(4);},'_tempSizeRotation',function(){return this._tempSizeRotation=new Float32Array(3);},'_tempRadius',function(){return this._tempRadius=new Float32Array(2);},'_tempRadian',function(){return this._tempRadian=new Float32Array(4);}
-	]);
-	return ParticleData;
-})()
-
-
-/**
-*@private
-*/
-//class laya.particle.ParticleEmitter
-var ParticleEmitter=(function(){
-	function ParticleEmitter(templet,particlesPerSecond,initialPosition){
-		this._templet=null;
-		this._timeBetweenParticles=NaN;
-		this._previousPosition=null;
-		this._timeLeftOver=0;
-		this._tempVelocity=new Float32Array([0,0,0]);
-		this._tempPosition=new Float32Array([0,0,0]);
-		this._templet=templet;
-		this._timeBetweenParticles=1.0 / particlesPerSecond;
-		this._previousPosition=initialPosition;
-	}
-
-	__class(ParticleEmitter,'laya.particle.ParticleEmitter');
-	var __proto=ParticleEmitter.prototype;
-	__proto.update=function(elapsedTime,newPosition){
-		elapsedTime=elapsedTime / 1000;
-		if (elapsedTime > 0){
-			MathUtil.subtractVector3(newPosition,this._previousPosition,this._tempVelocity);
-			MathUtil.scaleVector3(this._tempVelocity,1 / elapsedTime,this._tempVelocity);
-			var timeToSpend=this._timeLeftOver+elapsedTime;
-			var currentTime=-this._timeLeftOver;
-			while (timeToSpend > this._timeBetweenParticles){
-				currentTime+=this._timeBetweenParticles;
-				timeToSpend-=this._timeBetweenParticles;
-				MathUtil.lerpVector3(this._previousPosition,newPosition,currentTime / elapsedTime,this._tempPosition);
-				this._templet.addParticleArray(this._tempPosition,this._tempVelocity);
-			}
-			this._timeLeftOver=timeToSpend;
-		}
-		this._previousPosition[0]=newPosition[0];
-		this._previousPosition[1]=newPosition[1];
-		this._previousPosition[2]=newPosition[2];
-	}
-
-	return ParticleEmitter;
-})()
-
-
+	var Utils=laya.utils.Utils,Value2D=laya.webgl.shader.d2.value.Value2D,WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
 /**
 *<code>ParticleSettings</code> 类是粒子配置数据类
 */
@@ -241,7 +18,7 @@ var ParticleSetting=(function(){
 		this.textureName=null;
 		/**贴图个数,默认为1可不设置*/
 		this.textureCount=1;
-		/**最大同屏粒子个数，最大饱和粒子数为maxPartices-1。注意:WebGL模式下释放粒子时间为最大声明周期，可能会出现释放延迟,实际看到的同屏粒子数小于该数值，如连续喷发出现中断，请调大该数值。*/
+		/**由于循环队列判断算法，最大饱和粒子数为maxPartices-1*/
 		this.maxPartices=100;
 		/**粒子持续时间(单位:秒）*/
 		this.duration=1;
@@ -347,12 +124,93 @@ var ParticleSetting=(function(){
 				setting[key]=ParticleSetting._defaultSetting[key];
 			}
 		}
+		setting.endVelocity=+setting.endVelocity;
+		setting.gravity[0]=+setting.gravity[0];
+		setting.gravity[1]=+setting.gravity[1];
+		setting.gravity[2]=+setting.gravity[2];
 	}
 
 	__static(ParticleSetting,
 	['_defaultSetting',function(){return this._defaultSetting=new ParticleSetting();}
 	]);
 	return ParticleSetting;
+})()
+
+
+/**
+*@private
+*/
+//class laya.particle.ParticleData
+var ParticleData=(function(){
+	function ParticleData(){
+		this.position=null;
+		this.velocity=null;
+		this.startColor=null;
+		this.endColor=null;
+		this.sizeRotation=null;
+		this.radius=null;
+		this.radian=null;
+		this.durationAddScale=NaN;
+		this.time=NaN;
+	}
+
+	__class(ParticleData,'laya.particle.ParticleData');
+	ParticleData.Create=function(settings,position,velocity,time){
+		var particleData=new ParticleData();
+		particleData.position=position;
+		MathUtil.scaleVector3(velocity,settings.emitterVelocitySensitivity,ParticleData._tempVelocity);
+		var horizontalVelocity=MathUtil.lerp(settings.minHorizontalVelocity,settings.maxHorizontalVelocity,Math.random());
+		var horizontalAngle=Math.random()*Math.PI *2;
+		ParticleData._tempVelocity[0]+=horizontalVelocity *Math.cos(horizontalAngle);
+		ParticleData._tempVelocity[2]+=horizontalVelocity *Math.sin(horizontalAngle);
+		ParticleData._tempVelocity[1]+=MathUtil.lerp(settings.minVerticalVelocity,settings.maxVerticalVelocity,Math.random());
+		particleData.velocity=ParticleData._tempVelocity;
+		particleData.startColor=ParticleData._tempStartColor;
+		particleData.endColor=ParticleData._tempEndColor;
+		var i=0;
+		if (settings.disableColor){
+			for (i=0;i < 3;i++){
+				particleData.startColor[i]=1;
+				particleData.endColor[i]=1;
+			}
+			particleData.startColor[i]=MathUtil.lerp(settings.minStartColor[i],settings.maxStartColor[i],Math.random());
+			particleData.endColor[i]=MathUtil.lerp(settings.minEndColor[i],settings.maxEndColor[i],Math.random());
+		}
+		else{
+			if (settings.colorComponentInter){
+				for (i=0;i < 4;i++){
+					particleData.startColor[i]=MathUtil.lerp(settings.minStartColor[i],settings.maxStartColor[i],Math.random());
+					particleData.endColor[i]=MathUtil.lerp(settings.minEndColor[i],settings.maxEndColor[i],Math.random());
+				}
+				}else {
+				MathUtil.lerpVector4(settings.minStartColor,settings.maxStartColor,Math.random(),particleData.startColor);
+				MathUtil.lerpVector4(settings.minEndColor,settings.maxEndColor,Math.random(),particleData.endColor);
+			}
+		}
+		particleData.sizeRotation=ParticleData._tempSizeRotation;
+		var sizeRandom=Math.random();
+		particleData.sizeRotation[0]=MathUtil.lerp(settings.minStartSize,settings.maxStartSize,sizeRandom);
+		particleData.sizeRotation[1]=MathUtil.lerp(settings.minEndSize,settings.maxEndSize,sizeRandom);
+		particleData.sizeRotation[2]=MathUtil.lerp(settings.minRotateSpeed,settings.maxRotateSpeed,Math.random());
+		particleData.radius=ParticleData._tempRadius;
+		var radiusRandom=Math.random();
+		particleData.radius[0]=MathUtil.lerp(settings.minStartRadius,settings.maxStartRadius,radiusRandom);
+		particleData.radius[1]=MathUtil.lerp(settings.minEndRadius,settings.maxEndRadius,radiusRandom);
+		particleData.radian=ParticleData._tempRadian;
+		particleData.radian[0]=MathUtil.lerp(settings.minHorizontalStartRadian,settings.maxHorizontalStartRadian,Math.random());
+		particleData.radian[1]=MathUtil.lerp(settings.minVerticalStartRadian,settings.maxVerticalStartRadian,Math.random());
+		var useEndRadian=settings.useEndRadian;
+		particleData.radian[2]=useEndRadian?MathUtil.lerp(settings.minHorizontalEndRadian,settings.maxHorizontalEndRadian,Math.random()):particleData.radian[0];
+		particleData.radian[3]=useEndRadian?MathUtil.lerp(settings.minVerticalEndRadian,settings.maxVerticalEndRadian,Math.random()):particleData.radian[1];
+		particleData.durationAddScale=settings.ageAddScale *Math.random();
+		particleData.time=time;
+		return particleData;
+	}
+
+	__static(ParticleData,
+	['_tempVelocity',function(){return this._tempVelocity=new Float32Array(3);},'_tempStartColor',function(){return this._tempStartColor=new Float32Array(4);},'_tempEndColor',function(){return this._tempEndColor=new Float32Array(4);},'_tempSizeRotation',function(){return this._tempSizeRotation=new Float32Array(3);},'_tempRadius',function(){return this._tempRadius=new Float32Array(2);},'_tempRadian',function(){return this._tempRadian=new Float32Array(4);}
+	]);
+	return ParticleData;
 })()
 
 
@@ -384,6 +242,228 @@ var ParticleTemplateBase=(function(){
 	*/
 	__proto.addParticleArray=function(position,velocity){}
 	return ParticleTemplateBase;
+})()
+
+
+//class laya.particle.particleUtils.PicTool
+var PicTool=(function(){
+	function PicTool(){}
+	__class(PicTool,'laya.particle.particleUtils.PicTool');
+	PicTool.getCanvasPic=function(img,color){
+		img=img.bitmap;
+		var canvas=new HTMLCanvas();
+		var ctx=canvas.getContext('2d');
+		canvas.size(img.width,img.height);
+		var red=(color >> 16 & 0xFF);
+		var green=(color >> 8 & 0xFF);
+		var blue=(color & 0xFF);
+		if(Render.isConchApp){
+			ctx.setFilter(red/255,green/255,blue/255,0);
+		}
+		ctx.drawImage(img.source||img._source,0,0);
+		if (!Render.isConchApp){
+			var imgdata=ctx.getImageData(0,0,canvas.width,canvas.height);
+			var data=imgdata.data;
+			for (var i=0,n=data.length;i < n;i+=4){
+				if (data[i+3]==0)continue ;
+				data[i]=red;
+				data[i+1]=green;
+				data[i+2]=blue;
+			}
+			ctx.putImageData(imgdata,0,0);
+		}
+		return canvas;
+	}
+
+	PicTool.getRGBPic=function(img){
+		var rst;
+		rst=[new Texture(PicTool.getCanvasPic(img,0xFF0000)),new Texture(PicTool.getCanvasPic(img,0x00FF00)),new Texture(PicTool.getCanvasPic(img,0x0000FF))];
+		return rst;
+	}
+
+	return PicTool;
+})()
+
+
+/**
+*<code>EmitterBase</code> 类是粒子发射器类
+*/
+//class laya.particle.emitter.EmitterBase
+var EmitterBase=(function(){
+	function EmitterBase(){
+		/**
+		*积累的帧时间
+		*/
+		this._frameTime=0;
+		/**
+		*粒子发射速率
+		*/
+		this._emissionRate=60;
+		/**
+		*当前剩余发射时间
+		*/
+		this._emissionTime=0;
+		/**
+		*发射粒子最小时间间隔
+		*/
+		this.minEmissionTime=1 / 60;
+		/**@private */
+		this._particleTemplate=null;
+	}
+
+	__class(EmitterBase,'laya.particle.emitter.EmitterBase');
+	var __proto=EmitterBase.prototype;
+	/**
+	*开始发射粒子
+	*@param duration 发射持续的时间(秒)
+	*/
+	__proto.start=function(duration){
+		(duration===void 0)&& (duration=Number.MAX_VALUE);
+		if (this._emissionRate !=0)
+			this._emissionTime=duration;
+	}
+
+	/**
+	*停止发射粒子
+	*@param clearParticles 是否清理当前的粒子
+	*/
+	__proto.stop=function(){
+		this._emissionTime=0;
+	}
+
+	/**
+	*清理当前的活跃粒子
+	*@param clearTexture 是否清理贴图数据,若清除贴图数据将无法再播放
+	*/
+	__proto.clear=function(){
+		this._emissionTime=0;
+	}
+
+	/**
+	*发射一个粒子
+	*
+	*/
+	__proto.emit=function(){}
+	/**
+	*时钟前进
+	*@param passedTime 前进时间
+	*
+	*/
+	__proto.advanceTime=function(passedTime){
+		(passedTime===void 0)&& (passedTime=1);
+		this._emissionTime-=passedTime;
+		if (this._emissionTime < 0)return;
+		this._frameTime+=passedTime;
+		if (this._frameTime < this.minEmissionTime)return;
+		while (this._frameTime > this.minEmissionTime){
+			this._frameTime-=this.minEmissionTime;
+			this.emit();
+		}
+	}
+
+	/**
+	*设置粒子粒子模板
+	*@param particleTemplate 粒子模板
+	*
+	*/
+	__getset(0,__proto,'particleTemplate',null,function(particleTemplate){
+		this._particleTemplate=particleTemplate;
+	});
+
+	/**
+	*设置粒子发射速率
+	*@param emissionRate 粒子发射速率 (个/秒)
+	*/
+	/**
+	*获取粒子发射速率
+	*@return 发射速率 粒子发射速率 (个/秒)
+	*/
+	__getset(0,__proto,'emissionRate',function(){
+		return this._emissionRate;
+		},function(_emissionRate){
+		if (_emissionRate <=0)return;
+		this._emissionRate=_emissionRate;
+		(_emissionRate > 0)&& (this.minEmissionTime=1 / _emissionRate);
+	});
+
+	return EmitterBase;
+})()
+
+
+/**
+*
+*@private
+*
+*@created 2015-8-25 下午3:41:07
+*/
+//class laya.particle.particleUtils.CMDParticle
+var CMDParticle=(function(){
+	function CMDParticle(){
+		/**
+		*最大帧
+		*/
+		this.maxIndex=0;
+		/**
+		*帧命令数组
+		*/
+		this.cmds=null;
+		/**
+		*粒子id
+		*/
+		this.id=0;
+	}
+
+	__class(CMDParticle,'laya.particle.particleUtils.CMDParticle');
+	var __proto=CMDParticle.prototype;
+	__proto.setCmds=function(cmds){
+		this.cmds=cmds;
+		this.maxIndex=cmds.length-1;
+	}
+
+	return CMDParticle;
+})()
+
+
+/**
+*@private
+*/
+//class laya.particle.ParticleEmitter
+var ParticleEmitter=(function(){
+	function ParticleEmitter(templet,particlesPerSecond,initialPosition){
+		this._templet=null;
+		this._timeBetweenParticles=NaN;
+		this._previousPosition=null;
+		this._timeLeftOver=0;
+		this._tempVelocity=new Float32Array([0,0,0]);
+		this._tempPosition=new Float32Array([0,0,0]);
+		this._templet=templet;
+		this._timeBetweenParticles=1.0 / particlesPerSecond;
+		this._previousPosition=initialPosition;
+	}
+
+	__class(ParticleEmitter,'laya.particle.ParticleEmitter');
+	var __proto=ParticleEmitter.prototype;
+	__proto.update=function(elapsedTime,newPosition){
+		elapsedTime=elapsedTime / 1000;
+		if (elapsedTime > 0){
+			MathUtil.subtractVector3(newPosition,this._previousPosition,this._tempVelocity);
+			MathUtil.scaleVector3(this._tempVelocity,1 / elapsedTime,this._tempVelocity);
+			var timeToSpend=this._timeLeftOver+elapsedTime;
+			var currentTime=-this._timeLeftOver;
+			while (timeToSpend > this._timeBetweenParticles){
+				currentTime+=this._timeBetweenParticles;
+				timeToSpend-=this._timeBetweenParticles;
+				MathUtil.lerpVector3(this._previousPosition,newPosition,currentTime / elapsedTime,this._tempPosition);
+				this._templet.addParticleArray(this._tempPosition,this._tempVelocity);
+			}
+			this._timeLeftOver=timeToSpend;
+		}
+		this._previousPosition[0]=newPosition[0];
+		this._previousPosition[1]=newPosition[1];
+		this._previousPosition[2]=newPosition[2];
+	}
+
+	return ParticleEmitter;
 })()
 
 
@@ -487,77 +567,51 @@ var CanvasShader=(function(){
 
 
 /**
-*
 *@private
-*
-*@created 2015-8-25 下午3:41:07
 */
-//class laya.particle.particleUtils.CMDParticle
-var CMDParticle=(function(){
-	function CMDParticle(){
-		/**
-		*最大帧
+//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
+var ParticleShaderValue=(function(_super){
+	function ParticleShaderValue(){
+		/*
+		public var a_CornerTextureCoordinate:Array=[4,WebGLContext.FLOAT,false,116,0];
+		public var a_Position:Array=[3,WebGLContext.FLOAT,false,116,16];
+		public var a_Velocity:Array=[3,WebGLContext.FLOAT,false,116,28];
+		public var a_StartColor:Array=[4,WebGLContext.FLOAT,false,116,40];
+		public var a_EndColor:Array=[4,WebGLContext.FLOAT,false,116,56];
+		public var a_SizeRotation:Array=[3,WebGLContext.FLOAT,false,116,72];
+		public var a_Radius:Array=[2,WebGLContext.FLOAT,false,116,84];
+		public var a_Radian:Array=[4,WebGLContext.FLOAT,false,116,92];
+		public var a_AgeAddScale:Array=[1,WebGLContext.FLOAT,false,116,108];
+		public var a_Time:Array=[1,WebGLContext.FLOAT,false,116,112];
 		*/
-		this.maxIndex=0;
-		/**
-		*帧命令数组
-		*/
-		this.cmds=null;
-		/**
-		*粒子id
-		*/
-		this.id=0;
+		this.u_CurrentTime=NaN;
+		this.u_Duration=NaN;
+		this.u_Gravity=null;
+		//v3
+		this.u_EndVelocity=NaN;
+		this.u_texture=null;
+		ParticleShaderValue.__super.call(this,0,0);
 	}
 
-	__class(CMDParticle,'laya.particle.particleUtils.CMDParticle');
-	var __proto=CMDParticle.prototype;
-	__proto.setCmds=function(cmds){
-		this.cmds=cmds;
-		this.maxIndex=cmds.length-1;
+	__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
+	var __proto=ParticleShaderValue.prototype;
+	/*�ŵ� ParticleShader ����
+	this._attribLocation=['a_CornerTextureCoordinate',0,'a_Position',1,'a_Velocity',2,'a_StartColor',3,
+	'a_EndColor',4,'a_SizeRotation',5,'a_Radius',6,'a_Radian',7,'a_AgeAddScale',8,'a_Time',9];
+	*/
+	__proto.upload=function(){
+		var size=this.size;
+		size[0]=RenderState2D.width;
+		size[1]=RenderState2D.height;
+		this.alpha=this.ALPHA *RenderState2D.worldAlpha;
+		ParticleShaderValue.pShader.upload(this);
 	}
 
-	return CMDParticle;
-})()
-
-
-//class laya.particle.particleUtils.PicTool
-var PicTool=(function(){
-	function PicTool(){}
-	__class(PicTool,'laya.particle.particleUtils.PicTool');
-	PicTool.getCanvasPic=function(img,color){
-		img=img.bitmap;
-		var canvas=new HTMLCanvas("2D");
-		var ctx=canvas.getContext('2d');
-		canvas.size(img.width,img.height);
-		var red=(color >> 16 & 0xFF);
-		var green=(color >> 8 & 0xFF);
-		var blue=(color & 0xFF);
-		if(Render.isConchApp){
-			ctx.setFilter(red/255,green/255,blue/255,0);
-		}
-		ctx.drawImage(img.source,0,0);
-		if (!Render.isConchApp){
-			var imgdata=ctx.getImageData(0,0,canvas.width,canvas.height);
-			var data=imgdata.data;
-			for (var i=0,n=data.length;i < n;i+=4){
-				if (data[i+3]==0)continue ;
-				data[i] *=red/255;
-				data[i+1] *=green/255;
-				data[i+2] *=blue/255;
-			}
-			ctx.putImageData(imgdata,0,0);
-		}
-		return canvas;
-	}
-
-	PicTool.getRGBPic=function(img){
-		var rst;
-		rst=[new Texture(PicTool.getCanvasPic(img,0xFF0000)),new Texture(PicTool.getCanvasPic(img,0x00FF00)),new Texture(PicTool.getCanvasPic(img,0x0000FF))];
-		return rst;
-	}
-
-	return PicTool;
-})()
+	__static(ParticleShaderValue,
+	['pShader',function(){return this.pShader=new ParticleShader();}
+	]);
+	return ParticleShaderValue;
+})(Value2D)
 
 
 /**
@@ -642,8 +696,9 @@ var Emitter2D=(function(_super){
 var ParticleTemplateWebGL=(function(_super){
 	function ParticleTemplateWebGL(parSetting){
 		this._vertices=null;
-		this._vertexBuffer=null;
-		this._indexBuffer=null;
+		//protected var _indexBuffer:Buffer;
+		this._mesh=null;
+		this._conchMesh=null;
 		this._floatCountPerVertex=29;
 		//0~3为CornerTextureCoordinate,4~6为Position,7~9Velocity,10到13为StartColor,14到17为EndColor,18到20位SizeRotation，21到22位Radius,23到26位Radian，27为DurationAddScaleShaderValue,28为Time
 		this._firstActiveElement=0;
@@ -658,9 +713,22 @@ var ParticleTemplateWebGL=(function(_super){
 
 	__class(ParticleTemplateWebGL,'laya.particle.ParticleTemplateWebGL',_super);
 	var __proto=ParticleTemplateWebGL.prototype;
+	__proto.reUse=function(context,pos){
+		return 0;
+	}
+
 	__proto.initialize=function(){
-		this._vertices=new Float32Array(this.settings.maxPartices *this._floatCountPerVertex *4);
-		var particleOffset=0;
+		var floatStride=0;
+		if (Render.isConchApp){
+			this._vertices=this._conchMesh._float32Data;
+			floatStride=MeshParticle2D.const_stride / 4;
+		}
+		else{
+			this._vertices=this._mesh._vb.getFloat32Array();
+			floatStride=this._mesh._stride / 4;
+		};
+		var bufi=0;
+		var bufStart=0;
 		for (var i=0;i < this.settings.maxPartices;i++){
 			var random=Math.random();
 			var cornerYSegement=this.settings.textureCount ? 1.0 / this.settings.textureCount :1.0;
@@ -669,27 +737,29 @@ var ParticleTemplateWebGL=(function(_super){
 				if (random < cornerY+cornerYSegement)
 					break ;
 			}
-			particleOffset=i *this._floatCountPerVertex *4;
-			this._vertices[particleOffset+this._floatCountPerVertex *0+0]=-1;
-			this._vertices[particleOffset+this._floatCountPerVertex *0+1]=-1;
-			this._vertices[particleOffset+this._floatCountPerVertex *0+2]=0;
-			this._vertices[particleOffset+this._floatCountPerVertex *0+3]=cornerY;
-			this._vertices[particleOffset+this._floatCountPerVertex *1+0]=1;
-			this._vertices[particleOffset+this._floatCountPerVertex *1+1]=-1;
-			this._vertices[particleOffset+this._floatCountPerVertex *1+2]=1;
-			this._vertices[particleOffset+this._floatCountPerVertex *1+3]=cornerY;
-			this._vertices[particleOffset+this._floatCountPerVertex *2+0]=1;
-			this._vertices[particleOffset+this._floatCountPerVertex *2+1]=1;
-			this._vertices[particleOffset+this._floatCountPerVertex *2+2]=1;
-			this._vertices[particleOffset+this._floatCountPerVertex *2+3]=cornerY+cornerYSegement;
-			this._vertices[particleOffset+this._floatCountPerVertex *3+0]=-1;
-			this._vertices[particleOffset+this._floatCountPerVertex *3+1]=1;
-			this._vertices[particleOffset+this._floatCountPerVertex *3+2]=0;
-			this._vertices[particleOffset+this._floatCountPerVertex *3+3]=cornerY+cornerYSegement;
+			this._vertices[bufi++]=-1;
+			this._vertices[bufi++]=-1;
+			this._vertices[bufi++]=0;
+			this._vertices[bufi++]=cornerY;
+			bufi=(bufStart+=floatStride);
+			this._vertices[bufi++]=1;
+			this._vertices[bufi++]=-1;
+			this._vertices[bufi++]=1;
+			this._vertices[bufi++]=cornerY;
+			bufi=bufStart+=floatStride;
+			this._vertices[bufi++]=1;
+			this._vertices[bufi++]=1;
+			this._vertices[bufi++]=1;
+			this._vertices[bufi++]=cornerY+cornerYSegement;
+			bufi=bufStart+=floatStride;
+			this._vertices[bufi++]=-1;
+			this._vertices[bufi++]=1;
+			this._vertices[bufi++]=0;
+			this._vertices[bufi++]=cornerY+cornerYSegement;
+			bufi=bufStart+=floatStride;
 		}
 	}
 
-	__proto.loadContent=function(){}
 	__proto.update=function(elapsedTime){
 		this._currentTime+=elapsedTime / 1000;
 		this.retireActiveParticles();
@@ -729,6 +799,7 @@ var ParticleTemplateWebGL=(function(_super){
 	}
 
 	__proto.addNewParticlesToVertexBuffer=function(){}
+	//由于循环队列判断算法，当下一个freeParticle等于retiredParticle时不添加例子，意味循环队列中永远有一个空位。（由于此判断算法快速、简单，所以放弃了使循环队列饱和的复杂算法（需判断freeParticle在retiredParticle前、后两种情况并不同处理））
 	__proto.addParticleArray=function(position,velocity){
 		var nextFreeParticle=this._firstFreeElement+1;
 		if (nextFreeParticle >=this.settings.maxPartices)
@@ -826,7 +897,7 @@ var ParticleTemplateCanvas=(function(_super){
 		this.settings=particleSetting;
 		this._maxNumParticles=particleSetting.maxPartices;
 		this.texture=new Texture();
-		this.texture.on(/*laya.events.Event.LOADED*/"loaded",this,this._textureLoaded);
+		this.texture.on(/*laya.events.Event.READY*/"ready",this,this._textureLoaded);
 		this.texture.load(particleSetting.textureName);
 	}
 
@@ -957,17 +1028,17 @@ var ParticleTemplateCanvas=(function(_super){
 		var iList=this.iList;
 		var preAlpha=NaN;
 		context.translate(x,y);
-		preAlpha=context.ctx.globalAlpha;
+		preAlpha=context.globalAlpha;
 		for(i=0;i<len;i++){
 			tcmd=particleList[i];
 			tI=iList[tcmd.id];
 			tParam=tcmd.cmds[tI];
 			if (!tParam)continue ;
 			if ((tAlpha=tParam[1])<=0.01)continue ;
-			context.setAlpha(preAlpha*tAlpha);
-			context.drawTextureWithTransform(this.texture,px,py,pw,ph,tParam[2],1);
+			context.globalAlpha=preAlpha*tAlpha;
+			context.drawTextureWithTransform(this.texture,px,py,pw,ph,tParam[2],0,0,1,null);
 		}
-		context.setAlpha(preAlpha);
+		context.globalAlpha=preAlpha;
 		context.translate(-x,-y);
 	}
 
@@ -985,9 +1056,9 @@ var ParticleTemplateCanvas=(function(_super){
 		var preAlpha=NaN;
 		var preB;
 		context.translate(x,y);
-		preAlpha=context.ctx.globalAlpha;
-		preB=context.ctx.globalCompositeOperation;
-		context.blendMode("lighter");
+		preAlpha=context.globalAlpha;
+		preB=context.globalCompositeOperation;
+		context.globalCompositeOperation="lighter";
 		for(i=0;i<len;i++){
 			tcmd=particleList[i];
 			tI=iList[tcmd.id];
@@ -995,24 +1066,24 @@ var ParticleTemplateCanvas=(function(_super){
 			if (!tParam)continue ;
 			if ((tAlpha=tParam[1])<=0.01)continue ;
 			context.save();
-			context.transformByMatrix(tParam[2]);
+			context.transformByMatrix(tParam[2],0,0);
 			if(tParam[3]>0.01){
-				context.setAlpha(preAlpha*tParam[3]);
+				context.globalAlpha=preAlpha *tParam[3];
 				context.drawTexture(textureList[0],px,py,pw,ph);
 			}
 			if(tParam[4]>0.01){
-				context.setAlpha(preAlpha*tParam[4]);
+				context.globalAlpha=preAlpha *tParam[4];
 				context.drawTexture(textureList[1],px,py,pw,ph);
 			}
 			if(tParam[5]>0.01){
-				context.setAlpha(preAlpha*tParam[5]);
+				context.globalAlpha=preAlpha *tParam[5];
 				context.drawTexture(textureList[2],px,py,pw,ph);
 			}
 			context.restore();
 		}
-		context.setAlpha(preAlpha);
+		context.globalAlpha=preAlpha;
 		context.translate(-x,-y);
-		context.blendMode(preB);
+		context.globalCompositeOperation=preB;
 	}
 
 	ParticleTemplateCanvas.changeTexture=function(texture,rst,settings){
@@ -1036,32 +1107,35 @@ var ParticleTemplateCanvas=(function(_super){
 //class laya.particle.ParticleTemplate2D extends laya.particle.ParticleTemplateWebGL
 var ParticleTemplate2D=(function(_super){
 	function ParticleTemplate2D(parSetting){
-		this._vertexBuffer2D=null;
-		this._indexBuffer2D=null;
 		this.x=0;
 		this.y=0;
 		this._blendFn=null;
 		this._startTime=0;
+		this._key={};
 		this.sv=new ParticleShaderValue();
 		ParticleTemplate2D.__super.call(this,parSetting);
 		var _this=this;
 		Laya.loader.load(this.settings.textureName,Handler.create(null,function(texture){
-			(texture.bitmap).enableMerageInAtlas=false;
 			_this.texture=texture;
 		}));
 		this.sv.u_Duration=this.settings.duration;
 		this.sv.u_Gravity=this.settings.gravity;
 		this.sv.u_EndVelocity=this.settings.endVelocity;
 		this._blendFn=BlendMode.fns[parSetting.blendState];
+		if (Render.isConchApp){
+			var nSize=MeshParticle2D.const_stride *this.settings.maxPartices *4 *4;
+			this._conchMesh=/*__JS__ */new ParamData(nSize,true);
+		}
+		else{
+			this._mesh=MeshParticle2D.getAMesh(this.settings.maxPartices);
+		}
 		this.initialize();
-		this._vertexBuffer=this._vertexBuffer2D=VertexBuffer2D.create(-1,/*laya.webgl.WebGLContext.DYNAMIC_DRAW*/0x88E8);
-		this._indexBuffer=this._indexBuffer2D=IndexBuffer2D.create(/*laya.webgl.WebGLContext.STATIC_DRAW*/0x88E4);
-		this.loadContent();
 	}
 
 	__class(ParticleTemplate2D,'laya.particle.ParticleTemplate2D',_super);
 	var __proto=ParticleTemplate2D.prototype;
 	Laya.imps(__proto,{"laya.webgl.submit.ISubmit":true})
+	//loadContent();
 	__proto.getRenderType=function(){return-111}
 	__proto.releaseRender=function(){}
 	__proto.addParticleArray=function(position,velocity){
@@ -1070,9 +1144,10 @@ var ParticleTemplate2D=(function(_super){
 		_super.prototype.addParticleArray.call(this,position,velocity);
 	}
 
-	__proto.loadContent=function(){
-		var indexes=new Uint16Array(this.settings.maxPartices *6);
-		for (var i=0;i < this.settings.maxPartices;i++){
+	/*
+	override protected function loadContent():void{
+		var indexes:Uint16Array=new Uint16Array(settings.maxPartices *6);
+		for (var i:int=0;i < settings.maxPartices;i++){
 			indexes[i *6+0]=(i *4+0);
 			indexes[i *6+1]=(i *4+1);
 			indexes[i *6+2]=(i *4+2);
@@ -1080,32 +1155,34 @@ var ParticleTemplate2D=(function(_super){
 			indexes[i *6+4]=(i *4+2);
 			indexes[i *6+5]=(i *4+3);
 		}
-		this._indexBuffer2D.clear();
-		this._indexBuffer2D.append(indexes);
-		this._indexBuffer2D.upload();
+		_indexBuffer2D.clear();
+		_indexBuffer2D.append(indexes);
+		_indexBuffer2D.upload();
 	}
 
+	*/
 	__proto.addNewParticlesToVertexBuffer=function(){
-		this._vertexBuffer2D.clear();
-		this._vertexBuffer2D.append(this._vertices);
+		var _vertexBuffer2D=this._mesh._vb;
+		_vertexBuffer2D.clear();
+		_vertexBuffer2D.append(this._vertices);
 		var start=0;
 		if (this._firstNewElement < this._firstFreeElement){
 			start=this._firstNewElement *4 *this._floatCountPerVertex *4;
-			this._vertexBuffer2D.subUpload(start,start,start+(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex *4);
+			_vertexBuffer2D.subUpload(start,start,start+(this._firstFreeElement-this._firstNewElement)*4 *this._floatCountPerVertex *4);
 			}else {
 			start=this._firstNewElement *4 *this._floatCountPerVertex *4;
-			this._vertexBuffer2D.subUpload(start,start,start+(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex *4);
+			_vertexBuffer2D.subUpload(start,start,start+(this.settings.maxPartices-this._firstNewElement)*4 *this._floatCountPerVertex *4);
 			if (this._firstFreeElement > 0){
-				this._vertexBuffer2D.setNeedUpload();
-				this._vertexBuffer2D.subUpload(0,0,this._firstFreeElement *4 *this._floatCountPerVertex *4);
+				_vertexBuffer2D.setNeedUpload();
+				_vertexBuffer2D.subUpload(0,0,this._firstFreeElement *4 *this._floatCountPerVertex *4);
 			}
 		}
 		this._firstNewElement=this._firstFreeElement;
 	}
 
 	__proto.renderSubmit=function(){
-		if (this.texture&&this.texture.loaded){
-			this.update(Laya.timer.delta);
+		if (this.texture&&this.texture.getIsReady()){
+			this.update(Laya.timer._delta);
 			this.sv.u_CurrentTime=this._currentTime;
 			if (this._firstNewElement !=this._firstFreeElement){
 				this.addNewParticlesToVertexBuffer();
@@ -1113,8 +1190,8 @@ var ParticleTemplate2D=(function(_super){
 			this.blend();
 			if (this._firstActiveElement !=this._firstFreeElement){
 				var gl=WebGL.mainContext;
-				this._vertexBuffer2D.bind(this._indexBuffer2D);
-				this.sv.u_texture=this.texture.source;
+				this._mesh.useMesh(gl);
+				this.sv.u_texture=this.texture._getSource();
 				this.sv.upload();
 				if (this._firstActiveElement < this._firstFreeElement){
 					WebGL.mainContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,(this._firstFreeElement-this._firstActiveElement)*6,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,this._firstActiveElement *6 *2);
@@ -1124,11 +1201,57 @@ var ParticleTemplate2D=(function(_super){
 					if (this._firstFreeElement > 0)
 						WebGL.mainContext.drawElements(/*laya.webgl.WebGLContext.TRIANGLES*/0x0004,this._firstFreeElement *6,/*laya.webgl.WebGLContext.UNSIGNED_SHORT*/0x1403,0);
 				}
-				Stat.drawCall++;
+				Stat.renderBatch++;
 			}
 			this._drawCounter++;
 		}
 		return 1;
+	}
+
+	__proto.updateParticleForNative=function(){
+		if (this.texture&&this.texture.getIsReady()){
+			this.update(Laya.timer._delta);
+			this.sv.u_CurrentTime=this._currentTime;
+			if (this._firstNewElement !=this._firstFreeElement){
+				this._firstNewElement=this._firstFreeElement;
+			}
+		}
+	}
+
+	__proto.getMesh=function(){
+		return this._mesh;
+	}
+
+	__proto.getConchMesh=function(){
+		return this._conchMesh;
+	}
+
+	__proto.getFirstNewElement=function(){
+		return this._firstNewElement;
+	}
+
+	__proto.getFirstFreeElement=function(){
+		return this._firstFreeElement;
+	}
+
+	__proto.getFirstActiveElement=function(){
+		return this._firstActiveElement;
+	}
+
+	__proto.getFirstRetiredElement=function(){
+		return this._firstRetiredElement;
+	}
+
+	__proto.setFirstFreeElement=function(_value){
+		this._firstFreeElement=_value;
+	}
+
+	__proto.setFirstNewElement=function(_value){
+		this._firstNewElement=_value;
+	}
+
+	__proto.addDrawCounter=function(){
+		this._drawCounter++;
 	}
 
 	__proto.blend=function(){
@@ -1141,52 +1264,14 @@ var ParticleTemplate2D=(function(_super){
 	}
 
 	__proto.dispose=function(){
-		this._vertexBuffer2D.dispose();
-		this._indexBuffer2D.dispose();
+		if (!Render.isConchApp){
+			this._mesh.releaseMesh();
+		}
 	}
 
 	ParticleTemplate2D.activeBlendType=-1;
 	return ParticleTemplate2D;
 })(ParticleTemplateWebGL)
-
-
-/**
-*@private
-*/
-//class laya.particle.shader.value.ParticleShaderValue extends laya.webgl.shader.d2.value.Value2D
-var ParticleShaderValue=(function(_super){
-	function ParticleShaderValue(){
-		this.a_CornerTextureCoordinate=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,0];
-		this.a_Position=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,16];
-		this.a_Velocity=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,28];
-		this.a_StartColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,40];
-		this.a_EndColor=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,56];
-		this.a_SizeRotation=[3,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,72];
-		this.a_Radius=[2,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,84];
-		this.a_Radian=[4,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,92];
-		this.a_AgeAddScale=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,108];
-		this.a_Time=[1,/*laya.webgl.WebGLContext.FLOAT*/0x1406,false,116,112];
-		this.u_CurrentTime=NaN;
-		this.u_Duration=NaN;
-		this.u_Gravity=null;
-		//v3
-		this.u_EndVelocity=NaN;
-		this.u_texture=null;
-		ParticleShaderValue.__super.call(this,0,0);
-	}
-
-	__class(ParticleShaderValue,'laya.particle.shader.value.ParticleShaderValue',_super);
-	var __proto=ParticleShaderValue.prototype;
-	__proto.upload=function(){
-		this.refresh();
-		ParticleShaderValue.pShader.upload(this);
-	}
-
-	__static(ParticleShaderValue,
-	['pShader',function(){return this.pShader=new ParticleShader();}
-	]);
-	return ParticleShaderValue;
-})(Value2D)
 
 
 /**
@@ -1206,7 +1291,9 @@ var Particle2D=(function(_super){
 		this._emitter=null;
 		/**是否自动播放*/
 		this.autoPlay=true;
+		this.tempCmd=null;
 		Particle2D.__super.call(this);
+		this.customRenderEnable=true;
 		if (setting)this.setParticleSetting(setting);
 	}
 
@@ -1225,35 +1312,24 @@ var Particle2D=(function(_super){
 	*@param settings 粒子配置数据
 	*/
 	__proto.setParticleSetting=function(setting){
-		var _$this=this;
 		if (!setting)return this.stop();
 		ParticleSetting.checkSetting(setting);
-		if(/*__JS__ */!window.ConchParticleTemplate2D||Render.isWebGL)this.customRenderEnable=true;
-		if (Render.isWebGL){
+		if (Render.isConchApp){
 			this._particleTemplate=new ParticleTemplate2D(setting);
-			this.graphics._saveToCmd(Render.context._drawParticle,[this._particleTemplate]);
+			var sBlendMode=BlendMode.NAMES[setting.blendState];
+			this.blendMode=sBlendMode;
+			this.tempCmd=this.graphics._saveToCmd(null,DrawParticleCmd.create.call(this.graphics,this._particleTemplate));
+			this._setGraphicsCallBack();
 		}
-		else if (Render.isConchApp&&/*__JS__ */window.ConchParticleTemplate2D){
-			this._particleTemplate=/*__JS__ */new ConchParticleTemplate2D();
-			var _this=this;
-			Laya.loader.load(setting.textureName,Handler.create(null,function(texture){
-				/*__JS__ */_this._particleTemplate.texture=texture;
-				_this._particleTemplate.settings=setting;
-				if (Render.isConchNode){
-					/*__JS__ */_this.graphics.drawParticle(_this._particleTemplate);
-				}
-				else{
-					_this.graphics._saveToCmd(Render.context._drawParticle,[_$this._particleTemplate]);
-				}
-			}));
-			this._emitter={start:function (){}};
-			/*__JS__ */this.play=this._particleTemplate.play.bind(this._particleTemplate);
-			/*__JS__ */this.stop=this._particleTemplate.stop.bind(this._particleTemplate);
-			if (this.autoPlay)this.play();
-			return;
-		}
-		else {
-			this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
+		else{
+			if (Render.isWebGL){
+				this.customRenderEnable=true;
+				this._particleTemplate=new ParticleTemplate2D(setting);
+				this.graphics._saveToCmd(null,DrawParticleCmd.create(this._particleTemplate));
+			}
+			else {
+				this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
+			}
 		}
 		if (!this._emitter){
 			this._emitter=new Emitter2D(this._particleTemplate);
@@ -1270,14 +1346,14 @@ var Particle2D=(function(_super){
 	*播放
 	*/
 	__proto.play=function(){
-		this.timer.frameLoop(1,this,this._loop);
+		Laya.timer.frameLoop(1,this,this._loop);
 	}
 
 	/**
 	*停止
 	*/
 	__proto.stop=function(){
-		this.timer.clear(this,this._loop);
+		Laya.timer.clear(this,this._loop);
 	}
 
 	/**@private */
@@ -1301,12 +1377,12 @@ var Particle2D=(function(_super){
 
 	__proto.customRender=function(context,x,y){
 		if (Render.isWebGL){
-			this._matrix4[0]=context.ctx._curMat.a;
-			this._matrix4[1]=context.ctx._curMat.b;
-			this._matrix4[4]=context.ctx._curMat.c;
-			this._matrix4[5]=context.ctx._curMat.d;
-			this._matrix4[12]=context.ctx._curMat.tx;
-			this._matrix4[13]=context.ctx._curMat.ty;
+			this._matrix4[0]=context._curMat.a;
+			this._matrix4[1]=context._curMat.b;
+			this._matrix4[4]=context._curMat.c;
+			this._matrix4[5]=context._curMat.d;
+			this._matrix4[12]=context._curMat.tx;
+			this._matrix4[13]=context._curMat.ty;
 			var sv=(this._particleTemplate).sv;
 			sv.u_mmat=this._matrix4;
 		}
@@ -1346,13 +1422,15 @@ var Particle2D=(function(_super){
 */
 //class laya.particle.shader.ParticleShader extends laya.webgl.shader.Shader
 var ParticleShader=(function(_super){
+	//TODO:coverage
 	function ParticleShader(){
-		ParticleShader.__super.call(this,ParticleShader.vs,ParticleShader.ps,"ParticleShader");
+		ParticleShader.__super.call(this,ParticleShader.vs,ParticleShader.ps,"ParticleShader",null,['a_CornerTextureCoordinate',0,'a_Position',1,'a_Velocity',2,'a_StartColor',3,
+		'a_EndColor',4,'a_SizeRotation',5,'a_Radius',6,'a_Radian',7,'a_AgeAddScale',8,'a_Time',9]);
 	}
 
 	__class(ParticleShader,'laya.particle.shader.ParticleShader',_super);
 	__static(ParticleShader,
-	['vs',function(){return this.vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Velocity;\nattribute vec4 a_StartColor;\nattribute vec4 a_EndColor;\nattribute vec3 a_SizeRotation;\nattribute vec2 a_Radius;\nattribute vec4 a_Radian;\nattribute float a_AgeAddScale;\nattribute float a_Time;\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform float u_CurrentTime;\nuniform float u_Duration;\nuniform float u_EndVelocity;\nuniform vec3 u_Gravity;\n\n#ifdef PARTICLE3D\n uniform mat4 u_WorldMat;\n uniform mat4 u_View;\n uniform mat4 u_Projection;\n uniform vec2 u_ViewportScale;\n#else\n uniform vec2 size;\n uniform mat4 mmat;\n uniform mat4 u_mmat;\n#endif\n\nvec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)\n{\n\n   float startVelocity = length(velocity);//起始标量速度\n   float endVelocity = startVelocity * u_EndVelocity;//结束标量速度\n\n   float velocityIntegral = startVelocity * normalizedAge +(endVelocity - startVelocity) * normalizedAge *normalizedAge/2.0;//计算当前速度的标量（单位空间），vt=v0*t+(1/2)*a*(t^2)\n   \n   vec3 addPosition = normalize(velocity) * velocityIntegral * u_Duration;//计算受自身速度影响的位置，转换标量到矢量    \n   addPosition += u_Gravity * age * normalizedAge;//计算受重力影响的位置\n   \n   float radius=mix(a_Radius.x, a_Radius.y, normalizedAge); //计算粒子受半径和角度影响（无需计算角度和半径时，可用宏定义优化屏蔽此计算）\n   float radianHorizontal =mix(a_Radian.x,a_Radian.z,normalizedAge);\n   float radianVertical =mix(a_Radian.y,a_Radian.w,normalizedAge);\n   \n   float r =cos(radianVertical)* radius;\n   addPosition.y += sin(radianVertical) * radius;\n	\n   addPosition.x += cos(radianHorizontal) *r;\n   addPosition.z += sin(radianHorizontal) *r;\n  \n   #ifdef PARTICLE3D\n   position+=addPosition;\n    return  u_Projection*u_View*u_WorldMat*(vec4(position, 1.0));\n   #else\n   addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上\n   position+=addPosition;\n    return  vec4(position,1.0);\n   #endif\n}\n\nfloat ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)\n{    \n    float size = mix(startSize, endSize, normalizedAge);\n    \n	#ifdef PARTICLE3D\n    //Project the size into screen coordinates.\n     return size * u_Projection[1][1];\n	#else\n	 return size;\n	#endif\n}\n\nmat2 ComputeParticleRotation(in float rot,in float age)\n{    \n    float rotation =rot * age;\n    //计算2x2旋转矩阵.\n    float c = cos(rotation);\n    float s = sin(rotation);\n    return mat2(c, -s, s, c);\n}\n\nvec4 ComputeParticleColor(in vec4 startColor,in vec4 endColor,in float normalizedAge)\n{\n	vec4 color=mix(startColor,endColor,normalizedAge);\n    //硬编码设置，使粒子淡入很快，淡出很慢,6.7的缩放因子把置归一在0到1之间，可以谷歌x*(1-x)*(1-x)*6.7的制图表\n    color.a *= normalizedAge * (1.0-normalizedAge) * (1.0-normalizedAge) * 6.7;\n   \n    return color;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   age *= 1.0 + a_AgeAddScale;\n   float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   gl_Position = ComputeParticlePosition(a_Position, a_Velocity, age, normalizedAge);//计算粒子位置\n   float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);\n   mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);\n	\n   #ifdef PARTICLE3D\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize * u_ViewportScale;\n   #else\n    mat4 mat=u_mmat*mmat;\n    gl_Position=vec4((mat*gl_Position).xy,0.0,1.0);\n	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize*vec2(mat[0][0],mat[1][1]);\n    gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);\n   #endif\n   \n   v_Color = ComputeParticleColor(a_StartColor,a_EndColor, normalizedAge);\n   v_TextureCoordinate =a_CornerTextureCoordinate.zw;\n}\n\n";},'ps',function(){return this.ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\nvoid main()\n{	\n	gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n	gl_FragColor.xyz *= v_Color.w;\n}";}
+	['vs',function(){return this.vs="attribute vec4 a_CornerTextureCoordinate;\nattribute vec3 a_Position;\nattribute vec3 a_Velocity;\nattribute vec4 a_StartColor;\nattribute vec4 a_EndColor;\nattribute vec3 a_SizeRotation;\nattribute vec2 a_Radius;\nattribute vec4 a_Radian;\nattribute float a_AgeAddScale;\nattribute float a_Time;\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\n\nuniform float u_CurrentTime;\nuniform float u_Duration;\nuniform float u_EndVelocity;\nuniform vec3 u_Gravity;\n\nuniform vec2 size;\nuniform mat4 u_mmat;\n\nvec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)\n{\n\n   float startVelocity = length(velocity);//起始标量速度\n   float endVelocity = startVelocity * u_EndVelocity;//结束标量速度\n\n   float velocityIntegral = startVelocity * normalizedAge +(endVelocity - startVelocity) * normalizedAge *normalizedAge/2.0;//计算当前速度的标量（单位空间），vt=v0*t+(1/2)*a*(t^2)\n   \n   vec3 addPosition = normalize(velocity) * velocityIntegral * u_Duration;//计算受自身速度影响的位置，转换标量到矢量    \n   addPosition += u_Gravity * age * normalizedAge;//计算受重力影响的位置\n   \n   float radius=mix(a_Radius.x, a_Radius.y, normalizedAge); //计算粒子受半径和角度影响（无需计算角度和半径时，可用宏定义优化屏蔽此计算）\n   float radianHorizontal =mix(a_Radian.x,a_Radian.z,normalizedAge);\n   float radianVertical =mix(a_Radian.y,a_Radian.w,normalizedAge);\n   \n   float r =cos(radianVertical)* radius;\n   addPosition.y += sin(radianVertical) * radius;\n	\n   addPosition.x += cos(radianHorizontal) *r;\n   addPosition.z += sin(radianHorizontal) *r;\n  \n   addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上\n   position+=addPosition;\n   return  vec4(position,1.0);\n}\n\nfloat ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)\n{    \n    float size = mix(startSize, endSize, normalizedAge);\n    return size;\n}\n\nmat2 ComputeParticleRotation(in float rot,in float age)\n{    \n    float rotation =rot * age;\n    //计算2x2旋转矩阵.\n    float c = cos(rotation);\n    float s = sin(rotation);\n    return mat2(c, -s, s, c);\n}\n\nvec4 ComputeParticleColor(in vec4 startColor,in vec4 endColor,in float normalizedAge)\n{\n	vec4 color=mix(startColor,endColor,normalizedAge);\n    //硬编码设置，使粒子淡入很快，淡出很慢,6.7的缩放因子把置归一在0到1之间，可以谷歌x*(1-x)*(1-x)*6.7的制图表\n    color.a *= normalizedAge * (1.0-normalizedAge) * (1.0-normalizedAge) * 6.7;\n   \n    return color;\n}\n\nvoid main()\n{\n   float age = u_CurrentTime - a_Time;\n   age *= 1.0 + a_AgeAddScale;\n   float normalizedAge = clamp(age / u_Duration,0.0,1.0);\n   gl_Position = ComputeParticlePosition(a_Position, a_Velocity, age, normalizedAge);//计算粒子位置\n   float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);\n   mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);\n	\n    mat4 mat=u_mmat;\n    gl_Position=vec4((mat*gl_Position).xy,0.0,1.0);\n    gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize*vec2(mat[0][0],mat[1][1]);\n    gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);\n   \n   v_Color = ComputeParticleColor(a_StartColor,a_EndColor, normalizedAge);\n   v_TextureCoordinate =a_CornerTextureCoordinate.zw;\n}\n\n";},'ps',function(){return this.ps="#ifdef FSHIGHPRECISION\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n\nvarying vec4 v_Color;\nvarying vec2 v_TextureCoordinate;\nuniform sampler2D u_texture;\n\nvoid main()\n{	\n	gl_FragColor=texture2D(u_texture,v_TextureCoordinate)*v_Color;\n	gl_FragColor.xyz *= v_Color.w;\n}";}
 	]);
 	return ParticleShader;
 })(Shader)
@@ -1360,14 +1438,3 @@ var ParticleShader=(function(_super){
 
 
 })(window,document,Laya);
-
-if (typeof define === 'function' && define.amd){
-	define('laya.core', ['require', "exports"], function(require, exports) {
-        'use strict';
-        Object.defineProperty(exports, '__esModule', { value: true });
-        for (var i in Laya) {
-			var o = Laya[i];
-            o && o.__isclass && (exports[i] = o);
-        }
-    });
-}

@@ -16,6 +16,7 @@ package laya.ani.bone
 		public var deformData:Array;
 		public var frameIndex:int = 0;
 		
+		//TODO:coverage
 		public function DeformSlotDisplayData() 
 		{
 			
@@ -39,7 +40,7 @@ package laya.ani.bone
 			return 0; // Can't happen.
 		}
 	
-		
+		//TODO:coverage
 		public function apply(time:Number,boneSlot:BoneSlot,alpha:Number=1):void
 		{
 			time += 0.05;

@@ -9,12 +9,14 @@ package laya.utils {
 		private var _strsToID:Object = {};
 		private var _idToStrs:Array = [];
 		private var _length:int = 0;
+		//TODO:
 		
 		/**
 		 * 添加一个字符。
 		 * @param	str 字符，将作为key 存储相应生成的数字。
 		 * @return 此字符对应的数字。
 		 */
+		//TODO:coverage
 		public function add(str:String):int {
 			var index:* = _strsToID[str];
 			if (index != null) return index;
@@ -28,6 +30,7 @@ package laya.utils {
 		 * @param	str 字符。
 		 * @return 此字符对应的ID。
 		 */
+		//TODO:coverage
 		public function getID(str:String):int {
 			var index:* = _strsToID[str];
 			return index == null ? -1 : index;
@@ -38,6 +41,7 @@ package laya.utils {
 		 * @param  id ID。
 		 * @return 此id对应的字符。
 		 */
+		//TODO:coverage
 		public function getName(id:int):String {
 			var str:* = _idToStrs[id];
 			return str == null ? undefined : str;

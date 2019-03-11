@@ -1,20 +1,12 @@
 package laya.debug.tools.enginehook 
 {
-	import laya.display.Sprite;
-	import laya.display.css.CSSStyle;
-	import laya.display.css.Style;
-	import laya.filters.Filter;
-	import laya.maths.Matrix;
-	import laya.maths.Rectangle;
-	import laya.renders.Render;
-	import laya.renders.RenderContext;
-	import laya.renders.RenderSprite;
-	import laya.resource.HTMLCanvas;
-	import laya.utils.Browser;
-	import laya.utils.Pool;
-	import laya.utils.RunDriver;
-	import laya.utils.Stat;
 	import laya.debug.tools.CacheAnalyser;
+	import laya.display.Sprite;
+	import laya.display.css.CacheStyle;
+	import laya.renders.RenderSprite;
+	import laya.resource.Context;
+	import laya.utils.Browser;
+
 	/**
 	 * ...
 	 * @author ww
@@ -55,7 +47,7 @@ package laya.debug.tools.enginehook
 		public var _next:RenderSprite;
 		/** @private */
 		public var _fun:Function;
-		public var _oldCanvas:Function;
+		public static var _oldCanvas:Function;
 		public function RenderSpriteHook() 
 		{
 			
@@ -64,44 +56,38 @@ package laya.debug.tools.enginehook
 		public static var _preCreateFun:Function;
 		public static function init():void
 		{
-			if (I) return;
-			I = new RenderSpriteHook();
-			_preCreateFun = RunDriver.createRenderSprite;
-			RunDriver.createRenderSprite = I.createRenderSprite;
+			if (_oldCanvas) return;
+			//I = new RenderSpriteHook();
+			//_preCreateFun = RunDriver.createRenderSprite;
+			//RunDriver.createRenderSprite = I.createRenderSprite;
+			_oldCanvas=RenderSprite["prototype"]["_canvas"];
+			RenderSprite["prototype"]["_canvas"] = RenderSpriteHook["prototype"]["_canvas"];
 		}
-		public function createRenderSprite(type:int, next:RenderSprite):RenderSprite 
-		{
-			
-			var rst:RenderSprite;
-			rst = _preCreateFun(type, next);
-			
-			if (type == RenderSprite.CANVAS)
-			{
-				rst["_oldCanvas"] = rst._fun;
-				rst._fun = I._canvas;
-			}
-			return rst;
-		}
-		public function _canvas(sprite:Sprite, context:RenderContext, x:Number, y:Number):void {
-			if (!SpriteRenderForVisibleAnalyse.allowRendering) return;
+
+		public function _canvas(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			//trace("hooked canvas");
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var _cacheCanvas:* = sprite._$P.cacheCanvas;
+			var _cacheStyle:CacheStyle = sprite._cacheStyle;
 			var _next:RenderSprite = this._next;
-			if (!_cacheCanvas||SpriteRenderForVisibleAnalyse.isVisibleTesting) {
-				_next._fun.call(_next, sprite, context, x, y);
+			var _repaint:Boolean ;
+			if (!_cacheStyle.enableCanvasRender) {
+				_oldCanvas.call(this,sprite, context, x, y);
 				return;
 			}
+
+			if (sprite._needRepaint() || (!_cacheStyle.canvas)) {
+				_repaint = true;
+			}else
+			{
+				_repaint = false;
+			}
+			
 			
 			var preTime:int;
 			preTime = Browser.now();
-			var tx:RenderContext = _cacheCanvas.ctx;
-			var _repaint:Boolean = sprite._needRepaint() || (!tx);
-			_oldCanvas(sprite, context, x, y);
-			if (Config.showCanvasMark) 
-			{
-				
-			}
+			
+			_oldCanvas.call(this,sprite, context, x, y);
+
 			if (_repaint)
 			{
 				CacheAnalyser.I.reCacheCanvas(sprite,Browser.now()-preTime);

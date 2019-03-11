@@ -1,7 +1,6 @@
 package laya.webgl.utils {
 	import laya.maths.Matrix;
 	import laya.maths.Rectangle;
-	import laya.webgl.resource.RenderTarget2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	
 	public class RenderState2D {
@@ -12,25 +11,23 @@ package laya.webgl.utils {
 		public static var worldMatrix4:Array = /*[STATIC SAFE]*/ TEMPMAT4_ARRAY;
 		
 		public static var worldMatrix:Matrix = new Matrix();
-		
+		public	static var matWVP:* = null;// :Matrix4x4 = Matrix4x4.DEFAULT;		// 3d矩阵
 		public static var worldAlpha:Number = 1.0;
 		
 		public static var worldScissorTest:Boolean = false;
 		
-		public static var worldFilters:Array;
+		//public static var worldClipRect:Rectangle = new Rectangle(0, 0, _MAXSIZE, _MAXSIZE);
 		public static var worldShaderDefines:ShaderDefines2D;
-		
-		public static var worldClipRect:Rectangle = new Rectangle(0, 0, _MAXSIZE, _MAXSIZE);
-		
-		public static var curRenderTarget:RenderTarget2D;
+		public static var worldFilters:Array;
 		
 		public static var width:Number = 0;
 		public static var height:Number = 0;
-		
+		/* 不知道 有什么用，删掉先
 		public static function getMatrArray():Array {
 			return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 		}
-		
+		*/
+		//TODO:coverage
 		public static function mat2MatArray(mat:Matrix, matArray:Array):Array {
 			var m:Matrix = mat;
 			var m4:Array = matArray;
@@ -64,13 +61,11 @@ package laya.webgl.utils {
 		
 		public static function clear():void {
 			worldScissorTest = false;
-			worldShaderDefines = null;
-			worldFilters = null;
+			//worldFilters = null;
 			worldAlpha = 1;
-			worldClipRect.x = worldClipRect.y = 0;
-			worldClipRect.width = width;
-			worldClipRect.height = height;
-			curRenderTarget = null;
+			//worldClipRect.x = worldClipRect.y = 0;
+			//worldClipRect.width = width;
+			//worldClipRect.height = height;
 		}
 	
 	}

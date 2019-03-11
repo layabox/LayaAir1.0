@@ -1,4 +1,5 @@
 package laya.ani.bone {
+	import laya.ani.AnimationContent;
 	import laya.ani.AnimationTemplet;
 	import laya.ani.bone.BoneSlot;
 	import laya.ani.bone.SkinData;
@@ -144,24 +145,25 @@ package laya.ani.bone {
 		 */
 		override public function parse(data:ArrayBuffer):void {
 			super.parse(data);
-			_endLoaded();
+			//_loaded = true;
+			event(Event.LOADED, this);
 			if (this._aniVersion != LAYA_ANIMATION_VISION) {
 				//trace("[Error] Version " + _aniVersion + " The engine is inconsistent, update to the version " + KeyframesAniTemplet.LAYA_ANIMATION_VISION + " please.");
 				trace("[Error] 版本不一致，请使用IDE版本配套的重新导出"+this._aniVersion+"->"+LAYA_ANIMATION_VISION);
-				_loaded = false;
+				//_loaded = false;
 			}
 			//解析公共数据
-			if (loaded) {
+			//if (loaded) {
 				//这里后面要改成一个状态，直接确认是不是要不要加载外部图片
 				if (_mainTexture) {
 					_parsePublicExtData();
 				} else {
 					_parseTexturePath();
 				}
-			} else {
-				this.event(Event.ERROR, this);
-				isParseFail = true;
-			}
+			//} else {
+				//this.event(Event.ERROR, this);
+				//isParseFail = true;
+			//}
 		}
 		
 		private function _parseTexturePath():void {
@@ -704,7 +706,12 @@ package laya.ani.bone {
 		 * @return
 		 */
 		public function getGrahicsDataWithCache(aniIndex:int, frameIndex:Number):Graphics {
-			return _graphicsCache[aniIndex][frameIndex];
+			if (_graphicsCache[aniIndex] && _graphicsCache[aniIndex][frameIndex])
+			{
+				return _graphicsCache[aniIndex][frameIndex];
+			}
+			//trace("getGrahicsDataWithCache fail:",aniIndex,frameIndex,this._path);
+			return null;
 		}
 		
 		/**
@@ -718,6 +725,15 @@ package laya.ani.bone {
 			_graphicsCache[aniIndex][frameIndex] = graphics;
 		}
 		
+		public function deleteAniData(aniIndex:int):void
+		{
+			if (_anis[aniIndex])
+			{
+				var tAniDataO:AnimationContent = _anis[aniIndex];
+				tAniDataO.bone3DMap = null;
+				tAniDataO.nodes = null;
+			}
+		}
 		/**
 		 * 释放纹理
 		 */

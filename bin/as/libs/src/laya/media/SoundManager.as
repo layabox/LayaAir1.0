@@ -15,7 +15,7 @@ package laya.media {
 	 * 播放音效，优先使用WebAudio播放声音，如果WebAudio不可用，则用H5Audio播放，H5Audio在部分机器上有兼容问题（比如不能混音，播放有延迟等）。
 	 * 播放背景音乐，则使用H5Audio播放（使用WebAudio会增加特别大的内存，并且要等加载完毕后才能播放，有延迟）
 	 * 建议背景音乐用mp3类型，音效用wav或者mp3类型（如果打包为app，音效只能用wav格式）。
-	 * 详细教程及声音格式请参考：http://ldc.layabox.com/doc/?nav=ch-as-1-7-0
+	 * 详细教程及声音格式请参考：http://ldc2.layabox.com/doc/?nav=ch-as-1-7-0
 	 */
 	public class SoundManager {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
@@ -47,7 +47,7 @@ package laya.media {
 		/**@private 是否背景音乐静音，默认为false。*/
 		private static var _musicMuted:Boolean = false;
 		/**@private 当前背景音乐url。*/
-		public static var _tMusic:String = null;
+		public static var _bgMusic:String = null;
 		/**@private 当前背景音乐声道。*/
 		private static var _musicChannel:SoundChannel = null;
 		/**@private 当前播放的Channel列表。*/
@@ -62,6 +62,22 @@ package laya.media {
 		public static var _soundClass:Class;
 		/**@private */
 		public static var _musicClass:Class;
+		/**@private */
+		private static var _lastSoundUsedTimeDic:Object = { };
+		/**@private */
+		private static var _isCheckingDispose:Boolean = false;
+		
+		/**@private */
+		public static function __init__():Boolean {
+			var win:* = Browser.window;
+			var supportWebAudio:Boolean = win["AudioContext"] || win["webkitAudioContext"] || win["mozAudioContext"] ? true : false;
+			if (supportWebAudio) WebAudioSound.initWebAudio();
+			_soundClass = supportWebAudio?WebAudioSound:AudioSound;
+			AudioSound._initMusicAudio();
+			_musicClass = AudioSound;
+			return supportWebAudio;
+		}
+		
 		/**
 		 * 音效播放后自动删除。
 		 * @default true
@@ -87,6 +103,41 @@ package laya.media {
 				if (_channels[i] == channel) {
 					_channels.splice(i, 1);
 				}
+			}
+		}
+		
+		/**@private */
+		public static function disposeSoundLater(url:String):void
+		{
+			_lastSoundUsedTimeDic[url] = Browser.now();
+			if (!_isCheckingDispose)
+			{
+				_isCheckingDispose = true;
+				Laya.timer.loop(5000, null, _checkDisposeSound);
+			}
+		}
+		
+		/**@private */
+		private static function _checkDisposeSound():void
+		{
+			var key:String;
+			var tTime:Number = Browser.now();
+			var hasCheck:Boolean = false;
+			for (key in _lastSoundUsedTimeDic)
+			{
+				if (tTime-_lastSoundUsedTimeDic[key]>30000)
+				{
+					delete _lastSoundUsedTimeDic[key];
+					disposeSoundIfNotUsed(key);
+				}else
+				{
+					hasCheck = true;
+				}
+			}
+			if (!hasCheck)
+			{
+				_isCheckingDispose = false;
+				Laya.timer.clear(null, _checkDisposeSound);
 			}
 		}
 		
@@ -150,7 +201,7 @@ package laya.media {
 		
 		private static function _recoverWebAudio():void
 		{
-			if(WebAudioSound.ctx&&WebAudioSound.ctx.state!="running")
+			if(WebAudioSound.ctx&&WebAudioSound.ctx.state!="running"&&WebAudioSound.ctx.resume)
 			WebAudioSound.ctx.resume();
 		}
 		
@@ -200,11 +251,16 @@ package laya.media {
 		public static function set musicMuted(value:Boolean):void {
 			if (value == _musicMuted) return;
 			if (value) {
-				if (_tMusic)
+				if (_bgMusic)
 				{
 					if (_musicChannel&&!_musicChannel.isStopped)
 					{
-						_musicChannel.pause();
+						if (Render.isConchApp) {
+							__JS__("if (SoundManager._musicChannel._audio) SoundManager._musicChannel._audio.muted = true;");
+						}
+						else {
+							_musicChannel.pause();
+						}
 					}else
 					{
 						_musicChannel = null;
@@ -217,10 +273,15 @@ package laya.media {
 				_musicMuted = value;
 			} else {
 				_musicMuted = value;
-				if (_tMusic) {
+				if (_bgMusic) {
 					if (_musicChannel)
 					{
-						_musicChannel.resume();
+						if (Render.isConchApp) {
+							__JS__("if(SoundManager._musicChannel._audio) SoundManager._musicChannel._audio.muted = false;");
+						}
+						else {
+							_musicChannel.resume();
+						}
 					}
 				}
 			}
@@ -262,7 +323,7 @@ package laya.media {
 			if (_muted) return null;
 			_recoverWebAudio();
 			url = URL.formatURL(url);
-			if (url == _tMusic) {
+			if (url == _bgMusic) {
 				if (_musicMuted) return null;
 			} else {
 				if (Render.isConchApp) {
@@ -283,13 +344,16 @@ package laya.media {
 			if (!tSound) {
 				tSound = new soundClass();
 				tSound.load(url);
-				Loader.cacheRes(url, tSound);
+				if (!Browser.onMiniGame)
+				{
+					Loader.cacheRes(url, tSound);
+				}	
 			}
 			var channel:SoundChannel;
 			channel = tSound.play(startTime, loops);
 			if (!channel) return null;
 			channel.url = url;
-			channel.volume = (url == _tMusic) ? musicVolume : soundVolume;
+			channel.volume = (url == _bgMusic) ? musicVolume : soundVolume;
 			channel.completeHandler = complete;
 			return channel;
 		}
@@ -316,7 +380,7 @@ package laya.media {
 		 */
 		public static function playMusic(url:String, loops:int = 0, complete:Handler = null, startTime:Number = 0):SoundChannel {
 			url = URL.formatURL(url);
-			_tMusic = url;
+			_bgMusic = url;
 			if (_musicChannel) _musicChannel.stop();
 			return _musicChannel = playSound(url, loops, complete, _musicClass, startTime);
 		}
@@ -341,7 +405,7 @@ package laya.media {
 		 * 停止播放所有声音（包括背景音乐和音效）。
 		 */
 		public static function stopAll():void {
-			_tMusic = null;
+			_bgMusic = null;
 			var i:int;
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
@@ -358,7 +422,7 @@ package laya.media {
 			var channel:SoundChannel;
 			for (i = _channels.length - 1; i >= 0; i--) {
 				channel = _channels[i];
-				if (channel.url != _tMusic) {
+				if (channel.url != _bgMusic) {
 					channel.stop();
 				}
 			}
@@ -370,7 +434,7 @@ package laya.media {
 		 */
 		public static function stopMusic():void {
 			if (_musicChannel) _musicChannel.stop();
-			_tMusic = null;
+			_bgMusic = null;
 		}
 		
 		/**
@@ -388,7 +452,7 @@ package laya.media {
 				var channel:SoundChannel;
 				for (i = _channels.length - 1; i >= 0; i--) {
 					channel = _channels[i];
-					if (channel.url != _tMusic) {
+					if (channel.url != _bgMusic) {
 						channel.volume = volume;
 					}
 				}
@@ -401,7 +465,7 @@ package laya.media {
 		 */
 		public static function setMusicVolume(volume:Number):void {
 			musicVolume = volume;
-			_setVolume(_tMusic, volume);
+			_setVolume(_bgMusic, volume);
 		}
 		
 		/**

@@ -4,7 +4,7 @@ package laya.webgl.canvas.save {
 	
 	public class SaveBase implements ISaveData {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		
+		/*[FILEINDEX:1]*/
 		/*[DISBALEOUTCONST-BEGIN]*/
 		public static const TYPE_ALPHA:int = 0x1;
 		public static const TYPE_FILESTYLE:int = 0x2;
@@ -25,8 +25,9 @@ package laya.webgl.canvas.save {
 		public static const TYPE_SHADER:int = 0x100000;
 		public static const TYPE_FILTERS:int = 0x200000;
 		public static const TYPE_FILTERS_TYPE:int = 0x400000;
+		public static const TYPE_COLORFILTER:int = 0x800000;
 		/*[DISBALEOUTCONST-END]*/
-		private static var _cache:* =/*[STATIC SAFE]*/ SaveBase._createArray();
+		private static var POOL:* =/*[STATIC SAFE]*/ SaveBase._createArray();
 		private static var _namemap:* =/*[STATIC SAFE]*/ _init();
 		
 		public static function _createArray():Array {
@@ -53,7 +54,7 @@ package laya.webgl.canvas.save {
 			namemap[TYPE_GLOBALCOMPOSITEOPERATION] = "_nBlendType";
 			namemap[TYPE_SHADER] = "shader";
 			namemap[TYPE_FILTERS] = "filters";
-			
+			namemap[TYPE_COLORFILTER] = '_colorFiler';
 			return namemap;
 		}
 		
@@ -69,14 +70,14 @@ package laya.webgl.canvas.save {
 		
 		public function restore(context:WebGLContext2D):void {
 			_dataObj[_valueName] = _value;
-			_cache[_cache._length++] = this;
-			_newSubmit && (context._curSubmit = Submit.RENDERBASE, context._renderKey = 0);
+			POOL[POOL._length++] = this;
+			_newSubmit && (context._curSubmit = Submit.RENDERBASE);
 		}
 		
 		public static function save(context:WebGLContext2D, type:int, dataObj:*, newSubmit:Boolean):void {
 			if ((context._saveMark._saveuse & type) !== type) {
 				context._saveMark._saveuse |= type;
-				var cache:* = _cache;
+				var cache:* = POOL;
 				var o:* = cache._length > 0 ? cache[--cache._length] : (new SaveBase());
 				o._value = dataObj[o._valueName = _namemap[type]];
 				o._dataObj = dataObj;

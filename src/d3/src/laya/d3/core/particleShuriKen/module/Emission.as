@@ -1,7 +1,5 @@
 package laya.d3.core.particleShuriKen.module {
 	import laya.d3.core.IClone;
-	import laya.d3.core.particleShuriKen.ShurikenParticleSystem;
-	import laya.d3.core.particleShuriKen.module.shape.BaseShape;
 	import laya.d3.math.Vector3;
 	import laya.resource.IDestroy;
 	
@@ -58,7 +56,7 @@ package laya.d3.core.particleShuriKen.module {
 		/**
 		 * @private
 		 */
-		public function _destroy():void {
+		public function destroy():void {
 			_bursts = null;
 			_destroyed = true;
 		}

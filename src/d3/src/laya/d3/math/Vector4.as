@@ -5,7 +5,7 @@ package laya.d3.math {
 	/**
 	 * <code>Vector4</code> 类用于创建四维向量。
 	 */
-	public class Vector4 implements IClone {
+	public class Vector4 extends BaseVector implements IClone {
 		
 		/**零向量，禁止修改*/
 		public static var ZERO:Vector4 = new Vector4();
@@ -24,9 +24,6 @@ package laya.d3.math {
 		
 		/*W单位向量，禁止修改*/
 		public static var UnitW:Vector4 = new Vector4(0.0, 0.0, 0.0, 1.0);
-		
-		/**四维向量元素数组*/
-		public var elements:* = new Float32Array(4);
 		
 		/**
 		 * 获取X轴坐标。
@@ -100,7 +97,7 @@ package laya.d3.math {
 		 * @param	w  W轴坐标。
 		 */
 		public function Vector4(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 0) {
-			var v:Float32Array = elements;
+			var v:Float32Array = elements = new Float32Array(4);
 			v[0] = x;
 			v[1] = y;
 			v[2] = z;

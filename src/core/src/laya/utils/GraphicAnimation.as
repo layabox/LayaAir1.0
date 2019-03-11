@@ -6,72 +6,51 @@ package laya.utils {
 	import laya.resource.Texture;
 	
 	/**
+	 * Graphics动画解析器
 	 * @private
 	 */
 	public class GraphicAnimation extends FrameAnimation {
-		/**
-		 * @private
-		 */
+		/**@private */
 		public var animationList:Array;
-		/**
-		 * @private
-		 */
+		/**@private */
 		public var animationDic:Object;
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected var _nodeList:Array;
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected var _nodeDefaultProps:Object;
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected var _gList:Array;
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected var _nodeIDAniDic:Object = {};
 		
-		/**
-		 * @private
-		 */
-		protected static const _drawTextureCmd:Array =/*[STATIC SAFE]*/ [["skin", null], ["x", 0], ["y", 0], ["width", -1], ["height", -1], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0], ["anchorX", 0], ["anchorY", 0]];
-		/**
-		 * @private
-		 */
+		/**@private */
+		protected static const _drawTextureCmd:Array = [["skin", null], ["x", 0], ["y", 0], ["width", -1], ["height", -1], ["pivotX", 0], ["pivotY", 0], ["scaleX", 1], ["scaleY", 1], ["rotation", 0], ["alpha", 1], ["skewX", 0], ["skewY", 0], ["anchorX", 0], ["anchorY", 0]];
+		/**@private */
 		protected static var _temParam:Array = [];
-		/**
-		 * @private
-		 */
+		/**@private */
 		private static var _I:GraphicAnimation;
-		
+		/**@private */
+		private static var _rootMatrix:Matrix;
+		/**@private */
 		private var _rootNode:Object;
+		/**@private */
+		protected var _nodeGDic:Object;
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		private function _parseNodeList(uiView:Object):void {
-			if (!_nodeList) {
-				_nodeList = [];
-			}
+			if (!_nodeList) _nodeList = [];
 			_nodeDefaultProps[uiView.compId] = uiView.props;
-			if (uiView.compId)
-				_nodeList.push(uiView.compId);
+			if (uiView.compId) _nodeList.push(uiView.compId);
 			var childs:Array = uiView.child;
 			if (childs) {
 				var i:int, len:int = childs.length;
 				for (i = 0; i < len; i++) {
 					_parseNodeList(childs[i]);
-					
 				}
 			}
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		private function _calGraphicData(aniData:Object):void {
 			this._setUp(null, aniData);
 			_createGraphicData();
@@ -85,13 +64,11 @@ package laya.utils {
 			}
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		private function _createGraphicData():void {
 			var gList:Array = [];
 			var i:int, len:int = count;
-			var animationDataNew:Array = this._animationNewFrames;
+			var animationDataNew:Array = this._usedFrames;
 			if (!animationDataNew) animationDataNew = [];
 			var preGraphic:Graphics;
 			for (i = 0; i < len; i++) {
@@ -103,36 +80,26 @@ package laya.utils {
 			_gList = gList;
 		}
 		
-		private static var _rootMatrix:Matrix;
-		
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected function _createFrameGraphic(frame:int):* {
-			var g:Graphics = RunDriver.createGraphics();
-			if (!_rootMatrix)
-				_rootMatrix = new Matrix();
+			var g:Graphics = new Graphics();
+			if (!_rootMatrix) _rootMatrix = new Matrix();
 			_updateNodeGraphic(_rootNode, frame, _rootMatrix, g);
 			//_updateNodeGraphic2(_rootNode, frame, g);
 			return g;
 		}
-		protected var _nodeGDic:Object;
 		
 		protected function _updateNodeGraphic(node:Object, frame:int, parentTransfrom:Matrix, g:Graphics, alpha:Number = 1):void {
 			var tNodeG:GraphicNode;
 			tNodeG = _nodeGDic[node.compId] = _getNodeGraphicData(node.compId, frame, _nodeGDic[node.compId]);
-			var tGraphicAlpha:Number = tNodeG.alpha * alpha;
-			if (tGraphicAlpha < 0.01) return;
 			if (!tNodeG.resultTransform)
-			{
-				tNodeG.resultTransform = Matrix.create();
-			}
-		
+				tNodeG.resultTransform = new Matrix();
 			var tResultTransform:Matrix;
 			tResultTransform = tNodeG.resultTransform;
 			Matrix.mul(tNodeG.transform, parentTransfrom, tResultTransform);
 			var tTex:Texture;
-			
+			var tGraphicAlpha:Number = tNodeG.alpha * alpha;
+			if (tGraphicAlpha < 0.01) return;
 			if (tNodeG.skin) {
 				tTex = _getTextureByUrl(tNodeG.skin);
 				if (tTex) {
@@ -144,10 +111,8 @@ package laya.utils {
 					}
 				}
 			}
-			var childs:Array;
-			childs = node.child;
-			if (!childs)
-				return;
+			var childs:Array = node.child;
+			if (!childs) return;
 			var i:int, len:int;
 			len = childs.length;
 			for (i = 0; i < len; i++) {
@@ -156,15 +121,13 @@ package laya.utils {
 		}
 		
 		protected function _updateNoChilds(tNodeG:GraphicNode, g:Graphics):void {
-			if (!tNodeG.skin)
-				return;
+			if (!tNodeG.skin) return;
 			var tTex:Texture = _getTextureByUrl(tNodeG.skin);
-			if (!tTex)
-				return;
+			if (!tTex) return;
 			var tTransform:Matrix = tNodeG.transform;
 			tTransform._checkTransform();
 			var onlyTranslate:Boolean;
-			onlyTranslate = !tTransform.bTransform;
+			onlyTranslate = !tTransform._bTransform;
 			if (!onlyTranslate) {
 				g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height, tTransform.clone(), tNodeG.alpha);
 			} else {
@@ -182,30 +145,22 @@ package laya.utils {
 			var tTransform:Matrix = tNodeG.transform;
 			tTransform._checkTransform();
 			var onlyTranslate:Boolean;
-			onlyTranslate = !tTransform.bTransform;
+			onlyTranslate = !tTransform._bTransform;
 			var hasTrans:Boolean;
 			hasTrans = onlyTranslate && (tTransform.tx != 0 || tTransform.ty != 0);
 			var ifSave:Boolean;
-			ifSave = (tTransform.bTransform) || tNodeG.alpha != 1;
-			if (ifSave) {
-				g.save();
-			}
-			if (tNodeG.alpha != 1) {
-				g.alpha(tNodeG.alpha);
-			}
-			if (!onlyTranslate) {
-				g.transform(tTransform.clone());
-			} else if (hasTrans) {
-				g.translate(tTransform.tx, tTransform.ty);
-			}
+			ifSave = (tTransform._bTransform) || tNodeG.alpha != 1;
+			if (ifSave) g.save();
+			if (tNodeG.alpha != 1) g.alpha(tNodeG.alpha);
+			if (!onlyTranslate) g.transform(tTransform.clone());
+			else if (hasTrans) g.translate(tTransform.tx, tTransform.ty);
 			
-			var childs:Array;
-			childs = node.child;
+			var childs:Array = node.child;
 			var tTex:Texture;
 			if (tNodeG.skin) {
 				tTex = _getTextureByUrl(tNodeG.skin);
 				if (tTex) {
-					g.drawTexture(tTex, 0, 0, tNodeG.width, tNodeG.height);
+					g.drawImage(tTex, 0, 0, tNodeG.width, tNodeG.height);
 				}
 			}
 			
@@ -226,27 +181,20 @@ package laya.utils {
 					g.translate(-tTransform.tx, -tTransform.ty);
 				}
 			}
-		
 		}
 		
-		/**
-		 * @private
-		 */
-		override protected function _calculateNodeKeyFrames(node:Object):void {
-			super._calculateNodeKeyFrames(node);
+		/**@private */
+		override protected function _calculateKeyFrames(node:Object):void {
+			super._calculateKeyFrames(node);
 			_nodeIDAniDic[node.target] = node;
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected function getNodeDataByID(nodeID:int):Object {
 			return _nodeIDAniDic[nodeID];
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected function _getParams(obj:Object, params:Array, frame:int, obj2:Object):Array {
 			var rst:Array = _temParam;
 			rst.length = params.length;
@@ -257,14 +205,11 @@ package laya.utils {
 			return rst;
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		private function _getObjVar(obj:Object, key:String, frame:int, noValue:*, obj2:Object):* {
 			if (obj.hasOwnProperty(key)) {
 				var vArr:Array = obj[key];
-				if (frame >= vArr.length)
-					frame = vArr.length - 1;
+				if (frame >= vArr.length) frame = vArr.length - 1;
 				return obj[key][frame];
 			}
 			if (obj2.hasOwnProperty(key)) {
@@ -275,17 +220,15 @@ package laya.utils {
 		
 		protected function _getNodeGraphicData(nodeID:int, frame:int, rst:GraphicNode):GraphicNode {
 			if (!rst)
-				rst = GraphicNode.create();
+				rst = new GraphicNode();
 			if (!rst.transform) {
-				rst.transform = Matrix.create();
-			}else
-			{
+				rst.transform = new Matrix();
+			} else {
 				rst.transform.identity();
 			}
-				
+			
 			var node:Object = getNodeDataByID(nodeID);
-			if (!node)
-				return rst;
+			if (!node) return rst;
 			var frameData:Object = node.frames;
 			var params:Array = _getParams(frameData, _drawTextureCmd, frame, _nodeDefaultProps[nodeID]);
 			var url:String = params[0];
@@ -302,7 +245,6 @@ package laya.utils {
 			if (height == -1) height = 0;
 			var tex:Texture;
 			rst.skin = url;
-			
 			rst.width = width;
 			rst.height = height;
 			if (url) {
@@ -319,9 +261,7 @@ package laya.utils {
 			
 			rst.alpha = params[10];
 			
-			var m:Matrix;
-			
-			m = rst.transform;
+			var m:Matrix = rst.transform;
 			if (aX != 0) {
 				px = aX * width;
 			}
@@ -335,7 +275,7 @@ package laya.utils {
 			if (rotate || sx !== 1 || sy !== 1 || skewX || skewY) {
 				tm = _tempMt;
 				tm.identity();
-				tm.bTransform = true;
+				tm._bTransform = true;
 				var skx:Number = (rotate - skewX) * 0.0174532922222222; //laya.CONST.PI180;
 				var sky:Number = (rotate + skewY) * 0.0174532922222222;
 				var cx:Number = Math.cos(sky);
@@ -358,22 +298,17 @@ package laya.utils {
 		}
 		private static var _tempMt:Matrix = new Matrix();
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected function _getTextureByUrl(url:String):* {
 			return Loader.getRes(url);
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		public function setAniData(uiView:Object, aniName:String = null):void {
 			if (uiView.animations) {
 				_nodeDefaultProps = {};
 				_nodeGDic = {};
-				if (_nodeList)
-					_nodeList.length = 0;
+				if (_nodeList) _nodeList.length = 0;
 				_rootNode = uiView;
 				_parseNodeList(uiView);
 				var aniDic:Object = {};
@@ -416,11 +351,9 @@ package laya.utils {
 			aniO = aniData.aniO;
 			delete aniData.nodeRoot;
 			delete aniData.aniO;
-			//trace("parse:",aniO.name);
 			_nodeDefaultProps = {};
 			_nodeGDic = {};
-			if (_nodeList)
-				_nodeList.length = 0;
+			if (_nodeList) _nodeList.length = 0;
 			_rootNode = rootNode;
 			_parseNodeList(rootNode);
 			_labels = null;
@@ -438,9 +371,7 @@ package laya.utils {
 			return frameO;
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		public function setUpAniData(uiView:Object):void {
 			if (uiView.animations) {
 				var aniDic:Object = {};
@@ -450,8 +381,7 @@ package laya.utils {
 				var tAniO:Object;
 				for (i = 0; i < len; i++) {
 					tAniO = animations[i];
-					if (!tAniO)
-						continue;
+					if (!tAniO) continue;
 					var frameO:Object = {};
 					frameO.name = tAniO.name;
 					frameO.aniO = tAniO;
@@ -464,29 +394,16 @@ package laya.utils {
 			}
 		}
 		
-		/**
-		 * @private
-		 */
+		/**@private */
 		protected function _clear():void {
 			animationList = null;
 			animationDic = null;
 			_gList = null;
-			if (_nodeGDic)
-			{
-				var key:String;
-				var tGNode:GraphicNode;
-				for (key in _nodeGDic)
-				{
-					tGNode = _nodeGDic[key];
-					if (tGNode) tGNode.recover();
-				}
-			}
 			_nodeGDic = null;
 		}
 		
 		public static function parseAnimationByData(animationObject:Object):Object {
-			if (!_I)
-				_I = new GraphicAnimation();
+			if (!_I) _I = new GraphicAnimation();
 			var rst:Object;
 			rst = _I.parseByData(animationObject);
 			_I._clear();
@@ -494,9 +411,7 @@ package laya.utils {
 		}
 		
 		public static function parseAnimationData(aniData:Object):Object {
-			if (!_I)
-				_I = new GraphicAnimation();
-			//_I.setAniData(aniData);
+			if (!_I) _I = new GraphicAnimation();
 			_I.setUpAniData(aniData);
 			var rst:Object;
 			rst = {};
@@ -509,7 +424,6 @@ package laya.utils {
 
 }
 import laya.maths.Matrix;
-import laya.utils.Pool;
 
 class GraphicNode {
 	public var skin:String;
@@ -518,26 +432,4 @@ class GraphicNode {
 	public var width:Number;
 	public var height:Number;
 	public var alpha:Number = 1;
-	public function recover():void
-	{
-		skin = null;
-		width = 0;
-		height = 0;
-		alpha = 1;
-		if (transform)
-		{
-			transform.destroy();
-			transform = null;
-		}
-		if (resultTransform)
-		{
-			resultTransform.destroy();
-			resultTransform = null;
-		}
-		Pool.recover("GraphicNode", this);
-	}
-	public static function create():GraphicNode
-	{
-		return Pool.getItemByClass("GraphicNode", GraphicNode);
-	}
 }

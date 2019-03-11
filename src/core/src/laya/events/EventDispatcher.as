@@ -106,11 +106,10 @@ package laya.events {
 		 */
 		public function off(type:String, caller:*, listener:Function, onceOnly:Boolean = false):EventDispatcher {
 			if (!this._events || !this._events[type]) return this;
-			
 			var listeners:Object = this._events[type];
-			if (listener != null) {
+			if (listeners != null) {
 				if (listeners.run) {
-					if ((!caller || listeners.caller === caller) && listeners.method === listener && (!onceOnly || listeners.once)) {
+					if ((!caller || listeners.caller === caller) && (listener==null || listeners.method === listener) && (!onceOnly || listeners.once)) {
 						delete this._events[type];
 						listeners.recover();
 					}
@@ -118,7 +117,12 @@ package laya.events {
 					var count:int = 0;
 					for (var i:int = 0, n:int = listeners.length; i < n; i++) {
 						var item:Handler = listeners[i];
-						if (item && (!caller || item.caller === caller) && item.method === listener && (!onceOnly || item.once)) {
+						if (!item)
+						{
+							count++;
+							continue;
+						}
+						if (item && (!caller || item.caller === caller) && (listener==null || item.method === listener) && (!onceOnly || item.once)) {
 							count++;
 							listeners[i] = null;
 							item.recover();
@@ -152,6 +156,19 @@ package laya.events {
 			return this;
 		}
 		
+		/**
+		 * 移除caller为target的所有事件监听
+		 * @param	caller caller对象
+		 */
+		public function offAllCaller(caller:*):EventDispatcher {
+			if (caller && this._events) {
+				for (var name:String in _events) {
+					off(name, caller, null);
+				}
+			}			
+			return this;
+		}
+		
 		private function _recoverHandlers(arr:*):void {
 			if (!arr) return;
 			if (arr.run) {
@@ -172,7 +189,7 @@ package laya.events {
 		 * @return	如果是鼠标事件，则值为 true;否则，值为 false。
 		 */
 		public function isMouseEvent(type:String):Boolean {
-			return MOUSE_EVENTS[type];
+			return MOUSE_EVENTS[type] || false;
 		}
 	}
 }

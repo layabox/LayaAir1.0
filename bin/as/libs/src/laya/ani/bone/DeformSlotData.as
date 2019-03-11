@@ -8,6 +8,7 @@ package laya.ani.bone
 		
 		public var deformSlotDisplayList:Vector.<DeformSlotDisplayData> = new Vector.<DeformSlotDisplayData>();
 		
+		//TODO:coverage
 		public function DeformSlotData() 
 		{
 			

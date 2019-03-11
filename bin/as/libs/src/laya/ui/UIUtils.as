@@ -50,6 +50,7 @@ package laya.ui {
 		 * @param	traget 目标显示对象。
 		 * @param	isGray 如果值true，则添加灰度滤镜，否则移除灰度滤镜。
 		 */
+		//TODO:coverage
 		public static function gray(traget:Sprite, isGray:Boolean = true):void {
 			if (isGray) {
 				addFilter(traget, grayFilter);
@@ -63,6 +64,7 @@ package laya.ui {
 		 * @param	target 目标显示对象。
 		 * @param	filter 滤镜对象。
 		 */
+		//TODO:coverage
 		public static function addFilter(target:Sprite, filter:IFilter):void {
 			var filters:Array = target.filters || [];
 			filters.push(filter);
@@ -74,6 +76,7 @@ package laya.ui {
 		 * @param	target 目标显示对象。
 		 * @param	filterType 滤镜类型。
 		 */
+		//TODO:coverage
 		public static function clearFilter(target:Sprite, filterType:Class):void {
 			var filters:Array = target.filters;
 			if (filters != null && filters.length > 0) {
@@ -91,6 +94,7 @@ package laya.ui {
 		 * @return
 		 *
 		 */
+		//TODO:coverage
 		private static function _getReplaceStr(word:String):String {
 			return escapeSequence[word];
 		}
@@ -109,6 +113,7 @@ package laya.ui {
 		/**
 		 * @private 根据字符串，返回函数表达式
 		 */
+		//TODO:coverage
 		public static function getBindFun(value:String):Function {
 			var fun:Function = _funMap.get(value);
 			if (fun == null) {

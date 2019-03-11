@@ -39,6 +39,7 @@ package laya.ani.bone {
 			}
 		}
 		
+		//TODO:coverage
 		public function update(pMatrix:Matrix = null):void {
 			rotation = transform.skX;
 			var tResultMatrix:Matrix;
@@ -119,6 +120,7 @@ package laya.ani.bone {
 			}
 		}
 		
+		//TODO:coverage
 		public function updateChild():void {
 			var i:int = 0, n:int = 0;
 			var tBone:Bone;
@@ -128,12 +130,14 @@ package laya.ani.bone {
 			}
 		}
 		
+		//TODO:coverage
 		public function setRotation(rd:Number):void {
 			if (_sprite) {
 				_sprite.rotation = rd * 180 / Math.PI;
 			}
 		}
 		
+		//TODO:coverage
 		public function updateDraw(x:Number, y:Number):void {
 			if (!ShowBones || ShowBones[this.name]) {
 				if (_sprite) {
@@ -164,6 +168,7 @@ package laya.ani.bone {
 			bone.parentBone = this;
 		}
 		
+		//TODO:coverage
 		public function findBone(boneName:String):Bone {
 			if (this.name == boneName) {
 				return this;
@@ -183,6 +188,7 @@ package laya.ani.bone {
 			return null;
 		}
 		
+		//TODO:coverage
 		public function localToWorld(local:Vector.<Number>):void {
 			var localX:Number = local[0];
 			var localY:Number = local[1];

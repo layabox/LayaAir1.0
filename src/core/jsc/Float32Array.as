@@ -50,7 +50,7 @@
 		
 		public function subarray(start:int, end:int = -1):Float32Array { return null; };
 		
-		public function set(src:Array, ofs:int):void
+		public function set(src:*, ofs:int=0):void
 		{
 			for (var i:int = 0, n:int = src.length; i < n; i++)
 			{

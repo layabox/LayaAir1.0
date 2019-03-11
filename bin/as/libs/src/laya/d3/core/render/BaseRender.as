@@ -1,28 +1,29 @@
 package laya.d3.core.render {
 	import laya.d3.core.BaseCamera;
-	import laya.d3.core.PhasorSpriter3D;
+	import laya.d3.core.GeometryElement;
 	import laya.d3.core.RenderableSprite3D;
-	import laya.d3.core.Sprite3D;
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.scene.ITreeNode;
-	import laya.d3.core.scene.Scene;
+	import laya.d3.core.scene.OctreeNode;
+	import laya.d3.core.scene.Scene3D;
+	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.math.BoundBox;
+	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.BoundSphere;
-	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.resource.BaseTexture;
-	import laya.d3.resource.Texture2D;
-	import laya.d3.shadowMap.ParallelSplitShadowMap;
+	import laya.d3.shader.DefineDatas;
+	import laya.d3.shader.ShaderData;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
-	import laya.resource.IDestroy;
+	import laya.renders.Render;
+	import laya.resource.ISingletonElement;
+	import laya.webgl.resource.Texture2D;
 	
 	/**
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许实例。
 	 */
-	public class BaseRender extends EventDispatcher implements IDestroy {
+	public class BaseRender extends EventDispatcher implements ISingletonElement {
 		/**@private */
 		public static var _tempBoundBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
@@ -33,18 +34,21 @@ package laya.d3.core.render {
 		
 		/**@private */
 		private var _id:int;
-		/**@private */
-		private var _destroyed:Boolean;
 		/** @private */
 		private var _lightmapScaleOffset:Vector4;
 		/** @private */
 		private var _lightmapIndex:int;
 		/** @private */
-		private var _enable:Boolean;
-		/** @private */
 		private var _receiveShadow:Boolean;
 		/** @private */
 		private var _materialsInstance:Vector.<Boolean>;
+		/** @private */
+		private var _castShadow:Boolean;
+		/** @private  [实现IListPool接口]*/
+		private var _indexInList:int = -1;
+		/** @private */
+		public var _indexInCastShadowList:int = -1;
+		
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
 		/** @private */
@@ -61,28 +65,41 @@ package laya.d3.core.render {
 		protected var _octreeNodeNeedChange:Boolean;
 		
 		/** @private */
-		public var _indexInSceneFrustumCullingObjects:int;
+		public var _enable:Boolean;
+		/** @private */
+		public var _shaderValues:ShaderData;
+		/** @private */
+		public var _defineDatas:DefineDatas;
+		
 		/** @private */
 		public var _materials:Vector.<BaseMaterial>;
+		/** @private */
+		public var _scene:Scene3D;
 		/** @private */
 		public var _owner:RenderableSprite3D;
 		/** @private */
 		public var _renderElements:Vector.<RenderElement>;
 		/** @private */
 		public var _distanceForSort:Number;
+		/**@private */
+		public var _visible:Boolean = true;//初始值为默认可见,否则会造成第一帧动画不更新等，TODO:还有个包围盒更新好像浪费了
 		/** @private */
-		public var _treeNode:ITreeNode;
-		/**@private */
-		public var _isPartOfStaticBatch:Boolean;
-		/**@private */
-		public var _staticBatchRootSprite3D:Sprite3D;
-		/**@private */
-		public var _staticBatchRenderElements:Vector.<RenderElement>;
+		public var _treeNode:OctreeNode;
+		
+		/** @private */
+		public var _updateLoopCount:int;
+		/** @private */
+		public var _updateCamera:BaseCamera;
+		/** @private */
+		public var _isPartOfStaticBatch:Boolean = false;
+		/** @private */
+		public var _staticBatch:GeometryElement = null;
 		
 		/**排序矫正值。*/
 		public var sortingFudge:Number;
-		/** 是否产生阴影。 */
-		public var castShadow:Boolean;
+		
+		/**@private	[NATIVE]*/
+		public var _cullingBufferIndex:int;
 		
 		/**
 		 * 获取唯一标识ID,通常用于识别。
@@ -104,8 +121,10 @@ package laya.d3.core.render {
 		 * @param value 光照贴图的索引。
 		 */
 		public function set lightmapIndex(value:int):void {
-			_lightmapIndex = value;
-			_applyLightMapParams();
+			if (_lightmapIndex !== value) {
+				_lightmapIndex = value;
+				_applyLightMapParams();
+			}
 		}
 		
 		/**
@@ -122,8 +141,8 @@ package laya.d3.core.render {
 		 */
 		public function set lightmapScaleOffset(value:Vector4):void {
 			_lightmapScaleOffset = value;
-			_setShaderValueColor(RenderableSprite3D.LIGHTMAPSCALEOFFSET, value);
-			_addShaderDefine(RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
+			_shaderValues.setVector(RenderableSprite3D.LIGHTMAPSCALEOFFSET, value);
+			_defineDatas.add(RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
 		}
 		
 		/**
@@ -139,8 +158,7 @@ package laya.d3.core.render {
 		 * @param value 是否可用。
 		 */
 		public function set enable(value:Boolean):void {
-			_enable = value;
-			event(Event.ENABLE_CHANGED, [this, value]);
+			_enable = !!value;
 		}
 		
 		/**
@@ -150,8 +168,9 @@ package laya.d3.core.render {
 		public function get material():BaseMaterial {
 			var material:BaseMaterial = _materials[0];
 			if (material && !_materialsInstance[0]) {
-				var insMat:BaseMaterial = _getInstanceMaterial(material,0);
-				event(Event.MATERIAL_CHANGED, [this, 0, insMat]);
+				var insMat:BaseMaterial = _getInstanceMaterial(material, 0);
+				var renderElement:RenderElement = _renderElements[0];
+				(renderElement) && (renderElement.material = insMat);
 			}
 			return _materials[0];
 		}
@@ -171,8 +190,9 @@ package laya.d3.core.render {
 		public function get materials():Vector.<BaseMaterial> {
 			for (var i:int = 0, n:int = _materials.length; i < n; i++) {
 				if (!_materialsInstance[i]) {
-					var insMat:BaseMaterial = _getInstanceMaterial(_materials[i],i);
-					event(Event.MATERIAL_CHANGED, [this, i, insMat]);
+					var insMat:BaseMaterial = _getInstanceMaterial(_materials[i], i);
+					var renderElement:RenderElement = _renderElements[i];
+					(renderElement) && (renderElement.material = insMat);
 				}
 			}
 			return _materials.slice();
@@ -204,7 +224,8 @@ package laya.d3.core.render {
 				_materials[0] = value;
 				_materialsInstance[0] = false;
 				_changeMaterialReference(lastValue, value);
-				event(Event.MATERIAL_CHANGED, [this, 0, value]);
+				var renderElement:RenderElement = _renderElements[0];
+				(renderElement) && (renderElement.material = value);
 			}
 		}
 		
@@ -223,7 +244,7 @@ package laya.d3.core.render {
 		 */
 		public function set sharedMaterials(value:Vector.<BaseMaterial>):void {
 			if (!value)
-				throw new Error("MeshRender: shadredMaterials value can't be null.");
+				throw new Error("BaseRender: shadredMaterials value can't be null.");
 			var len:int = value.length;
 			_materialsInstance.length = len;
 			for (var i:int = 0; i < len; i++) {
@@ -231,7 +252,8 @@ package laya.d3.core.render {
 				if (lastValue !== value[i]) {
 					_materialsInstance[i] = false;
 					_changeMaterialReference(lastValue, value[i]);
-					event(Event.MATERIAL_CHANGED, [this, i, value[i]]);
+					var renderElement:RenderElement = _renderElements[i];
+					(renderElement) && (renderElement.material = value[i]);
 				}
 			}
 			_materials = value;
@@ -282,9 +304,9 @@ package laya.d3.core.render {
 			if (_receiveShadow !== value) {
 				_receiveShadow = value;
 				if (value)
-					_addShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
+					_defineDatas.add(RenderableSprite3D.SHADERDEFINE_RECEIVE_SHADOW);
 				else
-					_removeShaderDefine(ParallelSplitShadowMap.SHADERDEFINE_RECEIVE_SHADOW);
+					_defineDatas.remove(RenderableSprite3D.SHADERDEFINE_RECEIVE_SHADOW);
 			}
 		}
 		
@@ -296,39 +318,77 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * 获取是否已销毁。
-		 * @return 是否已销毁。
+		 * 获取是否产生阴影。
+		 * @return 是否产生阴影。
 		 */
-		public function get destroyed():Boolean {
-			return _destroyed;
+		public function get castShadow():Boolean {
+			return _castShadow;
 		}
 		
 		/**
+		 *	设置是否产生阴影。
+		 * 	@param value 是否产生阴影。
+		 */
+		public function set castShadow(value:Boolean):void {
+			if (_castShadow !== value) {
+				if (_owner.activeInHierarchy) {
+					if (value)
+						_scene._addShadowCastRenderObject(this);
+					else
+						_scene._removeShadowCastRenderObject(this);
+				}
+				_castShadow = value;
+			}
+		}
+		
+		/**
+		 * 是否是静态的一部分。
+		 */
+		public function get isPartOfStaticBatch():Boolean {
+			return _isPartOfStaticBatch;
+		}
+		
+		/**
+		 * @private
 		 * 创建一个新的 <code>BaseRender</code> 实例。
 		 */
 		public function BaseRender(owner:RenderableSprite3D) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_id = ++_uniqueIDCounter;
-			_indexInSceneFrustumCullingObjects = -1;
+			_indexInCastShadowList = -1;
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			_boundingBoxCenter = new Vector3();
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
+			if (Render.isConchApp) {//[NATIVE]
+				var length:int = FrustumCulling._cullingBufferLength;
+				_cullingBufferIndex = length;
+				var cullingBuffer:Float32Array = FrustumCulling._cullingBuffer;
+				var resizeLength:int = length + 5;
+				if (resizeLength >= cullingBuffer.length) {
+					var temp:Float32Array = cullingBuffer;
+					cullingBuffer = FrustumCulling._cullingBuffer = new Float32Array(cullingBuffer.length + 4096);
+					cullingBuffer.set(temp, 0);
+				}
+				cullingBuffer[length] = 1;
+				FrustumCulling._cullingBufferLength = resizeLength;
+			}
+			
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
 			_octreeNodeNeedChange = true;
 			_materials = new Vector.<BaseMaterial>();
 			_renderElements = new Vector.<RenderElement>();
-			_isPartOfStaticBatch = false;
-			_destroyed = false;
 			_owner = owner;
 			_enable = true;
 			_materialsInstance = new Vector.<Boolean>();
+			_shaderValues = new ShaderData(null);
+			_defineDatas = new DefineDatas();
 			lightmapIndex = -1;
-			castShadow = false;
+			_castShadow = false;
 			receiveShadow = false;
 			sortingFudge = 0.0;
-			_owner.transform.on(Event.WORLDMATRIX_NEEDCHANGE, this, _onWorldMatNeedChange);
+			(owner) && (_owner.transform.on(Event.TRANSFORM_CHANGED, this, _onWorldMatNeedChange));//如果为合并BaseRender,owner可能为空
 		}
 		
 		/**
@@ -342,7 +402,7 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		private function _getInstanceMaterial(material:BaseMaterial,index:int):BaseMaterial {
+		private function _getInstanceMaterial(material:BaseMaterial, index:int):BaseMaterial {
 			var insMat:BaseMaterial = __JS__("new material.constructor()");
 			material.cloneTo(insMat);//深拷贝
 			insMat.name = insMat.name + "(Instance)";
@@ -355,8 +415,18 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		private function _setShaderValuelightMap(lightMap:Texture2D):void {
-			_setShaderValueTexture(RenderableSprite3D.LIGHTMAP, lightMap);
+		public function _applyLightMapParams():void {
+			if (_scene && _lightmapIndex >= 0) {
+				var lightMaps:Vector.<Texture2D> = _scene.getlightmaps();
+				if (_lightmapIndex < lightMaps.length) {
+					_defineDatas.add(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+					_shaderValues.setTexture(RenderableSprite3D.LIGHTMAP, lightMaps[_lightmapIndex]);
+				} else {
+					_defineDatas.remove(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+				}
+			} else {
+				_defineDatas.remove(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
+			}
 		}
 		
 		/**
@@ -373,24 +443,6 @@ package laya.d3.core.render {
 		 * @private
 		 */
 		protected function _renderRenderableBoundBox():void {
-			var linePhasor:PhasorSpriter3D = Laya3D._debugPhasorSprite;
-			var boundBox:BoundBox = boundingBox;
-			var corners:Vector.<Vector3> = _tempBoundBoxCorners;
-			boundBox.getCorners(corners);
-			linePhasor.line(corners[0], _greenColor, corners[1], _greenColor);
-			linePhasor.line(corners[2], _greenColor, corners[3], _greenColor);
-			linePhasor.line(corners[4], _greenColor, corners[5], _greenColor);
-			linePhasor.line(corners[6], _greenColor, corners[7], _greenColor);
-			
-			linePhasor.line(corners[0], _greenColor, corners[3], _greenColor);
-			linePhasor.line(corners[1], _greenColor, corners[2], _greenColor);
-			linePhasor.line(corners[2], _greenColor, corners[6], _greenColor);
-			linePhasor.line(corners[3], _greenColor, corners[7], _greenColor);
-			
-			linePhasor.line(corners[0], _greenColor, corners[4], _greenColor);
-			linePhasor.line(corners[1], _greenColor, corners[5], _greenColor);
-			linePhasor.line(corners[4], _greenColor, corners[7], _greenColor);
-			linePhasor.line(corners[5], _greenColor, corners[6], _greenColor);
 		}
 		
 		/**
@@ -408,127 +460,56 @@ package laya.d3.core.render {
 		}
 		
 		/**
-		 * @private
+		 * @private [实现ISingletonElement接口]
 		 */
-		public function _setShaderValueTexture(shaderName:int, texture:BaseTexture):void {
-			_owner._shaderValues.setValue(shaderName, texture);
+		public function _getIndexInList():int {
+			return _indexInList;
+		}
+		
+		/**
+		 * @private [实现ISingletonElement接口]
+		 */
+		public function _setIndexInList(index:int):void {
+			_indexInList = index;
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _setShaderValueMatrix4x4(shaderName:int, matrix4x4:Matrix4x4):void {
-			_owner._shaderValues.setValue(shaderName, matrix4x4 ? matrix4x4.elements : null);
-		}
-		
-		/**
-		 * 设置颜色。
-		 * @param	shaderIndex shader索引。
-		 * @param	color 颜色向量。
-		 */
-		public function _setShaderValueColor(shaderIndex:int, color:*):void {
-			_owner._shaderValues.setValue(shaderIndex, color ? color.elements : null);
-		}
-		
-		/**
-		 * 设置Buffer。
-		 * @param	shaderIndex shader索引。
-		 * @param	buffer  buffer数据。
-		 */
-		public function _setShaderValueBuffer(shaderIndex:int, buffer:Float32Array):void {
-			_owner._shaderValues.setValue(shaderIndex, buffer);
-		}
-		
-		/**
-		 * 设置整型。
-		 * @param	shaderIndex shader索引。
-		 * @param	i 整形。
-		 */
-		public function _setShaderValueInt(shaderIndex:int, i:int):void {
-			_owner._shaderValues.setValue(shaderIndex, i);
-		}
-		
-		/**
-		 * 设置布尔。
-		 * @param	shaderIndex shader索引。
-		 * @param	b 布尔。
-		 */
-		public function _setShaderValueBool(shaderIndex:int, b:Boolean):void {
-			_owner._shaderValues.setValue(shaderIndex, b);
-		}
-		
-		/**
-		 * 设置浮点。
-		 * @param	shaderIndex shader索引。
-		 * @param	i 浮点。
-		 */
-		public function _setShaderValueNumber(shaderIndex:int, number:Number):void {
-			_owner._shaderValues.setValue(shaderIndex, number);
-		}
-		
-		/**
-		 * 设置二维向量。
-		 * @param	shaderIndex shader索引。
-		 * @param	vector2 二维向量。
-		 */
-		public function _setShaderValueVector2(shaderIndex:int, vector2:Vector2):void {
-			_owner._shaderValues.setValue(shaderIndex, vector2 ? vector2.elements : null);
-		}
-		
-		/**
-		 * 增加Shader宏定义。
-		 * @param value 宏定义。
-		 */
-		public function _addShaderDefine(value:int):void {
-			_owner._shaderDefineValue |= value;
-		}
-		
-		/**
-		 * 移除Shader宏定义。
-		 * @param value 宏定义。
-		 */
-		public function _removeShaderDefine(value:int):void {
-			_owner._shaderDefineValue &= ~value;
+		public function _setBelongScene(scene:Scene3D):void {
+			if (_scene !== scene) {
+				_scene = scene;
+				_applyLightMapParams();
+			}
 		}
 		
 		/**
 		 * @private
+		 * @param boundFrustum 如果boundFrustum为空则为摄像机不裁剪模式。
 		 */
-		public function _renderUpdate(projectionView:Matrix4x4):Boolean {
+		public function _needRender(boundFrustum:BoundFrustum):Boolean {
 			return true;
 		}
 		
 		/**
 		 * @private
+		 * 逐精灵执行。
 		 */
-		public function _applyLightMapParams():void {
-			if (_lightmapIndex >= 0) {
-				var scene:Scene = _owner.scene;
-				if (scene) {
-					var lightMaps:Vector.<Texture2D> = scene.getlightmaps();
-					var lightMap:Texture2D = lightMaps[_lightmapIndex];
-					if (lightMap) {
-						_addShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
-						if (lightMap.loaded)
-							_setShaderValuelightMap(lightMap);
-						else
-							lightMap.once(Event.LOADED, this, _setShaderValuelightMap);
-					} else {
-						_removeShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
-					}
-				} else {
-					_removeShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
-				}
-			} else {
-				_removeShaderDefine(RenderableSprite3D.SAHDERDEFINE_LIGHTMAP);
-			}
+		public function _renderUpdate(context:RenderContext3D, transform:Transform3D):void {
+		}
+		
+		/**
+		 * @private
+		 * 逐精灵和相机执行。
+		 */
+		public function _renderUpdateWithCamera(context:RenderContext3D, transform:Transform3D):void {
 		}
 		
 		/**
 		 * @private
 		 */
 		public function _updateOctreeNode():void {
-			var treeNode:ITreeNode = _treeNode;
+			var treeNode:OctreeNode = _treeNode;
 			if (treeNode && _octreeNodeNeedChange) {
 				treeNode.updateObject(this);
 				_octreeNodeNeedChange = false;
@@ -542,9 +523,9 @@ package laya.d3.core.render {
 			offAll();
 			var i:int = 0, n:int = 0;
 			for (i = 0, n = _renderElements.length; i < n; i++)
-				_renderElements[i]._destroy();
+				_renderElements[i].destroy();
 			for (i = 0, n = _materials.length; i < n; i++)
-				_materials[i]._removeReference();
+				(_materials[i].destroyed) || (_materials[i]._removeReference());//TODO:材质可能为空
 			
 			_renderElements = null;
 			_owner = null;
@@ -553,9 +534,6 @@ package laya.d3.core.render {
 			_boundingBoxCenter = null;
 			_boundingSphere = null;
 			_lightmapScaleOffset = null;
-			_destroyed = true;
 		}
-	
 	}
-
 }

@@ -1,7 +1,4 @@
 package laya.utils {
-	/*[IF-FLASH]*/
-	import flash.utils.Dictionary;
-	import laya.display.Node;
 	
 	/**
 	 * <code>Tween</code>  是一个缓动类。使用此类能够实现对目标对象属性的渐变。
@@ -10,9 +7,7 @@ package laya.utils {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		/**@private */
-		/*[IF-FLASH]*/
-		private static var tweenMap:flash.utils.Dictionary = new flash.utils.Dictionary(true);
-		//[IF-JS] private static var tweenMap:Array = {};
+		private static var tweenMap:Array = [];
 		/**@private */
 		private var _complete:Handler;
 		/**@private */
@@ -37,6 +32,10 @@ package laya.utils {
 		public var gid:int = 0;
 		/**更新回调，缓动数值发生变化时，回调变化的值*/
 		public var update:Handler;
+		/**重播次数，如果repeat=0，则表示无限循环播放*/
+		public var repeat:int = 1;
+		/**当前播放次数*/
+		private var _count:int = 0;
 		
 		/**
 		 * 缓动对象的props属性到目标值。
@@ -116,9 +115,7 @@ package laya.utils {
 			this.update = props.update;
 			
 			//判断是否覆盖			
-			//[IF-JS]var gid:int = (target.$_GID || (target.$_GID = Utils.getGID()));
-			/*[IF-FLASH]*/
-			var gid:* = target;
+			var gid:int = (target.$_GID || (target.$_GID = Utils.getGID()));
 			if (!tweenMap[gid]) {
 				tweenMap[gid] = [this];
 			} else {
@@ -128,11 +125,10 @@ package laya.utils {
 			
 			if (runNow) {
 				if (delay <= 0) firstStart(target, props, isTo);
-				else
-				{
+				else {
 					_delayParam = [target, props, isTo];
-					Laya.scaleTimer.once(delay, this, firstStart, _delayParam);
-				} 
+					Laya.timer.once(delay, this, firstStart, _delayParam);
+				}
 			} else {
 				_initProps(target, props, isTo);
 			}
@@ -162,7 +158,7 @@ package laya.utils {
 		}
 		
 		private function _beginLoop():void {
-			Laya.scaleTimer.frameLoop(1, this, _doEase);
+			Laya.timer.frameLoop(1, this, _doEase);
 		}
 		
 		/**执行缓动**/
@@ -176,12 +172,9 @@ package laya.utils {
 			if (!target) return;
 			
 			//如果对象被销毁，则立即停止缓动
-			/*[IF-FLASH]*/
-			if (target is Node && target.destroyed) return clearTween(target);
-			//[IF-JS]if (target.destroyed) return clearTween(target);
+			if (target.destroyed) return clearTween(target);
 			
 			var usedTimer:Number = this._usedTimer = time - this._startTimer - this._delay;
-
 			if (usedTimer < 0) return;
 			if (usedTimer >= this._duration) return complete();
 			
@@ -207,7 +200,7 @@ package laya.utils {
 			if (!this._target) return;
 			
 			//立即执行初始化
-			Laya.scaleTimer.runTimer(this, firstStart);
+			Laya.timer.runTimer(this, firstStart);
 			
 			//缓存当前属性
 			var target:* = this._target;
@@ -219,27 +212,31 @@ package laya.utils {
 				target[prop[0]] = prop[1] + prop[2];
 			}
 			if (update) update.run();
-			//清理
-			clear();
-			//回调
-			handler && handler.run();
+			
+			_count++;
+			if (repeat != 0 && _count >= repeat) {
+				//清理
+				this.clear();
+				//回调
+				handler && handler.run();
+			} else {
+				restart();
+			}
 		}
 		
 		/**
 		 * 暂停缓动，可以通过resume或restart重新开始。
 		 */
 		public function pause():void {
-			Laya.scaleTimer.clear(this, _beginLoop);
-			Laya.scaleTimer.clear(this, _doEase);
-			Laya.scaleTimer.clear(this, firstStart);
+			Laya.timer.clear(this, _beginLoop);
+			Laya.timer.clear(this, _doEase);
+			Laya.timer.clear(this, firstStart);
 			var time:Number = Browser.now();
 			var dTime:Number;
 			dTime = time - this._startTimer - this._delay;
-			if (dTime < 0)
-			{
+			if (dTime < 0) {
 				this._usedTimer = dTime;
 			}
-			
 		}
 		
 		/**
@@ -255,12 +252,8 @@ package laya.utils {
 		 * @param	target 目标对象。
 		 */
 		public static function clearAll(target:Object):void {
-			/*[IF-FLASH]*/
-			if (!target) return;
-			//[IF-JS]if (!target || !target.$_GID) return;
-			/*[IF-FLASH]*/
-			var tweens:Array = tweenMap[target];
-			//[IF-JS]var tweens:Array = tweenMap[target.$_GID];
+			if (!target || !target.$_GID) return;
+			var tweens:Array = tweenMap[target.$_GID];
 			if (tweens) {
 				for (var i:int, n:int = tweens.length; i < n; i++) {
 					tweens[i]._clear();
@@ -297,7 +290,7 @@ package laya.utils {
 		 */
 		public function _clear():void {
 			pause();
-			Laya.scaleTimer.clear(this, firstStart);
+			Laya.timer.clear(this, firstStart);
 			this._complete = null;
 			this._target = null;
 			this._ease = null;
@@ -317,9 +310,7 @@ package laya.utils {
 		}
 		
 		private function _remove():void {
-			/*[IF-FLASH]*/
-			var tweens:Array = tweenMap[this._target];
-			//[IF-JS]var tweens:Array = tweenMap[this._target.$_GID];
+			var tweens:Array = tweenMap[this._target.$_GID];
 			if (tweens) {
 				for (var i:int, n:int = tweens.length; i < n; i++) {
 					if (tweens[i] === this) {
@@ -337,9 +328,8 @@ package laya.utils {
 			pause();
 			this._usedTimer = 0;
 			this._startTimer = Browser.now();
-			if (this._delayParam)
-			{
-				Laya.scaleTimer.once( this._delay, this, firstStart, this._delayParam);
+			if (this._delayParam) {
+				Laya.timer.once(this._delay, this, firstStart, this._delayParam);
 				return;
 			}
 			var props:Array = this._props;
@@ -347,7 +337,7 @@ package laya.utils {
 				var prop:Array = props[i];
 				this._target[prop[0]] = prop[1];
 			}
-			Laya.scaleTimer.once(this._delay, this, _beginLoop);
+			Laya.timer.once(this._delay, this, _beginLoop);
 		}
 		
 		/**
@@ -356,19 +346,15 @@ package laya.utils {
 		public function resume():void {
 			if (this._usedTimer >= this._duration) return;
 			this._startTimer = Browser.now() - this._usedTimer - this._delay;
-			if (this._delayParam)
-			{
-				if (this._usedTimer < 0)
-				{
-					Laya.scaleTimer.once(-this._usedTimer, this, firstStart, this._delayParam);
-				}else
-				{
+			if (this._delayParam) {
+				if (this._usedTimer < 0) {
+					Laya.timer.once(-this._usedTimer, this, firstStart, this._delayParam);
+				} else {
 					firstStart.apply(this, this._delayParam);
 				}
-			}else
-			{
+			} else {
 				_beginLoop();
-			}	
+			}
 		}
 		
 		private static function easeNone(t:Number, b:Number, c:Number, d:Number):Number {

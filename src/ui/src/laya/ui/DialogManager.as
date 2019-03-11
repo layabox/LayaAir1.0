@@ -1,9 +1,10 @@
 package laya.ui {
+	import laya.Const;
 	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.ui.Box;
-	import laya.ui.Component;
 	import laya.ui.Dialog;
+	import laya.ui.UIComponent;
 	import laya.utils.Ease;
 	import laya.utils.Handler;
 	import laya.utils.Tween;
@@ -30,14 +31,14 @@ package laya.ui {
 		public var lockLayer:Sprite;
 		
 		/**@private 全局默认弹出对话框效果，可以设置一个效果代替默认的弹出效果，如果不想有任何效果，可以赋值为null*/
-		public var popupEffect:Function = function(dialog:Sprite):void {
+		public var popupEffect:Function = function(dialog:Dialog):void {
 			dialog.scale(1, 1);
-			Tween.from(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.backOut, Handler.create(this, this.doOpen, [dialog]));
+			dialog._effectTween = Tween.from(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.backOut, Handler.create(this, this.doOpen, [dialog]), 0, false, false);
 		}
 		
 		/**@private 全局默认关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
-		public var closeEffect:Function = function(dialog:Sprite, type:String):void {
-			Tween.to(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.strongOut, Handler.create(this, this.doClose, [dialog, type]));
+		public var closeEffect:Function = function(dialog:Dialog):void {
+			dialog._effectTween = Tween.to(dialog, {x: Laya.stage.width / 2, y: Laya.stage.height / 2, scaleX: 0, scaleY: 0}, 300, Ease.strongOut, Handler.create(this, this.doClose, [dialog]), 0, false, false);
 		}
 		
 		/**全局默认关闭对话框效果，可以设置一个效果代替默认的关闭效果，如果不想有任何效果，可以赋值为null*/
@@ -60,11 +61,11 @@ package laya.ui {
 		
 		private function _closeOnSide():void {
 			var dialog:Dialog = getChildAt(numChildren - 1) as Dialog;
-			if (dialog is Dialog) dialog.close("side");
+			if (dialog is Dialog) dialog.close();
 		}
 		
 		/**设置锁定界面，如果为空则什么都不显示*/
-		public function setLockView(value:Component):void {
+		public function setLockView(value:UIComponent):void {
 			if (!lockLayer) {
 				lockLayer = new Box();
 				lockLayer.mouseEnabled = true;
@@ -83,13 +84,13 @@ package laya.ui {
 			var height:Number = maskLayer.height = Laya.stage.height;
 			if (lockLayer) lockLayer.size(width, height);
 			
-			maskLayer.graphics.clear();
+			maskLayer.graphics.clear(true);
 			maskLayer.graphics.drawRect(0, 0, width, height, UIConfig.popupBgColor);
 			maskLayer.alpha = UIConfig.popupBgAlpha;
 			
 			for (var i:int = numChildren - 1; i > -1; i--) {
 				var item:Dialog = getChildAt(i) as Dialog;
-				if (item.popupCenter) _centerDialog(item);
+				if (item.isPopupCenter) _centerDialog(item);
 			}
 		}
 		
@@ -99,28 +100,36 @@ package laya.ui {
 		}
 		
 		/**
-		 * 显示对话框(非模式窗口类型)。
+		 * 显示对话框
 		 * @param dialog 需要显示的对象框 <code>Dialog</code> 实例。
 		 * @param closeOther 是否关闭其它对话框，若值为ture，则关闭其它的对话框。
 		 * @param showEffect 是否显示弹出效果
 		 */
-		public function open(dialog:Dialog, closeOther:Boolean = false, showEffect:Boolean=false):void {
+		public function open(dialog:Dialog, closeOther:Boolean = false, showEffect:Boolean = false):void {
 			if (closeOther) _closeAll();
-			if (dialog.popupCenter) _centerDialog(dialog);
+			_clearDialogEffect(dialog);
+			if (dialog.isPopupCenter) _centerDialog(dialog);
 			addChild(dialog);
-			if (dialog.isModal || this._$P["hasZorder"]) timer.callLater(this, _checkMask);
+			if (dialog.isModal || this._getBit(Const.HAS_ZORDER)) Laya.timer.callLater(this, _checkMask);
 			if (showEffect && dialog.popupEffect != null) dialog.popupEffect.runWith(dialog);
 			else doOpen(dialog);
 			event(Event.OPEN);
 		}
 		
+		/**@private */
+		private function _clearDialogEffect(dialog:Dialog):void {
+			if (dialog._effectTween) {
+				Tween.clear(dialog._effectTween);
+				dialog._effectTween = null;
+			}
+		}
+		
 		/**
 		 * 执行打开对话框。
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
-		 * @param type	关闭的类型，默认为空
 		 */
 		public function doOpen(dialog:Dialog):void {
-			dialog.onOpened();
+			dialog.onOpened(dialog._param);
 		}
 		
 		/**
@@ -136,25 +145,24 @@ package laya.ui {
 		/**
 		 * 关闭对话框。
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
-		 * @param type	关闭的类型，默认为空
-		 * @param showEffect 是否显示弹出效果
 		 */
-		public function close(dialog:Dialog, type:String = null, showEffect:Boolean=false):void {
-			if (showEffect && dialog.closeEffect != null) dialog.closeEffect.runWith([dialog, type]);
-			else doClose(dialog, type);
+		public function close(dialog:Dialog):void {
+			_clearDialogEffect(dialog);
+			if (dialog.isShowEffect && dialog.closeEffect != null) dialog.closeEffect.runWith([dialog]);
+			else doClose(dialog);
 			event(Event.CLOSE);
 		}
 		
 		/**
 		 * 执行关闭对话框。
 		 * @param dialog 需要关闭的对象框 <code>Dialog</code> 实例。
-		 * @param type	关闭的类型，默认为空
 		 */
-		public function doClose(dialog:Dialog, type:String = null):void {
+		public function doClose(dialog:Dialog):void {
 			dialog.removeSelf();
 			dialog.isModal && _checkMask();
-			dialog.closeHandler && dialog.closeHandler.runWith(type);
-			dialog.onClosed(type);
+			dialog.closeHandler && dialog.closeHandler.runWith(dialog.closeType);
+			dialog.onClosed(dialog.closeType);
+			if (dialog.autoDestroyAtClosed) dialog.destroy();
 		}
 		
 		/**

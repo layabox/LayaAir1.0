@@ -1,11 +1,10 @@
 package laya.d3.core.material {
-	import laya.d3.core.render.RenderQueue;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.resource.BaseTexture;
-	import laya.d3.shader.ShaderCompile3D;
 	import laya.d3.shader.ShaderDefines;
+	import laya.webgl.resource.BaseTexture;
 	
 	/**
 	 * ...
@@ -59,89 +58,81 @@ package laya.d3.core.material {
 			SHADERDEFINE_DETAIL_NUM3 = shaderDefines.registerDefine("DETAIL_NUM3");
 		}
 		
-		/**
-		 * 加载闪光材质。
-		 * @param url 闪光材质地址。
-		 */
-		public static function load(url:String):TerrainMaterial {
-			return Laya.loader.create(url, null, null, TerrainMaterial);
-		}
-		
 		public function setDiffuseScale1(x:Number, y:Number):void {
 			_diffuseScale1.x = x;
 			_diffuseScale1.y = y;
-			_setColor(DIFFUSESCALE1, _diffuseScale1);
+			_shaderValues.setVector(DIFFUSESCALE1, _diffuseScale1);
 		}
 		
 		public function setDiffuseScale2(x:Number, y:Number):void {
 			_diffuseScale2.x = x;
 			_diffuseScale2.y = y;
-			_setColor(DIFFUSESCALE2, _diffuseScale2);
+			_shaderValues.setVector(DIFFUSESCALE2, _diffuseScale2);
 		}
 		
 		public function setDiffuseScale3(x:Number, y:Number):void {
 			_diffuseScale3.x = x;
 			_diffuseScale3.y = y;
-			_setColor(DIFFUSESCALE3, _diffuseScale3);
+			_shaderValues.setVector(DIFFUSESCALE3, _diffuseScale3);
 		}
 		
 		public function setDiffuseScale4(x:Number, y:Number):void {
 			_diffuseScale4.x = x;
 			_diffuseScale4.y = y;
-			_setColor(DIFFUSESCALE4, _diffuseScale4);
+			_shaderValues.setVector(DIFFUSESCALE4, _diffuseScale4);
 		}
 		
 		public function setDetailNum(value:int):void {
 			switch (value) {
 			case 1: 
-				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
+				_defineDatas.add(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				break;
 			case 2: 
-				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
+				_defineDatas.add(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				break;
 			case 3: 
-				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
+				_defineDatas.add(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
 				break;
 			case 4: 
-				_addShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
-				_removeShaderDefine(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
+				_defineDatas.add(TerrainMaterial.SHADERDEFINE_DETAIL_NUM4);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM1);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM2);
+				_defineDatas.remove(TerrainMaterial.SHADERDEFINE_DETAIL_NUM3);
 				break;
 			}
 		}
 		
 		public function get ambientColor():Vector3 {
-			return _getColor(MATERIALAMBIENT);
+			return _shaderValues.getVector(MATERIALAMBIENT) as Vector3;
 		}
 		
 		public function set ambientColor(value:Vector3):void {
-			_setColor(MATERIALAMBIENT, value);
+			_shaderValues.setVector(MATERIALAMBIENT, value);
 		}
 		
 		public function get diffuseColor():Vector3 {
-			return _getColor(MATERIALDIFFUSE);
+			return _shaderValues.getVector(MATERIALDIFFUSE) as Vector3;
 		}
 		
 		public function set diffuseColor(value:Vector3):void {
-			_setColor(MATERIALDIFFUSE, value);
+			_shaderValues.setVector(MATERIALDIFFUSE, value);
 		}
 		
 		public function get specularColor():Vector4 {
-			return _getColor(MATERIALSPECULAR);
+			return _shaderValues.getVector(MATERIALSPECULAR) as Vector4;
 		}
 		
 		public function set specularColor(value:Vector4):void {
-			_setColor(MATERIALSPECULAR, value);
+			_shaderValues.setVector(MATERIALSPECULAR, value);
 		}
 		
 		/**
@@ -149,27 +140,27 @@ package laya.d3.core.material {
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
+			var renderState:RenderState = getRenderState();
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				renderQueue = RenderQueue.OPAQUE;
-				depthWrite = true;
-				cull = CULL_BACK;
-				blend = BLEND_DISABLE;
-				depthTest = DEPTHTEST_LESS;
+				renderQueue = BaseMaterial.RENDERQUEUE_OPAQUE;
+				renderState.depthWrite = true;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_DISABLE;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				renderQueue = RenderQueue.OPAQUE;
-				depthWrite = false;
-				cull = CULL_BACK;
-				blend = BLEND_ENABLE_ALL;
-				srcBlend = BLENDPARAM_SRC_ALPHA;
-				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				depthTest = DEPTHTEST_LEQUAL;
+				renderQueue = BaseMaterial.RENDERQUEUE_OPAQUE;
+				renderState.depthWrite = false;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_ENABLE_ALL;
+				renderState.srcBlend = RenderState.BLENDPARAM_SRC_ALPHA;
+				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				renderState.depthTest = RenderState.DEPTHTEST_LEQUAL;
 				break;
 			default: 
 				throw new Error("TerrainMaterial:renderMode value error.");
 			}
-			_conchMaterial && _conchMaterial.setRenderMode(value);//NATIVE
 		}
 		
 		/**
@@ -177,7 +168,7 @@ package laya.d3.core.material {
 		 * @return 第一层贴图。
 		 */
 		public function get diffuseTexture1():BaseTexture {
-			return _getTexture(DIFFUSETEXTURE1);
+			return _shaderValues.getTexture(DIFFUSETEXTURE1);
 		}
 		
 		/**
@@ -185,7 +176,7 @@ package laya.d3.core.material {
 		 * @param value 第一层贴图。
 		 */
 		public function set diffuseTexture1(value:BaseTexture):void {
-			_setTexture(DIFFUSETEXTURE1, value);
+			_shaderValues.setTexture(DIFFUSETEXTURE1, value);
 		}
 		
 		/**
@@ -193,7 +184,7 @@ package laya.d3.core.material {
 		 * @return 第二层贴图。
 		 */
 		public function get diffuseTexture2():BaseTexture {
-			return _getTexture(DIFFUSETEXTURE2);
+			return _shaderValues.getTexture(DIFFUSETEXTURE2);
 		}
 		
 		/**
@@ -201,7 +192,7 @@ package laya.d3.core.material {
 		 * @param value 第二层贴图。
 		 */
 		public function set diffuseTexture2(value:BaseTexture):void {
-			_setTexture(DIFFUSETEXTURE2, value);
+			_shaderValues.setTexture(DIFFUSETEXTURE2, value);
 		}
 		
 		/**
@@ -209,7 +200,7 @@ package laya.d3.core.material {
 		 * @return 第三层贴图。
 		 */
 		public function get diffuseTexture3():BaseTexture {
-			return _getTexture(DIFFUSETEXTURE3);
+			return _shaderValues.getTexture(DIFFUSETEXTURE3);
 		}
 		
 		/**
@@ -217,7 +208,7 @@ package laya.d3.core.material {
 		 * @param value 第三层贴图。
 		 */
 		public function set diffuseTexture3(value:BaseTexture):void {
-			_setTexture(DIFFUSETEXTURE3, value);
+			_shaderValues.setTexture(DIFFUSETEXTURE3, value);
 		}
 		
 		/**
@@ -225,7 +216,7 @@ package laya.d3.core.material {
 		 * @return 第四层贴图。
 		 */
 		public function get diffuseTexture4():BaseTexture {
-			return _getTexture(DIFFUSETEXTURE4);
+			return _shaderValues.getTexture(DIFFUSETEXTURE4);
 		}
 		
 		/**
@@ -233,7 +224,7 @@ package laya.d3.core.material {
 		 * @param value 第四层贴图。
 		 */
 		public function set diffuseTexture4(value:BaseTexture):void {
-			_setTexture(DIFFUSETEXTURE4, value);
+			_shaderValues.setTexture(DIFFUSETEXTURE4, value);
 		}
 		
 		/**
@@ -241,7 +232,7 @@ package laya.d3.core.material {
 		 * @return splatAlpha贴图。
 		 */
 		public function get splatAlphaTexture():BaseTexture {
-			return _getTexture(SPLATALPHATEXTURE);
+			return _shaderValues.getTexture(SPLATALPHATEXTURE);
 		}
 		
 		/**
@@ -249,19 +240,19 @@ package laya.d3.core.material {
 		 * @param value splatAlpha贴图。
 		 */
 		public function set splatAlphaTexture(value:BaseTexture):void {
-			_setTexture(SPLATALPHATEXTURE, value);
+			_shaderValues.setTexture(SPLATALPHATEXTURE, value);
 		}
 		
 		public function get normalTexture():BaseTexture {
-			return _getTexture(NORMALTEXTURE);
+			return _shaderValues.getTexture(NORMALTEXTURE);
 		}
 		
 		public function set normalTexture(value:BaseTexture):void {
-			_setTexture(NORMALTEXTURE, value);
+			_shaderValues.setTexture(NORMALTEXTURE, value);
 		}
 		
 		public function disableLight():void {
-			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+			_disablePublicDefineDatas.add(Scene3D.SHADERDEFINE_POINTLIGHT | Scene3D.SHADERDEFINE_SPOTLIGHT | Scene3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**

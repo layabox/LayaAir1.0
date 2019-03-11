@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec4 a_Position;
 uniform mat4 u_MvpMatrix;
 
@@ -30,14 +32,11 @@ uniform mat4 u_MvpMatrix;
 #if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
 	attribute vec3 a_Normal;
 	varying vec3 v_Normal; 
-#endif
-
-#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
 	uniform vec3 u_CameraPos;
 	varying vec3 v_ViewDir; 
 #endif
 
-#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP))&&defined(NORMALMAP)
+#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
 	attribute vec4 a_Tangent0;
 	varying vec3 v_Tangent;
 	varying vec3 v_Binormal;
@@ -63,8 +62,7 @@ varying float v_posViewZ;
 void main_castShadow()
 {
 	#ifdef BONE
-		mat4 skinTransform=mat4(0.0);
-		skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
+		mat4 skinTransform = u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
 		skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
 		skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
 		skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
@@ -81,11 +79,26 @@ void main_castShadow()
 		v_posViewZ = gl_Position.z;
 }
 
+mat3 inverse(mat3 m) {
+  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];
+  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];
+  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];
+
+  float b01 = a22 * a11 - a12 * a21;
+  float b11 = -a22 * a10 + a12 * a20;
+  float b21 = a21 * a10 - a11 * a20;
+
+  float det = a00 * b01 + a01 * b11 + a02 * b21;
+
+  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),
+              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),
+              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;
+}
+
 void main_normal()
 {
 	#ifdef BONE
-		mat4 skinTransform=mat4(0.0);
-		skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
+		mat4 skinTransform = u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
 		skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
 		skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
 		skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
@@ -96,15 +109,15 @@ void main_normal()
 	#endif
 
 	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)||defined(REFLECTMAP)
-		mat3 worldMat;
+		mat3 worldInvMat;
 		#ifdef BONE
-			worldMat=mat3(u_WorldMat*skinTransform);
+			worldInvMat=inverse(mat3(u_WorldMat*skinTransform));
 		#else
-			worldMat=mat3(u_WorldMat);
+			worldInvMat=inverse(mat3(u_WorldMat));
 		#endif  
-		v_Normal=worldMat*a_Normal;//TODO:法线可以用"魔法"矩阵
+		v_Normal=a_Normal*worldInvMat;
 		#if (defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&defined(NORMALMAP)
-			v_Tangent=worldMat*a_Tangent0.xyz;
+			v_Tangent=a_Tangent0.xyz*worldInvMat;
 			v_Binormal=cross(v_Normal,v_Tangent)*a_Tangent0.w;
 		#endif
 	#endif
@@ -124,18 +137,18 @@ void main_normal()
 	#if defined(DIFFUSEMAP)||((defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT))&&(defined(SPECULARMAP)||defined(NORMALMAP)))
 		v_Texcoord0=a_Texcoord0;
 		#ifdef TILINGOFFSET
-			v_Texcoord0=(vec2(v_Texcoord0.x,v_Texcoord0.y-1.0)*u_TilingOffset.xy)+u_TilingOffset.zw;
-			v_Texcoord0=vec2(v_Texcoord0.x,1.0+v_Texcoord0.y);
+			v_Texcoord0=TransformUV(v_Texcoord0,u_TilingOffset);
 		#endif
 	#endif
 
 	#ifdef LIGHTMAP
 		#ifdef SCALEOFFSETLIGHTINGMAPUV
 			#ifdef UV1
-				v_LightMapUV=vec2(a_Texcoord1.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,1.0+a_Texcoord1.y*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+				v_LightMapUV=vec2(a_Texcoord1.x,1.0-a_Texcoord1.y)*u_LightmapScaleOffset.xy+u_LightmapScaleOffset.zw;
 			#else
-				v_LightMapUV=vec2(a_Texcoord0.x,a_Texcoord0.y-1.0)*u_LightmapScaleOffset.xy+u_LightmapScaleOffset.zw;
+				v_LightMapUV=vec2(a_Texcoord0.x,1.0-a_Texcoord0.y)*u_LightmapScaleOffset.xy+u_LightmapScaleOffset.zw;
 			#endif 
+			v_LightMapUV.y=1.0-v_LightMapUV.y;
 		#else
 			#ifdef UV1
 				v_LightMapUV=a_Texcoord1;
@@ -145,7 +158,7 @@ void main_normal()
 		#endif 
 	#endif
 
-	#ifdef COLOR
+	#if defined(COLOR)&&defined(ENABLEVERTEXCOLOR)
 		v_Color=a_Color;
 	#endif
 

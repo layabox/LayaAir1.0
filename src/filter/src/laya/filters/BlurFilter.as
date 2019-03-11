@@ -11,24 +11,16 @@ package laya.filters {
 		/**模糊滤镜的强度(值越大，越不清晰 */
 		public var strength:Number;
 		public var strength_sig2_2sig2_gauss1:Array = [];//给shader用的。避免创建对象
-		
+		public var strength_sig2_native:Float32Array;//给native用的
+		public var renderFunc:*;//
 		/**
 		 * 模糊滤镜
 		 * @param	strength	模糊滤镜的强度值
 		 */
 		public function BlurFilter(strength:Number = 4) {
-			if (Render.isWebGL) WebGLFilter.enable(); 
 			this.strength = strength;
-			_action = RunDriver.createFilterAction(BLUR);
-			_action.data = this;
-		}
-		
-		/**
-		 * @private
-		 * 当前滤镜对应的操作器
-		 */
-		override public function get action():IFilterAction {
-			return _action;
+			_action = null;
+			_glRender = new BlurFilterGLRender();
 		}
 		
 		/**
@@ -39,12 +31,20 @@ package laya.filters {
 			return BLUR;
 		}
 		
-		/**
-		 * @private 通知微端
-		 */
-		public override function callNative(sp:Sprite):void
+		public function getStrenth_sig2_2sig2_native():Float32Array
 		{
-			sp.conchModel &&sp.conchModel.blurFilter&&sp.conchModel.blurFilter(strength);
+			if (!strength_sig2_native)
+			{
+				strength_sig2_native = new Float32Array(4);
+			}
+			//TODO James 不要每次进行计算
+			var sigma:Number = strength/3.0;
+			var sigma2:Number = sigma * sigma;
+			strength_sig2_native[0] = strength;
+			strength_sig2_native[1] = sigma2;
+			strength_sig2_native[2] = 2.0*sigma2;
+			strength_sig2_native[3] = 1.0 / (2.0 * Math.PI * sigma2);
+			return strength_sig2_native;
 		}
 	}
 }

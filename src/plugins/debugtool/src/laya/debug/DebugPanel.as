@@ -29,14 +29,16 @@ package laya.debug {
 		}
 		public static var I:DebugPanel;
 		private static var overlay:Boolean;
+		private static var _enable:Boolean = false;
+		
 		/**
-		 * 初始化调试面板 
+		 * 启动调试面板
 		 * @param underGame 是否在游戏下方显示，true:将改变原游戏的大小,false:直接覆盖在游戏上方
 		 * @param bgColor 调试面板背景颜色
-		 * 
-		 */		
-		public static function init(underGame:Boolean=true,bgColor:String="#ffffff"):void {
-			if (!I) {
+		 */
+		public static function enable(underGame:Boolean = true, bgColor:String = "#ffffff"):void {
+			if (!_enable && !I) {
+				_enable = true;
 				overlay = !underGame;
 				DivScripts.init();
 				DebugTool.initBasicFunctions();
@@ -45,13 +47,12 @@ package laya.debug {
 				I = new DebugPanel();
 				I.setRoot(Laya.stage);
 				CacheAnalyser.showRecacheSprite = false;
-				if (bgColor)
-				{
+				if (bgColor) {
 					I.div.style.background = bgColor;
 				}
-			}
-		
+			}		
 		}
+		
 		public static const ChildrenSign:String = "item";
 		public static const LabelSign:String = "text";
 		
@@ -63,7 +64,7 @@ package laya.debug {
 			IDTools.idObj(sprite);
 			rst.id = IDTools.getObjID(sprite);
 			var childs:Array;
-			childs = sprite._childs;
+			childs = sprite._children;
 			var i:int, len:int;
 			len = childs.length;
 			var tchild:Object;
@@ -81,26 +82,26 @@ package laya.debug {
 		public static var tObjKeys:Array = [];
 		public var tShowObj:Object;
 		public var preValueO:Object = {};
-		public static var noDisplayKeys:Object = { "desginWidth":true, "desginHeight":true };
+		public static var noDisplayKeys:Object = {"desginWidth": true, "desginHeight": true};
+		public static const Bottom:String = "bottom";
+		public static const Right:String = "right";
+		public static var sideType:String = Bottom;
 		
-		private function removeNoDisplayKeys(arr:Array):void
-		{
+		private function removeNoDisplayKeys(arr:Array):void {
 			var i:int;
-			for (i = arr.length - 1; i >= 0; i--)
-			{
-				if (noDisplayKeys[arr[i]])
-				{
+			for (i = arr.length - 1; i >= 0; i--) {
+				if (noDisplayKeys[arr[i]]) {
 					arr.splice(i, 1);
 				}
 			}
 		}
+		
 		public function updateShowKeys():void {
 			tObjKeys.length = 0;
 			if (!tShowObj)
 				return;
 			tObjKeys = ClassTool.getObjectDisplayAbleKeys(tShowObj, tObjKeys);
-			if (tShowObj == Laya.stage)
-			{
+			if (tShowObj == Laya.stage) {
 				removeNoDisplayKeys(tObjKeys);
 			}
 			
@@ -138,6 +139,7 @@ package laya.debug {
 		public var div:*;
 		public var debug_view:*;
 		public var height:Number = 300;
+		public var width:Number = 600;
 		public var clickedHandler:Handler;
 		
 		private function _init():void {
@@ -149,12 +151,11 @@ package laya.debug {
 			debug_view.tree.attachEvent("onSelect", function(id:*):void {
 					var dataO:Object;
 					dataO = getDataByID(id, _treeDataList[0]);
-					if (dataO.target)
-					{
+					if (dataO.target) {
 						DebugTool.showDisBound(dataO.target);
 						showTargetInfo(dataO.target);
 					}
-					
+				
 				});
 			debug_view.setValueChangeHandler(function(data:*, new_value:*):void {
 					onValueChange(data, new_value);
@@ -200,10 +201,197 @@ package laya.debug {
 					}
 				
 				});
-			JSTools.showToBody(div, 0, 0);
 			
+			JSTools.showToBody(div, 0, 0);
+			initNewDivs();
+			initDragWork();
+			initTreeWidthDrag();
 			Laya.stage.on(Event.RESIZE, this, adptPos);
 			adptPos();
+		}
+		private function initNewDivs():void
+		{
+			var parentNode:*;
+			parentNode = Browser.document.getElementById("show_current_cache_control").parentNode;
+			var switchNode:*;
+			switchNode = Browser.createElement("input");
+			switchNode.type = "checkbox";
+			parentNode.appendChild(switchNode);
+			parentNode.append("右侧");
+			function onSwitchChange(e:*):void
+			{
+				if (e.target.checked)
+				{
+					sideType = Right;
+				}else
+				{
+					sideType = Bottom;
+				}
+				adptPos();
+			}
+			switchNode.addEventListener("change", onSwitchChange);
+		}
+		private var dragArea:Number = 10;
+		
+		private static function getOffset(e:*, sign:String):Number
+		{
+			var target:*;
+			target = e.target;
+			var cTarget:*;
+			cTarget = e.currentTarget;
+			var kSign:String;
+			if (sign == "X")
+			{
+				kSign = "offsetLeft";
+			}else
+			{
+				kSign = "offsetTop";
+			}
+			var value:Number;
+			value = e["offset" + sign];
+			while (target&&target != cTarget)
+			{
+				value += target[kSign];
+				target = target.offsetParent;
+			}
+			
+			return value;
+		}
+		
+		private function initTreeWidthDrag():void
+		{
+			
+			var leftDiv:*;
+			var rightDiv:*;
+			leftDiv = Browser.document.getElementById("tree_container");
+			var parentNode:*;
+			parentNode = leftDiv.parentNode;
+			rightDiv = parentNode.children[1];
+			var isMouseDown:Boolean = false;
+			var preX:Number;
+			var preY:Number;
+			
+			
+			function onDivMouseMove(e:*):void {
+				
+				var abs:Number;
+				abs = Math.abs(getOffset(e, "X")-leftDiv.clientWidth);
+				if (abs < dragArea)
+				{
+					div.style.cursor = "e-resize";
+				}else
+				{
+					div.style.cursor = "auto";
+				}
+				//e.stopPropagation();
+			
+			}
+			function onDivMouseDown(e:*):void {
+				var abs:Number;
+				abs = Math.abs(getOffset(e, "X")-leftDiv.clientWidth);
+				if (abs < dragArea)
+				{
+					div.style.cursor = "e-resize";
+					isMouseDown = true;
+				}else
+				{
+					isMouseDown = false;
+					return;
+				}
+				e.stopPropagation();
+			}
+			function onBodyMouseMove(e:*):void {
+				if (!isMouseDown)
+					return;
+				leftDiv.style.width = getOffset(e, "X")+"px";
+				e.stopPropagation();
+			}
+			function onDivMouseUp(e:*):void {
+				if (!isMouseDown)
+					return;
+				isMouseDown = false;
+				e.stopPropagation();
+			}
+			parentNode.addEventListener("mousedown", onDivMouseDown,true)
+			parentNode.addEventListener("mousemove", onDivMouseMove,true)
+			Browser.document.body.addEventListener("mousemove", onBodyMouseMove)
+			Browser.document.body.addEventListener("mouseup", onDivMouseUp)
+		}
+		private function initDragWork():void {
+			var isMouseDown:Boolean = false;
+			var preX:Number;
+			var preY:Number;
+			
+			
+			function onDivMouseMove(e:*):void {
+				if (sideType == Bottom) {
+					if (getOffset(e,"Y") < dragArea) {
+						div.style.cursor = "n-resize";
+					}
+					else {
+						div.style.cursor = "auto";
+					}
+				}
+				else {
+					if (getOffset(e,"X") < dragArea) {
+						div.style.cursor = "e-resize";
+					}
+					else {
+						div.style.cursor = "auto";
+					}
+				}
+			
+			}
+			function onDivMouseDown(e:*):void {
+				if (sideType == Bottom)
+				{
+					if (getOffset(e,"Y") > dragArea)
+					return;
+				}else
+				{
+					if (getOffset(e,"X") > dragArea)
+					return;
+				}
+				
+				isMouseDown = true;
+				preX = e.pageX;
+				preY = e.pageY;
+				e.stopPropagation();
+			}
+			function onBodyMouseMove(e:*):void {
+				if (!isMouseDown)
+					return;
+				var curX:Number;
+				var curY:Number;
+				var dX:Number;
+				var dY:Number;
+				curX = e.pageX;
+				curY = e.pageY;
+				dX = curX - preX;
+				dY = curY - preY;
+				if (sideType == Bottom)
+				{
+					this.height -= dY;
+				}else
+				{
+					this.width -= dX;
+				}
+				
+				adptPos();
+				preX = curX;
+				preY = curY;
+				e.stopPropagation();
+			}
+			function onDivMouseUp(e:*):void {
+				if (!isMouseDown)
+					return;
+				isMouseDown = false;
+				e.stopPropagation();
+			}
+			div.addEventListener("mousedown", onDivMouseDown,true)
+			div.addEventListener("mousemove", onDivMouseMove,true)
+			Browser.document.body.addEventListener("mousemove", onBodyMouseMove)
+			Browser.document.body.addEventListener("mouseup", onDivMouseUp)
 		}
 		
 		private function onClickSelected(target:*):void {
@@ -223,8 +411,8 @@ package laya.debug {
 		
 		private function onSelectItem(obj:Object):void {
 			var tTarget:*;
-			tTarget = obj.target;		
-			showTargetInfo(tTarget);				
+			tTarget = obj.target;
+			showTargetInfo(tTarget);
 		}
 		
 		public static function mParseFloat(v:*):Number {
@@ -280,14 +468,25 @@ package laya.debug {
 		}
 		
 		private var fromMe:Boolean = false;
+		
 		private function adptPos():void {
-			if (fromMe) return;
+			if (fromMe)
+				return;
 			fromMe = true;
-			JSTools.setPos(div, 0, Browser.clientHeight - this.height);
-			debug_view.resize(Browser.clientWidth, this.height);
-			if (!overlay)
-			{
-				Laya.stage.setScreenSize(Browser.clientWidth * Browser.pixelRatio, (Browser.clientHeight - this.height) * Browser.pixelRatio);
+			
+			if (sideType == Bottom) {
+				JSTools.setPos(div, 0, Browser.clientHeight - this.height);
+				debug_view.resize(Browser.clientWidth, this.height);
+				if (!overlay) {
+					Laya.stage.setScreenSize(Browser.clientWidth * Browser.pixelRatio, (Browser.clientHeight - this.height) * Browser.pixelRatio);
+				}
+			}
+			else {
+				JSTools.setPos(div, Browser.clientWidth - this.width, 0);
+				debug_view.resize(this.width, Browser.clientHeight);
+				if (!overlay) {
+					Laya.stage.setScreenSize((Browser.clientWidth - this.width) * Browser.pixelRatio, Browser.clientHeight * Browser.pixelRatio);
+				}
 			}
 			
 			fromMe = false;

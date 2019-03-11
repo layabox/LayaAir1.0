@@ -4,6 +4,7 @@ package laya.ui {
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.utils.Handler;
+	import laya.utils.Tween;
 	
 	/**
 	 * <code>Dialog</code> 组件是一个弹出对话框，实现对话框弹出，拖动，模式窗口功能。
@@ -146,15 +147,15 @@ package laya.ui {
 		public static const SURE:String = "sure";
 		/**对话框内的某个按钮命名为no，点击此按钮则会关闭*/
 		public static const NO:String = "no";
-		/**对话框内的某个按钮命名为ok，点击此按钮则会关闭*/
-		public static const OK:String = "ok";
 		/**对话框内的某个按钮命名为yes，点击此按钮则会关闭*/
 		public static const YES:String = "yes";
+		/**对话框内的某个按钮命名为ok，点击此按钮则会关闭*/
+		public static const OK:String = "ok";
 		
 		/**@private 表示对话框管理器。*/
 		private static var _manager:DialogManager;
 		
-		/**对话框管理容器，所有的对话框都在该容器内，并且受管理器管，可以自定义自己的管理器，来更改窗口管理的流程。
+		/**对话框管理容器，所有的对话框都在该容器内，并且受管理器管理，可以自定义自己的管理器，来更改窗口管理的流程。
 		 * 任意对话框打开和关闭，都会触发管理类的open和close事件*/
 		public static function get manager():DialogManager {
 			return _manager ||= new DialogManager();
@@ -164,11 +165,6 @@ package laya.ui {
 			_manager = value;
 		}
 		
-		/**
-		 * 一个布尔值，指定对话框是否居中弹。
-		 * <p>如果值为true，则居中弹出，否则，则根据对象坐标显示，默认为true。</p>
-		 */
-		public var popupCenter:Boolean = true;
 		/**
 		 * 对话框被关闭时会触发的回调函数处理器。
 		 * <p>回调函数参数为用户点击的按钮名字name:String。</p>
@@ -188,96 +184,39 @@ package laya.ui {
 		public var group:String;
 		/**是否是模式窗口*/
 		public var isModal:Boolean;
+		/**是否显示弹出效果*/
+		public var isShowEffect:Boolean = true;
+		/**指定对话框是否居中弹。<p>如果值为true，则居中弹出，否则，则根据对象坐标显示，默认为true。</p>*/
+		public var isPopupCenter:Boolean = true;
+		/**关闭类型，点击name为"close"，"cancel"，"sure"，"no"，"yes"，"no"的按钮时，会自动记录点击按钮的名称*/
+		public var closeType:String;
 		/**@private */
-		protected var _dragArea:Rectangle;
+		private var _dragArea:Rectangle;
+		/**@private */
+		public var _param:*;
+		/**@private */
+		public var _effectTween:Tween;		
 		
-		/**@inheritDoc */
-		override protected function initialize():void {
+		public function Dialog() {
 			popupEffect = manager.popupEffectHandler;
 			closeEffect = manager.closeEffectHandler;
 			_dealDragArea();
 			on(Event.CLICK, this, _onClick);
 		}
 		
-		/**@private */
+		/**@private 提取拖拽区域*/
 		protected function _dealDragArea():void {
 			var dragTarget:Sprite = getChildByName("drag") as Sprite;
 			if (dragTarget) {
-				dragArea = dragTarget.x + "," + dragTarget.y + "," + dragTarget.width + "," + dragTarget.height;
+				dragArea = dragTarget._x + "," + dragTarget._y + "," + dragTarget.width + "," + dragTarget.height;
 				dragTarget.removeSelf();
 			}
 		}
 		
 		/**
-		 * @private (protected)
-		 * 对象的 <code>Event.CLICK</code> 点击事件侦听处理函数。
-		 */
-		protected function _onClick(e:Event):void {
-			var btn:Button = e.target as Button;
-			if (btn) {
-				switch (btn.name) {
-				case CLOSE: 
-				case CANCEL: 
-				case SURE: 
-				case NO: 
-				case OK: 
-				case YES: 
-					close(btn.name);
-					break;
-				}
-			}
-		}
-		
-		/**
-		 * 显示对话框（以非模式窗口方式显示）。
-		 * @param closeOther 是否关闭其它的对话框。若值为true则关闭其它对话框。
-		 * @param showEffect 是否显示弹出效果
-		 */
-		public function show(closeOther:Boolean = false, showEffect:Boolean = true):void {
-			_open(false, closeOther, showEffect);
-		}
-		
-		/**
-		 * 显示对话框（以模式窗口方式显示）。
-		 * @param closeOther 是否关闭其它的对话框。若值为true则关闭其它对话框。
-		 * @param showEffect 是否显示弹出效果
-		 */
-		public function popup(closeOther:Boolean = false, showEffect:Boolean = true):void {
-			_open(true, closeOther, showEffect);
-		}
-		
-		/**@private */
-		protected function _open(modal:Boolean, closeOther:Boolean, showEffect:Boolean):void {
-			manager.lock(false);
-			isModal = modal;
-			manager.open(this, closeOther, showEffect);
-		}
-		
-		/**打开完成后，调用此方法（如果有弹出动画，则在动画完成后执行）*/
-		public function onOpened():void {
-		}
-		
-		/**
-		 * 关闭对话框。
-		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
-		 * @param showEffect 是否显示关闭效果
-		 */
-		public function close(type:String = null, showEffect:Boolean = true):void {
-			manager.close(this, type, showEffect);
-		}
-		
-		/**关闭完成后，调用此方法（如果有关闭动画，则在动画完成后执行）
-		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
-		 */
-		public function onClosed(type:String = null):void {
-		}
-		
-		/**
 		 * 用来指定对话框的拖拽区域。默认值为"0,0,0,0"。
 		 * <p><b>格式：</b>构成一个矩形所需的 x,y,width,heith 值，用逗号连接为字符串。
-		 * 例如："0,0,100,200"。
-		 * </p>
-		 *
+		 * 例如："0,0,100,200"。</p>
 		 * @see #includeExamplesSummary 请参考示例
 		 */
 		public function get dragArea():String {
@@ -303,13 +242,81 @@ package laya.ui {
 			else this.stopDrag();
 		}
 		
+		/**@private 处理默认点击事件*/
+		protected function _onClick(e:Event):void {
+			var btn:Button = e.target as Button;
+			if (btn) {
+				switch (btn.name) {
+				case CLOSE: 
+				case CANCEL: 
+				case SURE: 
+				case NO: 
+				case OK: 
+				case YES: 
+					close(btn.name);
+					return;
+				}
+			}
+		}
+		
+		/**@inheritDoc */
+		override public function open(closeOther:Boolean = true, param:* = null):void {
+			_dealDragArea();
+			_param = param;
+			manager.open(this, closeOther, isShowEffect);
+			manager.lock(false);
+		}
+		
 		/**
-		 * 弹出框的显示状态；如果弹框处于显示中，则为true，否则为false;
+		 * 关闭对话框。
+		 * @param type 关闭的原因，会传递给onClosed函数
 		 */
+		override public function close(type:String = null):void {
+			closeType = type;
+			manager.close(this);
+		}
+		
+		/**@inheritDoc */
+		override public function destroy(destroyChild:Boolean = true):void {
+			closeHandler = null;
+			popupEffect = null;
+			closeEffect = null;
+			_dragArea = null;
+			super.destroy(destroyChild);
+		}
+		
+		/**
+		 * 显示对话框（以非模式窗口方式显示）。
+		 * @param closeOther 是否关闭其它的对话框。若值为true则关闭其它对话框。
+		 * @param showEffect 是否显示弹出效果
+		 */
+		public function show(closeOther:Boolean = false, showEffect:Boolean = true):void {
+			_open(false, closeOther, showEffect);
+		}
+		
+		/**
+		 * 显示对话框（以模式窗口方式显示）。
+		 * @param closeOther 是否关闭其它的对话框。若值为true则关闭其它对话框。
+		 * @param showEffect 是否显示弹出效果
+		 */
+		public function popup(closeOther:Boolean = false, showEffect:Boolean = true):void {
+			_open(true, closeOther, showEffect);
+		}
+		
+		/**@private */
+		protected function _open(modal:Boolean, closeOther:Boolean, showEffect:Boolean):void {
+			isModal = modal;
+			isShowEffect = showEffect;
+			manager.lock(true);
+			this.open(closeOther);
+		}
+		
+		/**弹出框的显示状态；如果弹框处于显示中，则为true，否则为false;*/
 		public function get isPopup():Boolean {
 			return parent != null;
 		}
 		
+		/**@inheritDoc */
 		override public function set zOrder(value:Number):void {
 			super.zOrder = value;
 			manager._checkMask();
@@ -319,7 +326,7 @@ package laya.ui {
 		 * 设置锁定界面，在界面未准备好前显示锁定界面，准备完毕后则移除锁定层，如果为空则什么都不显示
 		 * @param	view 锁定界面内容
 		 */
-		public static function setLockView(view:Component):void {
+		public static function setLockView(view:UIComponent):void {
 			manager.setLockView(view);
 		}
 		

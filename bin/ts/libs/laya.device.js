@@ -3,9 +3,9 @@
 	var __un=Laya.un,__uns=Laya.uns,__static=Laya.static,__class=Laya.class,__getset=Laya.getset,__newvec=Laya.__newvec;
 
 	var Bitmap=laya.resource.Bitmap,Browser=laya.utils.Browser,Event=laya.events.Event,EventDispatcher=laya.events.EventDispatcher;
-	var Handler=laya.utils.Handler,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render,Sprite=laya.display.Sprite;
-	var Stage=laya.display.Stage,Texture=laya.resource.Texture,Utils=laya.utils.Utils,WebGL=laya.webgl.WebGL;
-	var WebGLContext=laya.webgl.WebGLContext;
+	var Handler=laya.utils.Handler,LayaGL=laya.layagl.LayaGL,Rectangle=laya.maths.Rectangle,Render=laya.renders.Render;
+	var Sprite=laya.display.Sprite,Stage=laya.display.Stage,Texture=laya.resource.Texture,Utils=laya.utils.Utils;
+	var WebGL=laya.webgl.WebGL,WebGLContext=laya.webgl.WebGLContext;
 /**
 *使用前可用<code>supported</code>查看浏览器支持。
 */
@@ -54,6 +54,34 @@ var Geolocation=(function(){
 	['navigator',function(){return this.navigator=Browser.window.navigator;},'position',function(){return this.position=new GeolocationInfo();},'supported',function(){return this.supported=!!Geolocation.navigator.geolocation;},'timeout',function(){return this.timeout=1E10;}
 	]);
 	return Geolocation;
+})()
+
+
+/**
+*加速度x/y/z的单位均为m/s²。
+*在硬件（陀螺仪）不支持的情况下，alpha、beta和gamma值为null。
+*
+*@author Survivor
+*/
+//class laya.device.motion.AccelerationInfo
+var AccelerationInfo=(function(){
+	function AccelerationInfo(){
+		/**
+		*x轴上的加速度值。
+		*/
+		this.x=NaN;
+		/**
+		*y轴上的加速度值。
+		*/
+		this.y=NaN;
+		/**
+		*z轴上的加速度值。
+		*/
+		this.z=NaN;
+	}
+
+	__class(AccelerationInfo,'laya.device.motion.AccelerationInfo');
+	return AccelerationInfo;
 })()
 
 
@@ -135,34 +163,6 @@ var Media=(function(){
 	}
 
 	return Media;
-})()
-
-
-/**
-*加速度x/y/z的单位均为m/s²。
-*在硬件（陀螺仪）不支持的情况下，alpha、beta和gamma值为null。
-*
-*@author Survivor
-*/
-//class laya.device.motion.AccelerationInfo
-var AccelerationInfo=(function(){
-	function AccelerationInfo(){
-		/**
-		*x轴上的加速度值。
-		*/
-		this.x=NaN;
-		/**
-		*y轴上的加速度值。
-		*/
-		this.y=NaN;
-		/**
-		*z轴上的加速度值。
-		*/
-		this.z=NaN;
-	}
-
-	__class(AccelerationInfo,'laya.device.motion.AccelerationInfo');
-	return AccelerationInfo;
 })()
 
 
@@ -270,7 +270,7 @@ var Accelerator=(function(_super){
 		Accelerator.rotationRate.alpha=e.rotationRate.gamma *-1;
 		Accelerator.rotationRate.beta=e.rotationRate.alpha *-1;
 		Accelerator.rotationRate.gamma=e.rotationRate.beta;
-		if (Browser.onAndriod){
+		if (Browser.onAndroid){
 			if (Accelerator.onChrome){
 				Accelerator.rotationRate.alpha *=180 / Math.PI;
 				Accelerator.rotationRate.beta *=180 / Math.PI;
@@ -483,6 +483,67 @@ var Shake=(function(_super){
 
 
 /**
+*@private
+*/
+//class laya.device.media.HtmlVideo extends laya.resource.Bitmap
+var HtmlVideo=(function(_super){
+	function HtmlVideo(){
+		this.video=null;
+		this._source=null;
+		HtmlVideo.__super.call(this);
+		this._width=1;
+		this._height=1;
+		this.createDomElement();
+	}
+
+	__class(HtmlVideo,'laya.device.media.HtmlVideo',_super);
+	var __proto=HtmlVideo.prototype;
+	__proto.createDomElement=function(){
+		var _$this=this;
+		this._source=this.video=Browser.createElement("video");
+		var style=this.video.style;
+		style.position='absolute';
+		style.top='0px';
+		style.left='0px';
+		this.video.addEventListener("loadedmetadata",(function(){
+			this._w=_$this.video.videoWidth;
+			this._h=_$this.video.videoHeight;
+		})['bind'](this));
+	}
+
+	__proto.setSource=function(url,extension){
+		while(this.video.childElementCount)
+		this.video.firstChild.remove();
+		if (extension & Video.MP4)
+			this.appendSource(url,"video/mp4");
+		if (extension & Video.OGG)
+			this.appendSource(url+".ogg","video/ogg");
+	}
+
+	__proto.appendSource=function(source,type){
+		var sourceElement=Browser.createElement("source");
+		sourceElement.src=source;
+		sourceElement.type=type;
+		this.video.appendChild(sourceElement);
+	}
+
+	__proto.getVideo=function(){
+		return this.video;
+	}
+
+	__proto._getSource=function(){
+		return this._source;
+	}
+
+	HtmlVideo.create=function(){
+		return new HtmlVideo();
+	}
+
+	return HtmlVideo;
+})(Bitmap)
+
+
+/**
 *<code>Video</code>将视频显示到Canvas上。<code>Video</code>可能不会在所有浏览器有效。
 *<p>关于Video支持的所有事件参见：<i>http://www.w3school.com.cn/tags/html_ref_audio_video_dom.asp</i>。</p>
 *<p>
@@ -501,10 +562,12 @@ var Video=(function(_super){
 		(width===void 0)&& (width=320);
 		(height===void 0)&& (height=240);
 		Video.__super.call(this);
-		if (Render.isWebGL)
+		if (Render.isConchApp || Render.isWebGL){
 			this.htmlVideo=new WebGLVideo();
-		else
-		this.htmlVideo=new HtmlVideo();
+		}
+		else{
+			this.htmlVideo=new HtmlVideo();
+		}
 		this.videoElement=this.htmlVideo.getVideo();
 		this.videoElement.layaTarget=this;
 		this.internalTexture=new Texture(this.htmlVideo);
@@ -540,8 +603,9 @@ var Video=(function(_super){
 	__class(Video,'laya.device.media.Video',_super);
 	var __proto=Video.prototype;
 	__proto.onPlayComplete=function(e){
-		Laya.timer.clear(this,this.renderCanvas);
 		this.event("ended");
+		if(!Render.isConchApp || !this.videoElement.loop)
+			Laya.timer.clear(this,this.renderCanvas);
 	}
 
 	/**
@@ -607,7 +671,7 @@ var Video=(function(_super){
 	__proto.renderCanvas=function(){
 		if (this.readyState===0)
 			return;
-		if (Render.isWebGL)
+		if (Render.isConchApp || Render.isWebGL)
 			this.htmlVideo['updateTexture']();
 		this.graphics.clear();
 		this.graphics.drawTexture(this.internalTexture,0,0,this.width,this.height);
@@ -621,7 +685,13 @@ var Video=(function(_super){
 
 	__proto.size=function(width,height){
 		_super.prototype.size.call(this,width,height)
-		this.videoElement.width=width / Browser.pixelRatio;
+		if (Render.isConchApp){
+			var transform=Utils.getTransformRelativeToWindow(this,0,0);
+			this.videoElement.width=width *transform.scaleX;
+		}
+		else{
+			this.videoElement.width=width / Browser.pixelRatio;
+		}
 		if (this.paused)this.renderCanvas();
 		return this;
 	}
@@ -655,7 +725,9 @@ var Video=(function(_super){
 		this.videoElement.removeEventListener("waiting",Video.onWaiting);
 		this.videoElement.removeEventListener("ended",this.onPlayComplete);
 		this.pause();
+		this.videoElement.layaTarget=null
 		this.videoElement=null;
+		this.htmlVideo.destroy();
 	}
 
 	__proto.syncVideoPosition=function(){
@@ -762,6 +834,28 @@ var Video=(function(_super){
 	});
 
 	/**
+	*设置视频的x坐标
+	*/
+	__getset(0,__proto,'x',_super.prototype._$get_x,function(val){
+		Laya.superSet(Sprite,this,'x',val);
+		if (Render.isConchApp){
+			var transform=Utils.getTransformRelativeToWindow(this,0,0);
+			this.videoElement.style.left=transform.x;
+		}
+	});
+
+	/**
+	*设置视频的y坐标
+	*/
+	__getset(0,__proto,'y',_super.prototype._$get_y,function(val){
+		Laya.superSet(Sprite,this,'y',val);
+		if (Render.isConchApp){
+			var transform=Utils.getTransformRelativeToWindow(this,0,0);
+			this.videoElement.style.top=transform.y;
+		}
+	});
+
+	/**
 	*playbackRate 属性设置或返回音频/视频的当前播放速度。如：
 	*<ul>
 	*<li>1.0 正常速度</li>
@@ -823,15 +917,27 @@ var Video=(function(_super){
 		return this.videoElement.seeking;
 	});
 
-	__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-		Laya.superSet(Sprite,this,'height',value);
+	__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+		if (Render.isConchApp){
+			var transform=Utils.getTransformRelativeToWindow(this,0,0);
+			this.videoElement.width=value *transform.scaleX;
+		}
+		else{
+			this.videoElement.width=this.width / Browser.pixelRatio;
+		}
+		Laya.superSet(Sprite,this,'width',value);
 		if (this.paused)this.renderCanvas();
 	});
 
-	__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-		this.videoElement.width=this.width / Browser.pixelRatio;
-		Laya.superSet(Sprite,this,'width',value);
-		if (this.paused)this.renderCanvas();
+	__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+		if (Render.isConchApp){
+			var transform=Utils.getTransformRelativeToWindow(this,0,0);
+			this.videoElement.height=value *transform.scaleY;
+		}
+		else{
+			this.videoElement.height=this.height / Browser.pixelRatio;
+		}
+		Laya.superSet(Sprite,this,'height',value);
 	});
 
 	Video.onAbort=function(e){e.target.layaTarget.event("abort")}
@@ -869,62 +975,6 @@ var Video=(function(_super){
 /**
 *@private
 */
-//class laya.device.media.HtmlVideo extends laya.resource.Bitmap
-var HtmlVideo=(function(_super){
-	function HtmlVideo(){
-		this.video=null;
-		HtmlVideo.__super.call(this);
-		this._w=1;
-		this._h=1;
-		this.createDomElement();
-	}
-
-	__class(HtmlVideo,'laya.device.media.HtmlVideo',_super);
-	var __proto=HtmlVideo.prototype;
-	__proto.createDomElement=function(){
-		var _$this=this;
-		this._source=this.video=Browser.createElement("video");
-		var style=this.video.style;
-		style.position='absolute';
-		style.top='0px';
-		style.left='0px';
-		this.video.addEventListener("loadedmetadata",(function(){
-			this._w=_$this.video.videoWidth;
-			this._h=_$this.video.videoHeight;
-		})['bind'](this));
-	}
-
-	__proto.setSource=function(url,extension){
-		while(this.video.childElementCount)
-		this.video.firstChild.remove();
-		if (extension & Video.MP4)
-			this.appendSource(url,"video/mp4");
-		if (extension & Video.OGG)
-			this.appendSource(url+".ogg","video/ogg");
-	}
-
-	__proto.appendSource=function(source,type){
-		var sourceElement=Browser.createElement("source");
-		sourceElement.src=source;
-		sourceElement.type=type;
-		this.video.appendChild(sourceElement);
-	}
-
-	__proto.getVideo=function(){
-		return this.video;
-	}
-
-	HtmlVideo.create=function(){
-		return new HtmlVideo();
-	}
-
-	return HtmlVideo;
-})(Bitmap)
-
-
-/**
-*@private
-*/
 //class laya.device.media.WebGLVideo extends laya.device.media.HtmlVideo
 var WebGLVideo=(function(_super){
 	function WebGLVideo(){
@@ -932,43 +982,49 @@ var WebGLVideo=(function(_super){
 		this.preTarget=null;
 		this.preTexture=null;
 		WebGLVideo.__super.call(this);
-		if(Browser.onIPhone)
+		if(!Render.isConchApp && Browser.onIPhone)
 			return;
-		this.gl=WebGL.mainContext;
+		this.gl=/*__JS__ */Render.isConchApp ? LayaGLContext.instance :WebGL.mainContext;
 		this._source=this.gl.createTexture();
-		this.preTarget=WebGLContext.curBindTexTarget;
-		this.preTexture=WebGLContext.curBindTexValue;
 		WebGLContext.bindTexture(this.gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
 		this.gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_S*/0x2802,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 		this.gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_WRAP_T*/0x2803,/*laya.webgl.WebGLContext.CLAMP_TO_EDGE*/0x812F);
 		this.gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MAG_FILTER*/0x2800,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
 		this.gl.texParameteri(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,/*laya.webgl.WebGLContext.TEXTURE_MIN_FILTER*/0x2801,/*laya.webgl.WebGLContext.LINEAR*/0x2601);
-		(this.preTarget && this.preTexture)&& (WebGLContext.bindTexture(this.gl,this.preTarget,this.preTexture));
+		WebGLContext.bindTexture(this.gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
 	}
 
 	__class(WebGLVideo,'laya.device.media.WebGLVideo',_super);
 	var __proto=WebGLVideo.prototype;
+	//(preTarget && preTexture)&& (WebGLContext.bindTexture(gl,preTarget,preTexture));
 	__proto.updateTexture=function(){
-		if(Browser.onIPhone)
+		if(!Render.isConchApp && Browser.onIPhone)
 			return;
 		WebGLContext.bindTexture(this.gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,this._source);
 		this.gl.texImage2D(/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,0,/*laya.webgl.WebGLContext.RGB*/0x1907,/*laya.webgl.WebGLContext.RGB*/0x1907,/*laya.webgl.WebGLContext.UNSIGNED_BYTE*/0x1401,this.video);
+		WebGLVideo.curBindSource=this._source;
 	}
 
+	__proto.destroy=function(){
+		if (this._source){
+			this.gl=/*__JS__ */Render.isConchApp ? LayaGLContext.instance :WebGL.mainContext;
+			if (WebGLVideo.curBindSource==this._source){
+				WebGLContext.bindTexture(this.gl,/*laya.webgl.WebGLContext.TEXTURE_2D*/0x0DE1,null);
+				WebGLVideo.curBindSource=null;
+			}
+			this.gl.deleteTexture(this._source);
+		}
+		laya.resource.Resource.prototype.destroy.call(this);
+	}
+
+	__getset(0,__proto,'_glTexture',function(){
+		return this._source;
+	});
+
+	WebGLVideo.curBindSource=null;
 	return WebGLVideo;
 })(HtmlVideo)
 
 
 	Laya.__init([Media]);
 })(window,document,Laya);
-
-if (typeof define === 'function' && define.amd){
-	define('laya.core', ['require', "exports"], function(require, exports) {
-        'use strict';
-        Object.defineProperty(exports, '__esModule', { value: true });
-        for (var i in Laya) {
-			var o = Laya[i];
-            o && o.__isclass && (exports[i] = o);
-        }
-    });
-}

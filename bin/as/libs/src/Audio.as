@@ -3,7 +3,7 @@ package {
 	
 	/**
 	 * @private
-	 * 声音
+	 * 声音API
 	 */
 	public dynamic class Audio {
 		/**设置或返回是否在加载完成后随即播放音频/视频*/

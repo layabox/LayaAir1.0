@@ -5,8 +5,8 @@ attribute float a_Texcoord0X;
 attribute float a_Texcoord0Y;
 attribute float a_BirthTime;
 
-uniform mat4 u_VMatrix;
-uniform mat4 u_PMatrix;
+uniform mat4 u_View;
+uniform mat4 u_Projection;
 
 uniform vec4 u_TilingOffset;
 
@@ -34,18 +34,19 @@ float hermiteInterpolate(float t, float outTangent, float inTangent, float durat
 
 float getCurWidth(in float normalizeTime)
 {
+	float width;
 	if(normalizeTime == 0.0){
-		return u_WidthCurve[0].w;
+		width=u_WidthCurve[0].w;
 	}
 	else if(normalizeTime >= 1.0){
-		return u_WidthCurve[u_WidthCurveKeyLength - 1].w;
+		width=u_WidthCurve[u_WidthCurveKeyLength - 1].w;
 	}
 	else{
 		for(int i = 0; i < 10; i ++ )
 		{
-			if(normalizeTime == u_WidthCurve[i].x)
-			{
-				return u_WidthCurve[i].w;
+			if(normalizeTime == u_WidthCurve[i].x){
+				width=u_WidthCurve[i].w;
+				break;
 			}
 			
 			vec4 lastFrame = u_WidthCurve[i];
@@ -58,10 +59,12 @@ float getCurWidth(in float normalizeTime)
 				float inTangent = nextFrame.y;
 				float value1 = lastFrame.w;
 				float value2 = nextFrame.w;
-				return hermiteInterpolate(t, outTangent, inTangent, duration, value1, value2);
+				width=hermiteInterpolate(t, outTangent, inTangent, duration, value1, value2);
+				break;
 			}
-		}	
+		}
 	}
+	return width;
 }	
 
 vec4 getColorFromGradientByBlend(in vec4 gradientColors[10], in vec2 gradientAlphas[10], in float normalizeTime)
@@ -70,26 +73,26 @@ vec4 getColorFromGradientByBlend(in vec4 gradientColors[10], in vec2 gradientAlp
 	for(int i = 1; i < 10; i++)
 	{
 		vec4 gradientColor = gradientColors[i];
-		float colorKey = gradientColor.w;
+		float colorKey = gradientColor.x;
 		if(colorKey >= normalizeTime)
 		{
 			vec4 lastGradientColor = gradientColors[i-1];
-			float lastColorKey = lastGradientColor.w;
+			float lastColorKey = lastGradientColor.x;
 			float age = (normalizeTime - lastColorKey) / (colorKey - lastColorKey);
-			color.rgb = mix(gradientColors[i-1].xyz, gradientColor.xyz, age);
+			color.rgb = mix(gradientColors[i-1].yzw, gradientColor.yzw, age);
 			break;
 		}
 	}
 	for(int i = 1; i < 10; i++)
 	{
 		vec2 gradientAlpha = gradientAlphas[i];
-		float alphaKey = gradientAlpha.y;
+		float alphaKey = gradientAlpha.x;
 		if(alphaKey >= normalizeTime)
 		{
 			vec2 lastGradientAlpha = gradientAlphas[i-1];
-			float lastAlphaKey = lastGradientAlpha.y;
+			float lastAlphaKey = lastGradientAlpha.x;
 			float age = (normalizeTime - lastAlphaKey) / (alphaKey - lastAlphaKey);
-			color.a = mix(lastGradientAlpha.x, gradientAlpha.x, age);
+			color.a = mix(lastGradientAlpha.y, gradientAlpha.y, age);
 			break;
 		}
 	}
@@ -124,10 +127,8 @@ void main()
 {
 	float normalizeTime = (u_CurTime - a_BirthTime) / u_LifeTime;
 	
-	gl_Position = u_PMatrix * u_VMatrix * vec4(a_Position + a_OffsetVector * getCurWidth(normalizeTime),1.0);
-	
 	#ifdef TILINGOFFSET
-		v_Texcoord0 = (vec2(a_Texcoord0X, a_Texcoord0Y) * u_TilingOffset.xy) + u_TilingOffset.zw;
+		v_Texcoord0 = vec2(a_Texcoord0X, 1.0 - a_Texcoord0Y) * u_TilingOffset.xy + u_TilingOffset.zw;
 	#else
 		v_Texcoord0 = vec2(a_Texcoord0X, a_Texcoord0Y);
 	#endif
@@ -137,7 +138,6 @@ void main()
 	#else
 		v_Color = getColorFromGradientByFixed(u_GradientColorkey, u_GradientAlphakey, normalizeTime);
 	#endif
+	
+	gl_Position = u_Projection * u_View * vec4(a_Position + a_OffsetVector * getCurWidth(normalizeTime),1.0);
 }
-
-
-

@@ -1,5 +1,6 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
+	import laya.layagl.LayaGL;
 	
 	/**
 	 * <code>Matrix4x4</code> 类用于创建4x4矩阵。
@@ -15,8 +16,9 @@ package laya.d3.math {
 		/**@private */
 		private static var _tempVector2:Vector3 = new Vector3();
 		/**@private */
+		private static var _tempVector3:Vector3 = new Vector3();
+		/**@private */
 		private static var _tempQuaternion:Quaternion = new Quaternion();
-		
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix4x4 = new Matrix4x4();
 		/**默认矩阵,禁止修改*/
@@ -124,6 +126,46 @@ package laya.d3.math {
 			resultE[10] = zz + (cos * (1.0 - zz));
 		}
 		
+		public function setRotation(rotation:Quaternion):void{
+			
+			var rotationE:Float32Array = rotation.elements;
+			var rotationX:Number = rotationE[0];
+			var rotationY:Number = rotationE[1];
+			var rotationZ:Number = rotationE[2];
+			var rotationW:Number = rotationE[3];
+			
+			var xx:Number = rotationX * rotationX;
+			var yy:Number = rotationY * rotationY;
+			var zz:Number = rotationZ * rotationZ;
+			var xy:Number = rotationX * rotationY;
+			var zw:Number = rotationZ * rotationW;
+			var zx:Number = rotationZ * rotationX;
+			var yw:Number = rotationY * rotationW;
+			var yz:Number = rotationY * rotationZ;
+			var xw:Number = rotationX * rotationW;
+			
+			var e:Float32Array = this.elements;
+			e[0] = 1.0 - (2.0 * (yy + zz));
+			e[1] = 2.0 * (xy + zw);
+			e[2] = 2.0 * (zx - yw);
+			e[4] = 2.0 * (xy - zw);
+			e[5] = 1.0 - (2.0 * (zz + xx));
+			e[6] = 2.0 * (yz + xw);
+			e[8] = 2.0 * (zx + yw);
+			e[9] = 2.0 * (yz - xw);
+			e[10] = 1.0 - (2.0 * (yy + xx));
+		}
+		
+		public function setPosition(position:Vector3):void{
+			
+			var positione:Float32Array = position.elements;
+			
+			var e:Float32Array = this.elements;
+			e[12] = positione[0];
+			e[13] = positione[1];
+			e[14] = positione[2];
+		}
+		
 		/**
 		 * 通过四元数创建旋转矩阵。
 		 * @param	rotation 旋转四元数。
@@ -212,16 +254,24 @@ package laya.d3.math {
 				}
 			}
 			
+			var b0:Number = b[0], b1:Number = b[1], b2:Number = b[2], b3:Number = b[3];
+			var b4:Number = b[4], b5:Number = b[5], b6:Number = b[6], b7:Number = b[7];
+			var b8:Number = b[8], b9:Number = b[9], b10:Number = b[10], b11:Number = b[11];
+			var b12:Number = b[12], b13:Number = b[13], b14:Number = b[14], b15:Number = b[15];
 			for (i = 0; i < 4; i++) {
 				ai0 = a[i];
 				ai1 = a[i + 4];
 				ai2 = a[i + 8];
 				ai3 = a[i + 12];
-				e[i] = ai0 * b[0] + ai1 * b[1] + ai2 * b[2] + ai3 * b[3];
-				e[i + 4] = ai0 * b[4] + ai1 * b[5] + ai2 * b[6] + ai3 * b[7];
-				e[i + 8] = ai0 * b[8] + ai1 * b[9] + ai2 * b[10] + ai3 * b[11];
-				e[i + 12] = ai0 * b[12] + ai1 * b[13] + ai2 * b[14] + ai3 * b[15];
+				e[i] = ai0 * b0 + ai1 * b1 + ai2 * b2 + ai3 * b3;
+				e[i + 4] = ai0 * b4 + ai1 * b5 + ai2 * b6 + ai3 * b7;
+				e[i + 8] = ai0 * b8 + ai1 * b9 + ai2 * b10 + ai3 * b11;
+				e[i + 12] = ai0 * b12 + ai1 * b13 + ai2 * b14 + ai3 * b15;
 			}
+		}
+		
+		public static function multiplyForNative(left:Matrix4x4, right:Matrix4x4, out:Matrix4x4):void {
+			LayaGL.instance.matrix4x4Multiply(left.elements, right.elements, out.elements);
 		}
 		
 		/**
@@ -396,8 +446,8 @@ package laya.d3.math {
 		 * 创建一个 <code>Matrix4x4</code> 实例。
 		 * @param	4x4矩阵的各元素
 		 */
-		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0, m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0, m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0, m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1) {
-			var e:Float32Array = this.elements = new Float32Array(16);
+		public function Matrix4x4(m11:Number = 1, m12:Number = 0, m13:Number = 0, m14:Number = 0, m21:Number = 0, m22:Number = 1, m23:Number = 0, m24:Number = 0, m31:Number = 0, m32:Number = 0, m33:Number = 1, m34:Number = 0, m41:Number = 0, m42:Number = 0, m43:Number = 0, m44:Number = 1, elements:Float32Array = null) {
+			var e:Float32Array = elements ? this.elements = elements : this.elements = new Float32Array(16);//TODO:[NATIVE]临时
 			e[0] = m11;
 			e[1] = m12;
 			e[2] = m13;
@@ -644,7 +694,56 @@ package laya.d3.math {
 			oe[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
 			oe[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
 			oe[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+		}
 		
+		/**
+		 * 计算BlillBoard矩阵
+		 * @param	objectPosition 物体位置
+		 * @param	cameraPosition 相机位置
+		 * @param	cameraUp       相机上向量
+		 * @param	cameraForward  相机前向量
+		 * @param	mat            变换矩阵
+		 */
+		public static function billboard(objectPosition:Vector3, cameraPosition:Vector3, cameraRight:Vector3, cameraUp:Vector3, cameraForward:Vector3, mat:Matrix4x4):void{
+			
+			Vector3.subtract(objectPosition, cameraPosition, _tempVector0);
+			
+			var lengthSq:Number = Vector3.scalarLengthSquared(_tempVector0);
+			
+			if (MathUtils3D.isZero(lengthSq)){
+				Vector3.scale(cameraForward, -1 , _tempVector1);
+				_tempVector1.cloneTo(_tempVector0);
+			}
+			else{
+				Vector3.scale(_tempVector0, 1 / Math.sqrt(lengthSq) , _tempVector0);
+			}
+			
+			Vector3.cross(cameraUp, _tempVector0, _tempVector2);
+			Vector3.normalize(_tempVector2, _tempVector2);
+			Vector3.cross(_tempVector0, _tempVector2, _tempVector3);
+			
+			var crosse:Float32Array = _tempVector2.elements;
+			var finale:Float32Array = _tempVector3.elements;
+			var diffee:Float32Array = _tempVector0.elements;
+			var obpose:Float32Array = objectPosition.elements;
+			
+			var mate:Float32Array = mat.elements;
+			mate[0]  = crosse[0];
+			mate[1]  = crosse[1];
+			mate[2]  = crosse[2];
+			mate[3]  = 0.0;
+			mate[4]  = finale[0];
+			mate[5]  = finale[1];
+			mate[6]  = finale[2];
+			mate[7]  = 0.0;
+			mate[8]  = diffee[0];
+			mate[9]  = diffee[1];
+			mate[10] = diffee[2];
+			mate[11] = 0.0;
+			mate[12] = obpose[0];
+			mate[13] = obpose[1];
+			mate[14] = obpose[2];
+			mate[15] = 1.0;
 		}
 		
 		/**设置矩阵为单位矩阵*/

@@ -92,6 +92,12 @@ package laya.ui {
 		 */
 		public function TextArea(text:String = "") {
 			super(text);
+			this.on(Event.CHANGE, this, _onTextChange);
+		}
+		
+		private function _onTextChange():void
+		{
+			callLater(changeScroll);
 		}
 		
 		override public function destroy(destroyChild:Boolean = true):void {

@@ -35,7 +35,8 @@ void main()
 	v_Texcoord0 = a_Texcoord0;
   
 	#ifdef LIGHTMAP
-		v_LightMapUV = vec2(a_Texcoord0.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Texcoord0.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+		v_LightMapUV = vec2(a_Texcoord0.x, 1.0 - a_Texcoord0.y) * u_LightmapScaleOffset.xy + u_LightmapScaleOffset.zw;
+		v_LightMapUV.y = 1.0 - v_LightMapUV.y;
 	#endif
   
 	#if defined(DIRECTIONLIGHT)||defined(POINTLIGHT)||defined(SPOTLIGHT)

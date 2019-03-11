@@ -1,13 +1,13 @@
 package laya.d3.core {
-	import laya.d3.core.render.RenderState;
+	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
-	import laya.d3.resource.Texture2D;
 	import laya.d3.resource.models.Mesh;
 	import laya.events.Event;
+	import laya.webgl.resource.Texture2D;
 	
 	/**
 	 * <code>TerrainMeshSprite3D</code> 类用于创建网格。
@@ -27,11 +27,7 @@ package laya.d3.core {
 		 */
 		public static function createFromMesh(mesh:Mesh, heightMapWidth:Number, heightMapHeight:Number, name:String = null):MeshTerrainSprite3D {
 			var meshTerrainSprite3D:MeshTerrainSprite3D = new MeshTerrainSprite3D(mesh, null, name);
-			
-			if (mesh.loaded)
-				meshTerrainSprite3D._initCreateFromMesh(heightMapWidth, heightMapHeight);
-			else
-				mesh.once(Event.LOADED, meshTerrainSprite3D, meshTerrainSprite3D._initCreateFromMesh, [heightMapWidth, heightMapHeight]);
+			meshTerrainSprite3D._initCreateFromMesh(heightMapWidth, heightMapHeight);
 			return meshTerrainSprite3D;
 		}
 		
@@ -43,12 +39,7 @@ package laya.d3.core {
 		 */
 		public static function createFromMeshAndHeightMap(mesh:Mesh, texture:Texture2D, minHeight:Number, maxHeight:Number, name:String = null):MeshTerrainSprite3D {
 			var meshTerrainSprite3D:MeshTerrainSprite3D = new MeshTerrainSprite3D(mesh, null, name);
-			
-			if (mesh.loaded)
-				meshTerrainSprite3D._initCreateFromMeshHeightMap(texture, minHeight, maxHeight);
-			else
-				mesh.once(Event.LOADED, meshTerrainSprite3D, meshTerrainSprite3D._initCreateFromMeshHeightMap, [texture,minHeight, maxHeight]);
-			
+			meshTerrainSprite3D._initCreateFromMeshHeightMap(texture, minHeight, maxHeight);
 			return meshTerrainSprite3D;
 		}
 		
@@ -163,16 +154,8 @@ package laya.d3.core {
 		 */
 		private function _initCreateFromMeshHeightMap(texture:Texture2D, minHeight:Number, maxHeight:Number):void {
 			var boundingBox:BoundBox = meshFilter.sharedMesh.boundingBox;
-			
-			if (texture.loaded) {
-				_heightMap = HeightMap.createFromImage(texture, minHeight, maxHeight);
-				_computeCellSize(boundingBox);
-			} else {
-				texture.once(Event.LOADED, null, function():void {
-					_heightMap = HeightMap.createFromImage(texture, minHeight, maxHeight);
-					_computeCellSize(boundingBox);
-				});
-			}
+			_heightMap = HeightMap.createFromImage(texture, minHeight, maxHeight);
+			_computeCellSize(boundingBox);
 			
 			var min:Vector3 = boundingBox.min;
 			var max:Vector3 = boundingBox.max;
@@ -201,9 +184,9 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		override public function _update(state:RenderState):void {
+		public function _update(state:RenderContext3D):void {//TODO:
 			_disableRotation();
-			super._update(state);
+			//super._update(state);
 		}
 		
 		/**

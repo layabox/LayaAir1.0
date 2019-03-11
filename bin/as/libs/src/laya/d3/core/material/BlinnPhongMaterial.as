@@ -1,10 +1,12 @@
 package laya.d3.core.material {
 	import laya.d3.core.render.RenderQueue;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.resource.BaseTexture;
-	import laya.d3.shader.ShaderCompile3D;
+	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.ShaderData;
 	import laya.d3.shader.ShaderDefines;
+	import laya.webgl.resource.BaseTexture;
 	
 	/**
 	 * <code>BlinnPhongMaterial</code> 类用于实现Blinn-Phong材质。
@@ -17,35 +19,28 @@ package laya.d3.core.material {
 		
 		/**渲染状态_不透明。*/
 		public static const RENDERMODE_OPAQUE:int = 0;
-		/**渲染状态_透明测试。*/
+		/**渲染状态_阿尔法测试。*/
 		public static const RENDERMODE_CUTOUT:int = 1;
-		/**渲染状态__透明混合。*/
+		/**渲染状态_透明混合。*/
 		public static const RENDERMODE_TRANSPARENT:int = 2;
-		/**渲染状态__加色法混合。*/
-		public static const RENDERMODE_ADDTIVE:int = 3;
 		
 		public static var SHADERDEFINE_DIFFUSEMAP:int;
 		public static var SHADERDEFINE_NORMALMAP:int;
 		public static var SHADERDEFINE_SPECULARMAP:int;
-		public static var SHADERDEFINE_REFLECTMAP:int;
 		public static var SHADERDEFINE_TILINGOFFSET:int;
-		public static var SHADERDEFINE_ADDTIVEFOG:int;
-		public static var SHADERDEFINE_GLOWINGEDGE:int;
+		public static var SHADERDEFINE_ENABLEVERTEXCOLOR:int;
 		
-		public static const ALBEDOTEXTURE:int = 1;
-		public static const NORMALTEXTURE:int = 2;
-		public static const SPECULARTEXTURE:int = 3;
-		public static const EMISSIVETEXTURE:int = 4;
-		public static const REFLECTTEXTURE:int = 5;
-		public static const ALBEDOCOLOR:int = 6;
-		public static const MATERIALSPECULAR:int = 8;
-		public static const SHININESS:int = 9;
-		public static const MATERIALREFLECT:int = 10;
-		public static const TILINGOFFSET:int = 11;
-		public static const GLOWINGEDGECOLOR:int = 12;
+		public static const ALBEDOTEXTURE:int = Shader3D.propertyNameToID("u_DiffuseTexture");
+		public static const NORMALTEXTURE:int = Shader3D.propertyNameToID("u_NormalTexture");
+		public static const SPECULARTEXTURE:int = Shader3D.propertyNameToID("u_SpecularTexture");
+		public static const ALBEDOCOLOR:int = Shader3D.propertyNameToID("u_DiffuseColor");
+		public static const MATERIALSPECULAR:int = Shader3D.propertyNameToID("u_MaterialSpecular");
+		public static const SHININESS:int = Shader3D.propertyNameToID("u_Shininess");
+		public static const TILINGOFFSET:int = Shader3D.propertyNameToID("u_TilingOffset");
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:BlinnPhongMaterial = new BlinnPhongMaterial();
+		
 		/**@private */
 		public static var shaderDefines:ShaderDefines = new ShaderDefines(BaseMaterial.shaderDefines);
 		
@@ -56,18 +51,8 @@ package laya.d3.core.material {
 			SHADERDEFINE_DIFFUSEMAP = shaderDefines.registerDefine("DIFFUSEMAP");
 			SHADERDEFINE_NORMALMAP = shaderDefines.registerDefine("NORMALMAP");
 			SHADERDEFINE_SPECULARMAP = shaderDefines.registerDefine("SPECULARMAP");
-			SHADERDEFINE_REFLECTMAP = shaderDefines.registerDefine("REFLECTMAP");
 			SHADERDEFINE_TILINGOFFSET = shaderDefines.registerDefine("TILINGOFFSET");
-			SHADERDEFINE_ADDTIVEFOG = shaderDefines.registerDefine("ADDTIVEFOG");
-			SHADERDEFINE_GLOWINGEDGE = shaderDefines.registerDefine("GLOWINGEDGE");
-		}
-		
-		/**
-		 * 加载标准材质。
-		 * @param url 标准材质地址。
-		 */
-		public static function load(url:String):BlinnPhongMaterial {
-			return Laya.loader.create(url, null, null, BlinnPhongMaterial);
+			SHADERDEFINE_ENABLEVERTEXCOLOR = shaderDefines.registerDefine("ENABLEVERTEXCOLOR");
 		}
 		
 		/**@private */
@@ -76,58 +61,355 @@ package laya.d3.core.material {
 		private var _albedoIntensity:Number;
 		/**@private */
 		private var _enableLighting:Boolean;
+		/**@private */
+		private var _enableVertexColor:Boolean = false;
+		
+		/**
+		 * @private
+		 */
+		public function get _ColorR():Number {
+			return _albedoColor.elements[0];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorR(value:Number):void {
+			_albedoColor.elements[0] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _ColorG():Number {
+			return _albedoColor.elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorG(value:Number):void {
+			_albedoColor.elements[1] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _ColorB():Number {
+			return _albedoColor.elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorB(value:Number):void {
+			_albedoColor.elements[2] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**@private */
+		public function get _ColorA():Number {
+			return _albedoColor.elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _ColorA(value:Number):void {
+			_albedoColor.elements[3] = value;
+			albedoColor = _albedoColor;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorR():Number {
+			return _shaderValues.getVector(MATERIALSPECULAR).elements[0];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorR(value:Number):void {
+			_shaderValues.getVector(MATERIALSPECULAR).elements[0] = value;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorG():Number {
+			return _shaderValues.getVector(MATERIALSPECULAR).elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorG(value:Number):void {
+			_shaderValues.getVector(MATERIALSPECULAR).elements[1] = value;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorB():Number {
+			return _shaderValues.getVector(MATERIALSPECULAR).elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorB(value:Number):void {
+			_shaderValues.getVector(MATERIALSPECULAR).elements[2] = value;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _SpecColorA():Number {
+			return _shaderValues.getVector(MATERIALSPECULAR).elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _SpecColorA(value:Number):void {
+			_shaderValues.getVector(MATERIALSPECULAR).elements[3] = value;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _AlbedoIntensity():Number {
+			return _albedoIntensity;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _AlbedoIntensity(value:Number):void {
+			if (_albedoIntensity !== value) {
+				var finalAlbedo:Vector4 = _shaderValues.getVector(ALBEDOCOLOR) as Vector4;
+				Vector4.scale(_albedoColor, value, finalAlbedo);
+				_albedoIntensity = value;
+				_shaderValues.setVector(ALBEDOCOLOR, finalAlbedo);//修改值后必须调用此接口,否则NATIVE不生效
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _Shininess():Number {
+			return _shaderValues.getNumber(SHININESS);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _Shininess(value:Number):void {
+			value = Math.max(0.0, Math.min(1.0, value));
+			_shaderValues.setNumber(SHININESS, value);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STX():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[0];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STX(x:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[0] = x;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STY():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[1];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STY(y:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[1] = y;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STZ():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[2];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STZ(z:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[2] = z;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _MainTex_STW():Number {
+			return _shaderValues.getVector(TILINGOFFSET).elements[3];
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _MainTex_STW(w:Number):void {
+			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
+			tilOff.elements[3] = w;
+			tilingOffset = tilOff;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function get _Cutoff():Number {
+			return alphaTestValue;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function set _Cutoff(value:Number):void {
+			alphaTestValue = value;
+		}
 		
 		/**
 		 * 设置渲染模式。
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
+			var renderState:RenderState = getRenderState();
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
-				renderQueue = RenderQueue.OPAQUE;
-				depthWrite = true;
-				cull = CULL_BACK;
-				blend = BLEND_DISABLE;
 				alphaTest = false;
-				depthTest = DEPTHTEST_LESS;
-				_removeShaderDefine(SHADERDEFINE_ADDTIVEFOG);
+				renderQueue = BaseMaterial.RENDERQUEUE_OPAQUE;
+				renderState.depthWrite = true;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_DISABLE;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
 				break;
 			case RENDERMODE_CUTOUT: 
-				depthWrite = true;
-				cull = CULL_BACK;
-				blend = BLEND_DISABLE;
-				renderQueue = RenderQueue.OPAQUE;
+				renderQueue = BaseMaterial.RENDERQUEUE_ALPHATEST;
 				alphaTest = true;
-				depthTest = DEPTHTEST_LESS;
-				_removeShaderDefine(SHADERDEFINE_ADDTIVEFOG);
+				renderState.depthWrite = true;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_DISABLE;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
 				break;
 			case RENDERMODE_TRANSPARENT: 
-				renderQueue = RenderQueue.TRANSPARENT;
-				depthWrite = false;
-				cull = CULL_BACK;
-				blend = BLEND_ENABLE_ALL;
-				srcBlend = BLENDPARAM_SRC_ALPHA;
-				dstBlend = BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
 				alphaTest = false;
-				depthTest = DEPTHTEST_LESS;
-				_removeShaderDefine(SHADERDEFINE_ADDTIVEFOG);
-				break;
-			case RENDERMODE_ADDTIVE: 
-				renderQueue = RenderQueue.TRANSPARENT;
-				depthWrite = false;
-				cull = CULL_BACK;
-				blend = BLEND_ENABLE_ALL;
-				srcBlend = BLENDPARAM_SRC_ALPHA;
-				dstBlend = BLENDPARAM_ONE;
-				alphaTest = false;
-				depthTest = DEPTHTEST_LESS;
-				_addShaderDefine(SHADERDEFINE_ADDTIVEFOG);
+				renderState.depthWrite = false;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_ENABLE_ALL;
+				renderState.srcBlend = RenderState.BLENDPARAM_SRC_ALPHA;
+				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
 				break;
 			default: 
 				throw new Error("Material:renderMode value error.");
 			}
-			
-			_conchMaterial && _conchMaterial.setRenderMode(value);//NATIVE
+		}
+		
+		/**
+		 * 获取是否支持顶点色。
+		 * @return  是否支持顶点色。
+		 */
+		public function get enableVertexColor():Boolean {
+			return _enableVertexColor;
+		}
+		
+		/**
+		 * 设置是否支持顶点色。
+		 * @param value  是否支持顶点色。
+		 */
+		public function set enableVertexColor(value:Boolean):void {
+			_enableVertexColor = value;
+			if (value)
+				_defineDatas.add(BlinnPhongMaterial.SHADERDEFINE_ENABLEVERTEXCOLOR);
+			else
+				_defineDatas.remove(BlinnPhongMaterial.SHADERDEFINE_ENABLEVERTEXCOLOR);
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移X分量。
+		 * @return 纹理平铺和偏移X分量。
+		 */
+		public function get tilingOffsetX():Number {
+			return _MainTex_STX;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移X分量。
+		 * @param x 纹理平铺和偏移X分量。
+		 */
+		public function set tilingOffsetX(x:Number):void {
+			_MainTex_STX = x;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Y分量。
+		 * @return 纹理平铺和偏移Y分量。
+		 */
+		public function get tilingOffsetY():Number {
+			return _MainTex_STY;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Y分量。
+		 * @param y 纹理平铺和偏移Y分量。
+		 */
+		public function set tilingOffsetY(y:Number):void {
+			_MainTex_STY = y;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Z分量。
+		 * @return 纹理平铺和偏移Z分量。
+		 */
+		public function get tilingOffsetZ():Number {
+			return _MainTex_STZ;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移Z分量。
+		 * @param z 纹理平铺和偏移Z分量。
+		 */
+		public function set tilingOffsetZ(z:Number):void {
+			_MainTex_STZ = z;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移W分量。
+		 * @return 纹理平铺和偏移W分量。
+		 */
+		public function get tilingOffsetW():Number {
+			return _MainTex_STW;
+		}
+		
+		/**
+		 * 获取纹理平铺和偏移W分量。
+		 * @param w 纹理平铺和偏移W分量。
+		 */
+		public function set tilingOffsetW(w:Number):void {
+			_MainTex_STW = w;
 		}
 		
 		/**
@@ -135,7 +417,7 @@ package laya.d3.core.material {
 		 * @return 纹理平铺和偏移。
 		 */
 		public function get tilingOffset():Vector4 {
-			return _getColor(TILINGOFFSET);
+			return _shaderValues.getVector(TILINGOFFSET) as Vector4;
 		}
 		
 		/**
@@ -146,67 +428,192 @@ package laya.d3.core.material {
 			if (value) {
 				var valueE:Float32Array = value.elements;
 				if (valueE[0] != 1 || valueE[1] != 1 || valueE[2] != 0 || valueE[3] != 0)
-					_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET);
+					_defineDatas.add(BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET);
 				else
-					_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET);
+					_defineDatas.remove(BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET);
 			} else {
-				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET);
+				_defineDatas.remove(BlinnPhongMaterial.SHADERDEFINE_TILINGOFFSET);
 			}
-			_setColor(TILINGOFFSET, value);
+			_shaderValues.setVector(TILINGOFFSET, value);
 		}
 		
 		/**
-		 * 获取漫反射颜色。
-		 * @return 漫反射颜色。
+		 * 获取反照率颜色R分量。
+		 * @return 反照率颜色R分量。
+		 */
+		public function get albedoColorR():Number {
+			return _ColorR;
+		}
+		
+		/**
+		 * 设置反照率颜色R分量。
+		 * @param value 反照率颜色R分量。
+		 */
+		public function set albedoColorR(value:Number):void {
+			_ColorR = value;
+		}
+		
+		/**
+		 * 获取反照率颜色G分量。
+		 * @return 反照率颜色G分量。
+		 */
+		public function get albedoColorG():Number {
+			return _ColorG;
+		}
+		
+		/**
+		 * 设置反照率颜色G分量。
+		 * @param value 反照率颜色G分量。
+		 */
+		public function set albedoColorG(value:Number):void {
+			_ColorG = value;
+		}
+		
+		/**
+		 * 获取反照率颜色B分量。
+		 * @return 反照率颜色B分量。
+		 */
+		public function get albedoColorB():Number {
+			return _ColorB;
+		}
+		
+		/**
+		 * 设置反照率颜色B分量。
+		 * @param value 反照率颜色B分量。
+		 */
+		public function set albedoColorB(value:Number):void {
+			_ColorB = value;
+		}
+		
+		/**
+		 * 获取反照率颜色Z分量。
+		 * @return 反照率颜色Z分量。
+		 */
+		public function get albedoColorA():Number {
+			return _ColorA;
+		}
+		
+		/**
+		 * 设置反照率颜色alpha分量。
+		 * @param value 反照率颜色alpha分量。
+		 */
+		public function set albedoColorA(value:Number):void {
+			_ColorA = value;
+		}
+		
+		/**
+		 * 获取反照率颜色。
+		 * @return 反照率颜色。
 		 */
 		public function get albedoColor():Vector4 {
 			return _albedoColor;
 		}
 		
 		/**
-		 * 设置漫反射颜色。
-		 * @param value 漫反射颜色。
+		 * 设置反照率颜色。
+		 * @param value 反照率颜色。
 		 */
 		public function set albedoColor(value:Vector4):void {
-			var finalAlbedo:Vector4 = _getColor(ALBEDOCOLOR);
+			var finalAlbedo:Vector4 = _shaderValues.getVector(ALBEDOCOLOR) as Vector4;
 			Vector4.scale(value, _albedoIntensity, finalAlbedo);
 			_albedoColor = value;
+			_shaderValues.setVector(ALBEDOCOLOR, finalAlbedo);//修改值后必须调用此接口,否则NATIVE不生效
 		}
 		
 		/**
-		 * 获取漫反射颜色。
-		 * @return 漫反射颜色。
+		 * 获取反照率强度。
+		 * @return 反照率强度。
 		 */
 		public function get albedoIntensity():Number {
 			return _albedoIntensity;
 		}
 		
 		/**
-		 * 设置漫反射颜色。
-		 * @param value 漫反射颜色。
+		 * 设置反照率强度。
+		 * @param value 反照率强度。
 		 */
 		public function set albedoIntensity(value:Number):void {
-			if (_albedoIntensity !== value) {
-				var finalAlbedo:Vector4 = _getColor(ALBEDOCOLOR);
-				Vector4.scale(_albedoColor, value, finalAlbedo);
-				_albedoIntensity = value;
-			}
+			_AlbedoIntensity = value;
+		}
+		
+		/**
+		 * 获取高光颜色R轴分量。
+		 * @return 高光颜色R轴分量。
+		 */
+		public function get specularColorR():Number {
+			return _SpecColorR;
+		}
+		
+		/**
+		 * 设置高光颜色R分量。
+		 * @param value 高光颜色R分量。
+		 */
+		public function set specularColorR(value:Number):void {
+			_SpecColorR = value;
+		}
+		
+		/**
+		 * 获取高光颜色G分量。
+		 * @return 高光颜色G分量。
+		 */
+		public function get specularColorG():Number {
+			return _SpecColorG;
+		}
+		
+		/**
+		 * 设置高光颜色G分量。
+		 * @param value 高光颜色G分量。
+		 */
+		public function set specularColorG(value:Number):void {
+			_SpecColorG = value;
+		}
+		
+		/**
+		 * 获取高光颜色B分量。
+		 * @return 高光颜色B分量。
+		 */
+		public function get specularColorB():Number {
+			return _SpecColorB;
+		}
+		
+		/**
+		 * 设置高光颜色B分量。
+		 * @param value 高光颜色B分量。
+		 */
+		public function set specularColorB(value:Number):void {
+			_SpecColorB = value;
+		}
+		
+		/**
+		 * 获取高光颜色A分量。
+		 * @return 高光颜色A分量。
+		 */
+		public function get specularColorA():Number {
+			return _SpecColorA;
+		}
+		
+		/**
+		 * 设置高光颜色A分量。
+		 * @param value 高光颜色A分量。
+		 */
+		public function set specularColorA(value:Number):void {
+			_SpecColorA = value;
 		}
 		
 		/**
 		 * 获取高光颜色。
 		 * @return 高光颜色。
 		 */
-		public function get specularColor():Vector3 {
-			return _getColor(MATERIALSPECULAR);
+		public function get specularColor():Vector4 {
+			return _shaderValues.getVector(MATERIALSPECULAR) as Vector4;
 		}
 		
 		/**
 		 * 设置高光颜色。
 		 * @param value 高光颜色。
 		 */
-		public function set specularColor(value:Vector3):void {
-			_setColor(MATERIALSPECULAR, value);
+		public function set specularColor(value:Vector4):void {
+			_shaderValues.setVector(MATERIALSPECULAR, value);
 		}
 		
 		/**
@@ -214,7 +621,7 @@ package laya.d3.core.material {
 		 * @return 高光强度。
 		 */
 		public function get shininess():Number {
-			return _getNumber(SHININESS);
+			return _Shininess;
 		}
 		
 		/**
@@ -222,44 +629,27 @@ package laya.d3.core.material {
 		 * @param value 高光强度。
 		 */
 		public function set shininess(value:Number):void {
-			value = Math.max(0.0, Math.min(1.0, value));
-			_setNumber(SHININESS, value);
+			_Shininess = value;
 		}
 		
 		/**
-		 * 获取反射颜色。
-		 * @return value 反射颜色。
-		 */
-		public function get reflectColor():Vector3 {
-			return _getColor(MATERIALREFLECT);
-		}
-		
-		/**
-		 * 设置反射颜色。
-		 * @param value 反射颜色。
-		 */
-		public function set reflectColor(value:Vector3):void {
-			_setColor(MATERIALREFLECT, value);
-		}
-		
-		/**
-		 * 获取漫反射贴图。
-		 * @return 漫反射贴图。
+		 * 获取反照率贴图。
+		 * @return 反照率贴图。
 		 */
 		public function get albedoTexture():BaseTexture {
-			return _getTexture(ALBEDOTEXTURE);
+			return _shaderValues.getTexture(ALBEDOTEXTURE);
 		}
 		
 		/**
-		 * 设置漫反射贴图。
-		 * @param value 漫反射贴图。
+		 * 设置反照率贴图。
+		 * @param value 反照率贴图。
 		 */
 		public function set albedoTexture(value:BaseTexture):void {
 			if (value)
-				_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP);
+				_defineDatas.add(BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP);
 			else
-				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP);
-			_setTexture(ALBEDOTEXTURE, value);
+				_defineDatas.remove(BlinnPhongMaterial.SHADERDEFINE_DIFFUSEMAP);
+			_shaderValues.setTexture(ALBEDOTEXTURE, value);
 		}
 		
 		/**
@@ -267,7 +657,7 @@ package laya.d3.core.material {
 		 * @return 法线贴图。
 		 */
 		public function get normalTexture():BaseTexture {
-			return _getTexture(NORMALTEXTURE);
+			return _shaderValues.getTexture(NORMALTEXTURE);
 		}
 		
 		/**
@@ -276,10 +666,10 @@ package laya.d3.core.material {
 		 */
 		public function set normalTexture(value:BaseTexture):void {
 			if (value)
-				_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_NORMALMAP);
+				_defineDatas.add(BlinnPhongMaterial.SHADERDEFINE_NORMALMAP);
 			else
-				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_NORMALMAP);
-			_setTexture(NORMALTEXTURE, value);
+				_defineDatas.remove(BlinnPhongMaterial.SHADERDEFINE_NORMALMAP);
+			_shaderValues.setTexture(NORMALTEXTURE, value);
 		}
 		
 		/**
@@ -287,7 +677,7 @@ package laya.d3.core.material {
 		 * @return 高光贴图。
 		 */
 		public function get specularTexture():BaseTexture {
-			return _getTexture(SPECULARTEXTURE);
+			return _shaderValues.getTexture(SPECULARTEXTURE);
 		}
 		
 		/**
@@ -296,31 +686,11 @@ package laya.d3.core.material {
 		 */
 		public function set specularTexture(value:BaseTexture):void {
 			if (value)
-				_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_SPECULARMAP);
+				_defineDatas.add(BlinnPhongMaterial.SHADERDEFINE_SPECULARMAP);
 			else
-				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_SPECULARMAP);
+				_defineDatas.remove(BlinnPhongMaterial.SHADERDEFINE_SPECULARMAP);
 			
-			_setTexture(SPECULARTEXTURE, value);
-		}
-		
-		/**
-		 * 获取反射贴图。
-		 * @return 反射贴图。
-		 */
-		public function get reflectTexture():BaseTexture {
-			return _getTexture(REFLECTTEXTURE);
-		}
-		
-		/**
-		 * 设置反射贴图。
-		 * @param value 反射贴图。
-		 */
-		public function set reflectTexture(value:BaseTexture):void {
-			if (value)
-				_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_REFLECTMAP);
-			else
-				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_REFLECTMAP);
-			_setTexture(REFLECTTEXTURE, value);
+			_shaderValues.setTexture(SPECULARTEXTURE, value);
 		}
 		
 		/**
@@ -338,71 +708,37 @@ package laya.d3.core.material {
 		public function set enableLighting(value:Boolean):void {
 			if (_enableLighting !== value) {
 				if (value)
-					_removeDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+					_disablePublicDefineDatas.remove(Scene3D.SHADERDEFINE_POINTLIGHT | Scene3D.SHADERDEFINE_SPOTLIGHT | Scene3D.SHADERDEFINE_DIRECTIONLIGHT);
 				else
-					_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
+					_disablePublicDefineDatas.add(Scene3D.SHADERDEFINE_POINTLIGHT | Scene3D.SHADERDEFINE_SPOTLIGHT | Scene3D.SHADERDEFINE_DIRECTIONLIGHT);
 				_enableLighting = value;
 			}
-		}
-		
-		/**
-		 * 设置是否开启边缘光照。
-		 * @param value 是否开启边缘光照。
-		 */
-		public function set enableGlowingEdge(value:Boolean):void {
-			if (value)
-				_addShaderDefine(BlinnPhongMaterial.SHADERDEFINE_GLOWINGEDGE);
-			else
-				_removeShaderDefine(BlinnPhongMaterial.SHADERDEFINE_GLOWINGEDGE);
-		}
-		
-		
-		/**
-		 * 获取边缘颜色。
-		 * @return value 边缘颜色。
-		 */
-		public function get glowingEdgeColor():Vector4 {
-			return _getColor(GLOWINGEDGECOLOR);
-		}
-		
-		/**
-		 * 设置边缘颜色。
-		 * @param value 边缘颜色。
-		 */
-		public function set glowingEdgeColor(value:Vector4):void {
-			_setColor(GLOWINGEDGECOLOR, value);
-		}
-		
-		public function BlinnPhongMaterial() {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			super();
-			
-			setShaderName("BLINNPHONG");
-			_albedoIntensity = 1.0;
-			_albedoColor = new Vector4(1.0, 1.0, 1.0, 1.0);
-			_setColor(ALBEDOCOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
-			_setColor(MATERIALSPECULAR, new Vector3(1.0, 1.0, 1.0));
-			_setNumber(SHININESS, 0.078125);
-			_setColor(MATERIALREFLECT, new Vector3(1.0, 1.0, 1.0));
-			_setNumber(ALPHATESTVALUE, 0.5);
-			_setColor(TILINGOFFSET, new Vector4(1.0, 1.0, 0.0, 0.0));
-			_enableLighting = true;
-			renderMode = RENDERMODE_OPAQUE;
-			_setColor(GLOWINGEDGECOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
-		}
-		
-		/**
-		 * 禁用灯光。
-		 */
-		public function disableLight():void {
-			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_POINTLIGHT | ShaderCompile3D.SHADERDEFINE_SPOTLIGHT | ShaderCompile3D.SHADERDEFINE_DIRECTIONLIGHT);
 		}
 		
 		/**
 		 * 禁用雾化。
 		 */
 		public function disableFog():void {
-			_addDisablePublicShaderDefine(ShaderCompile3D.SHADERDEFINE_FOG);
+			_disablePublicDefineDatas.add(Scene3D.SHADERDEFINE_FOG);
+		}
+		
+		/**
+		 * 创建一个 <code>BlinnPhongMaterial</code> 实例。
+		 */
+		public function BlinnPhongMaterial() {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			super();
+			setShaderName("BLINNPHONG");
+			_albedoIntensity = 1.0;
+			_albedoColor = new Vector4(1.0, 1.0, 1.0, 1.0);
+			var sv:ShaderData = _shaderValues;
+			sv.setVector(ALBEDOCOLOR, new Vector4(1.0, 1.0, 1.0, 1.0));
+			sv.setVector(MATERIALSPECULAR, new Vector4(1.0, 1.0, 1.0, 1.0));
+			sv.setNumber(SHININESS, 0.078125);
+			sv.setNumber(ALPHATESTVALUE, 0.5);
+			sv.setVector(TILINGOFFSET, new Vector4(1.0, 1.0, 0.0, 0.0));
+			_enableLighting = true;
+			renderMode = RENDERMODE_OPAQUE;
 		}
 		
 		/**

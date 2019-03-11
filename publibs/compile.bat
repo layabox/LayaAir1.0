@@ -1,1 +1,1 @@
-"laya.js.exe" "publish/LayaPublish.as3proj";iflash=false;chromerun=false;
+"layajs.exe" "publish/LayaPublish.as3proj";iflash=false;chromerun=false;

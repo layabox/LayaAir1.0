@@ -16,7 +16,7 @@ package laya.media {
 		 */
 		public var loops:int;
 		/**
-		 * 开始时间。
+		 * 播放声音开始时间。
 		 */
 		public var startTime:Number;
 		/**
@@ -40,35 +40,35 @@ package laya.media {
 		}
 		
 		/**
-		 * 获取当前播放时间。
+		 * 获取当前播放时间，单位是秒。
 		 */
 		public function get position():Number {
 			return 0;
 		}
 		
 		/**
-		 * 获取总时间。
+		 * 获取总时间，单位是秒。
 		 */
 		public function get duration():Number {
 			return 0;
 		}
 		
 		/**
-		 * 播放。
+		 * 播放声音。
 		 */
 		public function play():void {
 		
 		}
 		
 		/**
-		 * 停止。
+		 * 停止播放。
 		 */
 		public function stop():void {
 		
 		}
 		
 		/**
-		 * 暂停。
+		 * 暂停播放。
 		 */
 		public function pause():void {
 		}
@@ -88,5 +88,4 @@ package laya.media {
 			}
 		}
 	}
-
 }

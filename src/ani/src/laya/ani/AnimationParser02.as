@@ -27,6 +27,7 @@ package laya.ani {
 		/**
 		 * @private
 		 */
+		//TODO:coverage
 		private static function READ_BLOCK():void {
 			var count:uint = _BLOCK.count = _reader.getUint16();
 			var blockStarts:Array = _BLOCK.blockStarts = [];
@@ -40,6 +41,7 @@ package laya.ani {
 		/**
 		 * @private
 		 */
+		//TODO:coverage
 		private static function READ_STRINGS():void {
 			var offset:uint = _reader.getUint32();
 			var count:uint = _reader.getUint16();
@@ -55,6 +57,7 @@ package laya.ani {
 		/**
 		 * @private
 		 */
+		//TODO:coverage
 		public static function parse(templet:AnimationTemplet, reader:Byte):void {
 			_templet = templet;
 			_reader = reader;
@@ -73,6 +76,7 @@ package laya.ani {
 			}
 		}
 		
+		//TODO:coverage
 		public static function READ_ANIMATIONS():void {
 			var reader:Byte = _reader;
 			var arrayBuffer:ArrayBuffer = reader.__getBuffer();
@@ -128,6 +132,9 @@ package laya.ani {
 						keyFrame.startTime = reader.getFloat32();
 						
 						(lastKeyFrame) && (lastKeyFrame.duration = keyFrame.startTime - lastKeyFrame.startTime);
+						
+						keyFrame.dData = new Float32Array(keyframeWidth);
+						keyFrame.nextData = new Float32Array(keyframeWidth);
 						
 						var offset:int = _DATA.offset;
 						

@@ -40,8 +40,8 @@ package laya.ui {
 			var items:Array = [];
 			var maxHeight:Number = 0;
 			for (var i:int = 0, n:int = numChildren; i < n; i++) {
-				var item:Component = getChildAt(i) as Component;
-				if (item&&item.layoutEnabled) {
+				var item:UIComponent = getChildAt(i) as UIComponent;
+				if (item) {
 					items.push(item);
 					maxHeight = _height?_height:Math.max(maxHeight, item.height * item.scaleY);
 				}
@@ -60,7 +60,7 @@ package laya.ui {
 					item.y = maxHeight - item.height * item.scaleY;
 				}
 			}
-			changeSize();
+			_sizeChanged();
 		}
 	}
 }

@@ -9,7 +9,6 @@ package laya.debug.tools
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
 	import laya.debug.view.nodeInfo.DebugInfoLayer;
-	import laya.debug.view.nodeInfo.views.SelectInfosView;
 	
 	import laya.debug.tools.debugUI.DButton;
 	import laya.events.Event;
@@ -142,7 +141,6 @@ package laya.debug.tools
 		{
 			isFirst=true;
 			check(Laya.stage, Laya.stage.mouseX, Laya.stage.mouseY, null, true, false);
-			SelectInfosView.I.setSelectTarget(DebugTool.target);
 		}
 		
 		private var isGetting:Boolean = false;
@@ -183,8 +181,8 @@ package laya.debug.tools
 				//父对象没有接收到事件，子对象不再测试
 				if (isHit) {
 					var flag:Boolean = false;
-					for (var i:int = sp._childs.length - 1; i > -1; i--) {
-						var child:Sprite = sp._childs[i];
+					for (var i:int = sp._children.length - 1; i > -1; i--) {
+						var child:Sprite = sp._children[i];
 						//只有接受交互事件的，才进行处理
 						 (flag = check(child, mouseX, mouseY, callBack, hitTest, true));
 						if (flag) break;

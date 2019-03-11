@@ -8,7 +8,6 @@ package laya.ui {
 	 * <code>Panel</code> 是一个面板容器类。
 	 */
 	public class Panel extends Box {
-		
 		/**@private */
 		protected var _content:Box;
 		/**@private */
@@ -17,6 +16,10 @@ package laya.ui {
 		protected var _hScrollBar:HScrollBar;
 		/**@private */
 		protected var _scrollChanged:Boolean;
+		/**@private */
+		protected var _usedCache:String = null;
+		/**@private */
+		protected var _elasticEnabled:Boolean = false;
 		
 		/**
 		 * 创建一个新的 <code>Panel</code> 类实例。
@@ -87,9 +90,7 @@ package laya.ui {
 		
 		/**@inheritDoc */
 		override public function removeChildren(beginIndex:int = 0, endIndex:int = 0x7fffffff):Node {
-			for (var i:int = _content.numChildren - 1; i > -1; i--) {
-				_content.removeChildAt(i);
-			}
+			_content.removeChildren(beginIndex, endIndex);
 			_setScrollChanged();
 			return this;
 		}
@@ -147,8 +148,8 @@ package laya.ui {
 		}
 		
 		/**@inheritDoc */
-		override protected function changeSize():void {
-			super.changeSize();
+		override protected function _sizeChanged():void {
+			super._sizeChanged();
 			setContentSize(_width, _height);
 		}
 		
@@ -160,7 +161,7 @@ package laya.ui {
 			var max:Number = 0;
 			for (var i:int = _content.numChildren - 1; i > -1; i--) {
 				var comp:Sprite = _content.getChildAt(i) as Sprite;
-				max = Math.max(comp.x + comp.width * comp.scaleX, max);
+				max = Math.max(comp._x + comp.width * comp.scaleX - comp.pivotX, max);
 			}
 			return max;
 		}
@@ -173,7 +174,7 @@ package laya.ui {
 			var max:Number = 0;
 			for (var i:int = _content.numChildren - 1; i > -1; i--) {
 				var comp:Sprite = _content.getChildAt(i) as Sprite;
-				max = Math.max(comp.y + comp.height * comp.scaleY, max);
+				max = Math.max(comp._y + comp.height * comp.scaleY - comp.pivotY, max);
 			}
 			return max;
 		}
@@ -188,8 +189,8 @@ package laya.ui {
 			var content:Box = _content;
 			content.width = width;
 			content.height = height;
-			content.scrollRect || (content.scrollRect = new Rectangle());
-			content.scrollRect.setTo(0, 0, width, height);
+			content._style.scrollRect || (content.scrollRect = Rectangle.create());
+			content._style.scrollRect.setTo(0, 0, width, height);
 			content.scrollRect = content.scrollRect;
 		}
 		
@@ -219,6 +220,7 @@ package laya.ui {
 				super.addChild(_vScrollBar = new VScrollBar());
 				_vScrollBar.on(Event.CHANGE, this, onScrollBarChange, [_vScrollBar]);
 				_vScrollBar.target = _content;
+				_vScrollBar.elasticDistance = _elasticEnabled ? 200 : 0;
 				_setScrollChanged();
 			}
 			_vScrollBar.skin = value;
@@ -236,6 +238,7 @@ package laya.ui {
 				super.addChild(_hScrollBar = new HScrollBar());
 				_hScrollBar.on(Event.CHANGE, this, onScrollBarChange, [_hScrollBar]);
 				_hScrollBar.target = _content;
+				_hScrollBar.elasticDistance = _elasticEnabled ? 200 : 0;
 				_setScrollChanged();
 			}
 			_hScrollBar.skin = value;
@@ -269,7 +272,7 @@ package laya.ui {
 		 * @param e Event 对象。
 		 */
 		protected function onScrollBarChange(scrollBar:ScrollBar):void {
-			var rect:Rectangle = _content.scrollRect;
+			var rect:Rectangle = _content._style.scrollRect;
 			if (rect) {
 				var start:int = Math.round(scrollBar.value);
 				scrollBar.isVertical ? rect.y = start : rect.x = start;
@@ -297,7 +300,7 @@ package laya.ui {
 		/**@inheritDoc */
 		override public function set cacheAs(value:String):void {
 			super.cacheAs = value;
-			this._$P.cacheAs = null;
+			_usedCache = null;
 			if (value !== "none") {
 				_hScrollBar && _hScrollBar.on(Event.START, this, onScrollStart);
 				_vScrollBar && _vScrollBar.on(Event.START, this, onScrollStart);
@@ -307,15 +310,30 @@ package laya.ui {
 			}
 		}
 		
+		/**是否开启橡皮筋效果*/
+		public function get elasticEnabled():Boolean {
+			return _elasticEnabled;
+		}
+		
+		public function set elasticEnabled(value:Boolean):void {
+			_elasticEnabled = value;
+			if (_vScrollBar) {
+				_vScrollBar.elasticDistance = value ? 200 : 0;
+			}
+			if (_hScrollBar) {
+				_hScrollBar.elasticDistance = value ? 200 : 0;
+			}
+		}
+		
 		private function onScrollStart():void {
-			this._$P.cacheAs || (this._$P.cacheAs = super.cacheAs);
+			_usedCache || (_usedCache = super.cacheAs);
 			super.cacheAs = "none";
 			_hScrollBar && _hScrollBar.once(Event.END, this, onScrollEnd);
 			_vScrollBar && _vScrollBar.once(Event.END, this, onScrollEnd);
 		}
 		
 		private function onScrollEnd():void {
-			super.cacheAs = this._$P.cacheAs;
+			super.cacheAs = _usedCache;
 		}
 		
 		/**@private */

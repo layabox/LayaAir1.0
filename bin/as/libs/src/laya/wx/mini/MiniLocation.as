@@ -48,7 +48,7 @@ package laya.wx.mini
 			curWatchO.success = success;
 			curWatchO.error = error;
 			_watchDic[_curID] = curWatchO;
-			Laya.timer.loop(1000, null, _myLoop);
+			Laya.systemTimer.loop(1000, null, _myLoop);
 			return _curID;
 		}
 		/**@private **/
@@ -57,7 +57,7 @@ package laya.wx.mini
 			delete _watchDic[id];
 			if (!_hasWatch())
 			{
-				Laya.timer.clear(null, _myLoop);
+				Laya.systemTimer.clear(null, _myLoop);
 			}
 		}
 		/**@private **/

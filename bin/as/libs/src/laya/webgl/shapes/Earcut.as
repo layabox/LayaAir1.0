@@ -156,6 +156,7 @@ public static function isEar(ear:*):* {
     return true;
 }
 
+//TODO:coverage
 public static function isEarHashed(ear:*, minX:*, minY:*, invSize:*):Boolean {
     var a:* = ear.prev,
         b:* = ear,
@@ -197,6 +198,7 @@ public static function isEarHashed(ear:*, minX:*, minY:*, invSize:*):Boolean {
 }
 
 // go through all polygon nodes and cure small local self-intersections
+//TODO:coverage
 public static function cureLocalIntersections(start:*, triangles:*, dim:*):* {
     var p:* = start;
     do {
@@ -222,6 +224,7 @@ public static function cureLocalIntersections(start:*, triangles:*, dim:*):* {
 }
 
 // try splitting polygon into two and triangulate them independently
+//TODO:coverage
 public static function splitEarcut(start:*, triangles:*, dim:*, minX:*, minY:*, invSize:*):void {
     // look for a valid diagonal that divides the polygon into two
     var a:* = start;
@@ -248,6 +251,7 @@ public static function splitEarcut(start:*, triangles:*, dim:*, minX:*, minY:*, 
 }
 
 // link every hole into the outer loop, producing a single-ring polygon without holes
+//TODO:coverage
 public static function eliminateHoles(data:*, holeIndices:*, outerNode:*, dim:*):* {
     var queue:* = [],
         i:*, len:*, start:*, end:*, list:*;
@@ -271,11 +275,13 @@ public static function eliminateHoles(data:*, holeIndices:*, outerNode:*, dim:*)
     return outerNode;
 }
 
+//TODO:coverage
 public static function compareX(a:*, b:*):* {
     return a.x - b.x;
 }
 
 // find a bridge between vertices that connects hole with an outer ring and and link it
+//TODO:coverage
 public static function eliminateHole(hole:*, outerNode:*):void {
     outerNode = findHoleBridge(hole, outerNode);
     if (outerNode) {
@@ -285,6 +291,7 @@ public static function eliminateHole(hole:*, outerNode:*):void {
 }
 
 // David Eberly's algorithm for finding a bridge between hole and outer polygon
+//TODO:coverage
 public static function findHoleBridge(hole:*, outerNode:*):* {
     var p:* = outerNode,
         hx:* = hole.x,
@@ -344,6 +351,7 @@ public static function findHoleBridge(hole:*, outerNode:*):* {
 }
 
 // interlink polygon nodes in z-order
+//TODO:coverage
 public static function indexCurve(start:*, minX:*, minY:*, invSize:*):void {
     var p:* = start;
     do {
@@ -361,6 +369,7 @@ public static function indexCurve(start:*, minX:*, minY:*, invSize:*):void {
 
 // Simon Tatham's linked list merge sort algorithm
 // http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+//TODO:coverage
 public static function sortLinked(list:*):* {
     var i:*, p:*, q:*, e:*, tail:*, numMerges:*, pSize:*, qSize:*,
         inSize:* = 1;
@@ -413,6 +422,7 @@ public static function sortLinked(list:*):* {
 }
 
 // z-order of a point given coords and inverse of the longer side of data bbox
+//TODO:coverage
 public static function zOrder(x:*, y:*, minX:*, minY:*, invSize:*):* {
     // coords are transformed into non-negative 15-bit integer range
     x = 32767 * (x - minX) * invSize;
@@ -432,6 +442,7 @@ public static function zOrder(x:*, y:*, minX:*, minY:*, invSize:*):* {
 }
 
 // find the leftmost node of a polygon ring
+//TODO:coverage
 public static function getLeftmost(start:*):* {
     var p:* = start,
         leftmost:* = start;
@@ -451,6 +462,7 @@ public static function pointInTriangle(ax:*, ay:*, bx:*, by:*, cx:*, cy:*, px:*,
 }
 
 // check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+//TODO:coverage
 public static function isValidDiagonal(a:*, b:*):Boolean {
     return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
            locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
@@ -467,6 +479,7 @@ public static function equals(p1:*, p2:*):Boolean {
 }
 
 // check if two segments intersect
+//TODO:coverage
 public static function intersects(p1:*, q1:*, p2:*, q2:*):Boolean {
     if ((equals(p1, q1) && equals(p2, q2)) ||
         (equals(p1, q2) && equals(p2, q1))) return true;
@@ -475,6 +488,7 @@ public static function intersects(p1:*, q1:*, p2:*, q2:*):Boolean {
 }
 
 // check if a polygon diagonal intersects any polygon segments
+//TODO:coverage
 public static function intersectsPolygon(a:*, b:*):Boolean {
     var p:* = a;
     do {
@@ -487,6 +501,7 @@ public static function intersectsPolygon(a:*, b:*):Boolean {
 }
 
 // check if a polygon diagonal is locally inside the polygon
+//TODO:coverage
 public static function locallyInside(a:*, b:*):Boolean {
     return area(a.prev, a, a.next) < 0 ?
         area(a, b, a.next) >= 0 && area(a, a.prev, b) >= 0 :
@@ -494,6 +509,7 @@ public static function locallyInside(a:*, b:*):Boolean {
 }
 
 // check if the middle point of a polygon diagonal is inside the polygon
+//TODO:coverage
 public static function middleInside(a:*, b:*):Boolean {
     var p:* = a,
         inside:* = false,
@@ -511,6 +527,7 @@ public static function middleInside(a:*, b:*):Boolean {
 
 // link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
 // if one belongs to the outer ring and another to a hole, it merges it into a single ring
+//TODO:coverage
 public static function splitPolygon(a:*, b:*):* {
     var a2:* = new EarcutNode(a.i, a.x, a.y),
         b2:* = new EarcutNode(b.i, b.x, b.y),

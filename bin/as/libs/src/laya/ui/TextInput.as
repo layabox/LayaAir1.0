@@ -5,6 +5,7 @@ package laya.ui {
 	import laya.ui.AutoBitmap;
 	import laya.ui.Styles;
 	import laya.ui.UIUtils;
+	import laya.utils.Handler;
 	
 	/**
 	 * 输入文本后调度。
@@ -200,11 +201,24 @@ package laya.ui {
 		public function set skin(value:String):void {
 			if (_skin != value) {
 				_skin = value;
-				_bg || (graphics = _bg = new AutoBitmap());
-				_bg.source = Loader.getRes(_skin);
-				_width && (_bg.width = _width);
-				_height && (_bg.height = _height);
+				if (_skin&&!Loader.getRes(_skin))
+				{
+					Laya.loader.load(_skin, Handler.create(this, _skinLoaded), null, Loader.IMAGE,1);
+				}else
+				{
+					_skinLoaded();
+				}
 			}
+		}
+		
+		protected function _skinLoaded():void
+		{
+			_bg || (graphics = _bg = new AutoBitmap());
+			_bg.source = Loader.getRes(_skin);
+			_width && (_bg.width = _width);
+			_height && (_bg.height = _height);
+			_sizeChanged();
+			event(Event.LOADED);
 		}
 		
 		/**
@@ -268,28 +282,6 @@ package laya.ui {
 		
 		public function get editable():Boolean {
 			return Input(_tf).editable;
-		}
-		
-		/**
-		 * 设置原生input输入框的x坐标偏移。
-		 */
-		public function set inputElementXAdjuster(value:int):void {
-			Input(_tf).inputElementXAdjuster = value;
-		}
-		
-		public function get inputElementXAdjuster():int {
-			return Input(_tf).inputElementXAdjuster;
-		}
-		
-		/**
-		 * 设置原生input输入框的y坐标偏移。
-		 */
-		public function set inputElementYAdjuster(value:int):void {
-			Input(_tf).inputElementYAdjuster = value;
-		}
-		
-		public function get inputElementYAdjuster():int {
-			return Input(_tf).inputElementYAdjuster;
 		}
 		
 		/**选中输入框内的文本。*/
@@ -363,19 +355,6 @@ package laya.ui {
 		public function set type(value:String):void
 		{
 			Input(_tf).type = value;
-		}
-		
-		/**
-		 * @copy laya.display.Input#asPassword
-		 */
-		public function get asPassword():Boolean
-		{
-			return Input(_tf).asPassword;
-		}
-		
-		public function set asPassword(value:Boolean):void
-		{
-			Input(_tf).asPassword = value;
 		}
 		
 		public function setSelection(startIndex:int, endIndex:int):void

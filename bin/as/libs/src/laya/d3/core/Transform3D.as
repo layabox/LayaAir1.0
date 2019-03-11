@@ -25,27 +25,46 @@ package laya.d3.core {
 		private static var _tempMatrix0:Matrix4x4 = new Matrix4x4();
 		
 		/**@private */
+		public static const TRANSFORM_LOCALQUATERNION:int = 0x01;
+		/**@private */
+		public static const TRANSFORM_LOCALEULER:int = 0x02;
+		/**@private */
+		public static const TRANSFORM_LOCALMATRIX:int = 0x04;
+		/**@private */
+		public static const TRANSFORM_WORLDPOSITION:int = 0x08;
+		/**@private */
+		public static const TRANSFORM_WORLDQUATERNION:int = 0x10;
+		/**@private */
+		public static const TRANSFORM_WORLDSCALE:int = 0x20;
+		/**@private */
+		public static const TRANSFORM_WORLDMATRIX:int = 0x40;
+		/**@private */
+		public static const TRANSFORM_WORLDEULER:int = 0x80;
+		
+		/**@private */
 		private static const _angleToRandin:Number = 180 / Math.PI;
 		
 		/** @private */
 		private var _owner:Sprite3D;
 		/** @private */
-		private var _localPosition:Vector3 = new Vector3();
+		private var _localPosition:Vector3 = new Vector3(0, 0, 0);
 		/** @private */
 		private var _localRotation:Quaternion = new Quaternion(0, 0, 0, 1);
 		/** @private */
 		private var _localScale:Vector3 = new Vector3(1, 1, 1);
 		/**@private */
-		private var _localRotationEuler:Vector3 = new Vector3();
+		private var _localRotationEuler:Vector3 = new Vector3(0, 0, 0);
 		/** @private */
 		private var _localMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		private var _position:Vector3 = new Vector3();
+		private var _position:Vector3 = new Vector3(0, 0, 0);
 		/** @private */
 		private var _rotation:Quaternion = new Quaternion(0, 0, 0, 1);
 		/** @private */
 		private var _scale:Vector3 = new Vector3(1, 1, 1);
+		/**@private */
+		private var _rotationEuler:Vector3 = new Vector3(0, 0, 0);
 		/** @private */
 		private var _worldMatrix:Matrix4x4 = new Matrix4x4();
 		
@@ -55,27 +74,15 @@ package laya.d3.core {
 		private var _up:Vector3 = new Vector3();
 		/** @private */
 		private var _right:Vector3 = new Vector3();
+		/** @private */
+		private var _children:Vector.<Transform3D>;
 		
 		/** @private */
-		private var _localQuaternionUpdate:Boolean = false;
-		/** @private */
-		private var _locaEulerlUpdate:Boolean = false;
-		/** @private */
-		private var _localUpdate:Boolean = false;
-		/** @private */
-		private var _worldUpdate:Boolean = true;
-		/** @private */
-		private var _positionUpdate:Boolean = true;
-		/** @private */
-		private var _rotationUpdate:Boolean = true;
-		/** @private */
-		private var _scaleUpdate:Boolean = true;
-		/** @private */
-		private var _parent:Transform3D;
-		/** @private */
-		private var _childs:Vector.<Transform3D>;
+		public var _parent:Transform3D;
 		/**@private */
-		private var _dummy:AnimationTransform3D;
+		public var _dummy:AnimationTransform3D;
+		/**@private */
+		public var _transformFlag:int = 0;
 		
 		/** 变换中心点,注意:该中心点不受变换的影响。*/
 		public var pivot:Vector3;
@@ -103,64 +110,58 @@ package laya.d3.core {
 		 * @return	世界矩阵是否需要更新。
 		 */
 		public function get worldNeedUpdate():Boolean {
-			return _worldUpdate;
+			return _getTransformFlag(TRANSFORM_WORLDMATRIX);
 		}
 		
 		/**
-		 * 获取局部矩阵。
-		 * @return	局部矩阵。
+		 * 获取局部位置X轴分量。
+		 * @return	局部位置X轴分量。
 		 */
-		public function get localMatrix():Matrix4x4 {
-			if (_localUpdate) {
-				_updateLocalMatrix();
-				_localUpdate = false;
-			}
-			
-			return _localMatrix;
+		public function get localPositionX():Number {
+			return _localPosition.elements[0];
 		}
 		
 		/**
-		 * 设置局部矩阵。
-		 * @param value	局部矩阵。
+		 * 设置局部位置X轴分量。
+		 * @param x	局部位置X轴分量。
 		 */
-		public function set localMatrix(value:Matrix4x4):void {
-			_localMatrix = value;
-			_localMatrix.decomposeTransRotScale(_localPosition, _localRotation, _localScale);
-			_localUpdate = false;
-			_onWorldTransform();
+		public function set localPositionX(x:Number):void {
+			_localPosition.elements[0] = x;
+			localPosition = _localPosition;
 		}
 		
 		/**
-		 * 获取世界矩阵。
-		 * @return	世界矩阵。
+		 * 获取局部位置Y轴分量。
+		 * @return	局部位置Y轴分量。
 		 */
-		public function get worldMatrix():Matrix4x4 {
-			if (_worldUpdate) {
-				if (_parent != null)
-					Matrix4x4.multiply(_parent.worldMatrix, localMatrix, _worldMatrix);
-				else
-					localMatrix.cloneTo(_worldMatrix);
-				
-				_worldUpdate = false;
-			}
-			return _worldMatrix;
+		public function get localPositionY():Number {
+			return _localPosition.elements[1];
 		}
 		
 		/**
-		 * 设置世界矩阵。
-		 * @param	value 世界矩阵。
+		 * 设置局部位置Y轴分量。
+		 * @param y	局部位置Y轴分量。
 		 */
-		public function set worldMatrix(value:Matrix4x4):void {
-			if (_parent === null) {
-				value.cloneTo(_localMatrix);
-			} else {
-				_parent.worldMatrix.invert(_localMatrix);
-				Matrix4x4.multiply(_localMatrix, value, _localMatrix);
-			}
-			localMatrix = _localMatrix;
-			_worldMatrix = value;
-			
-			_worldUpdate = false;
+		public function set localPositionY(y:Number):void {
+			_localPosition.elements[1] = y;
+			localPosition = _localPosition;
+		}
+		
+		/**
+		 * 获取局部位置Z轴分量。
+		 * @return	局部位置Z轴分量。
+		 */
+		public function get localPositionZ():Number {
+			return _localPosition.elements[2];
+		}
+		
+		/**
+		 * 设置局部位置Z轴分量。
+		 * @param z	局部位置Z轴分量。
+		 */
+		public function set localPositionZ(z:Number):void {
+			_localPosition.elements[2] = z;
+			localPosition = _localPosition;
 		}
 		
 		/**
@@ -176,9 +177,79 @@ package laya.d3.core {
 		 * @param value	局部位置。
 		 */
 		public function set localPosition(value:Vector3):void {
-			_localPosition = value;
-			_localUpdate = true;
+			if (_localPosition !== value)
+				value.cloneTo(_localPosition);
+			
+			_setTransformFlag(TRANSFORM_LOCALMATRIX, true);
 			_onWorldPositionTransform();
+		}
+		
+		/**
+		 * 获取局部旋转四元数X分量。
+		 * @return	局部旋转四元数X分量。
+		 */
+		public function get localRotationX():Number {
+			return localRotation.elements[0];
+		}
+		
+		/**
+		 * 设置局部旋转四元数X分量。
+		 * @param x	局部旋转四元数X分量。
+		 */
+		public function set localRotationX(x:Number):void {
+			_localRotation.elements[0] = x;
+			localRotation = _localRotation;
+		}
+		
+		/**
+		 * 获取局部旋转四元数Y分量。
+		 * @return	局部旋转四元数Y分量。
+		 */
+		public function get localRotationY():Number {
+			return localRotation.elements[1];
+		}
+		
+		/**
+		 * 设置局部旋转四元数Y分量。
+		 * @param y	局部旋转四元数Y分量。
+		 */
+		public function set localRotationY(y:Number):void {
+			_localRotation.elements[1] = y;
+			localRotation = _localRotation;
+		}
+		
+		/**
+		 * 获取局部旋转四元数Z分量。
+		 * @return	局部旋转四元数Z分量。
+		 */
+		public function get localRotationZ():Number {
+			return localRotation.elements[2];
+		}
+		
+		/**
+		 * 设置局部旋转四元数Z分量。
+		 * @param z	局部旋转四元数Z分量。
+		 */
+		public function set localRotationZ(z:Number):void {
+			_localRotation.elements[2] = z;
+			localRotation = _localRotation;
+		}
+		
+		/**
+		 * 获取局部旋转四元数W分量。
+		 * @return	局部旋转四元数W分量。
+		 */
+		public function get localRotationW():Number {
+			return localRotation.elements[3];
+		}
+		
+		/**
+		 * 设置局部旋转四元数W分量。
+		 * @param w	局部旋转四元数W分量。
+		 */
+		public function set localRotationW(w:Number):void {
+			_localRotation.elements[3] = w;
+			localRotation = _localRotation;
 		}
 		
 		/**
@@ -186,9 +257,10 @@ package laya.d3.core {
 		 * @return	局部旋转。
 		 */
 		public function get localRotation():Quaternion {
-			if (_localQuaternionUpdate) {
+			if (_getTransformFlag(TRANSFORM_LOCALQUATERNION)) {
 				var eulerE:Float32Array = _localRotationEuler.elements;
 				Quaternion.createFromYawPitchRoll(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
+				_setTransformFlag(TRANSFORM_LOCALQUATERNION, false);
 			}
 			return _localRotation;
 		}
@@ -198,15 +270,66 @@ package laya.d3.core {
 		 * @param value	局部旋转。
 		 */
 		public function set localRotation(value:Quaternion):void {
-			_localRotation = value;
+			if (_localRotation !== value)
+				value.cloneTo(_localRotation);
 			_localRotation.normalize(_localRotation);
-			_locaEulerlUpdate = true;
-			_localQuaternionUpdate = false;
-			_localUpdate = true;
+			_setTransformFlag(TRANSFORM_LOCALEULER | TRANSFORM_LOCALMATRIX, true);
+			_setTransformFlag(TRANSFORM_LOCALQUATERNION, false);
 			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
 				_onWorldPositionRotationTransform();
 			else
 				_onWorldRotationTransform();
+		}
+		
+		/**
+		 * 获取局部缩放X。
+		 * @return	局部缩放X。
+		 */
+		public function get localScaleX():Number {
+			return _localScale.elements[0];
+		}
+		
+		/**
+		 * 设置局部缩放X。
+		 * @param	value 局部缩放X。
+		 */
+		public function set localScaleX(value:Number):void {
+			_localScale.elements[0] = value;
+			localScale = _localScale;
+		}
+		
+		/**
+		 * 获取局部缩放Y。
+		 * @return	局部缩放Y。
+		 */
+		public function get localScaleY():Number {
+			return _localScale.elements[1];
+		}
+		
+		/**
+		 * 设置局部缩放Y。
+		 * @param	value 局部缩放Y。
+		 */
+		public function set localScaleY(value:Number):void {
+			_localScale.elements[1] = value;
+			localScale = _localScale;
+		}
+		
+		/**
+		 * 获取局部缩放Z。
+		 * @return	局部缩放Z。
+		 */
+		public function get localScaleZ():Number {
+			return _localScale.elements[2];
+		}
+		
+		/**
+		 * 设置局部缩放Z。
+		 * @param	value 局部缩放Z。
+		 */
+		public function set localScaleZ(value:Number):void {
+			_localScale.elements[2] = value;
+			localScale = _localScale;
 		}
 		
 		/**
@@ -222,8 +345,9 @@ package laya.d3.core {
 		 * @param	value 局部缩放。
 		 */
 		public function set localScale(value:Vector3):void {
-			_localScale = value;
-			_localUpdate = true;
+			if (_localScale !== value)
+				value.cloneTo(_localScale);
+			_setTransformFlag(TRANSFORM_LOCALMATRIX, true);
 			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
 				_onWorldPositionScaleTransform();
 			else
@@ -231,14 +355,82 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 设置局部空间的旋转角度。
-		 * @param	value 欧拉角的旋转值，顺序为x、y、z。
+		 * 获取局部空间的X轴欧拉角。
+		 * @return	局部空间的X轴欧拉角。
+		 */
+		public function get localRotationEulerX():Number {
+			return localRotationEuler.elements[0];
+		}
+		
+		/**
+		 * 设置局部空间的X轴欧拉角。
+		 * @param	value 局部空间的X轴欧拉角。
+		 */
+		public function set localRotationEulerX(value:Number):void {
+			_localRotationEuler.elements[0] = value;
+			localRotationEuler = _localRotationEuler;
+		}
+		
+		/**
+		 * 获取局部空间的Y轴欧拉角。
+		 * @return	局部空间的Y轴欧拉角。
+		 */
+		public function get localRotationEulerY():Number {
+			return localRotationEuler.elements[1];
+		}
+		
+		/**
+		 * 设置局部空间的Y轴欧拉角。
+		 * @param	value 局部空间的Y轴欧拉角。
+		 */
+		public function set localRotationEulerY(value:Number):void {
+			_localRotationEuler.elements[1] = value;
+			localRotationEuler = _localRotationEuler;
+		}
+		
+		/**
+		 * 获取局部空间的Z轴欧拉角。
+		 * @return	局部空间的Z轴欧拉角。
+		 */
+		public function get localRotationEulerZ():Number {
+			return localRotationEuler.elements[2];
+		}
+		
+		/**
+		 * 设置局部空间的Z轴欧拉角。
+		 * @param	value 局部空间的Z轴欧拉角。
+		 */
+		public function set localRotationEulerZ(value:Number):void {
+			_localRotationEuler.elements[2] = value;
+			localRotationEuler = _localRotationEuler;
+		}
+		
+		/**
+		 * 获取局部空间欧拉角。
+		 * @return	欧拉角的旋转值。
+		 */
+		public function get localRotationEuler():Vector3 {
+			if (_getTransformFlag(TRANSFORM_LOCALEULER)) {
+				_localRotation.getYawPitchRoll(_tempVector30);
+				var eulerE:Float32Array = _tempVector30.elements;
+				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
+				localRotationEulerE[0] = eulerE[1] * _angleToRandin;
+				localRotationEulerE[1] = eulerE[0] * _angleToRandin;
+				localRotationEulerE[2] = eulerE[2] * _angleToRandin;
+				_setTransformFlag(TRANSFORM_LOCALEULER, false);
+			}
+			return _localRotationEuler;
+		}
+		
+		/**
+		 * 设置局部空间的欧拉角。
+		 * @param	value 欧拉角的旋转值。
 		 */
 		public function set localRotationEuler(value:Vector3):void {
-			_localRotationEuler = value;
-			_locaEulerlUpdate = false;
-			_localQuaternionUpdate = true;
-			_localUpdate = true;
+			if (_localRotationEuler !== value)
+				value.cloneTo(_localRotationEuler);
+			_setTransformFlag(TRANSFORM_LOCALEULER, false);
+			_setTransformFlag(TRANSFORM_LOCALQUATERNION | TRANSFORM_LOCALMATRIX, true);
 			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
 				_onWorldPositionRotationTransform();
 			else
@@ -246,19 +438,28 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获取局部空间的旋转角度。
-		 * @return	欧拉角的旋转值，顺序为x、y、z。
+		 * 获取局部矩阵。
+		 * @return	局部矩阵。
 		 */
-		public function get localRotationEuler():Vector3 {
-			if (_locaEulerlUpdate) {
-				_localRotation.getYawPitchRoll(_tempVector30);
-				var eulerE:Float32Array = _tempVector30.elements;
-				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
-				localRotationEulerE[0] = eulerE[1] * _angleToRandin;
-				localRotationEulerE[1] = eulerE[0] * _angleToRandin;
-				localRotationEulerE[2] = eulerE[2] * _angleToRandin;
+		public function get localMatrix():Matrix4x4 {
+			if (_getTransformFlag(TRANSFORM_LOCALMATRIX)) {
+				_updateLocalMatrix();
+				_setTransformFlag(TRANSFORM_LOCALMATRIX, false);
 			}
-			return _localRotationEuler;
+			
+			return _localMatrix;
+		}
+		
+		/**
+		 * 设置局部矩阵。
+		 * @param value	局部矩阵。
+		 */
+		public function set localMatrix(value:Matrix4x4):void {
+			if (_localMatrix !== value)
+				value.cloneTo(_localMatrix);
+			_localMatrix.decomposeTransRotScale(_localPosition, _localRotation, _localScale);
+			_setTransformFlag(TRANSFORM_LOCALMATRIX, false);
+			_onWorldTransform();
 		}
 		
 		/**
@@ -266,7 +467,7 @@ package laya.d3.core {
 		 * @return	世界位置。
 		 */
 		public function get position():Vector3 {
-			if (_positionUpdate) {
+			if (_getTransformFlag(TRANSFORM_WORLDPOSITION)) {
 				if (_parent != null) {
 					var parentPosition:Vector3 = _parent.position;//放到下面会影响_tempVector30计算，造成混乱
 					Vector3.multiply(_localPosition, _parent.scale, _tempVector30);
@@ -275,8 +476,7 @@ package laya.d3.core {
 				} else {
 					_localPosition.cloneTo(_position);
 				}
-				
-				_positionUpdate = false;
+				_setTransformFlag(TRANSFORM_WORLDPOSITION, false);
 			}
 			return _position;
 		}
@@ -305,8 +505,9 @@ package laya.d3.core {
 				value.cloneTo(_localPosition);
 			}
 			localPosition = _localPosition;
-			_position = value;
-			_positionUpdate = false;
+			if (_position !== value)
+				value.cloneTo(_position);
+			_setTransformFlag(TRANSFORM_WORLDPOSITION, false);
 		}
 		
 		/**
@@ -314,13 +515,12 @@ package laya.d3.core {
 		 * @return	世界旋转。
 		 */
 		public function get rotation():Quaternion {
-			if (_rotationUpdate) {
+			if (_getTransformFlag(TRANSFORM_WORLDQUATERNION)) {
 				if (_parent != null)
 					Quaternion.multiply(_parent.rotation, localRotation, _rotation);//使用localRotation不使用_localRotation,内部需要计算
 				else
-					localRotation.cloneTo(_rotation);//使用localRotation不使用_localRotation,内部需要计算
-				
-				_rotationUpdate = false;
+					localRotation.cloneTo(_rotation);
+				_setTransformFlag(TRANSFORM_WORLDQUATERNION, false);
 			}
 			return _rotation;
 		}
@@ -332,13 +532,15 @@ package laya.d3.core {
 		public function set rotation(value:Quaternion):void {
 			if (_parent != null) {
 				_parent.rotation.invert(_tempQuaternion0);
-				Quaternion.multiply(value, _tempQuaternion0, _localRotation);
+				Quaternion.multiply(_tempQuaternion0, value, _localRotation);
 			} else {
 				value.cloneTo(_localRotation);
 			}
 			localRotation = _localRotation;
-			_rotation = value;
-			_rotationUpdate = false;
+			if (value !== _rotation)
+				value.cloneTo(_rotation);
+			
+			_setTransformFlag(TRANSFORM_WORLDQUATERNION, false);
 		}
 		
 		/**
@@ -346,14 +548,14 @@ package laya.d3.core {
 		 * @return	世界缩放。
 		 */
 		public function get scale():Vector3 {
-			if (!_scaleUpdate)
+			if (!_getTransformFlag(TRANSFORM_WORLDSCALE))
 				return _scale;
 			if (_parent !== null)
 				Vector3.multiply(_parent.scale, _localScale, _scale);
 			else
 				_localScale.cloneTo(_scale);
 			
-			_scaleUpdate = false;
+			_setTransformFlag(TRANSFORM_WORLDSCALE, false);
 			return _scale;
 		}
 		
@@ -373,17 +575,73 @@ package laya.d3.core {
 				value.cloneTo(_localScale);
 			}
 			localScale = _localScale;
-			_scale = value;
-			_scaleUpdate = false;
+			if (_scale !== value)
+				value.cloneTo(_scale);
+			_setTransformFlag(TRANSFORM_WORLDSCALE, false);
 		}
 		
 		/**
-		 * 设置局部空间的旋转角度。
+		 * 获取世界空间的旋转角度。
+		 * @return	欧拉角的旋转值，顺序为x、y、z。
+		 */
+		public function get rotationEuler():Vector3 {
+			if (_getTransformFlag(TRANSFORM_WORLDEULER)) {
+				rotation.getYawPitchRoll(_tempVector30);//使用rotation属性,可能需要更新
+				var eulerE:Float32Array = _tempVector30.elements;
+				var rotationEulerE:Float32Array = _rotationEuler.elements;
+				rotationEulerE[0] = eulerE[1] * _angleToRandin;
+				rotationEulerE[1] = eulerE[0] * _angleToRandin;
+				rotationEulerE[2] = eulerE[2] * _angleToRandin;
+				_setTransformFlag(TRANSFORM_WORLDEULER, false);
+			}
+			return _rotationEuler;
+		}
+		
+		/**
+		 * 设置世界空间的旋转角度。
 		 * @param	欧拉角的旋转值，顺序为x、y、z。
 		 */
 		public function set rotationEuler(value:Vector3):void {
-			Quaternion.createFromYawPitchRoll(value.y, value.x, value.z, _rotation);
+			Quaternion.createFromYawPitchRoll(value.y / _angleToRandin, value.x / _angleToRandin, value.z / _angleToRandin, _rotation);
 			rotation = _rotation;
+			if (_rotationEuler !== value)
+				value.cloneTo(_rotationEuler);
+			
+			_setTransformFlag(TRANSFORM_WORLDEULER, false);
+		}
+		
+		/**
+		 * 获取世界矩阵。
+		 * @return	世界矩阵。
+		 */
+		public function get worldMatrix():Matrix4x4 {
+			if (_getTransformFlag(TRANSFORM_WORLDMATRIX)) {
+				if (_parent != null)
+					Matrix4x4.multiply(_parent.worldMatrix, localMatrix, _worldMatrix);
+				else
+					localMatrix.cloneTo(_worldMatrix);
+				
+				_setTransformFlag(TRANSFORM_WORLDMATRIX, false);
+			}
+			return _worldMatrix;
+		}
+		
+		/**
+		 * 设置世界矩阵。
+		 * @param	value 世界矩阵。
+		 */
+		public function set worldMatrix(value:Matrix4x4):void {
+			if (_parent === null) {
+				value.cloneTo(_localMatrix);
+			} else {
+				_parent.worldMatrix.invert(_localMatrix);
+				Matrix4x4.multiply(_localMatrix, value, _localMatrix);
+			}
+			localMatrix = _localMatrix;
+			if (_worldMatrix !== value)
+				value.cloneTo(_worldMatrix);
+			
+			_setTransformFlag(TRANSFORM_WORLDMATRIX, false);
 		}
 		
 		/**
@@ -423,59 +681,49 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获取父3D变换。
-		 * @return 父3D变换。
-		 */
-		public function get parent():Transform3D {
-			return _parent;
-		}
-		
-		/**
-		 * 设置父3D变换。
-		 * @param	value 父3D变换。
-		 */
-		public function set parent(value:Transform3D):void {
-			if (_parent !== value) {
-				if (_parent) {
-					var parentChilds:Vector.<Transform3D> = _parent._childs;
-					var index:int = parentChilds.indexOf(this);
-					parentChilds.splice(index, 1);
-				}
-				if (value) {
-					value._childs.push(this);
-					(value) && (_onWorldTransform());
-				}
-				_parent = value;
-			}
-		}
-		
-		/**
-		 *设置关联虚拟变换。
-		 * @param value 虚拟变换。
-		 */
-		public function set dummy(value:AnimationTransform3D):void {
-			if (_dummy !== value) {
-				(_dummy) && (_dummy._entity = null);
-				(value) && (value._entity = this);
-				_dummy = value;
-			}
-		}
-		
-		/**
-		 *获取关联虚拟变换。
-		 * @return 虚拟变换。
-		 */
-		public function get dummy():AnimationTransform3D {
-			return _dummy;
-		}
-		
-		/**
 		 * 创建一个 <code>Transform3D</code> 实例。
 		 * @param owner 所属精灵。
 		 */
 		public function Transform3D(owner:Sprite3D) {
 			_owner = owner;
-			_childs = new Vector.<Transform3D>();
+			_children = new Vector.<Transform3D>();
+			_setTransformFlag(TRANSFORM_LOCALQUATERNION | TRANSFORM_LOCALEULER | TRANSFORM_LOCALMATRIX, false);
+			_setTransformFlag(TRANSFORM_WORLDPOSITION | TRANSFORM_WORLDQUATERNION | TRANSFORM_WORLDEULER | TRANSFORM_WORLDSCALE | TRANSFORM_WORLDMATRIX, true);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setTransformFlag(type:int, value:Boolean):void {
+			if (value)
+				_transformFlag |= type;
+			else
+				_transformFlag &= ~type;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getTransformFlag(type:int):Boolean {
+			return (_transformFlag & type) != 0;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setParent(value:Transform3D):void {
+			if (_parent !== value) {
+				if (_parent) {
+					var parentChilds:Vector.<Transform3D> = _parent._children;
+					var index:int = parentChilds.indexOf(this);
+					parentChilds.splice(index, 1);
+				}
+				if (value) {
+					value._children.push(this);
+					(value) && (_onWorldTransform());
+				}
+				_parent = value;
+			}
 		}
 		
 		/**
@@ -505,11 +753,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldPositionRotationTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate) {
-				_worldUpdate = _positionUpdate = _rotationUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldPositionRotationTransform();
+			if (!_getTransformFlag(TRANSFORM_WORLDMATRIX) || !_getTransformFlag(TRANSFORM_WORLDPOSITION) || !_getTransformFlag(TRANSFORM_WORLDQUATERNION) || !_getTransformFlag(TRANSFORM_WORLDEULER)) {
+				_setTransformFlag(TRANSFORM_WORLDMATRIX | TRANSFORM_WORLDPOSITION | TRANSFORM_WORLDQUATERNION | TRANSFORM_WORLDEULER, true);
+				event(Event.TRANSFORM_CHANGED, _transformFlag);
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldPositionRotationTransform();
 			}
 		}
 		
@@ -517,11 +765,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldPositionScaleTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_scaleUpdate) {
-				_worldUpdate = _positionUpdate = _scaleUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldPositionScaleTransform();
+			if (!_getTransformFlag(TRANSFORM_WORLDMATRIX) || !_getTransformFlag(TRANSFORM_WORLDPOSITION) || !_getTransformFlag(TRANSFORM_WORLDSCALE)) {
+				_setTransformFlag(TRANSFORM_WORLDMATRIX | TRANSFORM_WORLDPOSITION | TRANSFORM_WORLDSCALE, true);
+				event(Event.TRANSFORM_CHANGED, _transformFlag);
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldPositionScaleTransform();
 			}
 		}
 		
@@ -529,11 +777,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldPositionTransform():void {
-			if (!_worldUpdate || !_positionUpdate) {
-				_worldUpdate = _positionUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldPositionTransform();
+			if (!_getTransformFlag(TRANSFORM_WORLDMATRIX) || !_getTransformFlag(TRANSFORM_WORLDPOSITION)) {
+				_setTransformFlag(TRANSFORM_WORLDMATRIX | TRANSFORM_WORLDPOSITION, true);
+				event(Event.TRANSFORM_CHANGED, _transformFlag);
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldPositionTransform();
 			}
 		}
 		
@@ -541,11 +789,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldRotationTransform():void {
-			if (!_worldUpdate || !_rotationUpdate) {
-				_worldUpdate = _rotationUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldPositionRotationTransform();//父节点旋转发生变化，子节点的世界位置和旋转都需要更新
+			if (!_getTransformFlag(TRANSFORM_WORLDMATRIX) || !_getTransformFlag(TRANSFORM_WORLDQUATERNION) || !_getTransformFlag(TRANSFORM_WORLDEULER)) {
+				_setTransformFlag(TRANSFORM_WORLDMATRIX | TRANSFORM_WORLDQUATERNION | TRANSFORM_WORLDEULER, true);
+				event(Event.TRANSFORM_CHANGED, _transformFlag);
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldPositionRotationTransform();//父节点旋转发生变化，子节点的世界位置和旋转都需要更新
 			}
 		}
 		
@@ -553,11 +801,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _onWorldScaleTransform():void {
-			if (!_worldUpdate || !_scaleUpdate) {
-				_worldUpdate = _scaleUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldPositionScaleTransform();//父节点缩放发生变化，子节点的世界位置和缩放都需要更新
+			if (!_getTransformFlag(TRANSFORM_WORLDMATRIX) || !_getTransformFlag(TRANSFORM_WORLDSCALE)) {
+				_setTransformFlag(TRANSFORM_WORLDMATRIX | TRANSFORM_WORLDSCALE, true);
+				event(Event.TRANSFORM_CHANGED, _transformFlag);
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldPositionScaleTransform();//父节点缩放发生变化，子节点的世界位置和缩放都需要更新
 			}
 		}
 		
@@ -565,11 +813,11 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _onWorldTransform():void {
-			if (!_worldUpdate || !_positionUpdate || !_rotationUpdate || !_scaleUpdate) {
-				_worldUpdate = _positionUpdate = _rotationUpdate = _scaleUpdate = true;
-				event(Event.WORLDMATRIX_NEEDCHANGE);
-				for (var i:int = 0, n:int = _childs.length; i < n; i++)
-					_childs[i]._onWorldTransform();
+			if (!_getTransformFlag(TRANSFORM_WORLDMATRIX) || !_getTransformFlag(TRANSFORM_WORLDPOSITION) || !_getTransformFlag(TRANSFORM_WORLDQUATERNION) || !_getTransformFlag(TRANSFORM_WORLDEULER) || !_getTransformFlag(TRANSFORM_WORLDSCALE)) {
+				_setTransformFlag(TRANSFORM_WORLDMATRIX | TRANSFORM_WORLDPOSITION | TRANSFORM_WORLDQUATERNION | TRANSFORM_WORLDEULER | TRANSFORM_WORLDSCALE, true);
+				event(Event.TRANSFORM_CHANGED, _transformFlag);
+				for (var i:int = 0, n:int = _children.length; i < n; i++)
+					_children[i]._onWorldTransform();
 			}
 		}
 		

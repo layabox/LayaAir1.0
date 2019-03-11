@@ -10,23 +10,26 @@ package laya.webgl.shader {
 	
 	public class Shader extends BaseShader {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,, WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
+		//private static var _TEXTURES:Array = /*[STATIC SAFE]*/ [WebGLContext.TEXTURE0, WebGLContext.TEXTURE1, WebGLContext.TEXTURE2, WebGLContext.TEXTURE3, WebGLContext.TEXTURE4, WebGLContext.TEXTURE5, WebGLContext.TEXTURE6,, WebGLContext.TEXTURE7, WebGLContext.TEXTURE8];
 		private static var _count:int = 0;
-		public static var _preCompileShader:* = {}; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
+		public static var _preCompileShader:* = { }; //存储预编译结果，可以通过名字获得内容,目前不支持#ifdef嵌套和条件
+		private var _attribInfo:Array = null;
 		
 		public static const SHADERNAME2ID:Number = 0.0002;
 		
 		
 		public static var nameKey:StringKey = new StringKey();
 		
-		public static var sharders:Array = /*[STATIC SAFE]*/ (sharders = [], sharders.length = 0x20, sharders);
+		public static var sharders:Array = /*[STATIC SAFE]*/ new Array(0x20);// (sharders = [], sharders.length = 0x20, sharders);
 		
+		//TODO:coverage
 		public static function getShader(name:*):Shader {
 			return sharders[name];
 		}
 		
-		public static function create(vs:String, ps:String, saveName:* = null, nameMap:* = null):Shader {
-			return new Shader(vs, ps, saveName, nameMap);
+		//TODO:coverage
+		public static function create(vs:String, ps:String, saveName:* = null, nameMap:* = null, bindAttrib:Array=null):Shader {
+			return new Shader(vs, ps, saveName, nameMap, bindAttrib);
 		}
 		
 		/**
@@ -37,6 +40,7 @@ package laya.webgl.shader {
 		 * @param	define 宏定义，格式:{name:value...}
 		 * @return
 		 */
+		//TODO:coverage
 		public static function withCompile(nameID:int, define:*, shaderName:*, createShader:Function):Shader {
 			if (shaderName && sharders[shaderName])
 				return sharders[shaderName];
@@ -44,7 +48,7 @@ package laya.webgl.shader {
 			var pre:ShaderCompile = _preCompileShader[SHADERNAME2ID * nameID];
 			if (!pre)
 				throw new Error("withCompile shader err!" + nameID);
-			return pre.createShader(define, shaderName, createShader);
+			return pre.createShader(define, shaderName, createShader,null);
 		}
 		
 		/**
@@ -55,14 +59,14 @@ package laya.webgl.shader {
 		 * @param	define 宏定义，格式:{name:value...}
 		 * @return
 		 */
-		public static function withCompile2D(nameID:int, mainID:int, define:*, shaderName:*, createShader:Function):Shader {
+		public static function withCompile2D(nameID:int, mainID:int, define:*, shaderName:*, createShader:Function,bindAttrib:Array=null):Shader {
 			if (shaderName && sharders[shaderName])
 				return sharders[shaderName];
 			
 			var pre:ShaderCompile = _preCompileShader[SHADERNAME2ID * nameID + mainID];
 			if (!pre)
 				throw new Error("withCompile shader err!" + nameID + " " + mainID);
-			return pre.createShader(define, shaderName, createShader);
+			return pre.createShader(define, shaderName, createShader,bindAttrib);
 		}
 		
 		public static function addInclude(fileName:String, txt:String):void {
@@ -75,9 +79,10 @@ package laya.webgl.shader {
 		 * @param	vs
 		 * @param	ps
 		 */
+		//TODO:coverage
 		public static function preCompile(nameID:int, vs:String, ps:String, nameMap:*):void {
 			var id:Number = SHADERNAME2ID * nameID;
-			_preCompileShader[id] = new ShaderCompile(id, vs, ps, nameMap);
+			_preCompileShader[id] = new ShaderCompile(vs, ps, nameMap);
 		}
 		
 		/**
@@ -88,8 +93,10 @@ package laya.webgl.shader {
 		 */
 		public static function preCompile2D(nameID:int, mainID:int, vs:String, ps:String, nameMap:*):void {
 			var id:Number = SHADERNAME2ID * nameID + mainID;
-			_preCompileShader[id] = new ShaderCompile(id, vs, ps, nameMap);
+			_preCompileShader[id] = new ShaderCompile(vs, ps, nameMap);
 		}
+		
+		private var customCompile:Boolean = false;
 		
 		private var _nameMap:*; //shader参数别名，语义
 		private var _vs:String
@@ -105,116 +112,104 @@ package laya.webgl.shader {
 		public var _program:* = null;
 		public var _params:Array = null;
 		public var _paramsMap:* = {};
-		public var _offset:int = 0;
-		public var _id:int;
 		
 		/**
 		 * 根据vs和ps信息生成shader对象
+		 * 把自己存储在 sharders 数组中
 		 * @param	vs
 		 * @param	ps
 		 * @param	name:
 		 * @param	nameMap 帮助里要详细解释为什么需要nameMap
 		 */
-		public function Shader(vs:String, ps:String, saveName:* = null, nameMap:* = null) {
+		public function Shader(vs:String, ps:String, saveName:* = null, nameMap:* = null, bindAttrib:Array=null) {
 			super();
 			if ((!vs) || (!ps)) throw "Shader Error";
+			_attribInfo = bindAttrib;
+			
+			if (Render.isConchApp) {
+				customCompile = true;
+			}
 			_id = ++_count;
 			_vs = vs;
 			_ps = ps;
 			_nameMap = nameMap ? nameMap : {};
 			saveName != null && (sharders[saveName] = this);
+			recreateResource();
+			lock = true;
 		}
 		
-		override protected function recreateResource():void {
+		 protected function recreateResource():void {
 			_compile();
-			completeCreate();
-			memorySize = 0;//忽略尺寸尺寸
+			_setGPUMemory(0);//忽略尺寸尺寸
 		}
 		
-		override protected function disposeResource():void {
+		//TODO:coverage
+		override protected function _disposeResource():void {
 			WebGL.mainContext.deleteShader(_vshader);
 			WebGL.mainContext.deleteShader(_pshader);
 			WebGL.mainContext.deleteProgram(_program);
 			_vshader = _pshader = _program = null;
 			_params = null;
 			_paramsMap = {};
-			memorySize = 0;
+			_setGPUMemory(0);
 			_curActTexIndex = 0;
 		}
 		
 		private function _compile():void {
 			if (!_vs || !_ps || _params)
 				return;
-			
+			/*
+			trace("================================");
+			trace(_vs);
+			trace(_ps);
+			trace("\n");
+			*/
 			_reCompile = true;
 			_params = [];
 			
-			var text:Array = [_vs, _ps];
 			var result:Object;
+			if (customCompile)
+				result =ShaderCompile.preGetParams(_vs, _ps);
 			var gl:WebGLContext = WebGL.mainContext;
 			_program = gl.createProgram();
-			_vshader = _createShader(gl, text[0], WebGLContext.VERTEX_SHADER);
-			_pshader = _createShader(gl, text[1], WebGLContext.FRAGMENT_SHADER);
+			_vshader = _createShader(gl, _vs, WebGLContext.VERTEX_SHADER);
+			_pshader = _createShader(gl, _ps, WebGLContext.FRAGMENT_SHADER);
 			
 			gl.attachShader(_program, _vshader);
 			gl.attachShader(_program, _pshader);
+
+			var one:*, i:int, j:int, n:int, location:*;
+			
+			//属性用指定location的方法，这样更灵活，更方便与vao结合。
+			//注意注意注意 这个必须放到link前面
+			var attribDescNum:int = _attribInfo?_attribInfo.length:0;
+			for (i = 0; i < attribDescNum; i+=2) {
+				gl.bindAttribLocation(_program, _attribInfo[i + 1], _attribInfo[i]);
+			}
+			
 			gl.linkProgram(_program);
-			if (!Render.isConchApp && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
+			if (!customCompile && !gl.getProgramParameter(_program, WebGLContext.LINK_STATUS)) {
 				throw gl.getProgramInfoLog(_program);
 			}
 			//trace(_vs);
 			//trace(_ps);
 			
-			var one:*, i:int, j:int, n:int, location:*;
-			var attribNum:int = 0;
-			
-			if (Render.isConchApp)
-			{
-				attribNum = gl.getProgramParameterEx(_vs,_ps,"", WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
-			}
-			else
-			{
-				attribNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
-			}
+			/*
+			var attribNum:int = customCompile ? result.attributes.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_ATTRIBUTES); //得到attribute的个数
 			
 			for (i = 0; i < attribNum; i++) {
-				var attrib:* = null;
-				if (Render.isConchApp)
-				{
-					attrib = gl.getActiveAttribEx(_vs,_ps,"", i); //attrib对象，{name,size,type}
-				}
-				else
-				{
-					attrib = gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
-				}
+				var attrib:* = customCompile ? result.attributes[i] : gl.getActiveAttrib(_program, i); //attrib对象，{name,size,type}
 				location = gl.getAttribLocation(_program, attrib.name); //用名字来得到location	
 				one = {vartype: "attribute", glfun:null, ivartype: 0, attrib: attrib, location: location, name: attrib.name, type: attrib.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				_params.push(one);
 			}
-			var nUniformNum:int = 0;
-			if (Render.isConchApp)
-			{
-				nUniformNum = gl.getProgramParameterEx(_vs,_ps,"", WebGLContext.ACTIVE_UNIFORMS); //个数
-			}
-			else
-			{
-				nUniformNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
-			}
-			
+			*/
+			var nUniformNum:int = customCompile ? result.uniforms.length : gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS); //个数
 			
 			for (i = 0; i < nUniformNum; i++) {
-				var uniform:* = null;
-				if (Render.isConchApp)
-				{
-					uniform = gl.getActiveUniformEx(_vs,_ps,"", i);//得到uniform对象，包括名字等信息 {name,type,size}	
-				}
-				else 
-				{
-					uniform = gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}	
-				}
-				
+				var uniform:* = customCompile ? result.uniforms[i] : gl.getActiveUniform(_program, i);//得到uniform对象，包括名字等信息 {name,type,size}
 				location = gl.getUniformLocation(_program, uniform.name); //用名字来得到location
-				one = {vartype: "uniform",glfun:null,ivartype: 1, attrib: attrib, location: location, name: uniform.name, type: uniform.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
+				one = {vartype: "uniform",glfun:null,ivartype: 1, location: location, name: uniform.name, type: uniform.type, isArray: false, isSame: false, preValue: null, indexOfParams: 0};
 				if (one.name.indexOf('[0]') > 0) {
 					one.name = one.name.substr(0, one.name.length - 3);
 					one.isArray = true;
@@ -233,10 +228,6 @@ package laya.webgl.shader {
 				_paramsMap[one.name] = one;
 				one._this = this;
 				one.uploadedValue = [];
-				if (one.vartype === "attribute") {
-					one.fun = _attribute;
-					continue;
-				}
 				
 				switch (one.type) {
 				case WebGLContext.INT: 
@@ -269,11 +260,10 @@ package laya.webgl.shader {
 					break;
 				case WebGLContext.FLOAT_MAT2: 
 				case WebGLContext.FLOAT_MAT3: 
+					//TODO 这个有人会用的。
 					throw new Error("compile shader err!");
-					break;
 				default: 
 					throw new Error("compile shader err!");
-					break;
 				}
 			}
 		}
@@ -282,7 +272,12 @@ package laya.webgl.shader {
 			var shader:* = gl.createShader(type);
 			gl.shaderSource(shader, str);
 			gl.compileShader(shader);
-			return shader;
+			if(gl.getShaderParameter(shader, WebGLContext.COMPILE_STATUS)){  
+				return shader;  
+			}else{  
+				console.log(gl.getShaderInfoLog(shader));  
+				return null;
+			}  			
 		}
 		
 		/**
@@ -290,20 +285,12 @@ package laya.webgl.shader {
 		 * @param	name
 		 * @return
 		 */
+		//TODO:coverage
 		public function getUniform(name:String):* {
 			return _paramsMap[name];
 		}
 		
-		private function _attribute(one:*, value:*):int {
-			var gl:WebGLContext = WebGL.mainContext;
-			var enableAtributes:Array = Buffer._enableAtributes;
-			var location:int = one.location;
-			(enableAtributes[location])||(gl.enableVertexAttribArray(location));
-			gl.vertexAttribPointer(location, value[0], value[1], value[2], value[3], value[4] + this._offset);
-			enableAtributes[location] = Buffer._bindVertexBuffer;
-			return 1;
-		}
-		
+		//TODO:coverage
 		private function _uniform1f(one:*, value:*):int {
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] !== value) {
@@ -313,6 +300,7 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform1fv(one:*, value:*):int {
 			if (value.length < 4) {
 				var uploadedValue:Array = one.uploadedValue;
@@ -340,6 +328,7 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec2v(one:*, value:*):int {
 			if (value.length < 2) {
 				var uploadedValue:Array = one.uploadedValue;
@@ -358,6 +347,7 @@ package laya.webgl.shader {
 			}
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec3(one:*, value:*):int {
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2]) {
@@ -367,6 +357,7 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec3v(one:*, value:*):int {
 			WebGL.mainContext.uniform3fv(one.location, value);
 			return 1;
@@ -381,16 +372,19 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec4v(one:*, value:*):int {
 			WebGL.mainContext.uniform4fv(one.location, value);
 			return 1;
 		}
 		
+		//TODO:coverage
 		private function _uniformMatrix2fv(one:*, value:*):int {
 			WebGL.mainContext.uniformMatrix2fv(one.location, false, value);
 			return 1;
 		}
-		
+				
+		//TODO:coverage
 		private function _uniformMatrix3fv(one:*, value:*):int {
 			WebGL.mainContext.uniformMatrix3fv(one.location, false, value);
 			return 1;
@@ -401,6 +395,7 @@ package laya.webgl.shader {
 			return 1;
 		}
 		
+		//TODO:coverage
 		private function _uniform1i(one:*, value:*):int {
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] !== value) {
@@ -410,11 +405,13 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform1iv(one:*, value:*):int {
 			WebGL.mainContext.uniform1iv(one.location, value);
 			return 1;
 		}
 		
+		//TODO:coverage
 		private function _uniform_ivec2(one:*, value:*):int {
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1]) {
@@ -424,11 +421,13 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform_ivec2v(one:*, value:*):int {
 			WebGL.mainContext.uniform2iv(one.location, value);
 			return 1;
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec3i(one:*, value:*):int {
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2]) {
@@ -443,6 +442,7 @@ package laya.webgl.shader {
 			return 1;
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec4i(one:*, value:*):int {
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2] || uploadedValue[3] !== value[3]) {
@@ -452,6 +452,7 @@ package laya.webgl.shader {
 			return 0;
 		}
 		
+		//TODO:coverage
 		private function _uniform_vec4vi(one:*, value:*):int {
 			WebGL.mainContext.uniform4iv(one.location, value);
 			return 1;
@@ -463,51 +464,60 @@ package laya.webgl.shader {
 			if (uploadedValue[0] == null) {
 				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
-				gl.activeTexture(_TEXTURES[_curActTexIndex]);
+				WebGLContext.activeTexture(gl,WebGLContext.TEXTURE0+_curActTexIndex);
 				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 				_curActTexIndex++;
 				return 1;
 			} else {
-				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
+				WebGLContext.activeTexture(gl, WebGLContext.TEXTURE0 + uploadedValue[0]);
 				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
 				return 0;
 			}
 		}
 		
+		//TODO:coverage
 		private function _uniform_samplerCube(one:*, value:*):int {//TODO:TEXTURTECUBE ARRAY
 			var gl:WebGLContext = WebGL.mainContext;
 			var uploadedValue:Array = one.uploadedValue;
 			if (uploadedValue[0] == null) {
 				uploadedValue[0] = _curActTexIndex;
 				gl.uniform1i(one.location, _curActTexIndex);
-				gl.activeTexture(_TEXTURES[_curActTexIndex]);
+				WebGLContext.activeTexture(gl, WebGLContext.TEXTURE0 + _curActTexIndex);
 				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
 				_curActTexIndex++;
 				return 1;
 			} else {
-				gl.activeTexture(_TEXTURES[uploadedValue[0]]);
+				WebGLContext.activeTexture(gl, WebGLContext.TEXTURE0 + uploadedValue[0]);
 				WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_CUBE_MAP, value);
 				return 0;
 			}
 		}
 		
+		//TODO:coverage
 		private function _noSetValue(one:*):void {
 			trace("no....:" + one.name);
 			//throw new Error("upload shader err,must set value:"+one.name);
 		}
 		
+		//TODO:coverage
 		public function uploadOne(name:String, value:*):void {
-			activeResource();
-			WebGLContext.UseProgram(_program);
+			//activeResource();
+			WebGLContext.useProgram(WebGL.mainContext, _program);
 			var one:* = _paramsMap[name];
 			one.fun.call(this, one, value);
 		}
 		
 		public function uploadTexture2D(value:*):void {
-			Stat.shaderCall++;
-			var gl:WebGLContext = WebGL.mainContext;
-			gl.activeTexture(WebGLContext.TEXTURE0);
-			WebGLContext.bindTexture(gl, WebGLContext.TEXTURE_2D, value);
+			//这个可能执行频率非常高，所以这里能省就省点
+			//Stat.shaderCall++;
+			//var gl:WebGLContext = WebGL.mainContext;
+			//WebGLContext.activeTexture(gl,WebGLContext.TEXTURE0);	2d必须是active0
+			var CTX:* = WebGLContext;
+			
+			if( CTX._activeTextures[0]!==value){
+				CTX.bindTexture(WebGL.mainContext, CTX.TEXTURE_2D, value);
+				CTX._activeTextures[0] = value;
+			}
 		}
 		
 		/**
@@ -516,9 +526,9 @@ package laya.webgl.shader {
 		 */
 		public function upload(shaderValue:ShaderValue, params:Array = null):void {
 			activeShader = bindShader = this;
-			
-			_lastUseFrameCount===Stat.loopCount  || activeResource();
-			WebGLContext.UseProgram(_program);
+			//recreateResource();
+			var gl:WebGLContext = WebGL.mainContext;
+			WebGLContext.useProgram(gl,_program);
 			
 			if (_reCompile) {
 				params = _params;
@@ -527,7 +537,6 @@ package laya.webgl.shader {
 				params = params || _params;
 			}
 			
-			var gl:WebGLContext = WebGL.mainContext;
 			
 			var one:*, value:*, n:int = params.length, shaderCall:int = 0;
 			
@@ -549,11 +558,12 @@ package laya.webgl.shader {
 		 * 按数组的定义提交
 		 * @param	shaderValue 数组格式[name,value,...]
 		 */
+		//TODO:coverage
 		public function uploadArray(shaderValue:Array, length:int, _bufferUsage:*):void {
 			activeShader = this;
 			bindShader = this;
-			activeResource();
-			WebGLContext.UseProgram(_program);
+			//activeResource();
+			WebGLContext.useProgram(WebGL.mainContext, _program);
 			var params:* = _params, value:*;
 			var one:*, shaderCall:int = 0;
 			for (var i:int = length - 2; i >= 0; i -= 2) {
@@ -574,8 +584,19 @@ package laya.webgl.shader {
 		 * 得到编译后的变量及相关预定义
 		 * @return
 		 */
+		//TODO:coverage
 		public function getParams():Array {
 			return _params;
 		}		
+		
+		/**
+		 * 设置shader里面的attribute绑定到哪个location，必须与mesh2d的对应起来，
+		 * 这个必须在编译之前设置。
+		 * @param attribDesc 属性描述，格式是 [attributeName, location, attributeName, location ... ]
+		 */
+		//TODO:coverage
+		public function setAttributesLocation(attribDesc:Array):void {
+			_attribInfo = attribDesc;
+		}
 	}
 }

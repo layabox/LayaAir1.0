@@ -8,8 +8,8 @@ package laya.utils {
 	public class WeakObject {
 		/**是否支持WeakMap*/
 		public static var supportWeakMap:Boolean;
-		/**如果不支持WeakMap，则多少时间清理一次缓存，默认5分钟清理一次*/
-		public static var delInterval:int = 5 * 60 * 1000;
+		/**如果不支持WeakMap，则多少时间清理一次缓存，默认10分钟清理一次*/
+		public static var delInterval:int = 10 * 60 * 1000;
 		/**全局WeakObject单例*/
 		public static var I:WeakObject = new WeakObject();
 		/**@private */
@@ -22,11 +22,12 @@ package laya.utils {
 		/**@private */
 		public static function __init__():void {
 			supportWeakMap = Browser.window.WeakMap != null;
-			//如果不支持，5分钟回收一次
-			if (!supportWeakMap) Laya.timer.loop(delInterval, null, clearCache);
+			//如果不支持，10分钟回收一次
+			if (!supportWeakMap) Laya.systemTimer.loop(delInterval, null, clearCache);
 		}
 		
 		/**清理缓存，回收内存*/
+		//TODO:coverage
 		public static function clearCache():void {
 			for (var i:int = 0, n:int = _maps.length; i < n; i++) {
 				var obj:WeakObject = _maps[i];
@@ -82,6 +83,7 @@ package laya.utils {
 		/**
 		 * 删除缓存
 		 */
+		//TODO:coverage
 		public function del(key:Object):void {
 			if (key == null) return;
 			if (supportWeakMap) {
@@ -97,6 +99,7 @@ package laya.utils {
 		/**
 		 * 是否有缓存
 		 */
+		//TODO:coverage
 		public function has(key:Object):Boolean {
 			if (key == null) return false;
 			if (supportWeakMap) {

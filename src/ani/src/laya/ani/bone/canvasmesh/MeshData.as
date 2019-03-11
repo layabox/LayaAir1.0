@@ -48,6 +48,7 @@ package laya.ani.bone.canvasmesh
 		 * @return 
 		 * 
 		 */		
+		//TODO:coverage
 		public function getBounds():Rectangle
 		{
 			return Rectangle._getWrapRec(vertices);

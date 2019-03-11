@@ -143,6 +143,7 @@ package laya.media.webaudio {
 			if (ctx.state == "running") {
 				Browser.document.removeEventListener("mousedown", _unlock, true);
 				Browser.document.removeEventListener("touchend", _unlock, true);
+				Browser.document.removeEventListener("touchstart", _unlock, true);
 				_unlocked = true;
 			}
 		}
@@ -153,6 +154,7 @@ package laya.media.webaudio {
 				_unlock(); // When played inside of a touch event, this will enable audio on iOS immediately.
 				Browser.document.addEventListener("mousedown", _unlock, true);
 				Browser.document.addEventListener("touchend", _unlock, true);
+				Browser.document.addEventListener("touchstart", _unlock, true);
 			}
 		}
 		
@@ -244,7 +246,6 @@ package laya.media.webaudio {
 		 *
 		 */
 		public function play(startTime:Number = 0, loops:Number = 0, channel:SoundChannel = null):SoundChannel {
-			//trace("playWebAudioSound");
 			channel = channel ? channel : new WebAudioSoundChannel();
 			if (!audioBuffer) {
 				if (url) {
@@ -253,7 +254,6 @@ package laya.media.webaudio {
 					this.once(Event.COMPLETE, this, __playAfterLoaded);
 					load(url);
 				}
-					//return null;
 			}
 			channel.url = this.url;
 			channel.loops = loops;

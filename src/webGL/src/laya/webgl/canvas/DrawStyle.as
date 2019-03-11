@@ -1,23 +1,17 @@
 package laya.webgl.canvas {
-	import laya.utils.Color;
+	import laya.utils.ColorUtils;
 	
 	public class DrawStyle {
 		public static var DEFAULT:DrawStyle = new DrawStyle("#000000")
 		
-		public var _color:Color = Color.create("black");
+		public var _color:ColorUtils;
 		
 		public static function create(value:*):DrawStyle {
 			if (value) {
-				var color:Color;
-				
-				if (value is String) color = Color.create(value as String);
-				else if (value is Color) color = value as Color;
-				
-				if (color) {
-					return color._drawStyle || (color._drawStyle = new DrawStyle(value));
-				}
+				var color:ColorUtils = (value is ColorUtils)?(value as ColorUtils):ColorUtils.create(value);
+				return color._drawStyle || (color._drawStyle = new DrawStyle(value));				
 			}
-			return DrawStyle.DEFAULT;
+			return DEFAULT;
 		}
 		
 		public function DrawStyle(value:*) {
@@ -26,24 +20,23 @@ package laya.webgl.canvas {
 		
 		public function setValue(value:*):void {
 			if (value) {
-				if (value is String) {
-					_color = Color.create(value as String);
-					return;
-				}
-				if (value is Color) {
-					_color = value as Color;
-					return;
-				}
+				_color = (value is ColorUtils)?(value as ColorUtils):ColorUtils.create(value);
 			}
+			else _color = ColorUtils.create("#000000");
 		}
 		
 		public function reset():void {
-			_color = Color.create("black");
+			_color = ColorUtils.create("#000000");
+		}
+		
+		public function toInt():int
+		{
+			return _color.numColor;
 		}
 		
 		public function equal(value:*):Boolean {
 			if (value is String) return _color.strColor === value as String;
-			if (value is Color) return _color.numColor === (value as Color).numColor;
+			if (value is ColorUtils) return _color.numColor === (value as ColorUtils).numColor;
 			return false;
 		}
 		

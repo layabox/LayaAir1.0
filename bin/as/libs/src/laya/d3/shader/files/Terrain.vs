@@ -45,7 +45,9 @@ void main()
 
 #ifdef LIGHTMAP
 	//这个地方使用a_Normal 并不是真的代表normal，其实凑巧法线图的uv正好是符合 light_Map的UV
-	v_LightMapUV=vec2(a_Normal.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Normal.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+	//v_LightMapUV=vec2(a_Normal.x*u_LightmapScaleOffset.x+u_LightmapScaleOffset.z,(a_Normal.y-1.0)*u_LightmapScaleOffset.y+u_LightmapScaleOffset.w);
+	v_LightMapUV=vec2(a_Normal.x,1.0 - a_Normal.y) * u_LightmapScaleOffset.xy + u_LightmapScaleOffset.zw;
+	v_LightMapUV.y=1.0-v_LightMapUV.y;
 #endif
 
 #ifdef RECEIVESHADOW

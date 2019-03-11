@@ -17,16 +17,8 @@ uniform float u_Duration;
 uniform float u_EndVelocity;
 uniform vec3 u_Gravity;
 
-#ifdef PARTICLE3D
- uniform mat4 u_WorldMat;
- uniform mat4 u_View;
- uniform mat4 u_Projection;
- uniform vec2 u_ViewportScale;
-#else
- uniform vec2 size;
- uniform mat4 mmat;
- uniform mat4 u_mmat;
-#endif
+uniform vec2 size;
+uniform mat4 u_mmat;
 
 vec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in float normalizedAge)
 {
@@ -49,26 +41,15 @@ vec4 ComputeParticlePosition(in vec3 position, in vec3 velocity,in float age,in 
    addPosition.x += cos(radianHorizontal) *r;
    addPosition.z += sin(radianHorizontal) *r;
   
-   #ifdef PARTICLE3D
-   position+=addPosition;
-    return  u_Projection*u_View*u_WorldMat*(vec4(position, 1.0));
-   #else
    addPosition.y=-addPosition.y;//2D粒子位置更新需要取负，2D粒子坐标系Y轴正向朝上
    position+=addPosition;
-    return  vec4(position,1.0);
-   #endif
+   return  vec4(position,1.0);
 }
 
 float ComputeParticleSize(in float startSize,in float endSize, in float normalizedAge)
 {    
     float size = mix(startSize, endSize, normalizedAge);
-    
-	#ifdef PARTICLE3D
-    //Project the size into screen coordinates.
-     return size * u_Projection[1][1];
-	#else
-	 return size;
-	#endif
+    return size;
 }
 
 mat2 ComputeParticleRotation(in float rot,in float age)
@@ -98,14 +79,10 @@ void main()
    float pSize = ComputeParticleSize(a_SizeRotation.x,a_SizeRotation.y, normalizedAge);
    mat2 rotation = ComputeParticleRotation(a_SizeRotation.z, age);
 	
-   #ifdef PARTICLE3D
-	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize * u_ViewportScale;
-   #else
-    mat4 mat=u_mmat*mmat;
+    mat4 mat=u_mmat;
     gl_Position=vec4((mat*gl_Position).xy,0.0,1.0);
-	gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize*vec2(mat[0][0],mat[1][1]);
+    gl_Position.xy += (rotation*a_CornerTextureCoordinate.xy) * pSize*vec2(mat[0][0],mat[1][1]);
     gl_Position=vec4((gl_Position.x/size.x-0.5)*2.0,(0.5-gl_Position.y/size.y)*2.0,0.0,1.0);
-   #endif
    
    v_Color = ComputeParticleColor(a_StartColor,a_EndColor, normalizedAge);
    v_TextureCoordinate =a_CornerTextureCoordinate.zw;

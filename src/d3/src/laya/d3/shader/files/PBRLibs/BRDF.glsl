@@ -1,4 +1,10 @@
-vec4 LayaAirBRDF(in vec3 diffuseColor, in vec3 specularColor, in float oneMinusReflectivity, in float smoothness, in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in vec3 gi)
+struct LayaGI
+{
+	vec3 diffuse;
+	vec3 specular;
+};
+
+vec4 LayaAirBRDF(in vec3 diffuseColor, in vec3 specularColor, in float oneMinusReflectivity, in float smoothness, in vec3 normal, in vec3 viewDir, in vec3 lightDir, in vec3 lightColor, in LayaGI gi)
 {
 	float perceptualRoughness = SmoothnessToPerceptualRoughness(smoothness);
 	vec3 halfDir = SafeNormalize(viewDir - lightDir);
@@ -23,9 +29,13 @@ vec4 LayaAirBRDF(in vec3 diffuseColor, in vec3 specularColor, in float oneMinusR
 	specularTerm = sqrt(max(0.0001, specularTerm));
 	specularTerm = max(0.0, specularTerm * nl);
 	
-	vec4 color;
-	color.rgb = diffuseColor * (gi + lightColor * diffuseTerm) + specularTerm * lightColor * FresnelTerm (specularColor, lh);
+	float surfaceReduction = 1.0 - 0.28 * roughness * perceptualRoughness;
+	float grazingTerm = clamp(smoothness + (1.0 - oneMinusReflectivity), 0.0, 1.0);
 	
-	color.a = 1.0;
+	vec4 color;
+	color.rgb = diffuseColor * (gi.diffuse + lightColor * diffuseTerm) 
+			  + specularTerm * lightColor * FresnelTerm (specularColor, lh)
+			  + surfaceReduction * gi.specular * FresnelLerp(specularColor, vec3(grazingTerm), nv);
+	
 	return color;
 }

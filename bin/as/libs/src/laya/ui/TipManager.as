@@ -5,24 +5,24 @@ package laya.ui {
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.maths.Rectangle;
-	import laya.ui.Component;
+	import laya.ui.UIComponent;
 	import laya.ui.UIEvent;
 	import laya.utils.Handler;
 	
 	/**鼠标提示管理类*/
-	public class TipManager extends Component {
+	public class TipManager extends UIComponent {
 		public static var offsetX:int = 10;
 		public static var offsetY:int = 15;
 		public static var tipTextColor:String = "#ffffff";
 		public static var tipBackColor:String = "#111111";
 		public static var tipDelay:Number = 200;
-		private var _tipBox:Component;
+		private var _tipBox:UIComponent;
 		private var _tipText:Text;
 		private var _defaultTipHandler:Function;
 		
 		public function TipManager() {
 			super();
-			_tipBox = new Component();
+			_tipBox = new UIComponent();
 			_tipBox.addChild(_tipText = new Text());
 			_tipText.x = _tipText.y = 5;
 			_tipText.color = tipTextColor;
@@ -91,10 +91,10 @@ package laya.ui {
 			var rec:Rectangle = dis.getBounds();
 			dis.x = Laya.stage.mouseX + offX;
 			dis.y = Laya.stage.mouseY + offY;
-			if (dis.x + rec.width > Laya.stage.width) {
+			if (dis._x + rec.width > Laya.stage.width) {
 				dis.x -= rec.width + offX;
 			}
-			if (dis.y + rec.height > Laya.stage.height) {
+			if (dis._y + rec.height > Laya.stage.height) {
 				dis.y -= rec.height + offY;
 			}
 		}
@@ -122,7 +122,7 @@ package laya.ui {
 		private function _showDefaultTip(text:String):void {
 			_tipText.text = text;
 			var g:Graphics = _tipBox.graphics;
-			g.clear();
+			g.clear(true);
 			g.drawRect(0, 0, _tipText.width + 10, _tipText.height + 10, tipBackColor);
 			addChild(_tipBox);
 			_showToStage(this);

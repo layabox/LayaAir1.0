@@ -1,113 +1,94 @@
 package laya.d3.component {
-	import laya.ani.AnimationState;
+	import laya.components.Component;
 	import laya.d3.animation.AnimationClip;
 	import laya.d3.animation.AnimationEvent;
 	import laya.d3.animation.AnimationNode;
 	import laya.d3.animation.AnimationTransform3D;
-	import laya.d3.animation.Keyframe;
+	import laya.d3.animation.AnimatorStateScript;
 	import laya.d3.animation.KeyframeNode;
+	import laya.d3.animation.KeyframeNodeList;
 	import laya.d3.core.Avatar;
-	import laya.d3.core.ComponentNode;
+	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
-	import laya.d3.core.render.RenderState;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.utils.Utils3D;
-	import laya.events.Event;
-	import laya.resource.IDestroy;
-	import laya.utils.Stat;
+	import laya.display.Node;
+	import laya.layagl.LayaGL;
+	import laya.net.Loader;
+	import laya.renders.Render;
+	import laya.utils.Timer;
 	
 	/**
-	 * <code>Animations</code> 类用于创建动画组件。
+	 * <code>Animator</code> 类用于创建动画组件。
 	 */
-	public class Animator extends Component3D implements IDestroy {
-		/**无效矩阵,禁止修改*/
-		public static const deafaultMatrix:Float32Array = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+	public class Animator extends Component {
+		/** @private */
+		private static var _tempVector3Array0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
+		/** @private */
+		private static var _tempVector3Array1:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
+		/** @private */
+		private static var _tempQuaternionArray0:Float32Array =/*[STATIC SAFE]*/ new Float32Array(4);
+		/** @private */
+		private static var _tempQuaternionArray1:Float32Array =/*[STATIC SAFE]*/ new Float32Array(4);
+		
+		/** 裁剪模式_始终播放动画。*/
+		public static const CULLINGMODE_ALWAYSANIMATE:int = 0;
+		/** 裁剪模式_不可见时完全不播放动画。*/
+		public static const CULLINGMODE_CULLCOMPLETELY:int = 2;
+		
+		/**
+		 * @private
+		 */
+		public static function _update(scene:Scene3D):void {
+			var pool:SimpleSingletonList = scene._animatorPool;
+			var elements:Vector.<Animator> = pool.elements as Vector.<Animator>;
+			for (var i:int = 0, n:int = pool.length; i < n; i++) {
+				var animator:Animator = elements[i];
+				(animator && animator.enabled) && (animator._update());
+			}
+		}
 		
 		/**@private */
-		private static var _tempMatrix4x40:Float32Array = new Float32Array(16);
-		
-		/**@private */
-		private var _updateTransformPropertyLoopCount:int;
-		/**@private */
-		private var _cacheFrameRateInterval:Number;
-		/**@private */
-		private var _cacheFrameRate:int;
-		/**@private */
-		private var _cachePlayRate:Number;
-		/**@private */
-		private var _currentPlayClip:AnimationClip;
-		/**@private */
-		private var _currentPlayClipIndex:int;
-		/**@private */
-		private var _stoped:Boolean;
-		/**@private */
-		private var _currentTime:Number;
-		/**@private */
-		private var _currentFrameTime:Number;
-		/**@private */
-		private var _currentFrameIndex:int;
-		/**@private */
-		private var _elapsedPlaybackTime:Number;
-		/**@private */
-		private var _startUpdateLoopCount:Number;
-		
-		/**@private */
-		private var _clipNames:Vector.<String>;
-		/**@private */
-		private var _clips:Vector.<AnimationClip>;
-		/**@private */
-		private var _playStartFrames:Vector.<Number>;
-		/**@private */
-		private var _playEndFrames:Vector.<Number>;
-		/**@private */
-		private var _playEventIndex:int;
-		
-		/**@private */
-		private var _defaultClipIndex:int;
+		private var _speed:Number;
 		/**@private */
 		private var _avatar:Avatar;
 		/**@private */
-		private var _cacheNodesDefaultlValues:Vector.<Vector.<Float32Array>>;
+		private var _keyframeNodeOwnerMap:Object;
+		/**@private */
+		private var _keyframeNodeOwners:Vector.<KeyframeNodeOwner> = new Vector.<KeyframeNodeOwner>();
+		/**@private */
+		private var _updateMark:int;
+		/**@private */
+		private var _controllerLayers:Vector.<AnimatorControllerLayer>;
+		/**@private */
+		public var _linkSprites:Object;
 		
-		/**@private 无Avatar时缓存场景树中的精灵节点。*/
-		public var _cacheNodesSpriteOwners:Vector.<Vector.<Sprite3D>>;
-		/**@private 有Avatar时缓存Avatar树中的AnimationNode节点。*/
-		private var _cacheNodesAvatarOwners:Vector.<Vector.<AnimationNode>>;
-		/**@private */
-		private var _lastPlayAnimationClip:AnimationClip;
-		/**@private */
-		private var _lastPlayAnimationClipIndex:int;
-		/** @private */
-		private var _publicClipsDatas:Vector.<Vector.<Float32Array>>;
-		/**@private */
-		private var _publicAvatarNodeDatas:Vector.<Float32Array>;
-		
-		/**@private */
-		public var _curAvatarNodeDatas:Vector.<Float32Array>;
-		/**@private */
-		public var _cacheNodesToSpriteMap:Vector.<int>;
-		/**@private */
-		public var _cacheSpriteToNodesMap:Vector.<int>;
-		/**@private */
-		public var _cacheFullFrames:Vector.<Array>;
 		/**@private	*/
 		public var _avatarNodeMap:Object;
-		/**@private	*/
-		public var _avatarNodes:Vector.<AnimationNode>;
-		/**@private	*/
-		public var _canCache:Boolean;
-		/** @private */
-		public var _lastFrameIndex:int;
+		/**@private */
+		public var _linkAvatarSpritesData:Object = {};
+		/**@private */
+		public var _linkAvatarSprites:Vector.<Sprite3D> = new Vector.<Sprite3D>();
+		/**@private */
+		public var _renderableSprites:Vector.<RenderableSprite3D> = new Vector.<RenderableSprite3D>();
 		
-		/**	是否为缓存模式*/
-		public var isCache:Boolean;
-		/** 播放速率*/
-		public var playbackRate:Number;
-		/**	激活时是否自动播放*/
-		public var playOnWake:Boolean;
+		/**	裁剪模式*/
+		public var cullingMode:int = CULLINGMODE_CULLCOMPLETELY;
+		
+		/**@private	[NATIVE]*/
+		public var _animationNodeLocalPositions:Float32Array;
+		/**@private	[NATIVE]*/
+		public var _animationNodeLocalRotations:Float32Array;
+		/**@private	[NATIVE]*/
+		public var _animationNodeLocalScales:Float32Array;
+		/**@private	[NATIVE]*/
+		public var _animationNodeWorldMatrixs:Float32Array;
+		/**@private	[NATIVE]*/
+		public var _animationNodeParentIndices:Int16Array;
 		
 		/**
 		 * 获取avatar。
@@ -123,146 +104,31 @@ package laya.d3.component {
 		 */
 		public function set avatar(value:Avatar):void {
 			if (_avatar !== value) {
-				var lastAvatar:Avatar = _avatar;
 				_avatar = value;
-				var clipLength:int = _clips.length;
-				for (var i:int = 0; i < clipLength; i++)
-					_offClipAndAvatarRelateEvent(lastAvatar, _clips[i]);
-				
 				if (value) {
-					if (value.loaded)
-						_getAvatarOwnersAndInitDatasAsync();
-					else
-						value.once(Event.LOADED, this, _getAvatarOwnersAndInitDatasAsync);
+					_getAvatarOwnersAndInitDatasAsync();
+					(owner as Sprite3D)._changeHierarchyAnimatorAvatar(this, value);
+				} else {
+					var parent:Node = owner._parent;
+					(owner as Sprite3D)._changeHierarchyAnimatorAvatar(this, parent ? (parent as Sprite3D)._hierarchyAnimator._avatar : null);
 				}
 			}
 		}
 		
 		/**
-		 * 获取默认动画片段。
-		 * @return  默认动画片段。
+		 * 获取动画的播放速度,1.0为正常播放速度。
+		 * @return 动画的播放速度。
 		 */
-		public function get clip():AnimationClip {
-			return _clips[_defaultClipIndex];
+		public function get speed():Number {
+			return _speed;
 		}
 		
 		/**
-		 * 设置默认动画片段,AnimationClip名称为默认playName。
-		 * @param value 默认动画片段。
+		 * 设置动画的播放速度,1.0为正常播放速度。
+		 * @param 动画的播放速度。
 		 */
-		public function set clip(value:AnimationClip):void {
-			var index:int = value ? _clips.indexOf(value) : -1;
-			if (_defaultClipIndex !== index) {
-				(_defaultClipIndex !== -1) && (removeClip(_clips[_defaultClipIndex]));
-				(index !== -1) && (addClip(value, value.name));
-				_defaultClipIndex = index;
-			}
-		}
-		
-		/**
-		 *  获取缓存播放帧，缓存模式下生效。
-		 * @return	value 缓存播放帧率。
-		 */
-		public function get cacheFrameRate():int {
-			return _cacheFrameRate;
-		}
-		
-		/**
-		 *  设置缓存播放帧率，缓存模式下生效。注意：修改此值会有计算开销。*
-		 * @return	value 缓存播放帧率
-		 */
-		public function set cacheFrameRate(value:int):void {
-			if (_cacheFrameRate !== value) {
-				_cacheFrameRate = value;
-				_cacheFrameRateInterval = 1.0 / _cacheFrameRate;
-				
-				for (var i:int = 0, n:int = _clips.length; i < n; i++)
-					(_clips[i].loaded) && (_computeCacheFullKeyframeIndices(i));
-			}
-		}
-		
-		/**
-		 *  获取缓存播放速率，缓存模式下生效。*
-		 * @return	 缓存播放速率。
-		 */
-		public function get cachePlayRate():Number {
-			return _cachePlayRate;
-		}
-		
-		/**
-		 *  设置缓存播放速率，缓存模式下生效。注意：修改此值会有计算开销。*
-		 * @return	value 缓存播放速率。
-		 */
-		public function set cachePlayRate(value:Number):void {
-			if (_cachePlayRate !== value) {
-				_cachePlayRate = value;
-				
-				for (var i:int = 0, n:int = _clips.length; i < n; i++)
-					(_clips[i].loaded) && (_computeCacheFullKeyframeIndices(i));
-			}
-		}
-		
-		/**
-		 * 获取当前动画索引
-		 * @return	value 当前动画索引
-		 */
-		public function get currentPlayClip():AnimationClip {
-			return _currentPlayClip;
-		}
-		
-		/**
-		 * 获取当前帧数
-		 * @return	 当前帧数
-		 */
-		public function get currentFrameIndex():int {
-			return _currentFrameIndex;
-		}
-		
-		/**
-		 *  获取当前精确时间，不包括重播时间
-		 * @return	value 当前时间
-		 */
-		public function get currentPlayTime():Number {
-			return _currentTime + (_playStartFrames[_currentPlayClipIndex] / _currentPlayClip._frameRate);
-		}
-		
-		/**
-		 *  获取当前帧时间，不包括重播时间
-		 * @return	value 当前时间
-		 */
-		public function get currentFrameTime():Number {
-			return _currentFrameTime;
-		}
-		
-		/**
-		 * 获取当前播放状态
-		 * @return	当前播放状态
-		 */
-		public function get playState():int {
-			if (_currentPlayClip == null)
-				return AnimationState.stopped;
-			if (_stoped)
-				return AnimationState.stopped;
-			return AnimationState.playing;
-		}
-		
-		/**
-		 * 设置当前播放位置
-		 * @param	value 当前时间
-		 */
-		public function set playbackTime(value:Number):void {
-			if (_currentPlayClip == null || !_currentPlayClip || !_currentPlayClip.loaded)
-				return;
-			
-			//TODO:补充该操作异常处理
-			//if (value < _playStarts || value > _playEnds)
-			//throw new Error("AnimationPlayer:value must large than playStartTime,small than playEndTime.");
-			
-			_startUpdateLoopCount = Stat.loopCount;
-			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
-			_currentTime = value /*% playDuration*/;
-			_currentFrameIndex = Math.floor(currentPlayTime / cacheFrameInterval);
-			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
+		public function set speed(value:Number):void {
+			_speed =value;
 		}
 		
 		/**
@@ -271,92 +137,22 @@ package laya.d3.component {
 		public function Animator() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
-			_clipNames = new Vector.<String>();
-			_clips = new Vector.<AnimationClip>();
-			_playStartFrames = new Vector.<Number>();
-			_playEndFrames = new Vector.<Number>();
-			_cacheNodesSpriteOwners = new Vector.<Vector.<Sprite3D>>();
-			_cacheNodesAvatarOwners = new Vector.<Vector.<AnimationNode>>();
-			_cacheNodesDefaultlValues = new Vector.<Vector.<Float32Array>>();
-			_cacheNodesToSpriteMap = new Vector.<int>();
-			_cacheSpriteToNodesMap = new Vector.<int>();
-			_cacheFullFrames = new Vector.<Array>();
-			_publicClipsDatas = new Vector.<Vector.<Float32Array>>();
+			_controllerLayers = new Vector.<AnimatorControllerLayer>();
 			
-			_playEventIndex = -1;
-			_updateTransformPropertyLoopCount = -1;
-			_lastFrameIndex = -1;
-			_defaultClipIndex = -1;
-			_cachePlayRate = 1.0;
-			_currentPlayClip = null;
-			_currentFrameIndex = -1;
-			_currentTime = 0.0;
-			_elapsedPlaybackTime = 0;
-			_startUpdateLoopCount = -1;
-			isCache = true;
-			cacheFrameRate = 60;
-			playbackRate = 1.0;
-			playOnWake = true;
+			_linkSprites = {};
+			_speed = 1.0;
+			_keyframeNodeOwnerMap = {};
+			_updateMark = 0;
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _getAvatarOwnersByClip(clipIndex:int):void {
-			var frameNodes:Vector.<KeyframeNode> = _clips[clipIndex]._nodes;
-			var frameNodesCount:int = frameNodes.length;
-			
-			var owners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[clipIndex];
-			owners.length = frameNodesCount;
-			var defaultValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
-			defaultValues.length = frameNodesCount;
-			
-			for (var i:int = 0; i < frameNodesCount; i++) {
-				var nodeOwner:AnimationNode = _avatarNodes[0];
-				var node:KeyframeNode = frameNodes[i];
-				var path:Vector.<String> = node.path;
+		private function _linkToSprites(linkSprites:Object):void {
+			for (var k:String in linkSprites) {
+				var nodeOwner:Sprite3D = owner as Sprite3D;
+				var path:Vector.<String> = linkSprites[k];
 				for (var j:int = 0, m:int = path.length; j < m; j++) {
-					var p:String = path[j];
-					if (p === "") {
-						break;
-					} else {
-						nodeOwner = nodeOwner.getChildByName(p);
-						if (!nodeOwner)
-							break;
-					}
-				}
-				if (!nodeOwner)
-					continue;
-				owners[i] = nodeOwner;
-				
-				var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](nodeOwner);
-				if (datas) {//不存在对应的实体节点时可能为空
-					var cacheDatas:Float32Array = new Float32Array(node.keyFrameWidth);
-					defaultValues[i] = cacheDatas;
-					for (j = 0, m = datas.length; j < m; j++)
-						cacheDatas[j] = datas[j];
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _handleSpriteOwnersByClip(clipIndex:int):void {
-			var frameNodes:Vector.<KeyframeNode> = _clips[clipIndex]._nodes;
-			var frameNodesCount:int = frameNodes.length;
-			
-			var owners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[clipIndex];
-			owners.length = frameNodesCount;
-			var defaultValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
-			defaultValues.length = frameNodesCount;
-			
-			for (var i:int = 0; i < frameNodesCount; i++) {
-				var nodeOwner:Sprite3D = _owner as Sprite3D;
-				var node:KeyframeNode = frameNodes[i];
-				var path:Vector.<String> = node.path;
-				var j:int, m:int;
-				for (j = 0, m = path.length; j < m; j++) {
 					var p:String = path[j];
 					if (p === "") {
 						break;
@@ -366,16 +162,94 @@ package laya.d3.component {
 							break;
 					}
 				}
+				(nodeOwner) && (linkSprite3DToAvatarNode(k, nodeOwner));//此时Avatar文件已经加载完成
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _addKeyframeNodeOwner(clipOwners:Vector.<KeyframeNodeOwner>, node:KeyframeNode, propertyOwner:*):void {
+			var nodeIndex:int = node._indexInList;
+			var fullPath:String = node.fullPath;
+			var keyframeNodeOwner:KeyframeNodeOwner = _keyframeNodeOwnerMap[fullPath];
+			if (keyframeNodeOwner) {
+				keyframeNodeOwner.referenceCount++;
+				clipOwners[nodeIndex] = keyframeNodeOwner;
+			} else {
+				var property:* = propertyOwner;
+				for (var i:int = 0, n:int = node.propertyCount; i < n; i++) {
+					property = property[node.getPropertyByIndex(i)];
+					if (!property)
+						break;
+				}
 				
-				if (nodeOwner) {
-					owners[i] = nodeOwner;
-					var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](null, nodeOwner);
-					if (datas) {//不存在对应的实体节点时可能为空
-						var cacheDatas:Float32Array = new Float32Array(node.keyFrameWidth);
-						defaultValues[i] = cacheDatas;
-						for (j = 0, m = datas.length; j < m; j++)
-							cacheDatas[j] = datas[j];
+				keyframeNodeOwner = _keyframeNodeOwnerMap[fullPath] = new KeyframeNodeOwner();
+				keyframeNodeOwner.fullPath = fullPath;
+				keyframeNodeOwner.indexInList = _keyframeNodeOwners.length;
+				keyframeNodeOwner.referenceCount = 1;
+				keyframeNodeOwner.propertyOwner = propertyOwner;
+				var propertyCount:int = node.propertyCount;
+				var propertys:Vector.<String> = new Vector.<String>(propertyCount);
+				for (i = 0; i < propertyCount; i++)
+					propertys[i] = node.getPropertyByIndex(i);
+				keyframeNodeOwner.property = propertys;
+				keyframeNodeOwner.type = node.type;
+				
+				if (property) {//查询成功后赋默认值
+					if (node.type === 0)
+						keyframeNodeOwner.defaultValue = property;
+					else
+						keyframeNodeOwner.defaultValue = property.elements.slice();
+				}
+				
+				_keyframeNodeOwners.push(keyframeNodeOwner);
+				clipOwners[nodeIndex] = keyframeNodeOwner;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _removeKeyframeNodeOwner(nodeOwners:Vector.<KeyframeNodeOwner>, node:KeyframeNode):void {
+			var fullPath:String = node.fullPath;
+			var keyframeNodeOwner:KeyframeNodeOwner = _keyframeNodeOwnerMap[fullPath];
+			if (keyframeNodeOwner) {//TODO:Avatar中没该节点,但动画文件有,不会保存_keyframeNodeOwnerMap在中,移除会出BUG,例如动画节点下的SkinnedMeshRender有动画帧，但Avatar中忽略了
+				keyframeNodeOwner.referenceCount--;
+				if (keyframeNodeOwner.referenceCount === 0) {
+					delete _keyframeNodeOwnerMap[fullPath];
+					_keyframeNodeOwners.splice(_keyframeNodeOwners.indexOf(keyframeNodeOwner), 1);
+				}
+				nodeOwners[node._indexInList] = null;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getOwnersByClip(clipStateInfo:AnimatorState):void {
+			var frameNodes:KeyframeNodeList = clipStateInfo._clip._nodes;
+			var frameNodesCount:int = frameNodes.count;
+			var nodeOwners:Vector.<KeyframeNodeOwner> = clipStateInfo._nodeOwners;
+			nodeOwners.length = frameNodesCount;
+			for (var i:int = 0; i < frameNodesCount; i++) {
+				var node:KeyframeNode = frameNodes.getNodeByIndex(i);
+				var property:* = _avatar ? _avatarNodeMap[_avatar._rootNode.name] : owner;//如果有avatar需使用克隆节点
+				for (var j:int = 0, m:int = node.ownerPathCount; j < m; j++) {
+					var ownPat:String = node.getOwnerPathByIndex(j);
+					if (ownPat === "") {//TODO:直接不存
+						break;
+					} else {
+						property = property.getChildByName(ownPat);
+						if (!property)
+							break;
 					}
+				}
+				
+				if (property) {
+					var propertyOwner:String = node.propertyOwner;
+					(propertyOwner) && (property = property[propertyOwner]);
+					property && _addKeyframeNodeOwner(nodeOwners, node, property);
 				}
 			}
 		}
@@ -383,133 +257,43 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _offClipAndAvatarRelateEvent(avatar:Avatar, clip:AnimationClip):void {
-			if (avatar.loaded) {
-				if (!clip.loaded)
-					clip.off(Event.LOADED, this, _getAvatarOwnersByClip);
-			} else {
-				avatar.off(Event.LOADED, this, _getAvatarOwnersAndInitDatasAsync);
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _getAvatarOwnersByClipAsync(clipIndex:int, clip:AnimationClip):void {
-			if (clip.loaded)
-				_getAvatarOwnersByClip(clipIndex);
-			else
-				clip.once(Event.LOADED, this, _getAvatarOwnersByClip, [clipIndex]);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _offGetSpriteOwnersByClipAsyncEvent(clip:AnimationClip):void {
-			if (!clip.loaded)
-				clip.off(Event.LOADED, this, _getSpriteOwnersByClipAsync);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _getSpriteOwnersByClipAsync(clipIndex:int, clip:AnimationClip):void {
-			if (clip.loaded)
-				_handleSpriteOwnersByClip(clipIndex);
-			else
-				clip.once(Event.LOADED, this, _handleSpriteOwnersByClip, [clipIndex]);
+		private function _getOwnersByClipAsync(clipStateInfo:AnimatorState):void {
+			var clip:AnimationClip = clipStateInfo._clip;
+			_getOwnersByClip(clipStateInfo);
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _getAvatarOwnersAndInitDatasAsync():void {
-			for (var i:int = 0, n:int = _clips.length; i < n; i++)
-				_getAvatarOwnersByClipAsync(i, _clips[i]);
+			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
+				var clipStateInfos:Vector.<AnimatorState> = _controllerLayers[i]._states;
+				for (var j:int = 0, m:int = clipStateInfos.length; j < m; j++)
+					_getOwnersByClipAsync(clipStateInfos[j]);
+			}
 			
 			_avatar._cloneDatasToAnimator(this);
-			
-			for (i = 0, n = _avatarNodes.length; i < n; i++)//TODO:换成字典查询
-				_checkAnimationNode(_avatarNodes[i], _owner as Sprite3D);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _offGetClipCacheFullKeyframeIndicesEvent(clip:AnimationClip):void {
-			(clip.loaded) || (clip.off(Event.LOADED, this, _computeCacheFullKeyframeIndices));
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _computeCacheFullKeyframeIndices(clipIndex:int):void {
-			var clip:AnimationClip = _clips[clipIndex];
-			var cacheInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
-			var clipCacheFullFrames:Array = clip._getFullKeyframeIndicesWithCache(cacheInterval);
-			if (clipCacheFullFrames) {
-				_cacheFullFrames[clipIndex] = clipCacheFullFrames;
-				return;
-			} else {
-				clipCacheFullFrames = _cacheFullFrames[clipIndex] = [];
-				var nodes:Vector.<KeyframeNode> = clip._nodes;
-				var nodeCount:int = nodes.length;
-				clipCacheFullFrames.length = nodeCount;
-				var frameCount:int = Math.ceil(clip._duration / cacheInterval - 0.00001) + 1;
-				for (var i:int = 0; i < nodeCount; i++) {
-					var node:KeyframeNode = nodes[i];
-					var nodeFullFrames:Int32Array = new Int32Array(frameCount);//使用Int32Array非UInt16Array,因为需要-1表示没到第0帧的情况
-					(nodeFullFrames as *).fill(-1);
-					var keyFrames:Vector.<Keyframe> = node.keyFrames;
-					for (var j:int = 0, n:int = keyFrames.length; j < n; j++) {
-						var keyFrame:Keyframe = keyFrames[j];
-						var startTime:Number = keyFrame.startTime;
-						var endTime:Number = startTime + keyFrame.duration;
-						while (startTime <= endTime) {
-							var frameIndex:Number = Math.ceil(startTime / cacheInterval - 0.00001);
-							nodeFullFrames[frameIndex] = j;
-							startTime += cacheInterval;
-						}
-					}
-					clipCacheFullFrames[i] = nodeFullFrames;
+			for (var k:String in _linkAvatarSpritesData) {
+				var sprites:Array = _linkAvatarSpritesData[k];
+				if (sprites) {
+					for (var c:int = 0, p:int = sprites.length; c < p; c++)
+						_isLinkSpriteToAnimationNode(sprites[c], k, true);//TODO:对应移除
 				}
-				clip._cacheFullKeyframeIndices(cacheInterval, clipCacheFullFrames);
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _updateAnimtionPlayer():void {
-			_updatePlayer(Laya.timer.delta / 1000.0);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _onOwnerActiveHierarchyChanged():void {
-			var owner:Sprite3D = _owner as Sprite3D;
-			if (owner.activeInHierarchy) {
-				Laya.timer.frameLoop(1, this, _updateAnimtionPlayer);//TODO:当前帧注册，下一帧执行
-				(playOnWake && clip) && (play());
-			} else {
-				(playState !== AnimationState.stopped) && (_stoped = true);//调用stop抛事件会出BUG（在删除节点操作会触发，事件内又添加节点）
-				Laya.timer.clear(this, _updateAnimtionPlayer);
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _eventScript(from:Number, to:Number):void {
-			var events:Vector.<AnimationEvent> = _currentPlayClip._animationEvents;
-			for (var n:int = events.length; _playEventIndex < n; _playEventIndex++) {//TODO:_playEventIndex问题
-				var eve:AnimationEvent = events[_playEventIndex];
+		private function _eventScript(scripts:Vector.<Script3D>, clipState:AnimatorState, playState:AnimatorPlayState, from:Number, to:Number):void {
+			var events:Vector.<AnimationEvent> = clipState._clip._events;
+			var eventIndex:int = playState._playEventIndex;
+			for (var n:int = events.length; eventIndex < n; eventIndex++) {//TODO:_playEventIndex问题
+				var eve:AnimationEvent = events[eventIndex];
 				var eventTime:Number = eve.time;
 				if (from <= eventTime && eventTime < to) {
-					var scripts:Vector.<Script> = _owner._scripts;
 					for (var j:int = 0, m:int = scripts.length; j < m; j++) {
-						var script:Script = scripts[j];
+						var script:Script3D = scripts[j];
 						var fun:Function = script[eve.eventName];
 						(fun) && (fun.apply(script, eve.params));
 					}
@@ -517,554 +301,1073 @@ package laya.d3.component {
 					break;
 				}
 			}
+			playState._playEventIndex = eventIndex;
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _setPlayParams(time:Number, cacheFrameInterval:Number):void {
-			var lastTime:Number = _currentTime;
-			_currentTime = time;
-			_currentFrameIndex = Math.max(Math.floor(currentPlayTime / cacheFrameInterval - 0.00001), 0);
-			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
-			_eventScript(lastTime, time);
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setPlayParamsWhenStop(aniClipPlayDuration:Number, cacheFrameInterval:Number):void {
-			var lastTime:Number = _currentTime;
-			_currentTime = aniClipPlayDuration;
-			_currentFrameIndex = Math.max(Math.floor(aniClipPlayDuration / cacheFrameInterval - 0.00001), 0);
-			_currentFrameTime = _currentFrameIndex * cacheFrameInterval;
-			_eventScript(lastTime, aniClipPlayDuration);
-			_currentPlayClip = null;//动画结束
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _revertKeyframeNodes(clip:AnimationClip, clipIndex:int):void {
-			var originalValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
-			var frameNodes:Vector.<KeyframeNode> = clip._nodes;
-			if (_avatar) {
-				var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[clipIndex];
-				for (var i:int = 0, n:int = avatarOwners.length; i < n; i++) {
-					var avatarOwner:AnimationNode = avatarOwners[i];
-					(avatarOwner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](avatarOwner, null, originalValues[i]));
+		private function _updatePlayer(animatorState:AnimatorState, playState:AnimatorPlayState, elapsedTime:Number, islooping:Boolean):void {
+			var clipDuration:Number = animatorState._clip._duration * (animatorState.clipEnd - animatorState.clipStart);
+			var lastElapsedTime:Number = playState._elapsedTime;
+			var elapsedPlaybackTime:Number = lastElapsedTime + elapsedTime;
+			playState._lastElapsedTime = lastElapsedTime;
+			playState._elapsedTime = elapsedPlaybackTime;
+			var normalizedTime:Number = elapsedPlaybackTime / clipDuration;//TODO:时候可以都统一为归一化时间
+			playState._normalizedTime = normalizedTime;
+			var playTime:Number = normalizedTime % 1.0;
+			playState._normalizedPlayTime =playTime < 0?playTime+1.0:playTime;
+			playState._duration = clipDuration;
+			var scripts:Vector.<AnimatorStateScript> = animatorState._scripts;
+			
+			if ((!islooping && elapsedPlaybackTime >= clipDuration)) {
+				playState._finish = true;
+				playState._elapsedTime = clipDuration;
+				playState._normalizedPlayTime = 1.0;
+				
+				if (scripts) {
+					for (var i:int = 0, n:int = scripts.length; i < n; i++)
+						scripts[i].onStateExit();
+				}
+				return;
+			}
+			
+			if (clipDuration > 0) {
+				if (elapsedPlaybackTime >= clipDuration) {
+					do {
+						elapsedPlaybackTime -= clipDuration;//TODO:大于1次循环后会一直掉
+						playState._playEventIndex = 0;
+					} while (elapsedPlaybackTime >= clipDuration)
 				}
 			} else {
-				var spriteOwners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[clipIndex];
-				for (i = 0, n = spriteOwners.length; i < n; i++) {
-					var spriteOwner:Sprite3D = spriteOwners[i];
-					(spriteOwner) && (AnimationNode._propertySetFuncs[frameNodes[i].propertyNameID](null, spriteOwner, originalValues[i]));
-				}
+				playState._resetPlayState(0.0);
+			}
+			
+			if (scripts) {
+				for (i = 0, n = scripts.length; i < n; i++)
+					scripts[i].onStateUpdate();
 			}
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _onAnimationStop():void {
-			var i:int, n:int;
-			var frameNode:KeyframeNode, keyFrames:Vector.<Keyframe>, endKeyframeData:Float32Array;
-			_lastFrameIndex = -1;
-			var frameNodes:Vector.<KeyframeNode> = _currentPlayClip._nodes;
-			if (_avatar) {
-				var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[_currentPlayClipIndex];
-				for (i = 0, n = avatarOwners.length; i < n; i++) {
-					var nodeOwner:AnimationNode = avatarOwners[i];
-					frameNode = frameNodes[i];
-					keyFrames = frameNode.keyFrames;
-					endKeyframeData = keyFrames[keyFrames.length - 1].data;
-					(nodeOwner) && (AnimationNode._propertySetFuncs[frameNode.propertyNameID](nodeOwner, null, endKeyframeData));
-				}
-			} else {
-				var spriteOwners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[_currentPlayClipIndex];
-				for (i = 0, n = spriteOwners.length; i < n; i++) {
-					var spriteOwner:Sprite3D = spriteOwners[i];
-					frameNode = frameNodes[i];
-					keyFrames = frameNode.keyFrames;
-					endKeyframeData = keyFrames[keyFrames.length - 1].data;
-					(spriteOwner) && (AnimationNode._propertySetFuncs[frameNode.propertyNameID](null, spriteOwner, endKeyframeData));
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setAnimationClipPropertyToAnimationNode(nodeOwners:Vector.<AnimationNode>, propertyMap:Int32Array, clipDatas:Vector.<Float32Array>):void {
-			for (var i:int = 0, n:int = propertyMap.length; i < n; i++) {
-				var nodexIndex:int = propertyMap[i];
-				var owner:AnimationNode = nodeOwners[nodexIndex];
-				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[nodexIndex];
-					var datas:Float32Array = clipDatas[nodexIndex];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](owner, null, datas));
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _setAnimationClipPropertyToSprite3D(nodeOwners:Vector.<Sprite3D>, curClipAnimationDatas:Vector.<Float32Array>):void {
-			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
-				var owner:Sprite3D = nodeOwners[i];
-				if (owner) {
-					var ketframeNode:KeyframeNode = _currentPlayClip._nodes[i];
-					var datas:Float32Array = curClipAnimationDatas[i];
-					(datas) && (AnimationNode._propertySetFuncs[ketframeNode.propertyNameID](null, owner, datas));
-				}
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		public function _handleSpriteOwnersBySprite(clipIndex:int, isLink:Boolean, path:Vector.<String>, sprite:Sprite3D):void {
-			var clip:AnimationClip = _clips[clipIndex];
-			var nodePath:String = path.join("/");
-			var ownersNodes:Vector.<KeyframeNode> = clip._nodesMap[nodePath];
-			if (ownersNodes) {
-				var owners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[clipIndex];
-				var nodes:Vector.<KeyframeNode> = clip._nodes;
-				var defaultValues:Vector.<Float32Array> = _cacheNodesDefaultlValues[clipIndex];
-				for (var i:int = 0, n:int = ownersNodes.length; i < n; i++) {
-					var node:KeyframeNode = ownersNodes[i];
-					var index:int = nodes.indexOf(node);
-					if (isLink) {
-						owners[index] = sprite;
-						var datas:Float32Array = AnimationNode._propertyGetFuncs[node.propertyNameID](null, sprite);
-						if (datas) {//不存在对应的实体节点时可能为空 
-							var cacheDatas:Float32Array = defaultValues[index];
-							(cacheDatas) || (defaultValues[index] = cacheDatas = new Float32Array(node.keyFrameWidth));
-							for (var j:int = 0, m:int = datas.length; j < m; j++)
-								cacheDatas[j] = datas[j];
-						}
+		private function _updateEventScript(stateInfo:AnimatorState, playStateInfo:AnimatorPlayState, islooping:Boolean):void {
+			var scripts:Vector.<Script3D> = (owner as Sprite3D)._scripts;
+			if (scripts) {//TODO:play是否也换成此种计算
+				var clipDuration:Number = stateInfo._clip._duration;
+				var lastElapsedTime:Number = playStateInfo._lastElapsedTime;
+				var elapsedTime:Number = playStateInfo._elapsedTime;
+				var lastLoop:Number = Math.floor(lastElapsedTime / clipDuration);
+				var loop:Number = Math.floor(elapsedTime / clipDuration);
+				var lastTime:Number = lastElapsedTime % clipDuration;
+				var time:Number = elapsedTime % clipDuration;
+				var loopCount:int = loop - lastLoop;
+				if (islooping) {
+					if (loopCount > 0) {
+						_eventScript(scripts, stateInfo, playStateInfo, lastTime, clipDuration);
+						for (var i:int = 0, n:int = loopCount - 1; i < n; i++)
+							_eventScript(scripts, stateInfo, playStateInfo, 0, clipDuration);
+						_eventScript(scripts, stateInfo, playStateInfo, 0, time);
 					} else {
-						owners[index] = null;
+						_eventScript(scripts, stateInfo, playStateInfo, lastTime, time);
+					}
+				} else {
+					if (loopCount > 0)
+						_eventScript(scripts, stateInfo, playStateInfo, lastTime, clipDuration);
+					else
+						_eventScript(scripts, stateInfo, playStateInfo, lastTime, time);
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _updateClipDatas(animatorState:AnimatorState, addtive:Boolean, playStateInfo:AnimatorPlayState, scale:Number):void {
+			var clip:AnimationClip = animatorState._clip;
+			var clipDuration:Number = clip._duration;
+			
+			var curPlayTime:Number = animatorState.clipStart * clipDuration + playStateInfo._normalizedPlayTime * playStateInfo._duration;
+			var currentFrameIndices:Int16Array = animatorState._currentFrameIndices;
+			var frontPlay:Boolean = playStateInfo._elapsedTime > playStateInfo._lastElapsedTime;
+			clip._evaluateClipDatasRealTime(clip._nodes, curPlayTime, currentFrameIndices, addtive,frontPlay);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _applyFloat(pro:*, proName:String, nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, data:Number):void {
+			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
+				if (additive) {
+					pro[proName] += weight * (data);
+				} else {
+					var oriValue:Number = pro[proName];
+					pro[proName] = oriValue + weight * (data - oriValue);
+				}
+			} else {
+				if (isFirstLayer) {
+					if (additive)
+						pro[proName] = nodeOwner.defaultValue + data;
+					else
+						pro[proName] = data;
+				} else {
+					if (additive) {
+						pro[proName] = nodeOwner.defaultValue + weight * (data);
+					} else {
+						var defValue:Number = nodeOwner.defaultValue;
+						pro[proName] = defValue + weight * (data - defValue);
 					}
 				}
 			}
 		}
 		
 		/**
-		 *@private
-		 */
-		public function _evaluateAvatarNodesCacheMode(avatarOwners:Vector.<AnimationNode>, clip:AnimationClip, publicClipDatas:Vector.<Float32Array>, avatarNodeDatas:Vector.<Float32Array>, unCacheMap:Int32Array):void {
-			clip._evaluateAnimationlDatasCacheMode(avatarOwners, _cacheFullFrames[_currentPlayClipIndex], this, publicClipDatas, unCacheMap);
-			_setAnimationClipPropertyToAnimationNode(avatarOwners, unCacheMap, publicClipDatas);
-			
-			for (var i:int = 0, n:int = _avatarNodes.length; i < n; i++) {
-				var node:AnimationNode = _avatarNodes[i];
-				var nodeTransform:AnimationTransform3D = node.transform;
-				if (nodeTransform._worldUpdate) {//Avatar根节点始终为false,不会更新
-					var nodeMatrix:Float32Array = new Float32Array(16);
-					avatarNodeDatas[i] = nodeMatrix;
-					nodeTransform._setWorldMatrixAndUpdate(nodeMatrix);
-				} else {
-					var mat:Float32Array = nodeTransform.getWorldMatrix();
-					avatarNodeDatas[i] = mat ? mat : deafaultMatrix;//如果没有动画帧必须设置其默认矩阵,根节点为空
-				}
-			}
-		}
-		
-		/**
-		 *@private
-		 */
-		public function _evaluateAvatarNodesRealTime(avatarOwners:Vector.<AnimationNode>, clip:AnimationClip, publicClipDatas:Vector.<Float32Array>, avatarNodeDatas:Vector.<Float32Array>, unCacheMap:Int32Array):void {
-			clip._evaluateAnimationlDatasRealTime(avatarOwners, currentPlayTime, publicClipDatas, unCacheMap);
-			_setAnimationClipPropertyToAnimationNode(avatarOwners, unCacheMap, publicClipDatas);
-			
-			for (var i:int = 0, n:int = _avatarNodes.length; i < n; i++) {
-				var transform:AnimationTransform3D = _avatarNodes[i].transform;
-				if (transform._worldUpdate) //Avatar根节点始终为false,不会更新
-					transform._setWorldMatrixNoUpdate(avatarNodeDatas[i]);
-				else
-					avatarNodeDatas[i] = deafaultMatrix;//TODO:
-			}
-		}
-		
-		/**
-		 *@private
-		 */
-		public function _updateAvatarNodesToSpriteCacheMode(clip:AnimationClip, avatarNodeDatas:Vector.<Float32Array>):void {
-			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
-				var nodeIndex:int = _cacheSpriteToNodesMap[i];
-				var nodeMatrix:Float32Array = avatarNodeDatas[nodeIndex];
-				if (nodeMatrix !== deafaultMatrix) {//TODO:
-					var spriteTransform:Transform3D = _avatarNodes[nodeIndex].transform._entity;
-					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
-					Utils3D.matrix4x4MultiplyMFM((_owner as Sprite3D)._transform.worldMatrix, nodeMatrix, spriteWorldMatrix);
-					spriteTransform.worldMatrix = spriteWorldMatrix;
-				}
-			}
-		}
-		
-		/**
-		 *@private
-		 */
-		public function _updateAvatarNodesToSpriteRealTime():void {
-			for (var i:int = 0, n:int = _cacheSpriteToNodesMap.length; i < n; i++) {
-				var node:AnimationNode = _avatarNodes[_cacheSpriteToNodesMap[i]];
-				var spriteTransform:Transform3D = node.transform._entity;
-				var nodeTransform:AnimationTransform3D = node.transform;
-				if (nodeTransform._worldUpdate) {//Avatar跟节点始终为false,不会更新
-					var nodeMatrix:Float32Array = _tempMatrix4x40;
-					nodeTransform._setWorldMatrixAndUpdate(nodeMatrix);
-					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
-					Utils3D.matrix4x4MultiplyMFM((_owner as Sprite3D)._transform.worldMatrix, nodeMatrix, spriteWorldMatrix);
-					spriteTransform.worldMatrix = spriteWorldMatrix;
-				}
-			}
-		}
-		
-		/**
 		 * @private
 		 */
-		public function _updatePlayer(elapsedTime:Number):void {
-			if (_currentPlayClip == null || _stoped || !_currentPlayClip.loaded)//动画停止或暂停，不更新
-				return;
-			
-			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
-			var time:Number = 0;
-			(_startUpdateLoopCount !== Stat.loopCount) && (time = elapsedTime * playbackRate, _elapsedPlaybackTime += time);
-			
-			var frameRate:Number = _currentPlayClip._frameRate;
-			var playStart:Number = _playStartFrames[_currentPlayClipIndex] / frameRate;
-			var playEnd:Number = Math.min(_playEndFrames[_currentPlayClipIndex] / frameRate, _currentPlayClip._duration);
-			
-			var aniClipPlayDuration:Number = playEnd - playStart;
-			if ((!_currentPlayClip.islooping && _elapsedPlaybackTime >= aniClipPlayDuration)) {
-				_onAnimationStop();
-				_setPlayParamsWhenStop(aniClipPlayDuration, cacheFrameInterval);
-				this.event(Event.STOPPED);//兼容
-				return;
-			}
-			time += _currentTime;
-			if (aniClipPlayDuration > 0) {
-				if (time >= aniClipPlayDuration) {
-					do {//TODO:用求余改良
-						time -= aniClipPlayDuration;
-						if (time < aniClipPlayDuration) {
-							_setPlayParams(time, cacheFrameInterval);
-							this.event(Event.COMPLETE);
-						}
-						_playEventIndex = 0;
-						_eventScript(0, time);
-					} while (time >= aniClipPlayDuration)
+		private function _applyPositionAndRotationEuler(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, data:Float32Array, out:Float32Array):void {
+			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
+				if (additive) {
+					out[0] += weight * data[0];
+					out[1] += weight * data[1];
+					out[2] += weight * data[2];
 				} else {
-					_setPlayParams(time, cacheFrameInterval);
+					var oriX:Number = out[0];
+					var oriY:Number = out[1];
+					var oriZ:Number = out[2];
+					out[0] = oriX + weight * (data[0] - oriX);
+					out[1] = oriY + weight * (data[1] - oriY);
+					out[2] = oriZ + weight * (data[2] - oriZ);
 				}
 			} else {
-				_currentTime = _currentFrameTime = _currentFrameIndex = _playEventIndex = 0;
-				this.event(Event.COMPLETE);
+				if (isFirstLayer) {
+					if (additive) {
+						var defValue:Float32Array = nodeOwner.defaultValue;
+						out[0] = defValue[0] + data[0];
+						out[1] = defValue[1] + data[1];
+						out[2] = defValue[2] + data[2];
+					} else {
+						out[0] = data[0];
+						out[1] = data[1];
+						out[2] = data[2];
+					}
+				} else {
+					defValue = nodeOwner.defaultValue;
+					if (additive) {
+						out[0] = defValue[0] + weight * data[0];
+						out[1] = defValue[1] + weight * data[1];
+						out[2] = defValue[2] + weight * data[2];
+					} else {
+						var defX:Number = defValue[0];
+						var defY:Number = defValue[1];
+						var defZ:Number = defValue[2];
+						out[0] = defX + weight * (data[0] - defX);
+						out[1] = defY + weight * (data[1] - defY);
+						out[2] = defZ + weight * (data[2] - defZ);
+					}
+				}
 			}
 		}
 		
 		/**
 		 * @private
-		 * 更新蒙皮动画组件。
-		 * @param	state 渲染状态参数。
 		 */
-		public override function _update(state:RenderState):void {
-			var clip:AnimationClip = _currentPlayClip;
-			if (playState !== AnimationState.playing || !clip || !clip.loaded)
-				return;
-			
-			var rate:Number = playbackRate * Laya.timer.scale;
-			var cacheRate:Number = _cachePlayRate;
-			_canCache = isCache && rate >= cacheRate;
-			var frameIndex:int = -1;
-			var clipDatas:Vector.<Float32Array>;
-			if (_canCache) {
-				frameIndex = _currentFrameIndex;
-				if (_lastFrameIndex === frameIndex)
-					return;
-				
-				clipDatas = clip._getAnimationDataWithCache(cacheRate, frameIndex);
-				if (_avatar) {
-					var avatarOwners:Vector.<AnimationNode> = _cacheNodesAvatarOwners[_currentPlayClipIndex];
-					var cacheMap:Int32Array = clip._cachePropertyMap;
-					var cacheMapCount:int = cacheMap.length;
-					if (cacheMapCount > 0) {//cacheMapCount>0时才进行相关计算，避免浪费,如骨骼动画
-						if (!clipDatas) {
-							clipDatas = new Vector.<Float32Array>();
-							clipDatas.length = cacheMapCount;
-							clip._cacheAnimationData(cacheRate, frameIndex, clipDatas);
-							clip._evaluateAnimationlDatasCacheMode(avatarOwners, _cacheFullFrames[_currentPlayClipIndex], this, clipDatas, cacheMap);
-						}
-						_setAnimationClipPropertyToAnimationNode(avatarOwners, cacheMap, clipDatas);
+		private function _applyRotation(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, clipRot:Float32Array, localRotationE:Float32Array):void {
+			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
+				if (additive) {
+					var tempQuat:Float32Array = _tempQuaternionArray1;
+					Utils3D.quaternionWeight(clipRot, weight, tempQuat);
+					Utils3D.quaterionNormalize(tempQuat, tempQuat);
+					Utils3D.quaternionMultiply(localRotationE, tempQuat, localRotationE);
+				} else {
+					Quaternion._lerpArray(localRotationE, clipRot, weight, localRotationE);
+				}
+			} else {
+				if (isFirstLayer) {
+					if (additive) {
+						var defaultRot:Float32Array = nodeOwner.defaultValue;
+						Utils3D.quaternionMultiply(defaultRot, clipRot, localRotationE);
+					} else {
+						localRotationE[0] = clipRot[0];
+						localRotationE[1] = clipRot[1];
+						localRotationE[2] = clipRot[2];
+						localRotationE[3] = clipRot[3];
+					}
+				} else {
+					defaultRot = nodeOwner.defaultValue;
+					if (additive) {
+						tempQuat = _tempQuaternionArray1;
+						Utils3D.quaternionWeight(clipRot, weight, tempQuat);
+						Utils3D.quaterionNormalize(tempQuat, tempQuat);
+						Utils3D.quaternionMultiply(defaultRot, tempQuat, localRotationE);
+					} else {
+						Quaternion._lerpArray(defaultRot, clipRot, weight, localRotationE);
+					}
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _applyScale(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, clipSca:Float32Array, localScaleE:Float32Array):void {
+			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
+				if (additive) {
+					var scale:Float32Array = _tempVector3Array1;
+					Utils3D.scaleWeight(clipSca, weight, scale);
+					localScaleE[0] = localScaleE[0] * scale[0];
+					localScaleE[1] = localScaleE[1] * scale[1];
+					localScaleE[2] = localScaleE[2] * scale[2];
+				} else {
+					Utils3D.scaleBlend(localScaleE, clipSca, weight, localScaleE);
+				}
+			} else {
+				if (isFirstLayer) {
+					if (additive) {
+						var defaultSca:Float32Array = nodeOwner.defaultValue;
+						localScaleE[0] = defaultSca[0] * clipSca[0];
+						localScaleE[1] = defaultSca[1] * clipSca[1];
+						localScaleE[2] = defaultSca[2] * clipSca[2];
+					} else {
+						localScaleE[0] = clipSca[0];
+						localScaleE[1] = clipSca[1];
+						localScaleE[2] = clipSca[2];
+					}
+				} else {
+					defaultSca = nodeOwner.defaultValue;
+					if (additive) {
+						scale = _tempVector3Array1;
+						Utils3D.scaleWeight(clipSca, weight, scale);
+						localScaleE[0] = defaultSca[0] * scale[0];
+						localScaleE[1] = defaultSca[1] * scale[1];
+						localScaleE[2] = defaultSca[2] * scale[2];
+					} else {
+						Utils3D.scaleBlend(defaultSca, clipSca, weight, localScaleE);
+					}
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _applyCrossData(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, srcValue:*, desValue:*, crossWeight:Number):void {
+			var pro:* = nodeOwner.propertyOwner;
+			if (pro) {
+				switch (nodeOwner.type) {
+				case 0: //Float
+					var proPat:Vector.<String> = nodeOwner.property;
+					var m:int = proPat.length - 1;
+					for (var j:int = 0; j < m; j++) {
+						pro = pro[proPat[j]];
+						if (!pro)//属性可能或被置空
+							break;
 					}
 					
-					_curAvatarNodeDatas = clip._getAvatarDataWithCache(_avatar, _cachePlayRate, frameIndex);
-					if (!_curAvatarNodeDatas) {
-						_curAvatarNodeDatas = new Vector.<Float32Array>();
-						_curAvatarNodeDatas.length = _avatarNodes.length;
-						clip._cacheAvatarData(_avatar, _cachePlayRate, frameIndex, _curAvatarNodeDatas);
-						_evaluateAvatarNodesCacheMode(avatarOwners, clip, clip._publicClipDatas, _curAvatarNodeDatas, clip._unCachePropertyMap);
-					}
-					_updateAvatarNodesToSpriteCacheMode(clip, _curAvatarNodeDatas);
-				} else {
-					var spriteOwners:Vector.<Sprite3D> = _cacheNodesSpriteOwners[_currentPlayClipIndex];
-					if (!clipDatas) {
-						clipDatas = new Vector.<Float32Array>();
-						clipDatas.length = _currentPlayClip._nodes.length;
-						clip._evaluateAnimationlDatasCacheMode(spriteOwners, _cacheFullFrames[_currentPlayClipIndex], this, clipDatas, null);//properyMap=null则数据全都存入_curClipAnimationDatas
-						clip._cacheAnimationData(cacheRate, frameIndex, clipDatas);
-					}
-					_setAnimationClipPropertyToSprite3D(spriteOwners, clipDatas);
+					var crossValue:Number = srcValue + crossWeight * (desValue - srcValue);
+					_applyFloat(pro, proPat[m], nodeOwner, additive, weight, isFirstLayer, crossValue);
+					break;
+				case 1: //Position
+					var localPos:Vector3 = pro.localPosition;
+					var position:Float32Array = _tempVector3Array0;
+					var srcX:Number = srcValue[0], srcY:Number = srcValue[1], srcZ:Number = srcValue[2];
+					position[0] = srcX + crossWeight * (desValue[0] - srcX);
+					position[1] = srcY + crossWeight * (desValue[1] - srcY);
+					position[2] = srcZ + crossWeight * (desValue[2] - srcZ);
+					_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, position, localPos.elements);
+					pro.localPosition = localPos;
+					break;
+				case 2: //Rotation
+					var localRot:Quaternion = pro.localRotation;
+					var rotation:Float32Array = _tempQuaternionArray0;
+					Quaternion._lerpArray(srcValue, desValue, crossWeight, rotation);
+					_applyRotation(nodeOwner, additive, weight, isFirstLayer, rotation, localRot.elements);
+					pro.localRotation = localRot;
+					break;
+				case 3: //Scale
+					var localSca:Vector3 = pro.localScale;
+					var scale:Float32Array = _tempVector3Array0;
+					Utils3D.scaleBlend(srcValue, desValue, crossWeight, scale);
+					_applyScale(nodeOwner, additive, weight, isFirstLayer, scale, localSca.elements);
+					pro.localScale = localSca;
+					break;
+				case 4: //RotationEuler
+					var localEuler:Vector3 = pro.localRotationEuler;
+					var rotationEuler:Float32Array = _tempVector3Array0;
+					srcX = srcValue[0], srcY = srcValue[1], srcZ = srcValue[2];
+					rotationEuler[0] = srcX + crossWeight * (desValue[0] - srcX);
+					rotationEuler[1] = srcY + crossWeight * (desValue[1] - srcY);
+					rotationEuler[2] = srcZ + crossWeight * (desValue[2] - srcZ);
+					_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, rotationEuler, localEuler.elements);
+					pro.localRotationEuler = localEuler;
+					break;
 				}
-			} else {
-				clipDatas = clip._publicClipDatas;
-				if (_avatar) {
-					clip._evaluateAnimationlDatasRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex], currentPlayTime, clipDatas, clip._cachePropertyMap);
-					if (!_publicAvatarNodeDatas) {
-						_publicAvatarNodeDatas = new Vector.<Float32Array>();
-						var nodeCount:int = _avatarNodes.length;
-						_publicAvatarNodeDatas.length = nodeCount;
-						for (var i:int = 1; i < nodeCount; i++)//根节点无需矩阵
-							_publicAvatarNodeDatas[i] = new Float32Array(16);
+				nodeOwner.updateMark = _updateMark;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setClipDatasToNode(stateInfo:AnimatorState, additive:Boolean, weight:Number, isFirstLayer:Boolean):void {
+			var nodes:KeyframeNodeList = stateInfo._clip._nodes;
+			var nodeOwners:Vector.<KeyframeNodeOwner> = stateInfo._nodeOwners;
+			for (var i:int = 0, n:int = nodes.count; i < n; i++) {
+				var nodeOwner:KeyframeNodeOwner = nodeOwners[i];
+				if (nodeOwner) {//骨骼中没有该节点
+					var pro:* = nodeOwner.propertyOwner;
+					if (pro) {
+						switch (nodeOwner.type) {
+						case 0: //Float
+							var proPat:Vector.<String> = nodeOwner.property;
+							var m:int = proPat.length - 1;
+							for (var j:int = 0; j < m; j++) {
+								pro = pro[proPat[j]];
+								if (!pro)//属性可能或被置空
+									break;
+							}
+							_applyFloat(pro, proPat[m], nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data);
+							break;
+						case 1: //Position
+							var localPos:Vector3 = pro.localPosition;
+							_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localPos.elements);
+							pro.localPosition = localPos;
+							break;
+						case 2: //Rotation
+							var localRot:Quaternion = pro.localRotation;
+							_applyRotation(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localRot.elements);
+							pro.localRotation = localRot;
+							break;
+						case 3: //Scale
+							var localSca:Vector3 = pro.localScale;
+							_applyScale(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localSca.elements);
+							pro.localScale = localSca;
+							break;
+						case 4: //RotationEuler
+							var localEuler:Vector3 = pro.localRotationEuler;
+							_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localEuler.elements);
+							pro.localRotationEuler = localEuler;
+							break;
+						}
+						nodeOwner.updateMark = _updateMark;
 					}
-					_curAvatarNodeDatas = _publicAvatarNodeDatas;
-					_evaluateAvatarNodesRealTime(_cacheNodesAvatarOwners[_currentPlayClipIndex], clip, clipDatas, _curAvatarNodeDatas, clip._unCachePropertyMap);
-					_updateAvatarNodesToSpriteRealTime();
-				} else {
-					clip._evaluateAnimationlDatasRealTime(_cacheNodesSpriteOwners[_currentPlayClipIndex], currentPlayTime, clipDatas, null);
 				}
 			}
-			_lastFrameIndex = frameIndex;
 		}
 		
 		/**
 		 * @private
 		 */
-		private function _checkAnimationNode(node:AnimationNode, sprite:Sprite3D):void {
-			if (node.name === sprite.name && !sprite._transform.dummy)//判断!sprite._transform.dummy重名节点可按顺序依次匹配。
-				sprite._isLinkSpriteToAnimationNode(this, node, true);
+		private function _setCrossClipDatasToNode(controllerLayer:AnimatorControllerLayer, srcState:AnimatorState, destState:AnimatorState, crossWeight:Number, isFirstLayer:Boolean):void {
+			//TODO:srcNodes、destNodes未使用
+			var nodeOwners:Vector.<KeyframeNodeOwner> = controllerLayer._crossNodesOwners;
+			var ownerCount:int = controllerLayer._crossNodesOwnersCount;
+			var additive:Boolean = controllerLayer.blendingMode !== AnimatorControllerLayer.BLENDINGMODE_OVERRIDE;
+			var weight:Number = controllerLayer.defaultWeight;
 			
-			for (var i:int = 0, n:int = sprite._childs.length; i < n; i++)
-				_checkAnimationNode(node, sprite.getChildAt(i) as Sprite3D);
+			var destDataIndices:Vector.<int> = controllerLayer._destCrossClipNodeIndices;
+			var destNodes:KeyframeNodeList = destState._clip._nodes;
+			var destNodeOwners:Vector.<KeyframeNodeOwner> = destState._nodeOwners;
+			var srcDataIndices:Vector.<int> = controllerLayer._srcCrossClipNodeIndices;
+			var srcNodeOwners:Vector.<KeyframeNodeOwner> = srcState._nodeOwners;
+			var srcNodes:KeyframeNodeList = srcState._clip._nodes;
+			
+			for (var i:int = 0; i < ownerCount; i++) {
+				var nodeOwner:KeyframeNodeOwner = nodeOwners[i];
+				if (nodeOwner) {
+					var srcIndex:int = srcDataIndices[i];
+					var destIndex:int = destDataIndices[i];
+					var srcValue:* = srcIndex !== -1 ? srcNodes.getNodeByIndex(srcIndex).data : destNodeOwners[destIndex].defaultValue;
+					var desValue:* = destIndex !== -1 ? destNodes.getNodeByIndex(destIndex).data : srcNodeOwners[srcIndex].defaultValue;
+					_applyCrossData(nodeOwner, additive, weight, isFirstLayer, srcValue, desValue, crossWeight);
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setFixedCrossClipDatasToNode(controllerLayer:AnimatorControllerLayer, destState:AnimatorState, crossWeight:Number, isFirstLayer:Boolean):void {
+			var nodeOwners:Vector.<KeyframeNodeOwner> = controllerLayer._crossNodesOwners;
+			var ownerCount:int = controllerLayer._crossNodesOwnersCount;
+			var additive:Boolean = controllerLayer.blendingMode !== AnimatorControllerLayer.BLENDINGMODE_OVERRIDE;
+			var weight:Number = controllerLayer.defaultWeight;
+			var destDataIndices:Vector.<int> = controllerLayer._destCrossClipNodeIndices;
+			var destNodes:KeyframeNodeList = destState._clip._nodes;
+			
+			for (var i:int = 0; i < ownerCount; i++) {
+				var nodeOwner:KeyframeNodeOwner = nodeOwners[i];
+				if (nodeOwner) {
+					var destIndex:int = destDataIndices[i];
+					var srcValue:* = nodeOwner.crossFixedValue;
+					var desValue:* = destIndex !== -1 ? destNodes.getNodeByIndex(destIndex).data : nodeOwner.defaultValue;
+					_applyCrossData(nodeOwner, additive, weight, isFirstLayer, srcValue, desValue, crossWeight);
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _revertDefaultKeyframeNodes(clipStateInfo:AnimatorState):void {
+			var nodeOwners:Vector.<KeyframeNodeOwner> = clipStateInfo._nodeOwners;
+			for (var i:int = 0, n:int = nodeOwners.length; i < n; i++) {
+				var nodeOwner:KeyframeNodeOwner = nodeOwners[i];
+				if (nodeOwner) {
+					var pro:* = nodeOwner.propertyOwner;
+					if (pro) {
+						switch (nodeOwner.type) {
+						case 0: 
+							var proPat:Vector.<String> = nodeOwner.property;
+							var m:int = proPat.length - 1;
+							for (var j:int = 0; j < m; j++) {
+								pro = pro[proPat[j]];
+								if (!pro)//属性可能或被置空
+									break;
+							}
+							pro[proPat[m]] = nodeOwner.defaultValue;
+							break;
+						case 1: 
+							var locPos:Vector3 = pro.localPosition;
+							var locPosE:Float32Array = locPos.elements;
+							var def:Float32Array = nodeOwner.defaultValue;
+							locPosE[0] = def[0];
+							locPosE[1] = def[1];
+							locPosE[2] = def[2];
+							pro.localPosition = locPos;
+							break;
+						case 2: 
+							var locRot:Quaternion = pro.localRotation;
+							var locRotE:Float32Array = locRot.elements;
+							def = nodeOwner.defaultValue;
+							locRotE[0] = def[0];
+							locRotE[1] = def[1];
+							locRotE[2] = def[2];
+							locRotE[3] = def[3];
+							pro.localRotation = locRot;
+							break;
+						case 3: 
+							var locSca:Vector3 = pro.localScale;
+							var locScaE:Float32Array = locSca.elements;
+							def = nodeOwner.defaultValue;
+							locScaE[0] = def[0];
+							locScaE[1] = def[1];
+							locScaE[2] = def[2];
+							pro.localScale = locSca;
+							break;
+						case 4: 
+							var locEul:Vector3 = pro.localRotationEuler;
+							var locEulE:Float32Array = locEul.elements;
+							def = nodeOwner.defaultValue;
+							locEulE[0] = def[0];
+							locEulE[1] = def[1];
+							locEulE[2] = def[2];
+							pro.localRotationEuler = locEul;
+							break;
+						default: 
+							throw "Animator:unknown type.";
+						}
+						
+					}
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _removeClip(clipStateInfos:Vector.<AnimatorState>, statesMap:Object, index:int, state:AnimatorState):void {
+			var clip:AnimationClip = state._clip;
+			clip._removeReference();
+			
+			clipStateInfos.splice(index, 1);
+			delete statesMap[state.name];
+			
+			var clipStateInfo:AnimatorState = clipStateInfos[index];
+			var frameNodes:KeyframeNodeList = clip._nodes;
+			var nodeOwners:Vector.<KeyframeNodeOwner> = clipStateInfo._nodeOwners;
+			
+			for (var i:int = 0, n:int = frameNodes.count; i < n; i++)
+				_removeKeyframeNodeOwner(nodeOwners, frameNodes.getNodeByIndex(i));
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _isLinkSpriteToAnimationNodeData(sprite:Sprite3D, nodeName:String, isLink:Boolean):void {
+			var linkSprites:Array = _linkAvatarSpritesData[nodeName];//存储挂点数据
+			if (isLink) {
+				linkSprites || (_linkAvatarSpritesData[nodeName] = linkSprites = []);
+				linkSprites.push(sprite);
+			} else {
+				linkSprites.splice(sprite, 1);
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _isLinkSpriteToAnimationNode(sprite:Sprite3D, nodeName:String, isLink:Boolean):void {
+			if (_avatar) {
+				var node:AnimationNode = _avatarNodeMap[nodeName];
+				if (node) {
+					if (isLink) {
+						sprite._transform._dummy = node.transform;
+						_linkAvatarSprites.push(sprite);
+						
+						var nodeTransform:AnimationTransform3D = node.transform;//nodeTransform为空时表示avatar中暂时无此节点
+						var spriteTransform:Transform3D = sprite.transform;
+						if (!spriteTransform.owner.isStatic && nodeTransform) {//Avatar跟节点始终为false,不会更新,Scene无transform
+							//TODO:spriteTransform.owner.isStatic外部判断
+							var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
+							var ownParTra:Transform3D = (owner as Sprite3D)._transform._parent;
+							if (ownParTra) {
+								Utils3D.matrix4x4MultiplyMFM(ownParTra.worldMatrix, nodeTransform.getWorldMatrix(), spriteWorldMatrix);//TODO:还可优化
+							} else {
+								var sprWorE:Float32Array = spriteWorldMatrix.elements;
+								var nodWorE:Float32Array = nodeTransform.getWorldMatrix();
+								for (var i:int = 0; i < 16; i++)
+									sprWorE[i] = nodWorE[i];
+							}
+							spriteTransform.worldMatrix = spriteWorldMatrix;
+						}
+					} else {
+						sprite._transform._dummy = null;
+						_linkAvatarSprites.splice(_linkAvatarSprites.indexOf(sprite), 1);
+					}
+				}
+			}
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override public function _load(owner:ComponentNode):void {
-			((owner as Sprite3D).activeInHierarchy) && (Laya.timer.frameLoop(1, this, _updateAnimtionPlayer));
-			_owner.on(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);//TODO:Stop和暂停的时候也要移除
+		override public function _onAdded():void {
+			var parent:Node = owner._parent;
+			(owner as Sprite3D)._setHierarchyAnimator(this, parent ? (parent as Sprite3D)._hierarchyAnimator : null);//只有动画组件在加载或卸载时才重新组织数据
+			(owner as Sprite3D)._changeAnimatorToLinkSprite3DNoAvatar(this, true, new <String>[]);
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
-		override public function _unload(owner:ComponentNode):void {
-			super._unload(owner);
-			((owner as Sprite3D).activeInHierarchy) && (Laya.timer.clear(this, _updateAnimtionPlayer));
-			_owner.off(Event.ACTIVE_IN_HIERARCHY_CHANGED, this, _onOwnerActiveHierarchyChanged);
-			_curAvatarNodeDatas = null;
+		override protected function _onDestroy():void {
+			var parent:Node = owner._parent;
+			(owner as Sprite3D)._clearHierarchyAnimator(this, parent ? (parent as Sprite3D)._hierarchyAnimator : null);//只有动画组件在加载或卸载时才重新组织数据
+			(owner as Sprite3D)._changeAnimatorToLinkSprite3DNoAvatar(this, false, new <String>[]);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onEnableInScene():void {
+			(owner._scene as Scene3D)._animatorPool.add(this);
+		
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onDisableInScene():void {
+			(owner._scene as Scene3D)._animatorPool.remove(this);
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override protected function _onEnable():void {
+			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
+				if (_controllerLayers[i].playOnWake) {
+					var defaultClip:AnimatorState = getDefaultState(i);
+					(defaultClip) && (play(null, i, 0));
+				}
+			}
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _destroy():void {
-			super._destroy();
-			for (var i:int = 0, n:int = _clips.length; i < n; i++)
-				_clips[i]._removeReference();
+		public function _handleSpriteOwnersBySprite(isLink:Boolean, path:Vector.<String>, sprite:Sprite3D):void {
+			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
+				var clipStateInfos:Vector.<AnimatorState> = _controllerLayers[i]._states;
+				for (var j:int = 0, m:int = clipStateInfos.length; j < m; j++) {
+					var clipStateInfo:AnimatorState = clipStateInfos[j];
+					var clip:AnimationClip = clipStateInfo._clip;
+					var nodePath:String = path.join("/");
+					var ownersNodes:Vector.<KeyframeNode> = clip._nodesMap[nodePath];
+					if (ownersNodes) {
+						var nodeOwners:Vector.<KeyframeNodeOwner> = clipStateInfo._nodeOwners;
+						for (var k:int = 0, p:int = ownersNodes.length; k < p; k++) {
+							if (isLink)
+								_addKeyframeNodeOwner(nodeOwners, ownersNodes[k], sprite);
+							else
+								_removeKeyframeNodeOwner(nodeOwners, ownersNodes[k]);
+						}
+					}
+				}
+			}
+		}
+		
+		/**
+		 *@private
+		 */
+		public function _updateAvatarNodesToSprite():void {
+			for (var i:int = 0, n:int = _linkAvatarSprites.length; i < n; i++) {
+				var sprite:Sprite3D = _linkAvatarSprites[i];
+				var nodeTransform:AnimationTransform3D = sprite.transform._dummy;//nodeTransform为空时表示avatar中暂时无此节点
+				var spriteTransform:Transform3D = sprite.transform;
+				if (!spriteTransform.owner.isStatic && nodeTransform) {
+					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
+					var ownParTra:Transform3D = (owner as Sprite3D)._transform._parent;
+					if (ownParTra) {
+						Utils3D.matrix4x4MultiplyMFM(ownParTra.worldMatrix, nodeTransform.getWorldMatrix(), spriteWorldMatrix);
+					} else {
+						var sprWorE:Float32Array = spriteWorldMatrix.elements;
+						var nodWorE:Float32Array = nodeTransform.getWorldMatrix();
+						for (var j:int = 0; j < 16; j++)
+							sprWorE[j] = nodWorE[j];
+					}
+					spriteTransform.worldMatrix = spriteWorldMatrix;
+				}
+			}
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _parse(data:Object):void {
+			var avatarData:Object = data.avatar;
+			if (avatarData) {
+				avatar = Loader.getRes(avatarData.path);
+				var linkSprites:Object = avatarData.linkSprites;
+				_linkSprites = linkSprites;
+				_linkToSprites(linkSprites);
+			}
 			
-			_currentPlayClip = null;
-			
-			_clipNames = null;
-			_cacheNodesSpriteOwners = null;
-			_cacheNodesAvatarOwners = null;
-			_cacheNodesDefaultlValues = null;
-			_clips = null;
-			_cacheFullFrames = null;
+			var clipPaths:Vector.<String> = data.clipPaths;
+			var play:* = data.playOnWake;
+			var layersData:Array = data.layers;
+			for (var i:int = 0; i < layersData.length; i++) {
+				var layerData:Object = layersData[i];
+				var animatorLayer:AnimatorControllerLayer = new AnimatorControllerLayer(layerData.name);
+				if (i === 0)
+					animatorLayer.defaultWeight = 1.0;//TODO:
+				else
+					animatorLayer.defaultWeight = layerData.weight;
+				
+				var blendingModeData:* = layerData.blendingMode;
+				(blendingModeData) && (animatorLayer.blendingMode = blendingModeData);
+				addControllerLayer(animatorLayer);
+				var states:Array = layerData.states;
+				for (var j:int = 0, m:int = states.length; j < m; j++) {
+					var state:Object = states[j];
+					var clipPath:String = state.clipPath;
+					if (clipPath) {
+						var name:String = state.name;
+						var motion:AnimationClip;
+						motion = Loader.getRes(clipPath);
+						if (motion) {//加载失败motion为空
+							var animatorState:AnimatorState = new AnimatorState();
+							animatorState.name = name;
+							animatorState.clip = motion;
+							motion._addReference();
+							addState(animatorState, i);
+							(j === 0) && (setDefaultClip(name, i));
+						}
+					}
+				}
+				(play !== undefined) && (animatorLayer.playOnWake = play);
+				
+			}
+			var cullingModeData:* = data.cullingMode;
+			(cullingModeData !== undefined) && (cullingMode = cullingModeData);
 		}
 		
 		/**
 		 * @private
 		 */
-		override public function _cloneTo(dest:Component3D):void {
+		public function _update():void {
+			if (_speed === 0)
+				return;
+			var needRender:Boolean;
+			if (cullingMode === CULLINGMODE_CULLCOMPLETELY) {//所有渲染精灵不可见时
+				needRender = false;
+				for (var i:int = 0, n:int = _renderableSprites.length; i < n; i++) {
+					if (_renderableSprites[i]._render._visible) {
+						needRender = true;
+						break;
+					}
+				}
+			} else {
+				needRender = true;
+			}
+			_updateMark++;
+			var timer:Timer = (owner._scene as Scene3D).timer;
+			var delta:Number = timer._delta / 1000.0;//Laya.timer.delta已结包含Laya.timer.scale
+			var timerScale:Number = timer.scale;
+			for (i = 0, n = _controllerLayers.length; i < n; i++) {
+				var controllerLayer:AnimatorControllerLayer = _controllerLayers[i];
+				var playStateInfo:AnimatorPlayState = controllerLayer._playStateInfo;
+				var crossPlayStateInfo:AnimatorPlayState = controllerLayer._crossPlayStateInfo;
+				addtive = controllerLayer.blendingMode !== AnimatorControllerLayer.BLENDINGMODE_OVERRIDE;
+				switch (controllerLayer._playType) {
+				case 0: 
+					var animatorState:AnimatorState = controllerLayer._currentPlayState;
+					var clip:AnimationClip = animatorState._clip;
+					var speed:Number = _speed * animatorState.speed;
+					var finish:Boolean = playStateInfo._finish;//提前取出finish,防止最后一帧跳过
+					finish || _updatePlayer(animatorState, playStateInfo, delta * speed, clip.islooping);
+					if (needRender) {
+						var addtive:Boolean = controllerLayer.blendingMode !== AnimatorControllerLayer.BLENDINGMODE_OVERRIDE;
+						_updateClipDatas(animatorState, addtive, playStateInfo, timerScale * speed);//clipDatas为逐动画文件,防止两个使用同一动画文件的Animator数据错乱,即使动画停止也要updateClipDatas
+						_setClipDatasToNode(animatorState, addtive, controllerLayer.defaultWeight, i === 0);//多层动画混合时即使动画停止也要设置数据
+						finish || _updateEventScript(animatorState, playStateInfo, clip.islooping);
+					}
+					break;
+				case 1: 
+					animatorState = controllerLayer._currentPlayState;
+					clip = animatorState._clip;
+					var crossClipState:AnimatorState = controllerLayer._crossPlayState;
+					var crossClip:AnimationClip = crossClipState._clip;
+					var crossDuratuion:Number = controllerLayer._crossDuration;
+					var startPlayTime:Number = crossPlayStateInfo._startPlayTime;
+					var crossClipDuration:Number = crossClip._duration - startPlayTime;
+					var crossScale:Number = crossDuratuion > crossClipDuration ? crossClipDuration / crossDuratuion : 1.0;//如果过度时间大于过度动作时间,则减慢速度
+					var crossSpeed:Number = _speed * crossClipState.speed;
+					_updatePlayer(crossClipState, crossPlayStateInfo, delta * crossScale * crossSpeed, crossClip.islooping);
+					var crossWeight:Number = ((crossPlayStateInfo._elapsedTime - startPlayTime) / crossScale) / crossDuratuion;
+					if (crossWeight >= 1.0) {
+						if (needRender) {
+							_updateClipDatas(crossClipState, addtive, crossPlayStateInfo, timerScale * crossSpeed);
+							_setClipDatasToNode(crossClipState, addtive, controllerLayer.defaultWeight, i === 0);
+							
+							controllerLayer._playType = 0;//完成融合,切换到正常播放状态
+							controllerLayer._currentPlayState = crossClipState;
+							crossPlayStateInfo._cloneTo(playStateInfo);
+						}
+					} else {
+						if (!playStateInfo._finish) {
+							speed = _speed * animatorState.speed;
+							_updatePlayer(animatorState, playStateInfo, delta * speed, clip.islooping);
+							if (needRender) {
+								_updateClipDatas(animatorState, addtive, playStateInfo, timerScale * speed);
+							}
+						}
+						if (needRender) {
+							_updateClipDatas(crossClipState, addtive, crossPlayStateInfo, timerScale * crossScale * crossSpeed);
+							_setCrossClipDatasToNode(controllerLayer, animatorState, crossClipState, crossWeight, i === 0);
+						}
+					}
+					if (needRender) {
+						_updateEventScript(animatorState, playStateInfo, false);
+						_updateEventScript(crossClipState, crossPlayStateInfo, crossClip.islooping);
+					}
+					break;
+				case 2: 
+					crossClipState = controllerLayer._crossPlayState;
+					crossClip = crossClipState._clip;
+					crossDuratuion = controllerLayer._crossDuration;
+					startPlayTime = crossPlayStateInfo._startPlayTime;
+					crossClipDuration = crossClip._duration - startPlayTime;
+					crossScale = crossDuratuion > crossClipDuration ? crossClipDuration / crossDuratuion : 1.0;//如果过度时间大于过度动作时间,则减慢速度
+					crossSpeed = _speed * crossClipState.speed;
+					_updatePlayer(crossClipState, crossPlayStateInfo, delta * crossScale * crossSpeed, crossClip.islooping);
+					if (needRender) {
+						crossWeight = ((crossPlayStateInfo._elapsedTime - startPlayTime) / crossScale) / crossDuratuion;
+						if (crossWeight >= 1.0) {
+							_updateClipDatas(crossClipState, addtive, crossPlayStateInfo, timerScale * crossSpeed);
+							_setClipDatasToNode(crossClipState, addtive, 1.0, i === 0);
+							controllerLayer._playType = 0;//完成融合,切换到正常播放状态
+							controllerLayer._currentPlayState = crossClipState;
+							crossPlayStateInfo._cloneTo(playStateInfo);
+						} else {
+							_updateClipDatas(crossClipState, addtive, crossPlayStateInfo, timerScale * crossScale * crossSpeed);
+							_setFixedCrossClipDatasToNode(controllerLayer, crossClipState, crossWeight, i === 0);
+						}
+						_updateEventScript(crossClipState, crossPlayStateInfo, crossClip.islooping);
+					}
+					break;
+				}
+			}
+			
+			if (needRender) {
+				if (_avatar) {
+					Render.isConchApp && _updateAnimationNodeWorldMatix(_animationNodeLocalPositions, _animationNodeLocalRotations, _animationNodeLocalScales, _animationNodeWorldMatrixs, _animationNodeParentIndices);//[NATIVE]
+					_updateAvatarNodesToSprite();
+				}
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		override public function _cloneTo(dest:Component):void {
 			var animator:Animator = dest as Animator;
 			animator.avatar = avatar;
-			var clipCount:int = _clips.length;
-			for (var i:int = 0, n:int = _clips.length; i < n; i++)
-				animator.addClip(_clips[i]);
-			if (clip) {
-				animator.clip = clip;
-			}
-		}
-		
-		/**
-		 * 添加动画片段。
-		 * @param	clip 动画片段。
-		 * @param	playName 动画片段播放名称，如果为null,则使用clip.name作为播放名称。
-		 * @param   开始帧率。
-		 * @param   结束帧率。
-		 */
-		public function addClip(clip:AnimationClip, playName:String = null, startFrame:int = 0, endFrame:uint = 4294967295/*int.MAX_VALUE*/):void {
-			playName = playName || clip.name;
-			var index:int = _clipNames.indexOf(playName);
-			if (index !== -1) {
-				if (_clips[index] !== clip)
-					throw new Error("Animation:this playName has exist with another clip.");
-			} else {
-				var clipIndex:int = _clips.indexOf(clip);
-				if (startFrame < 0 || endFrame < 0)
-					throw new Error("Animator:startFrame and endFrame must large than zero.");
-				
-				if (startFrame > endFrame)
-					throw new Error("Animator:startFrame must less than endFrame.");
-				
-				_clipNames.push(playName);
-				_clips.push(clip);
-				_playStartFrames.push(startFrame);
-				_playEndFrames.push(endFrame);
-				_cacheNodesSpriteOwners.push(new Vector.<Sprite3D>());
-				_cacheNodesAvatarOwners.push(new Vector.<AnimationNode>());
-				_cacheNodesDefaultlValues.push(new Vector.<Float32Array>());
-				_publicClipsDatas.push(new Vector.<Float32Array>());
-				clip._addReference();
-				
-				clipIndex = _clips.length - 1;
-				if (_avatar) {
-					if (_avatar.loaded)
-						_getAvatarOwnersByClipAsync(clipIndex, clip);
-					else
-						_avatar.once(Event.LOADED, this, _getAvatarOwnersByClipAsync, [clipIndex, clip]);
-				} else {
-					_getSpriteOwnersByClipAsync(clipIndex, clip);
+			
+			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
+				var controllLayer:AnimatorControllerLayer = _controllerLayers[i];
+				animator.addControllerLayer(controllLayer.clone());
+				var animatorStates:Vector.<AnimatorState> = controllLayer._states;
+				for (var j:int = 0, m:int = animatorStates.length; j < m; j++) {
+					var state:AnimatorState = animatorStates[j];
+					animator.addState(state.clone(), i);
+					(j == 0) && (animator.setDefaultClip(state.name, i));//TODO:
 				}
-				
-				if (clip.loaded)
-					_computeCacheFullKeyframeIndices(clipIndex);
-				else
-					clip.once(Event.LOADED, this, _computeCacheFullKeyframeIndices, [clipIndex]);
 			}
+			animator._linkSprites = _linkSprites;//TODO:需要统一概念
+			animator._linkToSprites(_linkSprites);
 		}
 		
 		/**
-		 * 移除动画片段。
-		 * @param	clip 动画片段。
+		 * 获取默认动画状态。
+		 * @param	layerIndex 层索引。
+		 * @return 默认动画状态。
 		 */
-		public function removeClip(clip:AnimationClip):void {
-			var index:int = _clips.indexOf(clip);
-			if (index !== -1) {
-				if (_avatar)
-					_offClipAndAvatarRelateEvent(_avatar, clip)
-				else
-					_offGetSpriteOwnersByClipAsyncEvent(clip);
-				_offGetClipCacheFullKeyframeIndicesEvent(clip);
-				
-				_clipNames.splice(index, 1);
-				_clips.splice(index, 1);
-				_playStartFrames.splice(index, 1);
-				_playEndFrames.splice(index, 1);
-				_cacheNodesSpriteOwners.splice(index, 1);
-				_cacheNodesAvatarOwners.splice(index, 1);
-				_cacheNodesDefaultlValues.splice(index, 1);
-				_publicClipsDatas.splice(index, 1);
-				clip._removeReference();
-			}
+		public function getDefaultState(layerIndex:int = 0):AnimatorState {
+			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
+			return controllerLayer._defaultState;
 		}
 		
 		/**
-		 * 通过播放名字移除动画片段。
-		 * @param	playName 播放名字。
+		 * 设置默认动画片段。
+		 * @param playName 默认动画片段名称。
 		 */
-		public function removeClipByName(playName:String):void {
-			var index:int = _clipNames.indexOf(playName);
-			if (index !== -1) {
-				var clip:AnimationClip = _clips[index];
-				if (_avatar)
-					_offClipAndAvatarRelateEvent(_avatar, clip);
-				else
-					_offGetSpriteOwnersByClipAsyncEvent(clip);
-				_offGetClipCacheFullKeyframeIndicesEvent(clip);
-				
-				_clipNames.splice(index, 1);
-				_clips.splice(index, 1);
-				_playStartFrames.splice(index, 1);
-				_playEndFrames.splice(index, 1);
-				_cacheNodesSpriteOwners.splice(index, 1);
-				_cacheNodesAvatarOwners.splice(index, 1);
-				_cacheNodesDefaultlValues.splice(index, 1);
-				_publicClipsDatas.splice(index, 1);
-			}
+		public function setDefaultClip(playName:String, layerIndex:int = 0):void {
+			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
+			controllerLayer._defaultState = controllerLayer._statesMap[playName];
 		}
 		
 		/**
-		 * 通过播放名字获取动画片段。
-		 * @param	playName 播放名字。
-		 * @return 动画片段。
+		 * 添加动画状态。
+		 * @param	state 动画状态。
+		 * @param   layerIndex 层索引。
 		 */
-		public function getClip(playName:String):AnimationClip {
-			var index:int = _clipNames.indexOf(playName);
-			if (index !== -1) {
-				return _clips[index];
+		public function addState(state:AnimatorState, layerIndex:int = 0):void {
+			var stateName:String = state.name;
+			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
+			var statesMap:Object = controllerLayer._statesMap;
+			var states:Vector.<AnimatorState> = controllerLayer._states;
+			if (statesMap[stateName]) {
+				throw "Animator:this stat's name has exist.";
 			} else {
-				return null;
+				statesMap[stateName] = state;
+				states.push(state);
+				state._clip._addReference();
+				
+				if (_avatar) {
+					_getOwnersByClipAsync(state);
+				} else {
+					_getOwnersByClipAsync(state);
+				}
 			}
 		}
 		
 		/**
-		 * 获取动画片段个数。
-		 * @return	动画个数。
+		 * 移除动画状态。
+		 * @param	state 动画状态。
+		 * @param   layerIndex 层索引。
 		 */
-		public function getClipCount():int {
-			return _clips.length;
+		public function removeState(state:AnimatorState, layerIndex:int = 0):void {
+			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
+			var clipStateInfos:Vector.<AnimatorState> = controllerLayer._states;
+			var statesMap:Object = controllerLayer._statesMap;
+			
+			var index:int = -1;
+			for (var i:int = 0, n:int = clipStateInfos.length; i < n; i++) {//TODO:是不是没移除
+				if (clipStateInfos[i] === state) {
+					index = i;
+					break;
+				}
+			}
+			if (index !== -1)
+				_removeClip(clipStateInfos, statesMap, index, state);
+		}
+		
+		/**
+		 * 添加控制器层。
+		 */
+		public function addControllerLayer(controllderLayer:AnimatorControllerLayer):void {
+			_controllerLayers.push(controllderLayer);
+		}
+		
+		/**
+		 * 获取控制器层。
+		 */
+		public function getControllerLayer(layerInex:int = 0):AnimatorControllerLayer {
+			return _controllerLayers[layerInex];
+		}
+		
+		/**
+		 * 获取当前的播放状态。
+		 *	@param   layerIndex 层索引。
+		 * 	@return  动画播放状态。
+		 */
+		public function getCurrentAnimatorPlayState(layerInex:int = 0):AnimatorPlayState {
+			return _controllerLayers[layerInex]._playStateInfo;
 		}
 		
 		/**
 		 * 播放动画。
 		 * @param	name 如果为null则播放默认动画，否则按名字播放动画片段。
-		 * @param	playbackRate 播放速率。
-		 * @param	startFrame 开始帧率。
-		 * @param	endFrame 结束帧率.-1表示为最大结束帧率。
+		 * @param	layerIndex 层索引。
+		 * @param	normalizedTime 归一化的播放起始时间。
 		 */
-		public function play(name:String = null, playbackRate:Number = 1.0):void {
-			if (!name && _defaultClipIndex == -1)
+		public function play(name:String = null, layerIndex:int = 0, normalizedTime:Number = Number.NEGATIVE_INFINITY):void {
+			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
+			var defaultState:AnimatorState = controllerLayer._defaultState;
+			if (!name && !defaultState)
 				throw new Error("Animator:must have  default clip value,please set clip property.");
+			var curPlayState:AnimatorState = controllerLayer._currentPlayState;
+			var playStateInfo:AnimatorPlayState = controllerLayer._playStateInfo;
 			
-			if (name) {
-				_currentPlayClipIndex = _clipNames.indexOf(name);
-				_currentPlayClip = _clips[_currentPlayClipIndex];
+			var animatorState:AnimatorState = name ? controllerLayer._statesMap[name] : defaultState;
+			var clipDuration:Number = animatorState._clip._duration;
+			if (curPlayState !== animatorState) {
+				if (normalizedTime !== Number.NEGATIVE_INFINITY)
+					playStateInfo._resetPlayState(clipDuration * normalizedTime);
+				else
+					playStateInfo._resetPlayState(0.0);
+				(curPlayState !== null && curPlayState !== animatorState) && (_revertDefaultKeyframeNodes(curPlayState));
+				controllerLayer._playType = 0;
+				controllerLayer._currentPlayState = animatorState;
 			} else {
-				_currentPlayClipIndex = _defaultClipIndex;
-				_currentPlayClip = _clips[_defaultClipIndex];
+				if (normalizedTime !== Number.NEGATIVE_INFINITY) {
+					playStateInfo._resetPlayState(clipDuration * normalizedTime);
+					controllerLayer._playType = 0;
+				}
 			}
 			
-			_currentTime = 0;
-			_currentFrameTime = 0;
-			_elapsedPlaybackTime = 0;
-			_playEventIndex = 0;
-			this.playbackRate = playbackRate;
-			_stoped = false;
-			
-			_currentFrameIndex = 0;
-			_startUpdateLoopCount = Stat.loopCount;
-			
-			if (_lastPlayAnimationClip) 
-				(_lastPlayAnimationClip !== _currentPlayClip) && (_revertKeyframeNodes(_lastPlayAnimationClip, _lastPlayAnimationClipIndex));//TODO:还原动画节点，防止切换动作时跳帧，如果是从stop而来是否无需设置
-			
-			//TODO:此处是否直接设置一帧最接近的原始帧率,后面AnimationClip首帧可以设置为null了就
-			_updatePlayer(0);//如果分段播放,可修正帧率
-			_lastPlayAnimationClip = _currentPlayClip;
-			_lastPlayAnimationClipIndex = _currentPlayClipIndex;
+			var scripts:Vector.<AnimatorStateScript> = animatorState._scripts;
+			if (scripts) {
+				for (var i:int = 0, n:int = scripts.length; i < n; i++)
+					scripts[i].onStateEnter();
+			}
 		}
 		
 		/**
-		 * 停止播放当前动画
+		 * 在当前动画状态和目标动画状态之间进行融合过渡播放。
+		 * @param	name 目标动画状态。
+		 * @param	transitionDuration 过渡时间,该值为当前动画状态的归一化时间，值在0.0~1.0之间。
+		 * @param	layerIndex 层索引。
+		 * @param	normalizedTime 归一化的播放起始时间。
 		 */
-		public function stop():void {
-			if (playState !== AnimationState.stopped) {
-				_stoped = true;
-				this.event(Event.STOPPED);//兼容
+		public function crossFade(name:String, transitionDuration:Number, layerIndex:int = 0, normalizedTime:Number = Number.NEGATIVE_INFINITY):void {
+			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
+			var destAnimatorState:AnimatorState = controllerLayer._statesMap[name];
+			if (destAnimatorState) {
+				var playType:int = controllerLayer._playType;
+				if (playType === -1) {
+					play(name, layerIndex, normalizedTime);//如果未层调用过play则回滚到play方法
+					return;
+				}
+				
+				var crossPlayStateInfo:AnimatorPlayState = controllerLayer._crossPlayStateInfo;
+				var crossNodeOwners:Vector.<KeyframeNodeOwner> = controllerLayer._crossNodesOwners;
+				var crossNodeOwnerIndicesMap:Object = controllerLayer._crossNodesOwnersIndicesMap;
+				
+				var srcAnimatorState:AnimatorState = controllerLayer._currentPlayState;
+				var destNodeOwners:Vector.<KeyframeNodeOwner> = destAnimatorState._nodeOwners;
+				var destCrossClipNodeIndices:Vector.<int> = controllerLayer._destCrossClipNodeIndices;
+				var destClip:AnimationClip = destAnimatorState._clip;
+				var destNodes:KeyframeNodeList = destClip._nodes;
+				var destNodesMap:Object = destClip._nodesDic;
+				switch (playType) {
+				case 0: 
+					var srcNodeOwners:Vector.<KeyframeNodeOwner> = srcAnimatorState._nodeOwners;
+					var scrCrossClipNodeIndices:Vector.<int> = controllerLayer._srcCrossClipNodeIndices;
+					var srcClip:AnimationClip = srcAnimatorState._clip;
+					var srcNodes:KeyframeNodeList = srcClip._nodes;
+					var srcNodesMap:Object = srcClip._nodesDic;
+					controllerLayer._playType = 1;
+					
+					var crossMark:int = ++controllerLayer._crossMark;
+					var crossCount:int = controllerLayer._crossNodesOwnersCount = 0;
+					
+					for (var i:int = 0, n:int = srcNodes.count; i < n; i++) {
+						var srcNode:KeyframeNode = srcNodes.getNodeByIndex(i);
+						var srcIndex:int = srcNode._indexInList;
+						var srcNodeOwner:KeyframeNodeOwner = srcNodeOwners[srcIndex];
+						if (srcNodeOwner) {
+							var srcFullPath:String = srcNode.fullPath;
+							scrCrossClipNodeIndices[crossCount] = srcIndex;
+							var destNode:KeyframeNode = destNodesMap[srcFullPath];
+							if (destNode)
+								destCrossClipNodeIndices[crossCount] = destNode._indexInList;
+							else
+								destCrossClipNodeIndices[crossCount] = -1;
+							
+							crossNodeOwnerIndicesMap[srcFullPath] = crossMark;
+							crossNodeOwners[crossCount] = srcNodeOwner;
+							crossCount++;
+						}
+					}
+					
+					for (i = 0, n = destNodes.count; i < n; i++) {
+						destNode = destNodes.getNodeByIndex(i);
+						var destIndex:int = destNode._indexInList;
+						var destNodeOwner:KeyframeNodeOwner = destNodeOwners[destIndex];
+						if (destNodeOwner) {
+							var destFullPath:String = destNode.fullPath;
+							if (!srcNodesMap[destFullPath]) {
+								scrCrossClipNodeIndices[crossCount] = -1;
+								destCrossClipNodeIndices[crossCount] = destIndex;
+								
+								crossNodeOwnerIndicesMap[destFullPath] = crossMark;
+								crossNodeOwners[crossCount] = destNodeOwner;
+								crossCount++;
+							}
+						}
+					}
+					break;
+				case 1: 
+				case 2: 
+					controllerLayer._playType = 2;
+					for (i = 0, n = crossNodeOwners.length; i < n; i++) {
+						var nodeOwner:KeyframeNodeOwner = crossNodeOwners[i];
+						nodeOwner.saveCrossFixedValue();
+						destNode = destNodesMap[nodeOwner.fullPath];
+						if (destNode)
+							destCrossClipNodeIndices[i] = destNode._indexInList;
+						else
+							destCrossClipNodeIndices[i] = -1;
+					}
+					
+					crossCount = controllerLayer._crossNodesOwnersCount;
+					crossMark = controllerLayer._crossMark;
+					for (i = 0, n = destNodes.count; i < n; i++) {
+						destNode = destNodes.getNodeByIndex(i);
+						destIndex = destNode._indexInList;
+						destNodeOwner = destNodeOwners[destIndex];
+						if (destNodeOwner) {
+							destFullPath = destNode.fullPath;
+							if (crossNodeOwnerIndicesMap[destFullPath] !== crossMark) {
+								destCrossClipNodeIndices[crossCount] = destIndex;
+								
+								crossNodeOwnerIndicesMap[destFullPath] = crossMark;
+								nodeOwner = destNodeOwners[destIndex];
+								crossNodeOwners[crossCount] = nodeOwner;
+								nodeOwner.saveCrossFixedValue();
+								crossCount++;
+							}
+						}
+					}
+					break;
+				default: 
+				}
+				controllerLayer._crossNodesOwnersCount = crossCount;
+				controllerLayer._crossPlayState = destAnimatorState;
+				controllerLayer._crossDuration = srcAnimatorState._clip._duration * transitionDuration;
+				if (normalizedTime !== Number.NEGATIVE_INFINITY)
+					crossPlayStateInfo._resetPlayState(destClip._duration * normalizedTime);
+				else
+					crossPlayStateInfo._resetPlayState(0.0);
+			}
+			
+			var scripts:Vector.<AnimatorStateScript> = destAnimatorState._scripts;
+			if (scripts) {
+				for (i = 0, n = scripts.length; i < n; i++)
+					scripts[i].onStateEnter();
 			}
 		}
 		
@@ -1074,16 +1377,13 @@ package laya.d3.component {
 		 * @param sprite3D 精灵节点。
 		 * @return 是否关联成功。
 		 */
-		public function linkSprite3DToAvatarNode(nodeName:String, sprite3D:Sprite3D):Boolean {
-			if (_avatar) {
-				var node:AnimationNode = _avatarNodeMap[nodeName];
-				if (node) {
-					sprite3D._isLinkSpriteToAnimationNode(this, node, true);
-					return true;
-				} else {
-					return false;
-				}
+		public function linkSprite3DToAvatarNode(nodeName:String, sprite3D:Sprite3D):Boolean {//TODO:克隆挂点信息丢失问题
+			if (sprite3D._hierarchyAnimator === this) {
+				_isLinkSpriteToAnimationNodeData(sprite3D, nodeName, true);
+				_isLinkSpriteToAnimationNode(sprite3D, nodeName, true);
+				return true;
 			} else {
+				throw("Animator:sprite3D must belong to this Animator");
 				return false;
 			}
 		}
@@ -1094,38 +1394,41 @@ package laya.d3.component {
 		 * @return 是否解除关联成功。
 		 */
 		public function unLinkSprite3DToAvatarNode(sprite3D:Sprite3D):Boolean {
-			if (_avatar) {
-				var dummy:AnimationTransform3D = sprite3D.transform.dummy;
+			if (sprite3D._hierarchyAnimator === this) {
+				var dummy:AnimationTransform3D = sprite3D.transform._dummy;
 				if (dummy) {
-					var node:AnimationNode = _avatarNodeMap[dummy._owner.name];
-					sprite3D._isLinkSpriteToAnimationNode(this, node, false);
+					var nodeName:String = dummy._owner.name;
+					_isLinkSpriteToAnimationNodeData(sprite3D, nodeName, false);
+					_isLinkSpriteToAnimationNode(sprite3D, nodeName, false);
 					return true;
 				} else {
 					return false;
 				}
 			} else {
+				throw("Animator:sprite3D must belong to this Animator");
 				return false;
 			}
 		}
 		
-		//****************************兼容性接口********************************************************
 		/**
-		 * 获取当前是否暂停
-		 * @return	是否暂停
+		 * @inheritDoc
 		 */
-		public function get paused():Boolean {
-			return _stoped;
+		override public function destroy():void {
+			super.destroy();
+			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
+				var clipStateInfos:Vector.<AnimatorState> = _controllerLayers[i]._states;
+				for (var j:int = 0, m:int = clipStateInfos.length; j < m; j++)
+					clipStateInfos[j]._clip._removeReference();
+			}
 		}
 		
 		/**
-		 * 设置是否暂停
-		 * @param	value 是否暂停
+		 *@private
+		 * [NATIVE]
 		 */
-		public function set paused(value:Boolean):void {
-			_stoped = value;
-			value && this.event(Event.PAUSED);
+		public function _updateAnimationNodeWorldMatix(localPositions:Float32Array, localRotations:Float32Array, localScales:Float32Array, worldMatrixs:Float32Array, parentIndices:Int16Array):void {
+			LayaGL.instance.updateAnimationNodeWorldMatix(localPositions, localRotations, localScales, parentIndices, worldMatrixs);
 		}
-		//****************************兼容性接口********************************************************
 	}
 
 }

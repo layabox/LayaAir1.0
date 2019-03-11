@@ -23,7 +23,7 @@ package laya.debug.tools
 			
 			canvas.height=img.height;
 			canvas.width=img.width;
-			ctx.drawImage(img.source,0,0);
+			ctx.drawImage(img.bitmap,0,0);
 			return canvas;
 		}
 		public static function getBase64Pic(img:Texture):String
