@@ -47,14 +47,14 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _TintColorR():Number {
-			return _color.elements[0];
+			return _color.x;
 		}
 		
 		/**
 		 * @private
 		 */
 		public function set _TintColorR(value:Number):void {
-			_color.elements[0] = value;
+			_color.x = value;
 			color = _color;
 		}
 		
@@ -62,14 +62,14 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _TintColorG():Number {
-			return _color.elements[1];
+			return _color.y;
 		}
 		
 		/**
 		 * @private
 		 */
 		public function set _TintColorG(value:Number):void {
-			_color.elements[1] = value;
+			_color.y = value;
 			color = _color;
 		}
 		
@@ -77,27 +77,27 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _TintColorB():Number {
-			return _color.elements[2];
+			return _color.z;
 		}
 		
 		/**
 		 * @private
 		 */
 		public function set _TintColorB(value:Number):void {
-			_color.elements[2] = value;
+			_color.z = value;
 			color = _color;
 		}
 		
 		/**@private */
 		public function get _TintColorA():Number {
-			return _color.elements[3];
+			return _color.w;
 		}
 		
 		/**
 		 * @private
 		 */
 		public function set _TintColorA(value:Number):void {
-			_color.elements[3] = value;
+			_color.w = value;
 			color = _color;
 		}
 		
@@ -105,7 +105,7 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _MainTex_STX():Number {
-			return _shaderValues.getVector(TILINGOFFSET).elements[0];
+			return _shaderValues.getVector(TILINGOFFSET).x;
 		}
 		
 		/**
@@ -113,7 +113,7 @@ package laya.d3.core.material {
 		 */
 		public function set _MainTex_STX(x:Number):void {
 			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
-			tilOff.elements[0] = x;
+			tilOff.x = x;
 			tilingOffset = tilOff;
 		}
 		
@@ -121,7 +121,7 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _MainTex_STY():Number {
-			return _shaderValues.getVector(TILINGOFFSET).elements[1];
+			return _shaderValues.getVector(TILINGOFFSET).y;
 		}
 		
 		/**
@@ -129,7 +129,7 @@ package laya.d3.core.material {
 		 */
 		public function set _MainTex_STY(y:Number):void {
 			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
-			tilOff.elements[1] = y;
+			tilOff.y = y;
 			tilingOffset = tilOff;
 		}
 		
@@ -137,7 +137,7 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _MainTex_STZ():Number {
-			return _shaderValues.getVector(TILINGOFFSET).elements[2];
+			return _shaderValues.getVector(TILINGOFFSET).z;
 		}
 		
 		/**
@@ -145,7 +145,7 @@ package laya.d3.core.material {
 		 */
 		public function set _MainTex_STZ(z:Number):void {
 			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
-			tilOff.elements[2] = z;
+			tilOff.z = z;
 			tilingOffset = tilOff;
 		}
 		
@@ -153,7 +153,7 @@ package laya.d3.core.material {
 		 * @private
 		 */
 		public function get _MainTex_STW():Number {
-			return _shaderValues.getVector(TILINGOFFSET).elements[3];
+			return _shaderValues.getVector(TILINGOFFSET).w;
 		}
 		
 		/**
@@ -161,7 +161,7 @@ package laya.d3.core.material {
 		 */
 		public function set _MainTex_STW(w:Number):void {
 			var tilOff:Vector4 = _shaderValues.getVector(TILINGOFFSET) as Vector4;
-			tilOff.elements[3] = w;
+			tilOff.w = w;
 			tilingOffset = tilOff;
 		}
 		
@@ -377,8 +377,7 @@ package laya.d3.core.material {
 		 */
 		public function set tilingOffset(value:Vector4):void {
 			if (value) {
-				var valueE:Float32Array = value.elements;
-				if (valueE[0] != 1 || valueE[1] != 1 || valueE[2] != 0 || valueE[3] != 0)
+				if (value.x != 1 || value.y!= 1 || value.z != 0 || value.w != 0)
 					_defineDatas.add(EffectMaterial.SHADERDEFINE_TILINGOFFSET);
 				else
 					_defineDatas.remove(EffectMaterial.SHADERDEFINE_TILINGOFFSET);

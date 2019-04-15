@@ -5,6 +5,7 @@ package laya.d3.core.trail {
 	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
 	
 	/**
 	 * <code>TrailRenderer</code> 类用于创建拖尾渲染器。
@@ -18,14 +19,14 @@ package laya.d3.core.trail {
 		 * @inheritDoc
 		 */
 		override protected function _calculateBoundingBox():void {
-			var minE:Float32Array = _boundingBox.min.elements;
-			minE[0] = -Number.MAX_VALUE;
-			minE[1] = -Number.MAX_VALUE;
-			minE[2] = -Number.MAX_VALUE;
-			var maxE:Float32Array = _boundingBox.min.elements;
-			maxE[0] = Number.MAX_VALUE;
-			maxE[1] = Number.MAX_VALUE;
-			maxE[2] = Number.MAX_VALUE;
+			var min:Vector3 = _boundingBox.min;
+			min.x = -Number.MAX_VALUE;
+			min.y = -Number.MAX_VALUE;
+			min.z = -Number.MAX_VALUE;
+			var max:Vector3 = _boundingBox.min;
+			max.x = Number.MAX_VALUE;
+			max.y = Number.MAX_VALUE;
+			max.z = Number.MAX_VALUE;
 		}
 		
 		/**

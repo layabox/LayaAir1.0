@@ -1,6 +1,7 @@
 package laya.resource {
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.utils.RunDriver;
 	
 	/**
@@ -182,6 +183,7 @@ package laya.resource {
 		 * @private
 		 */
 		public function _setCreateURL(url:String):void {
+			url = URL.formatURL(url);//需要序列化为绝对路径
 			if (_url !== url) {
 				var resList:Vector.<Resource>;
 				if (_url) {

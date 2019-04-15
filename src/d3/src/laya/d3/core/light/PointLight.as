@@ -68,8 +68,8 @@ package laya.d3.core.light {
 				var defineDatas:DefineDatas = scene._defineDatas;
 				var shaderValue:ShaderData = scene._shaderValues;
 				Vector3.scale(color, _intensity, _intensityColor);
-				shaderValue.setVector(Scene3D.POINTLIGHTCOLOR, _intensityColor);
-				shaderValue.setVector(Scene3D.POINTLIGHTPOS, transform.position);
+				shaderValue.setVector3(Scene3D.POINTLIGHTCOLOR, _intensityColor);
+				shaderValue.setVector3(Scene3D.POINTLIGHTPOS, transform.position);
 				shaderValue.setNumber(Scene3D.POINTLIGHTRANGE, range);
 				
 				var lightMatrix:Matrix4x4 = _lightMatrix;

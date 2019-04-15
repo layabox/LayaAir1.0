@@ -29,7 +29,7 @@ package laya.d3.core {
 				var gl:* = LayaGL.instance;
 				var verDec:VertexDeclaration = vertexBuffer.vertexDeclaration;
 				var valueData:Array = null;
-				if (Render.isConchApp)
+				if (Render.supportWebGLPlusRendering)
 					valueData = verDec._shaderValues._nativeArray;
 				else
 					valueData = verDec._shaderValues._data;
@@ -56,7 +56,7 @@ package laya.d3.core {
 					var verBuf:VertexBuffer3D = vertexBuffers[i];
 					var verDec:VertexDeclaration = verBuf.vertexDeclaration;
 					var valueData:Array = null;
-					if (Render.isConchApp)
+					if (Render.supportWebGLPlusRendering)
 						valueData = verDec._shaderValues._nativeArray;
 					else
 						valueData = verDec._shaderValues._data;

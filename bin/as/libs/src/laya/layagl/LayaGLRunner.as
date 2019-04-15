@@ -49,7 +49,7 @@ package laya.layagl {
 		//TODO:coverage
 		static public function uploadShaderUniformsForNative(layaGL:*, commandEncoder:CommandEncoder, shaderData:*):int {
 			var nType:int = LayaGL.UPLOAD_SHADER_UNIFORM_TYPE_ID;
-			if ( shaderData._runtimeCopyValues.length >= 0 )
+			if ( shaderData._runtimeCopyValues.length > 0 )
 			{
 				nType = LayaGL.UPLOAD_SHADER_UNIFORM_TYPE_DATA;
 			}

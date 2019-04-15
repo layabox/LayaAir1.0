@@ -214,24 +214,22 @@ package laya.d3.core.trail {
 		private function _updateVerticesByPositionData(position:Vector3, pointAtoBVector3:Vector3, index:int):void {
 			var vertexOffset:int = _floatCountPerVertices1 * 2 * index;
 			
-			var pointE:Float32Array = position.elements;
-			var pointAtoBVector3E:Float32Array = pointAtoBVector3.elements;
 			var curtime:Number = _owner._curtime;
-			_vertices1[vertexOffset] = pointE[0];
-			_vertices1[vertexOffset + 1] = pointE[1];
-			_vertices1[vertexOffset + 2] = pointE[2];
-			_vertices1[vertexOffset + 3] = -pointAtoBVector3E[0];
-			_vertices1[vertexOffset + 4] = -pointAtoBVector3E[1];
-			_vertices1[vertexOffset + 5] = -pointAtoBVector3E[2];
+			_vertices1[vertexOffset] = position.x;
+			_vertices1[vertexOffset + 1] = position.y;
+			_vertices1[vertexOffset + 2] = position.z;
+			_vertices1[vertexOffset + 3] = -pointAtoBVector3.x;
+			_vertices1[vertexOffset + 4] = -pointAtoBVector3.y;
+			_vertices1[vertexOffset + 5] = -pointAtoBVector3.z;
 			_vertices1[vertexOffset + 6] = curtime;
 			_vertices1[vertexOffset + 7] = 1.0;
 			
-			_vertices1[vertexOffset + 8] = pointE[0];
-			_vertices1[vertexOffset + 9] = pointE[1];
-			_vertices1[vertexOffset + 10] = pointE[2];
-			_vertices1[vertexOffset + 11] = pointAtoBVector3E[0];
-			_vertices1[vertexOffset + 12] = pointAtoBVector3E[1];
-			_vertices1[vertexOffset + 13] = pointAtoBVector3E[2];
+			_vertices1[vertexOffset + 8] = position.x;
+			_vertices1[vertexOffset + 9] = position.y;
+			_vertices1[vertexOffset + 10] = position.z;
+			_vertices1[vertexOffset + 11] = pointAtoBVector3.x;
+			_vertices1[vertexOffset + 12] = pointAtoBVector3.y;
+			_vertices1[vertexOffset + 13] = pointAtoBVector3.z;
 			_vertices1[vertexOffset + 14] = curtime;
 			_vertices1[vertexOffset + 15] = 0.0;
 			
@@ -284,10 +282,10 @@ package laya.d3.core.trail {
 					
 					if (_isTempEndVertex && (nextIndex === count - 1)) {//如果只剩最后一分段要将其转化为固定分段
 						var offset:int = _floatCountPerVertices1 * i * 2;
-						var fixedPosE:Float32Array = _lastFixedVertexPosition.elements;
-						fixedPosE[0] = _vertices1[0];
-						fixedPosE[1] = _vertices1[1];
-						fixedPosE[2] = _vertices1[2];
+						var fixedPos:Vector3 = _lastFixedVertexPosition;
+						fixedPos.x = _vertices1[0];
+						fixedPos.y = _vertices1[1];
+						fixedPos.z = _vertices1[2];
 						_isTempEndVertex = false;
 					}
 					_activeIndex++;

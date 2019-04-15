@@ -1,14 +1,18 @@
 package laya.ui {
 	// import laya.display.Animation;
-	import laya.display.Node;
 	import laya.display.Scene;
 	import laya.display.Sprite;
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.ui.Box;
 	import laya.ui.Button;
+	// import laya.ui.CheckBox;
 	import laya.ui.Image;
 	import laya.ui.Label;
+	// import laya.ui.ProgressBar;
+	// import laya.ui.Radio;
+	// import laya.ui.RadioGroup;
+	// import laya.ui.Tab;
 	import laya.ui.UIComponent;
 	import laya.utils.ClassUtils;
 	
@@ -212,7 +216,7 @@ package laya.ui {
 		/**@see  laya.ui.UIComponent#dataSource*/
 		public function get dataSource():* {
 			return _dataSource;
-		}		
+		}
 		
 		public function set dataSource(value:*):void {
 			_dataSource = value;

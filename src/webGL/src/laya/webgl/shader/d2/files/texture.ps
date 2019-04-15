@@ -56,9 +56,9 @@ uniform vec4 u_blurInfo2;
 uniform vec4 colorAdd;
 #endif
 
-//FILLTEXTURE
+#ifdef FILLTEXTURE	
 uniform vec4 u_TexRange;//startu,startv,urange, vrange
-
+#endif
 void main() {
 	if(cliped.x<0.) discard;
 	if(cliped.x>1.) discard;

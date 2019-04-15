@@ -53,9 +53,9 @@ package laya.d3.math {
 			
 			//Find the center of all points. 
 			var center:Vector3 = _tempVector3;
-			center.elements[0] = 0;
-			center.elements[1] = 0;
-			center.elements[2] = 0;
+			center.x = 0;
+			center.y = 0;
+			center.z = 0;
 			for (var i:int = start; i < upperEnd; ++i) {
 				Vector3.add(points[i], center, center);
 			}

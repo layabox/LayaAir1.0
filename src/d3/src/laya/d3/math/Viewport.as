@@ -46,40 +46,36 @@ package laya.d3.math {
 		public function project(source:Vector3, matrix:Matrix4x4, out:Vector3):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			Vector3.transformV3ToV3(source, matrix, out);
-			var sourceEleme:Float32Array = source.elements;
 			var matrixEleme:Float32Array = matrix.elements;
-			var outEleme:Float32Array = out.elements;
 			
-			var a:Number = (((sourceEleme[0] * matrixEleme[3]) + (sourceEleme[1] * matrixEleme[7])) + (sourceEleme[2] * matrixEleme[11])) + matrixEleme[15];
+			var a:Number = (((source.x * matrixEleme[3]) + (source.y * matrixEleme[7])) + (source.z * matrixEleme[11])) + matrixEleme[15];
 			
 			if (a !== 1.0)//待优化，经过计算得出的a可能会永远只近似于1，因为是Number类型
 			{
-				outEleme[0] = outEleme[0] / a;
-				outEleme[1] = outEleme[1] / a;
-				outEleme[2] = outEleme[2] / a;
+				out.x = out.x / a;
+				out.y = out.y / a;
+				out.z = out.z / a;
 			}
 			
-			outEleme[0] = (((outEleme[0] + 1.0) * 0.5) * width) + x;
-			outEleme[1] = (((-outEleme[1] + 1.0) * 0.5) * height) + y;
-			outEleme[2] = (outEleme[2] * (maxDepth - minDepth)) + minDepth;
+			out.x = (((out.x + 1.0) * 0.5) * width) + x;
+			out.y = (((-out.y + 1.0) * 0.5) * height) + y;
+			out.z = (out.z * (maxDepth - minDepth)) + minDepth;
 		}
 		
 		public function project1(source:Vector3, matrix:Matrix4x4, out:Vector3):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var v4:Vector4 = Vector3._tempVector4;
 			Vector3.transformV3ToV4(source, matrix, v4);
-			var v4e:Float32Array = v4.elements;
 			//v4e[3]是z，是相对于摄像机的位置。注意有时候可能为0
-			var dist:Number = v4e[3];
+			var dist:Number = v4.w;
 			if (dist < 1e-1 && dist > -1e-6) dist = 1e-6;
-			v4e[0] /= dist;
-			v4e[1] /= dist;
-			v4e[2] /= dist;
+			v4.x /= dist;
+			v4.y /= dist;
+			v4.z /= dist;
 			
-			var outEleme:Float32Array = out.elements;
-			outEleme[0] = (v4e[0] + 1) * width / 2 + x;
-			outEleme[1] = (-v4e[1] + 1) * height / 2 + y;
-			outEleme[2] = v4e[3];
+			out.x = (v4.x + 1) * width / 2 + x;
+			out.y = (-v4.y + 1) * height / 2 + y;
+			out.z = v4.w;
 			return;
 		}
 		
@@ -91,23 +87,21 @@ package laya.d3.math {
 		 */
 		public function unprojectFromMat(source:Vector3, matrix:Matrix4x4, out:Vector3):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var sourceEleme:Float32Array = source.elements;
 			var matrixEleme:Float32Array = matrix.elements;
-			var outEleme:Float32Array = out.elements;
 			
-			outEleme[0] = (((sourceEleme[0] - x) / (width)) * 2.0) - 1.0;
-			outEleme[1] = -((((sourceEleme[1] - y) / (height)) * 2.0) - 1.0);
+			out.x = (((source.x - x) / (width)) * 2.0) - 1.0;
+			out.y = -((((source.y - y) / (height)) * 2.0) - 1.0);
 			var halfDepth:Number = (maxDepth - minDepth) / 2;
-			outEleme[2] = (sourceEleme[2] - minDepth - halfDepth) / halfDepth;
+			out.z = (source.z - minDepth - halfDepth) / halfDepth;
 			
-			var a:Number = (((outEleme[0] * matrixEleme[3]) + (outEleme[1] * matrixEleme[7])) + (outEleme[2] * matrixEleme[11])) + matrixEleme[15];
+			var a:Number = (((out.x * matrixEleme[3]) + (out.y * matrixEleme[7])) + (out.z * matrixEleme[11])) + matrixEleme[15];
 			Vector3.transformV3ToV3(out, matrix, out);
 			
 			if (a !== 1.0)//待优化，经过计算得出的a可能会永远只近似于1，因为是Number类型
 			{
-				outEleme[0] = outEleme[0] / a;
-				outEleme[1] = outEleme[1] / a;
-				outEleme[2] = outEleme[2] / a;
+				out.x = out.x / a;
+				out.y = out.y / a;
+				out.z = out.z / a;
 			}
 		}
 		

@@ -53,6 +53,7 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override protected function _onInActive():void {
+			super._onInActive();
 			var scene3D:Scene3D = _scene as Scene3D;
 			scene3D._removeRenderObject(_render);
 			(_render.castShadow) && (scene3D._removeShadowCastRenderObject(_render));

@@ -1,10 +1,11 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
-	
+	import laya.d3.math.Native.ConchVector3;
+	import laya.renders.Render;
 	/**
 	 * <code>Vector3</code> 类用于创建三维向量。
 	 */
-	public class Vector3 extends BaseVector implements IClone {
+	public class Vector3 implements IClone {
 		/**@private	*/
 		public static const _tempVector4:Vector4 = new Vector4();
 		
@@ -36,11 +37,9 @@ package laya.d3.math {
 		 * @return	距离的平方。
 		 */
 		public static function distanceSquared(value1:Vector3, value2:Vector3):Number {
-			var value1e:Float32Array = value1.elements;
-			var value2e:Float32Array = value2.elements;
-			var x:Number = value1e[0] - value2e[0];
-			var y:Number = value1e[1] - value2e[1];
-			var z:Number = value1e[2] - value2e[2];
+			var x:Number = value1.x - value2.x;
+			var y:Number = value1.y - value2.y;
+			var z:Number = value1.z - value2.z;
 			return (x * x) + (y * y) + (z * z);
 		}
 		
@@ -51,11 +50,9 @@ package laya.d3.math {
 		 * @return	距离。
 		 */
 		public static function distance(value1:Vector3, value2:Vector3):Number {
-			var value1e:Float32Array = value1.elements;
-			var value2e:Float32Array = value2.elements;
-			var x:Number = value1e[0] - value2e[0];
-			var y:Number = value1e[1] - value2e[1];
-			var z:Number = value1e[2] - value2e[2];
+			var x:Number = value1.x - value2.x;
+			var y:Number = value1.y - value2.y;
+			var z:Number = value1.z - value2.z;
 			return Math.sqrt((x * x) + (y * y) + (z * z));
 		}
 		
@@ -66,12 +63,9 @@ package laya.d3.math {
 		 * @param	out。
 		 */
 		public static function min(a:Vector3, b:Vector3, out:Vector3):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			var g:Float32Array = b.elements
-			e[0] = Math.min(f[0], g[0]);
-			e[1] = Math.min(f[1], g[1]);
-			e[2] = Math.min(f[2], g[2]);
+			out.x = Math.min(a.x, b.x);
+			out.y = Math.min(a.y, b.y);
+			out.z = Math.min(a.z, b.z);
 		}
 		
 		/**
@@ -81,12 +75,9 @@ package laya.d3.math {
 		 * @param	out 结果三维向量。
 		 */
 		public static function max(a:Vector3, b:Vector3, out:Vector3):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			var g:Float32Array = b.elements
-			e[0] = Math.max(f[0], g[0]);
-			e[1] = Math.max(f[1], g[1]);
-			e[2] = Math.max(f[2], g[2]);
+			out.x = Math.max(a.x, b.x);
+			out.y = Math.max(a.y, b.y);
+			out.z = Math.max(a.z, b.z);
 		}
 		
 		/**
@@ -96,17 +87,13 @@ package laya.d3.math {
 		 * @param	out 输出三维向量。
 		 */
 		public static function transformQuat(source:Vector3, rotation:Quaternion, out:Vector3):void {
-			var destination:Float32Array = out.elements;
-			var se:Float32Array = source.elements;
-			var re:Float32Array = rotation.elements;
-			
-			var x:Number = se[0], y:Number = se[1], z:Number = se[2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
+			var x:Number = source.x, y:Number = source.y, z:Number = source.z, qx:Number = rotation.x, qy:Number = rotation.y, qz:Number = rotation.z, qw:Number = rotation.w,
 			
 			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
 			
-			destination[0] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-			destination[1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-			destination[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+			out.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+			out.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+			out.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
 		}
 		
 		/**
@@ -115,8 +102,7 @@ package laya.d3.math {
 		 * @return 标量长度。
 		 */
 		public static function scalarLength(a:Vector3):Number {
-			var f:Float32Array = a.elements;
-			var x:Number = f[0], y:Number = f[1], z:Number = f[2];
+			var x:Number = a.x, y:Number = a.y, z:Number = a.z;
 			return Math.sqrt(x * x + y * y + z * z);
 		}
 		
@@ -126,8 +112,7 @@ package laya.d3.math {
 		 * @return 标量长度的平方。
 		 */
 		public static function scalarLengthSquared(a:Vector3):Number {
-			var f:Float32Array = a.elements;
-			var x:Number = f[0], y:Number = f[1], z:Number = f[2];
+			var x:Number = a.x, y:Number = a.y, z:Number = a.z;
 			return x * x + y * y + z * z;
 		}
 		
@@ -137,15 +122,13 @@ package laya.d3.math {
 		 * @param	out 输出三维向量。
 		 */
 		public static function normalize(s:Vector3, out:Vector3):void {
-			var se:Float32Array = s.elements;
-			var oe:Float32Array = out.elements;
-			var x:Number = se[0], y:Number = se[1], z:Number = se[2];
+			var x:Number = s.x, y:Number = s.y, z:Number = s.z;
 			var len:Number = x * x + y * y + z * z;
 			if (len > 0) {
 				len = 1 / Math.sqrt(len);
-				oe[0] = se[0] * len;
-				oe[1] = se[1] * len;
-				oe[2] = se[2] * len;
+				out.x = s.x * len;
+				out.y = s.y * len;
+				out.z = s.z * len;
 			}
 		}
 		
@@ -156,12 +139,9 @@ package laya.d3.math {
 		 * @param	out 输出三维向量。
 		 */
 		public static function multiply(a:Vector3, b:Vector3, out:Vector3):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			var g:Float32Array = b.elements
-			e[0] = f[0] * g[0];
-			e[1] = f[1] * g[1];
-			e[2] = f[2] * g[2];
+			out.x = a.x * b.x;
+			out.y = a.y * b.y;
+			out.z = a.z * b.z;
 		}
 		
 		/**
@@ -171,11 +151,9 @@ package laya.d3.math {
 		 * @param	out 输出三维向量。
 		 */
 		public static function scale(a:Vector3, b:Number, out:Vector3):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			e[0] = f[0] * b;
-			e[1] = f[1] * b;
-			e[2] = f[2] * b;
+			out.x = a.x * b;
+			out.y = a.y * b;
+			out.z = a.z * b;
 		}
 		
 		/**
@@ -186,13 +164,10 @@ package laya.d3.math {
 		 * @param	out 输出向量。
 		 */
 		public static function lerp(a:Vector3, b:Vector3, t:Number, out:Vector3):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			var g:Float32Array = b.elements;
-			var ax:Number = f[0], ay:Number = f[1], az:Number = f[2];
-			e[0] = ax + t * (g[0] - ax);
-			e[1] = ay + t * (g[1] - ay);
-			e[2] = az + t * (g[2] - az);
+			var ax:Number = a.x, ay:Number = a.y, az:Number = a.z;
+			out.x = ax + t * (b.x - ax);
+			out.y = ay + t * (b.y - ay);
+			out.z = az + t * (b.z - az);
 		}
 		
 		/**
@@ -204,11 +179,9 @@ package laya.d3.math {
 		public static function transformV3ToV3(vector:Vector3, transform:Matrix4x4, result:Vector3):void {
 			var intermediate:Vector4 = _tempVector4;
 			transformV3ToV4(vector, transform, intermediate);
-			var intermediateElem:Float32Array = intermediate.elements;
-			var resultElem:Float32Array = result.elements;
-			resultElem[0] = intermediateElem[0];
-			resultElem[1] = intermediateElem[1];
-			resultElem[2] = intermediateElem[2];
+			result.x = intermediate.x;
+			result.y = intermediate.y;
+			result.z = intermediate.z;
 		}
 		
 		/**
@@ -218,17 +191,15 @@ package laya.d3.math {
 		 * @param	result 输出四维向量。
 		 */
 		public static function transformV3ToV4(vector:Vector3, transform:Matrix4x4, result:Vector4):void {
-			var vectorElem:Float32Array = vector.elements;
-			var vectorX:Number = vectorElem[0];
-			var vectorY:Number = vectorElem[1];
-			var vectorZ:Number = vectorElem[2];
+			var vectorX:Number = vector.x;
+			var vectorY:Number = vector.y;
+			var vectorZ:Number = vector.z;
 			
 			var transformElem:Float32Array = transform.elements;
-			var resultElem:Float32Array = result.elements;
-			resultElem[0] = (vectorX * transformElem[0]) + (vectorY * transformElem[4]) + (vectorZ * transformElem[8]) + transformElem[12];
-			resultElem[1] = (vectorX * transformElem[1]) + (vectorY * transformElem[5]) + (vectorZ * transformElem[9]) + transformElem[13];
-			resultElem[2] = (vectorX * transformElem[2]) + (vectorY * transformElem[6]) + (vectorZ * transformElem[10]) + transformElem[14];
-			resultElem[3] = (vectorX * transformElem[3]) + (vectorY * transformElem[7]) + (vectorZ * transformElem[11]) + transformElem[15];
+			result.x = (vectorX * transformElem[0]) + (vectorY * transformElem[4]) + (vectorZ * transformElem[8]) + transformElem[12];
+			result.y = (vectorX * transformElem[1]) + (vectorY * transformElem[5]) + (vectorZ * transformElem[9]) + transformElem[13];
+			result.z = (vectorX * transformElem[2]) + (vectorY * transformElem[6]) + (vectorZ * transformElem[10]) + transformElem[14];
+			result.w = (vectorX * transformElem[3]) + (vectorY * transformElem[7]) + (vectorZ * transformElem[11]) + transformElem[15];
 		}
 		
 		/**
@@ -238,16 +209,14 @@ package laya.d3.math {
 		 * @param	result 输出法线三维向量。
 		 */
 		public static function TransformNormal(normal:Vector3, transform:Matrix4x4, result:Vector3):void {
-			var normalElem:Float32Array = normal.elements;
-			var normalX:Number = normalElem[0];
-			var normalY:Number = normalElem[1];
-			var normalZ:Number = normalElem[2];
+			var normalX:Number = normal.x;
+			var normalY:Number = normal.y;
+			var normalZ:Number = normal.z;
 			
 			var transformElem:Float32Array = transform.elements;
-			var resultElem:Float32Array = result.elements;
-			resultElem[0] = (normalX * transformElem[0]) + (normalY * transformElem[4]) + (normalZ * transformElem[8]);
-			resultElem[1] = (normalX * transformElem[1]) + (normalY * transformElem[5]) + (normalZ * transformElem[9]);
-			resultElem[2] = (normalX * transformElem[2]) + (normalY * transformElem[6]) + (normalZ * transformElem[10]);
+			result.x = (normalX * transformElem[0]) + (normalY * transformElem[4]) + (normalZ * transformElem[8]);
+			result.y = (normalX * transformElem[1]) + (normalY * transformElem[5]) + (normalZ * transformElem[9]);
+			result.z = (normalX * transformElem[2]) + (normalY * transformElem[6]) + (normalZ * transformElem[10]);
 		}
 		
 		/**
@@ -257,17 +226,15 @@ package laya.d3.math {
 		 * @param	result 输出三维向量。
 		 */
 		public static function transformCoordinate(coordinate:Vector3, transform:Matrix4x4, result:Vector3):void {
-			var coordinateElem:Float32Array = coordinate.elements;
-			var coordinateX:Number = coordinateElem[0];
-			var coordinateY:Number = coordinateElem[1];
-			var coordinateZ:Number = coordinateElem[2];
+			var coordinateX:Number = coordinate.x;
+			var coordinateY:Number = coordinate.y;
+			var coordinateZ:Number = coordinate.z;
 			
 			var transformElem:Float32Array = transform.elements;
 			var w:Number = ((coordinateX * transformElem[3]) + (coordinateY * transformElem[7]) + (coordinateZ * transformElem[11]) + transformElem[15]);
-			var resultElem:Float32Array = result.elements;
-			resultElem[0] = (coordinateX * transformElem[0]) + (coordinateY * transformElem[4]) + (coordinateZ * transformElem[8]) + transformElem[12] / w;
-			resultElem[1] = (coordinateX * transformElem[1]) + (coordinateY * transformElem[5]) + (coordinateZ * transformElem[9]) + transformElem[13] / w;
-			resultElem[2] = (coordinateX * transformElem[2]) + (coordinateY * transformElem[6]) + (coordinateZ * transformElem[10]) + transformElem[14] / w;
+			result.x = (coordinateX * transformElem[0]) + (coordinateY * transformElem[4]) + (coordinateZ * transformElem[8]) + transformElem[12] / w;
+			result.y = (coordinateX * transformElem[1]) + (coordinateY * transformElem[5]) + (coordinateZ * transformElem[9]) + transformElem[13] / w;
+			result.z = (coordinateX * transformElem[2]) + (coordinateY * transformElem[6]) + (coordinateZ * transformElem[10]) + transformElem[14] / w;
 		}
 		
 		/**
@@ -278,23 +245,17 @@ package laya.d3.math {
 		 * @param   out 输出向量
 		 */
 		public static function Clamp(value:Vector3, min:Vector3, max:Vector3, out:Vector3):void {
+			var x:Number = value.x;
+			var y:Number = value.y;
+			var z:Number = value.z;
 			
-			var valuee:Float32Array = value.elements;
-			var x:Number = valuee[0];
-			var y:Number = valuee[1];
-			var z:Number = valuee[2];
+			var mineX:Number = min.x;
+			var mineY:Number = min.y;
+			var mineZ:Number = min.z;
 			
-			var mine:Float32Array = min.elements;
-			var mineX:Number = mine[0];
-			var mineY:Number = mine[1];
-			var mineZ:Number = mine[2];
-			
-			var maxe:Float32Array = max.elements;
-			var maxeX:Number = maxe[0];
-			var maxeY:Number = maxe[1];
-			var maxeZ:Number = maxe[2];
-			
-			var oute:Float32Array = out.elements;
+			var maxeX:Number = max.x;
+			var maxeY:Number = max.y;
+			var maxeZ:Number = max.z;
 			
 			x = (x > maxeX) ? maxeX : x;
 			x = (x < mineX) ? mineX : x;
@@ -305,9 +266,9 @@ package laya.d3.math {
 			z = (z > maxeZ) ? maxeZ : z;
 			z = (z < mineZ) ? mineZ : z;
 			
-			oute[0] = x;
-			oute[1] = y;
-			oute[2] = z;
+			out.x = x;
+			out.y = y;
+			out.z = z;
 		}
 		
 		/**
@@ -317,12 +278,9 @@ package laya.d3.math {
 		 * @param	out 输出向量。
 		 */
 		public static function add(a:Vector3, b:Vector3, out:Vector3):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			var g:Float32Array = b.elements
-			e[0] = f[0] + g[0];
-			e[1] = f[1] + g[1];
-			e[2] = f[2] + g[2];
+			out.x = a.x + b.x;
+			out.y = a.y + b.y;
+			out.z = a.z + b.z;
 		}
 		
 		/**
@@ -332,12 +290,9 @@ package laya.d3.math {
 		 * @param	o out 输出向量。
 		 */
 		public static function subtract(a:Vector3, b:Vector3, o:Vector3):void {
-			var oe:Float32Array = o.elements;
-			var ae:Float32Array = a.elements;
-			var be:Float32Array = b.elements;
-			oe[0] = ae[0] - be[0];
-			oe[1] = ae[1] - be[1];
-			oe[2] = ae[2] - be[2];
+			o.x = a.x - b.x;
+			o.y = a.y - b.y;
+			o.z = a.z - b.z;
 		}
 		
 		/**
@@ -347,13 +302,10 @@ package laya.d3.math {
 		 * @param	o 输出向量。
 		 */
 		public static function cross(a:Vector3, b:Vector3, o:Vector3):void {
-			var ae:Float32Array = a.elements;
-			var be:Float32Array = b.elements;
-			var oe:Float32Array = o.elements;
-			var ax:Number = ae[0], ay:Number = ae[1], az:Number = ae[2], bx:Number = be[0], by:Number = be[1], bz:Number = be[2];
-			oe[0] = ay * bz - az * by;
-			oe[1] = az * bx - ax * bz;
-			oe[2] = ax * by - ay * bx;
+			var ax:Number = a.x, ay:Number = a.y, az:Number = a.z, bx:Number = b.x, by:Number = b.y, bz:Number = b.z;
+			o.x = ay * bz - az * by;
+			o.y = az * bx - ax * bz;
+			o.z = ax * by - ay * bx;
 		}
 		
 		/**
@@ -363,10 +315,7 @@ package laya.d3.math {
 		 * @return   点积。
 		 */
 		public static function dot(a:Vector3, b:Vector3):Number {
-			var ae:Float32Array = a.elements;
-			var be:Float32Array = b.elements;
-			var r:Number = (ae[0] * be[0]) + (ae[1] * be[1]) + (ae[2] * be[2]);
-			return r;
+			return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 		}
 		
 		/**
@@ -376,58 +325,15 @@ package laya.d3.math {
 		 * @return  是否相等。
 		 */
 		public static function equals(a:Vector3, b:Vector3):Boolean {
-			var ae:Float32Array = a.elements;
-			var be:Float32Array = b.elements;
-			return MathUtils3D.nearEqual(ae[0], be[0]) && MathUtils3D.nearEqual(ae[1], be[1]) && MathUtils3D.nearEqual(ae[2], be[2]);
+			return MathUtils3D.nearEqual(a.x, b.x) && MathUtils3D.nearEqual(a.y, b.y) && MathUtils3D.nearEqual(a.z, b.z);
 		}
 		
-		/**
-		 * 获取X轴坐标。
-		 * @return	X轴坐标。
-		 */
-		public function get x():Number {
-			return this.elements[0];
-		}
-		
-		/**
-		 * 设置X轴坐标。
-		 * @param	value  X轴坐标。
-		 */
-		public function set x(value:Number):void {
-			this.elements[0] = value;
-		}
-		
-		/**
-		 * 获取Y轴坐标。
-		 * @return	Y轴坐标。
-		 */
-		public function get y():Number {
-			return this.elements[1];
-		}
-		
-		/**
-		 * 设置Y轴坐标。
-		 * @param	value  Y轴坐标。
-		 */
-		public function set y(value:Number):void {
-			this.elements[1] = value;
-		}
-		
-		/**
-		 * 获取Z轴坐标。
-		 * @return	Z轴坐标。
-		 */
-		public function get z():Number {
-			return this.elements[2];
-		}
-		
-		/**
-		 * 设置Z轴坐标。
-		 * @param	value  Z轴坐标。
-		 */
-		public function set z(value:Number):void {
-			this.elements[2] = value;
-		}
+		/**X轴坐标*/
+		public var x:Number;
+		/**Y轴坐标*/
+		public var y:Number;
+		/**Z轴坐标*/
+		public var z:Number;
 		
 		/**
 		 * 创建一个 <code>Vector3</code> 实例。
@@ -436,16 +342,13 @@ package laya.d3.math {
 		 * @param	z  Z轴坐标。
 		 */
 		public function Vector3(x:Number = 0, y:Number = 0, z:Number = 0, nativeElements:Float32Array = null/*[NATIVE]*/) {
-			var v:Float32Array;
-			if (nativeElements) {///*[NATIVE]*/
-				v = nativeElements;
-			} else {
-				v = new Float32Array(3);
+			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
+			if (__JS__("(window.conch != null)")) {
+				__JS__("return new ConchVector3(x, y, z, nativeElements)");
 			}
-			elements = v;
-			v[0] = x;
-			v[1] = y;
-			v[2] = z;
+			this.x = x;
+			this.y = y;
+			this.z = z;
 		}
 		
 		/**
@@ -455,9 +358,9 @@ package laya.d3.math {
 		 * @param	z Z值。
 		 */
 		public function setValue(x:Number, y:Number, z:Number):void {
-			elements[0] = x;
-			elements[1] = y;
-			elements[2] = z;
+			this.x = x;
+			this.y = y;
+			this.z = z;
 		}
 		
 		/**
@@ -466,9 +369,9 @@ package laya.d3.math {
 		 * @param  offset 数组偏移。
 		 */
 		public function fromArray(array:Array, offset:int = 0):void {
-			elements[0] = array[offset + 0];
-			elements[1] = array[offset + 1];
-			elements[2] = array[offset + 2];
+			x = array[offset + 0];
+			y = array[offset + 1];
+			z = array[offset + 2];
 		}
 		
 		/**
@@ -477,11 +380,9 @@ package laya.d3.math {
 		 */
 		public function cloneTo(destObject:*):void {
 			var destVector3:Vector3 = destObject as Vector3;
-			var destE:Float32Array = destVector3.elements;
-			var s:Float32Array = this.elements;
-			destE[0] = s[0];
-			destE[1] = s[1];
-			destE[2] = s[2];
+			destVector3.x = x;
+			destVector3.y = y;
+			destVector3.z = z;
 		}
 		
 		/**
@@ -495,9 +396,9 @@ package laya.d3.math {
 		}
 		
 		public function toDefault():void {
-			elements[0] = 0;
-			elements[1] = 0;
-			elements[2] = 0;
+			x = 0;
+			y = 0;
+			z = 0;
 		}
 	
 	}

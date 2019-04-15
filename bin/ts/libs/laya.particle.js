@@ -719,14 +719,8 @@ var ParticleTemplateWebGL=(function(_super){
 
 	__proto.initialize=function(){
 		var floatStride=0;
-		if (Render.isConchApp){
-			this._vertices=this._conchMesh._float32Data;
-			floatStride=MeshParticle2D.const_stride / 4;
-		}
-		else{
-			this._vertices=this._mesh._vb.getFloat32Array();
-			floatStride=this._mesh._stride / 4;
-		};
+		this._vertices=this._mesh._vb.getFloat32Array();
+		floatStride=this._mesh._stride / 4;
 		var bufi=0;
 		var bufStart=0;
 		for (var i=0;i < this.settings.maxPartices;i++){
@@ -1122,13 +1116,7 @@ var ParticleTemplate2D=(function(_super){
 		this.sv.u_Gravity=this.settings.gravity;
 		this.sv.u_EndVelocity=this.settings.endVelocity;
 		this._blendFn=BlendMode.fns[parSetting.blendState];
-		if (Render.isConchApp){
-			var nSize=MeshParticle2D.const_stride *this.settings.maxPartices *4 *4;
-			this._conchMesh=/*__JS__ */new ParamData(nSize,true);
-		}
-		else{
-			this._mesh=MeshParticle2D.getAMesh(this.settings.maxPartices);
-		}
+		this._mesh=MeshParticle2D.getAMesh(this.settings.maxPartices);
 		this.initialize();
 	}
 
@@ -1264,9 +1252,7 @@ var ParticleTemplate2D=(function(_super){
 	}
 
 	__proto.dispose=function(){
-		if (!Render.isConchApp){
-			this._mesh.releaseMesh();
-		}
+		this._mesh.releaseMesh();
 	}
 
 	ParticleTemplate2D.activeBlendType=-1;
@@ -1282,8 +1268,6 @@ var ParticleTemplate2D=(function(_super){
 var Particle2D=(function(_super){
 	function Particle2D(setting){
 		/**@private */
-		this._matrix4=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
-		/**@private */
 		this._particleTemplate=null;
 		/**@private */
 		this._canvasTemplate=null;
@@ -1293,6 +1277,7 @@ var Particle2D=(function(_super){
 		this.autoPlay=true;
 		this.tempCmd=null;
 		Particle2D.__super.call(this);
+		this._matrix4=new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
 		this.customRenderEnable=true;
 		if (setting)this.setParticleSetting(setting);
 	}
@@ -1314,22 +1299,13 @@ var Particle2D=(function(_super){
 	__proto.setParticleSetting=function(setting){
 		if (!setting)return this.stop();
 		ParticleSetting.checkSetting(setting);
-		if (Render.isConchApp){
+		if (Render.isWebGL){
+			this.customRenderEnable=true;
 			this._particleTemplate=new ParticleTemplate2D(setting);
-			var sBlendMode=BlendMode.NAMES[setting.blendState];
-			this.blendMode=sBlendMode;
-			this.tempCmd=this.graphics._saveToCmd(null,DrawParticleCmd.create.call(this.graphics,this._particleTemplate));
-			this._setGraphicsCallBack();
+			this.graphics._saveToCmd(null,DrawParticleCmd.create(this._particleTemplate));
 		}
-		else{
-			if (Render.isWebGL){
-				this.customRenderEnable=true;
-				this._particleTemplate=new ParticleTemplate2D(setting);
-				this.graphics._saveToCmd(null,DrawParticleCmd.create(this._particleTemplate));
-			}
-			else {
-				this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
-			}
+		else {
+			this._particleTemplate=this._canvasTemplate=new ParticleTemplateCanvas(setting);
 		}
 		if (!this._emitter){
 			this._emitter=new Emitter2D(this._particleTemplate);

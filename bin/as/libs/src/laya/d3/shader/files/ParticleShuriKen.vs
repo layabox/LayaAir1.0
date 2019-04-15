@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 #ifdef HIGHPRECISION
   precision highp float;
 #else
@@ -768,5 +770,6 @@ void main()
 	{
 		v_Discard=1.0;
 	}
+	gl_Position=remapGLPositionZ(gl_Position);
 }
 

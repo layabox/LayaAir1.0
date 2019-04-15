@@ -217,6 +217,7 @@ package laya.ui {
 		protected function _skinLoaded():void
 		{
 			_setClipChanged();
+			_sizeChanged();
 			event(Event.LOADED);
 		}
 		

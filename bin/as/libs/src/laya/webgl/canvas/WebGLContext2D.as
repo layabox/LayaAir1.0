@@ -27,7 +27,6 @@ package laya.webgl.canvas {
 	import laya.webgl.canvas.save.SaveTransform;
 	import laya.webgl.canvas.save.SaveTranslate;
 	import laya.webgl.resource.BaseTexture;
-	import laya.webgl.resource.CharBook;
 	import laya.webgl.resource.CharRenderInfo;
 	import laya.webgl.resource.RenderTexture2D;
 	import laya.webgl.resource.Texture2D;
@@ -159,7 +158,7 @@ package laya.webgl.canvas {
 		//文字颜色。使用顶点色
 		public var _drawTextureUseColor:Boolean = false;
 		
-		private static var _textRender:CharBook = TextRender.useOldCharBook?new CharBook(): (new TextRender() as CharBook);
+		private static var _textRender:TextRender = new TextRender();
 		
 		public var _italicDeg:Number = 0;//文字的倾斜角度
 		public var _lastTex:Texture = null; //上次使用的texture。主要是给fillrect用，假装自己也是一个drawtexture
@@ -947,14 +946,14 @@ package laya.webgl.canvas {
 			transformQuad(x, y, width || tex.width, height || tex.height, _italicDeg, m || _curMat, ops);
 			
 			if (drawTexAlign) {
-				ops[0] = (ops[0] + 0.5) | 0;
-				ops[1] = (ops[1] + 0.5) | 0;
-				ops[2] = (ops[2] + 0.5) | 0;
-				ops[3] = (ops[3] + 0.5) | 0;
-				ops[4] = (ops[4] + 0.5) | 0;
-				ops[5] = (ops[5] + 0.5) | 0;
-				ops[6] = (ops[6] + 0.5) | 0;
-				ops[7] = (ops[7] + 0.5) | 0;
+				ops[0] = Math.round(ops[0]);//  (ops[0] + 0.5) | 0;	// 这么计算负的时候会有问题
+				ops[1] = Math.round(ops[1]);//(ops[1] + 0.5) | 0;
+				ops[2] = Math.round(ops[2]);//(ops[2] + 0.5) | 0;
+				ops[3] = Math.round(ops[3]);//(ops[3] + 0.5) | 0;
+				ops[4] = Math.round(ops[4]);//(ops[4] + 0.5) | 0;
+				ops[5] = Math.round(ops[5]);//(ops[5] + 0.5) | 0;
+				ops[6] = Math.round(ops[6]);//(ops[6] + 0.5) | 0;
+				ops[7] = Math.round(ops[7]);//(ops[7] + 0.5) | 0;
 				drawTexAlign = false;	//一次性的
 			}
 
@@ -1207,6 +1206,7 @@ package laya.webgl.canvas {
 		}		
 		
 		override public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
+			if (!canvas) return;
 			var src:WebGLContext2D = canvas.context as WebGLContext2D;
 			var submit:ISubmit;
 			if (src._targets) {

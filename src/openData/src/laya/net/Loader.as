@@ -4,6 +4,8 @@ package laya.net {
 	import laya.display.Text;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	// import laya.media.Sound;
+	// import laya.media.SoundManager;
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
@@ -134,7 +136,7 @@ package laya.net {
 			this._url = url;
 			if (url.indexOf("data:image") === 0) type = IMAGE;
 			else url = URL.formatURL(url);
-			this._type = type || (type = getTypeFromUrl(url));
+			this._type = type || (type = getTypeFromUrl(_url));
 			this._cache = cache;
 			this._useWorkerLoader = useWorkerLoader;
 			this._data = null;
@@ -157,7 +159,7 @@ package laya.net {
 			//htmlimage和nativeimage为内部类型
 			if (type === IMAGE || type === "htmlimage" || type === "nativeimage") return _loadImage(url);
 			// if (type === SOUND) return _loadSound(url);
-			if (type === TTF) return _loadTTF(url);
+			// if (type === TTF) return _loadTTF(url);
 			
 			var contentType:String;
 			switch (type) {
@@ -203,12 +205,12 @@ package laya.net {
 		 * 加载TTF资源。
 		 * @param	url 资源地址。
 		 */
-		protected function _loadTTF(url:String):void {
+		// protected function _loadTTF(url:String):void {
 			// url = URL.formatURL(url);
 			// var ttfLoader:TTFLoader = new TTFLoader();
 			// ttfLoader.complete = Handler.create(this, onLoaded);
 			// ttfLoader.load(url);
-		}
+		// }
 		
 		/**
 		 * @private
@@ -249,7 +251,7 @@ package laya.net {
 				onload = function():void {
 					image = HTMLImage.create(imageSource.width, imageSource.height);
 					image.loadImageSource(imageSource, true);
-					image._setUrl(url);
+					image._setCreateURL(url);
 					clear();
 					_this.onLoaded(image);
 				};

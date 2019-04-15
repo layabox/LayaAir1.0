@@ -300,7 +300,7 @@ package laya.display {
 					//TODO:
 					filter.data = new ColorFilter().color(colorArr[0] * 255, colorArr[1] * 255, colorArr[2] * 255);
 					//TODO:
-					filter.apply({ctx: {ctx: ctx}});
+					filter.apply({canvas: canvas});
 				}
 			}
 			

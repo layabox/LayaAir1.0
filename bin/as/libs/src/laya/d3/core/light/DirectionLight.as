@@ -80,10 +80,10 @@ package laya.d3.core.light {
 				var defineDatas:DefineDatas = scene._defineDatas;
 				var shaderValue:ShaderData = scene._shaderValues;
 				Vector3.scale(color, _intensity, _intensityColor);
-				shaderValue.setVector(Scene3D.LIGHTDIRCOLOR, _intensityColor);
+				shaderValue.setVector3(Scene3D.LIGHTDIRCOLOR, _intensityColor);
 				transform.worldMatrix.getForward(_direction);
 				Vector3.normalize(_direction, _direction);
-				shaderValue.setVector(Scene3D.LIGHTDIRECTION, _direction);
+				shaderValue.setVector3(Scene3D.LIGHTDIRECTION, _direction);
 				return true;
 			} else {
 				return false;

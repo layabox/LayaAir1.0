@@ -1,5 +1,6 @@
 package laya.filters {
 	
+	import laya.utils.ColorUtils;
 	import laya.utils.RunDriver;
 	
 	/**
@@ -55,6 +56,16 @@ package laya.filters {
 		 */
 		public function color(red:Number = 0, green:Number = 0, blue:Number = 0, alpha:Number = 1):ColorFilter {
 			return setByMatrix([1, 0, 0, 0, red, 0, 1, 0, 0, green, 0, 0, 1, 0, blue, 0, 0, 0, 1, alpha]);
+		}
+		
+		/**
+		 * 设置滤镜色
+		 * @param	color 颜色值
+		 */
+		public function setColor(color:String):ColorFilter{
+			var arr:Array =  ColorUtils.create(color).arrColor;
+			var mt:Array = [0, 0, 0, 0, 256 * arr[0], 0, 0, 0, 0, 256 * arr[1], 0, 0, 0, 0, 256 * arr[2], 0, 0, 0, 1, 0];
+			return setByMatrix(mt);
 		}
 		
 		/**

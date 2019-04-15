@@ -155,14 +155,14 @@ package laya.d3.core.particleShuriKen {
 			//	Vector3.transformQuat(corners[i], rotation, _tempBoudingBoxCorners[i]);
 			//BoundBox.createfromPoints(_tempBoudingBoxCorners, _boundingBox);
 			
-			var minE:Float32Array = _boundingBox.min.elements;
-			minE[0] = -Number.MAX_VALUE;
-			minE[1] = -Number.MAX_VALUE;
-			minE[2] = -Number.MAX_VALUE;
-			var maxE:Float32Array = _boundingBox.min.elements;
-			maxE[0] = Number.MAX_VALUE;
-			maxE[1] = Number.MAX_VALUE;
-			maxE[2] = Number.MAX_VALUE;
+			var min:Vector3 = _boundingBox.min;
+			min.x = -Number.MAX_VALUE;
+			min.y = -Number.MAX_VALUE;
+			min.z = -Number.MAX_VALUE;
+			var max:Vector3 = _boundingBox.min;
+			max.x = Number.MAX_VALUE;
+			max.y = Number.MAX_VALUE;
+			max.z = Number.MAX_VALUE;
 		}
 		
 		/**
@@ -172,10 +172,10 @@ package laya.d3.core.particleShuriKen {
 			var oriBoundSphere:BoundSphere = (_owner as ShuriKenParticle3D).particleSystem._boundingSphere;
 			var maxScale:Number;
 			var transform:Transform3D = _owner.transform;
-			var scaleE:Float32Array = transform.scale.elements;
-			var scaleX:Number = Math.abs(scaleE[0]);
-			var scaleY:Number = Math.abs(scaleE[1]);
-			var scaleZ:Number = Math.abs(scaleE[2]);
+			var scaleE:Vector3 = transform.scale;
+			var scaleX:Number = Math.abs(scaleE.x);
+			var scaleY:Number = Math.abs(scaleE.y);
+			var scaleZ:Number = Math.abs(scaleE.z);
 			
 			if (scaleX >= scaleY && scaleX >= scaleZ)
 				maxScale = scaleX;
@@ -185,12 +185,12 @@ package laya.d3.core.particleShuriKen {
 			Vector3.transformCoordinate(oriBoundSphere.center, transform.worldMatrix, _boundingSphere.center);
 			_boundingSphere.radius = oriBoundSphere.radius * maxScale;
 			
-			if (Render.isConchApp) {//[NATIVE]
-				var centerE:Float32Array=_boundingSphere.center.elements;
+			if (Render.supportWebGLPlusCulling) {//[NATIVE]
+				var center:Vector3=_boundingSphere.center;
 				var buffer:Float32Array = FrustumCulling._cullingBuffer;
-				buffer[_cullingBufferIndex + 1] = centerE[0];
-				buffer[_cullingBufferIndex + 2] = centerE[1];
-				buffer[_cullingBufferIndex + 3] = centerE[2];
+				buffer[_cullingBufferIndex + 1] = center.x;
+				buffer[_cullingBufferIndex + 2] = center.y;
+				buffer[_cullingBufferIndex + 3] = center.z;
 				buffer[_cullingBufferIndex + 4] =_boundingSphere.radius;
 			}
 		}
@@ -224,7 +224,7 @@ package laya.d3.core.particleShuriKen {
 			case 0: //World
 				break;
 			case 1: //Local
-				sv.setVector(ShuriKenParticle3D.WORLDPOSITION, transform.position);
+				sv.setVector3(ShuriKenParticle3D.WORLDPOSITION, transform.position);
 				sv.setQuaternion(ShuriKenParticle3D.WORLDROTATION, transform.rotation);
 				break;
 			default: 
@@ -234,22 +234,22 @@ package laya.d3.core.particleShuriKen {
 			switch (particleSystem.scaleMode) {
 			case 0: 
 				var scale:Vector3 = transform.scale;
-				sv.setVector(ShuriKenParticle3D.POSITIONSCALE, scale);
-				sv.setVector(ShuriKenParticle3D.SIZESCALE, scale);
+				sv.setVector3(ShuriKenParticle3D.POSITIONSCALE, scale);
+				sv.setVector3(ShuriKenParticle3D.SIZESCALE, scale);
 				break;
 			case 1: 
 				var localScale:Vector3 = transform.localScale;
-				sv.setVector(ShuriKenParticle3D.POSITIONSCALE, localScale);
-				sv.setVector(ShuriKenParticle3D.SIZESCALE, localScale);
+				sv.setVector3(ShuriKenParticle3D.POSITIONSCALE, localScale);
+				sv.setVector3(ShuriKenParticle3D.SIZESCALE, localScale);
 				break;
 			case 2: 
-				sv.setVector(ShuriKenParticle3D.POSITIONSCALE, transform.scale);
-				sv.setVector(ShuriKenParticle3D.SIZESCALE, Vector3.ONE);
+				sv.setVector3(ShuriKenParticle3D.POSITIONSCALE, transform.scale);
+				sv.setVector3(ShuriKenParticle3D.SIZESCALE, Vector3.ONE);
 				break;
 			}
 			
 			Vector3.scale(Physics3DUtils.gravity, particleSystem.gravityModifier, _finalGravity);
-			sv.setVector(ShuriKenParticle3D.GRAVITY, _finalGravity);
+			sv.setVector3(ShuriKenParticle3D.GRAVITY, _finalGravity);
 			sv.setInt(ShuriKenParticle3D.SIMULATIONSPACE, particleSystem.simulationSpace);
 			sv.setBool(ShuriKenParticle3D.THREEDSTARTROTATION, particleSystem.threeDStartRotation);
 			sv.setInt(ShuriKenParticle3D.SCALINGMODE, particleSystem.scaleMode);

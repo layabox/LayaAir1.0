@@ -55,7 +55,7 @@ package laya.d3.animation {
 			_children = new Vector.<AnimationTransform3D>();
 			
 			_localMatrix = new Float32Array(16);
-			if (Render.isConchApp) {//[NATIVE]
+			if (Render.supportWebGLPlusAnimation) {//[NATIVE]
 				_localPosition = new Vector3(0,0,0,localPosition);
 				_localRotation = new Quaternion(0,0,0,1,localRotation);
 				_localScale = new Vector3(0,0,0,localScale);
@@ -77,7 +77,7 @@ package laya.d3.animation {
 		 */
 		private function _getlocalMatrix():Float32Array {
 			if (_localUpdate) {
-				Utils3D._createAffineTransformationArray(_localPosition.elements, _localRotation.elements, _localScale.elements, _localMatrix);
+				Utils3D._createAffineTransformationArray(_localPosition, _localRotation, _localScale, _localMatrix);
 				_localUpdate = false;
 			}
 			return _localMatrix;
@@ -115,8 +115,8 @@ package laya.d3.animation {
 		 */
 		public function get localRotation():Quaternion {
 			if (_localQuaternionUpdate) {
-				var eulerE:Float32Array = _localRotationEuler.elements;
-				Quaternion.createFromYawPitchRoll(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
+				var euler:Vector3 = _localRotationEuler;
+				Quaternion.createFromYawPitchRoll(euler.y / _angleToRandin, euler.x / _angleToRandin, euler.z / _angleToRandin, _localRotation);
 				_localQuaternionUpdate = false;
 			}
 			return _localRotation;
@@ -156,11 +156,11 @@ package laya.d3.animation {
 		public function get localRotationEuler():Vector3 {
 			if (_locaEulerlUpdate) {
 				_localRotation.getYawPitchRoll(_tempVector3);
-				var eulerE:Float32Array = _tempVector3.elements;
-				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
-				localRotationEulerE[0] = eulerE[1] * _angleToRandin;
-				localRotationEulerE[1] = eulerE[0] * _angleToRandin;
-				localRotationEulerE[2] = eulerE[2] * _angleToRandin;
+				var euler:Vector3 = _tempVector3;
+				var localRotationEuler:Vector3 = _localRotationEuler;
+				localRotationEuler.x = euler.y * _angleToRandin;
+				localRotationEuler.y = euler.x * _angleToRandin;
+				localRotationEuler.z = euler.z * _angleToRandin;
 				_locaEulerlUpdate = false;
 			}
 			return _localRotationEuler;
@@ -182,13 +182,13 @@ package laya.d3.animation {
 		 * @return	世界矩阵。
 		 */
 		public function getWorldMatrix():Float32Array {
-			if (!Render.isConchApp && _worldUpdate) {
+			if (!Render.supportWebGLPlusAnimation && _worldUpdate) {
 				if (_parent != null) {
 					Utils3D.matrix4x4MultiplyFFF(_parent.getWorldMatrix(), _getlocalMatrix(), _worldMatrix);
 				} else {
-					var locMat:Float32Array = _getlocalMatrix();
-					for (var i:int = 0; i < 16; ++i)
-						_worldMatrix[i] = locMat[i];
+					var e:Float32Array = _worldMatrix;//根节点的世界矩阵始终为单位矩阵。需使用Animator中的矩阵,否则移动Animator精灵无效
+					e[1] = e[2] = e[3] = e[4] = e[6] = e[7] = e[8] = e[9] = e[11] = e[12] = e[13] = e[14] = 0;
+					e[0] = e[5] = e[10] = e[15] = 1;
 				}
 				_worldUpdate = false;
 			}

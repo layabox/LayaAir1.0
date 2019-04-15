@@ -23,7 +23,6 @@ package laya.d3.math {
 		 */
 		public static function createFromTranslation(trans:Vector2, out:Matrix3x3):void {
 			var e:Float32Array = out.elements;
-			var g:Float32Array = trans.elements;
 			
 			out[0] = 1;
 			out[1] = 0;
@@ -31,8 +30,8 @@ package laya.d3.math {
 			out[3] = 0;
 			out[4] = 1;
 			out[5] = 0;
-			out[6] = g[0];
-			out[7] = g[1];
+			out[6] = trans.x;
+			out[7] = trans.y;
 			out[8] = 1;
 		}
 		
@@ -66,14 +65,13 @@ package laya.d3.math {
 		 */
 		public static function createFromScaling(scale:Vector2, out:Matrix3x3):void {
 			var e:Float32Array = out.elements;
-			var g:Float32Array = scale.elements;
 			
-			e[0] = g[0];
+			e[0] = scale.x;
 			e[1] = 0;
 			e[2] = 0;
 			
 			e[3] = 0;
-			e[4] = g[1];
+			e[4] = scale.y;
 			e[5] = 0;
 			
 			e[6] = 0;
@@ -171,12 +169,11 @@ package laya.d3.math {
 		public function translate(trans:Vector2, out:Matrix3x3):void {
 			var e:Float32Array = out.elements;
 			var f:Float32Array = this.elements;
-			var g:Float32Array = trans.elements;
 			
 			var a00:Number = f[0], a01:Number = f[1], a02:Number = f[2];
 			var a10:Number = f[3], a11:Number = f[4], a12:Number = f[5];
 			var a20:Number = f[6], a21:Number = f[7], a22:Number = f[8];
-			var x:Number = g[0], y:Number = g[1];
+			var x:Number = trans.x, y:Number = trans.y;
 			
 			e[0] = a00;
 			e[1] = a01;
@@ -228,9 +225,8 @@ package laya.d3.math {
 		public function scale(scale:Vector2, out:Matrix3x3):void {
 			var e:Float32Array = out.elements;
 			var f:Float32Array = this.elements;
-			var g:Float32Array = scale.elements;
 			
-			var x:Number = g[0], y:Number = g[1];
+			var x:Number = scale.x, y:Number = scale.y;
 			
 			e[0] = x * f[0];
 			e[1] = x * f[1];
@@ -366,22 +362,22 @@ package laya.d3.math {
 			
 			Vector3.cross(_tempV30, _tempV31, _tempV32);
 			
-			var v0e:Float32Array = _tempV30.elements;
-			var v1e:Float32Array = _tempV31.elements;
-			var v2e:Float32Array = _tempV32.elements;
+			var v0:Vector3 = _tempV30;
+			var v1:Vector3 = _tempV31;
+			var v2:Vector3 = _tempV32;
 			
 			var me:Float32Array = out.elements;
-			me[0] = v1e[0];
-			me[3] = v1e[1];
-			me[6] = v1e[2];
+			me[0] = v1.x;
+			me[3] = v1.y;
+			me[6] = v1.z;
 			
-			me[1] = v2e[0];
-			me[4] = v2e[1];
-			me[7] = v2e[2];
+			me[1] = v2.x;
+			me[4] = v2.y;
+			me[7] = v2.z;
 			
-			me[2] = v0e[0];
-			me[5] = v0e[1];
-			me[8] = v0e[2];
+			me[2] = v0.x;
+			me[5] = v0.y;
+			me[8] = v0.z;
 		}
 	}
 }

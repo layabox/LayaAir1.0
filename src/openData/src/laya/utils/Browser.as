@@ -1,8 +1,10 @@
 package laya.utils {
+	// import laya.media.SoundManager;
 	// import laya.net.LocalStorage;
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
+	import laya.wx.mini.MiniAdpter;
 	
 	/**
 	 * <code>Browser</code> 是浏览器代理类。封装浏览器及原生 js 提供的一些功能。
@@ -39,6 +41,8 @@ package laya.utils {
 		public static var onPC:Boolean;
 		/** @private */
 		public static var onMiniGame:Boolean;
+		/** @private */
+		public static var onBDMiniGame:Boolean;
 		/** @private */
 		public static var onLimixiu:Boolean;
 		/** @private */
@@ -86,10 +90,19 @@ package laya.utils {
 			}
 			if (u.indexOf("MiniGame") > -1) {
 				if (!Laya["MiniAdpter"]) {
-					console.error("请先添加小游戏适配库,详细教程：https://ldc.layabox.com/doc/?nav=zh-ts-5-0-0");
+					console.error("请先添加小游戏适配库,详细教程：https://ldc2.layabox.com/doc/?nav=zh-ts-5-0-0");
 						//TODO 教程要改
 				} else {
 					Laya["MiniAdpter"].enable();
+				}
+			}
+			// MiniAdpter.enable
+			if (u.indexOf("SwanGame") > -1) {
+				if (!Laya["BMiniAdapter"]) {
+					console.error("请先添加百度小游戏适配库,详细教程：https://ldc2.layabox.com/doc/?nav=zh-ts-5-0-0");
+						//TODO 教程要改
+				} else {
+					Laya["BMiniAdapter"].enable();
 				}
 			}
 			
@@ -141,11 +154,12 @@ package laya.utils {
 			onSafari = /*[STATIC SAFE]*/ u.indexOf("Safari") > -1;
 			onPC = !onMobile;
 			onMiniGame = /*[STATIC SAFE]*/ u.indexOf('MiniGame') > -1;
+			onBDMiniGame = /*[STATIC SAFE]*/ u.indexOf('SwanGame') > -1;
 			onLimixiu = /*[STATIC SAFE]*/ u.indexOf('limixiu') > -1;
-			
 			//处理LocalStorage兼容
 			// supportLocalStorage = LocalStorage.__init__();
 			//处理声音兼容性
+			// supportWebAudio = SoundManager.__init__();
 			
 			//这个其实在Render中感觉更合理，但是runtime要求第一个canvas是主画布，所以必须在下面的那个离线画布之前
 			Render._mainCanvas = new HTMLCanvas(true);

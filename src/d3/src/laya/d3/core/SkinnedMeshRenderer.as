@@ -1,9 +1,10 @@
 package laya.d3.core {
 	import laya.d3.animation.AnimationNode;
 	import laya.d3.component.Animator;
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.BlinnPhongMaterial;
 	import laya.d3.core.render.RenderContext3D;
-	import laya.d3.core.render.SubMeshRenderElement;
-	import laya.d3.core.scene.OctreeNode;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundSphere;
 	import laya.d3.math.Matrix4x4;
@@ -26,11 +27,9 @@ package laya.d3.core {
 		/** @private */
 		private var _cacheAnimationNode:Vector.<AnimationNode>;
 		/** @private */
-		private var _skinnedData:Vector.<Vector.<Float32Array>>;
+		public var _skinnedData:Vector.<Vector.<Float32Array>>;
 		/** @private */
 		private var _skinnedDataLoopMarks:Vector.<int>;
-		/** @private */
-		private var _localBoundingBoxCorners:Vector.<Vector3>;
 		/**@private */
 		private var _localBoundBox:BoundBox;
 		/**@private */
@@ -59,7 +58,6 @@ package laya.d3.core {
 		 */
 		public function set localBoundBox(value:BoundBox):void {
 			_localBoundBox = value;
-			value.getCorners(_localBoundingBoxCorners);
 		}
 		
 		/**
@@ -81,7 +79,6 @@ package laya.d3.core {
 			
 			_skinnedDataLoopMarks = new Vector.<int>();
 			_cacheAnimationNode = new Vector.<AnimationNode>();
-			_localBoundingBoxCorners = new Vector.<Vector3>(8);
 		}
 		
 		/**
@@ -92,7 +89,7 @@ package laya.d3.core {
 			var bindPoseIndices:Uint16Array = _cacheMesh._bindPoseIndices;
 			var innerBindPoseCount:int = bindPoseIndices.length;
 			
-			if (!Render.isConchApp) {
+			if (!Render.supportWebGLPlusAnimation) {
 				_cacheAnimationNode.length = innerBindPoseCount;
 				var nodeMap:Object = _cacheAnimator._avatarNodeMap;
 				for (var i:int = 0; i < innerBindPoseCount; i++) {
@@ -136,12 +133,11 @@ package laya.d3.core {
 					var subData:Vector.<Float32Array> = _skinnedData[i];
 					for (var j:int = 0, m:int = subBoneIndices.length; j < m; j++) {
 						var boneIndices:Uint16Array = subBoneIndices[j];
-						if (Render.isConchApp)
+						if (Render.supportWebGLPlusAnimation)
 							_computeSubSkinnedDataNative(_cacheAnimator._animationNodeWorldMatrixs, _cacheAnimationNodeIndices, _cacheMesh._inverseBindPosesBuffer, boneIndices, bindPoseInices, subData[j]);
 						else
 							_computeSubSkinnedData(bindPoses, boneIndices, bindPoseInices, subData[j], pathMarks);
 					}
-					(_renderElements[i] as SubMeshRenderElement).skinnedDatas = subData;
 				}
 			}
 		}
@@ -226,7 +222,7 @@ package laya.d3.core {
 				if (_localBoundBox == null)
 					_boundingBox.toDefault();
 				else
-					_calculateBoundBoxByInitCorners(_localBoundingBoxCorners);
+					_calculateBoundBoxByInitCorners(localBoundBox);
 			} else {
 				super._calculateBoundingBox();
 			}
@@ -246,13 +242,23 @@ package laya.d3.core {
 			}
 		}
 		
+		
 		/**
 		 * @inheritDoc
 		 */
-		override public function _updateOctreeNode():void {
-			var treeNode:OctreeNode = _treeNode;
-			if (treeNode) {
-				treeNode.updateObject(this);
+		override public function _changeRenderObjectsByMesh(mesh:Mesh):void {
+			var count:int = mesh.subMeshCount;
+			_renderElements.length = count;
+			for (var i:int = 0; i < count; i++) {
+				var renderElement:RenderElement = _renderElements[i];
+				if (!renderElement) {
+					var material:BaseMaterial = sharedMaterials[i];
+					renderElement = _renderElements[i] = new RenderElement();
+					renderElement.setTransform(_owner._transform);
+					renderElement.render = this;
+					renderElement.material = material ? material : BlinnPhongMaterial.defaultMaterial;//确保有材质,由默认材质代替。
+				}
+				renderElement.setGeometry(mesh._getSubMesh(i));
 			}
 		}
 		
@@ -262,9 +268,8 @@ package laya.d3.core {
 		override public function _renderUpdate(context:RenderContext3D, transform:Transform3D):void {
 			if (_cacheAnimator) {
 				_computeSkinnedData();
-				var aniOwnerTransParent:Transform3D = (_cacheAnimator.owner as Sprite3D)._transform._parent;
-				var worldMat:Matrix4x4 = aniOwnerTransParent ? aniOwnerTransParent.worldMatrix : Matrix4x4.DEFAULT;
-				_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, worldMat);
+				var aniOwnerTrans:Transform3D = (_cacheAnimator.owner as Sprite3D)._transform;
+				_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, aniOwnerTrans.worldMatrix);
 			} else {
 				_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
 			}
@@ -276,9 +281,8 @@ package laya.d3.core {
 		override public function _renderUpdateWithCamera(context:RenderContext3D, transform:Transform3D):void {
 			var projectionView:Matrix4x4 = context.projectionViewMatrix;
 			if (_cacheAnimator) {
-				var aniOwnerTransParent:Transform3D = (_cacheAnimator.owner as Sprite3D)._transform._parent;
-				var worldMat:Matrix4x4 = aniOwnerTransParent ? aniOwnerTransParent.worldMatrix : Matrix4x4.DEFAULT;
-				Matrix4x4.multiply(projectionView, worldMat, _projectionViewWorldMatrix);
+				var aniOwnerTrans:Transform3D = (_cacheAnimator.owner as Sprite3D)._transform;
+				Matrix4x4.multiply(projectionView, aniOwnerTrans.worldMatrix, _projectionViewWorldMatrix);
 			} else {
 				Matrix4x4.multiply(projectionView, transform.worldMatrix, _projectionViewWorldMatrix);
 			}

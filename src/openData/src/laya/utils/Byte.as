@@ -409,7 +409,7 @@ package laya.utils {
 		 */
 		public function readUint8():uint {
 			if (_pos_ + 1 > _length) throw "getUint8 error - Out of bounds";
-			return _d_.getUint8(_pos_++);
+			return _u8d_[_pos_++];
 		}
 		
 		/**
@@ -739,6 +739,19 @@ package laya.utils {
 			var uint8array:* = new Uint8Array(arraybuffer);
 			this._u8d_.set(uint8array.subarray(offset, offset + length), _pos_);
 			this._pos_ += length;
+		}
+		
+		/**
+		 * 读取ArrayBuffer数据
+		 * @param	length
+		 * @return
+		 */
+		public function readArrayBuffer(length:int):ArrayBuffer
+		{
+			var rst:ArrayBuffer;
+			rst = this._u8d_.buffer.slice(this._pos_, this._pos_ +length);
+			this._pos_ = this._pos_ +length
+			return rst;
 		}
 	}
 }

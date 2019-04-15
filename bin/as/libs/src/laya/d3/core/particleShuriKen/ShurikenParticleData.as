@@ -25,7 +25,7 @@ package laya.d3.core.particleShuriKen {
 		private static var _tempQuaternion:Quaternion = new Quaternion();
 		
 		public static var startLifeTime:Number;
-		public static var startColor:Float32Array = new Float32Array(4);
+		public static var startColor:Vector4 = new Vector4();
 		public static var startSize:Float32Array = new Float32Array(3);
 		public static var startRotation:Float32Array = new Float32Array(3);
 		public static var startSpeed:Number;
@@ -54,7 +54,7 @@ package laya.d3.core.particleShuriKen {
 		/**
 		 * @private
 		 */
-		private static function _randomInvertRoationArray(rotatonE:Float32Array, outE:Float32Array, randomizeRotationDirection:Number, rand:Rand, randomSeeds:Uint32Array):void {
+		private static function _randomInvertRoationArray(rotatonE:Vector3, outE:Vector3, randomizeRotationDirection:Number, rand:Rand, randomSeeds:Uint32Array):void {
 			var randDic:Number;
 			if (rand) {
 				rand.seed = randomSeeds[6];
@@ -64,13 +64,13 @@ package laya.d3.core.particleShuriKen {
 				randDic = Math.random();
 			}
 			if (randDic < randomizeRotationDirection) {
-				outE[0] = -rotatonE[0];
-				outE[1] = -rotatonE[1];
-				outE[2] = -rotatonE[2];
+				outE.x = -rotatonE.x;
+				outE.y = -rotatonE.y;
+				outE.z = -rotatonE.z;
 			} else {
-				outE[0] = rotatonE[0];
-				outE[1] = rotatonE[1];
-				outE[2] = rotatonE[2];
+				outE.x = rotatonE.x;
+				outE.y = rotatonE.y;
+				outE.z = rotatonE.z;
 			}
 		}
 		
@@ -102,18 +102,18 @@ package laya.d3.core.particleShuriKen {
 			//StartColor
 			switch (particleSystem.startColorType) {
 			case 0: 
-				var constantStartColorE:Float32Array = particleSystem.startColorConstant.elements;
-				startColor[0] = constantStartColorE[0];
-				startColor[1] = constantStartColorE[1];
-				startColor[2] = constantStartColorE[2];
-				startColor[3] = constantStartColorE[3];
+				var constantStartColor:Vector4 = particleSystem.startColorConstant;
+				startColor.x = constantStartColor.x;
+				startColor.y = constantStartColor.y;
+				startColor.z = constantStartColor.z;
+				startColor.w = constantStartColor.w;
 				break;
 			case 2: 
 				if (autoRandomSeed) {
-					MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements, particleSystem.startColorConstantMax.elements, Math.random(), startColor);
+					Vector4.lerp(particleSystem.startColorConstantMin, particleSystem.startColorConstantMax, Math.random(), startColor);
 				} else {
 					rand.seed = randomSeeds[3];
-					MathUtil.lerpVector4(particleSystem.startColorConstantMin.elements, particleSystem.startColorConstantMax.elements, rand.getFloat(), startColor);
+					Vector4.lerp(particleSystem.startColorConstantMin, particleSystem.startColorConstantMax, rand.getFloat(), startColor);
 					randomSeeds[3] = rand.seed;
 				}
 				break;
@@ -123,10 +123,10 @@ package laya.d3.core.particleShuriKen {
 				var color:GradientColor = colorOverLifetime.color;
 				switch (color.type) {
 				case 0: 
-					startColor[0] = startColor[0] * color.constant.x;
-					startColor[1] = startColor[1] * color.constant.y;
-					startColor[2] = startColor[2] * color.constant.z;
-					startColor[3] = startColor[3] * color.constant.w;
+					startColor.x = startColor.x * color.constant.x;
+					startColor.y = startColor.y * color.constant.y;
+					startColor.z = startColor.z * color.constant.z;
+					startColor.w = startColor.w * color.constant.w;
 					break;
 				case 2: 
 					var colorRandom:Number;
@@ -139,10 +139,10 @@ package laya.d3.core.particleShuriKen {
 					}
 					var minConstantColor:Vector4 = color.constantMin;
 					var maxConstantColor:Vector4 = color.constantMax;
-					startColor[0] = startColor[0] * MathUtil.lerp(minConstantColor.x, maxConstantColor.x, colorRandom);
-					startColor[1] = startColor[1] * MathUtil.lerp(minConstantColor.y, maxConstantColor.y, colorRandom);
-					startColor[2] = startColor[2] * MathUtil.lerp(minConstantColor.z, maxConstantColor.z, colorRandom);
-					startColor[3] = startColor[3] * MathUtil.lerp(minConstantColor.w, maxConstantColor.w, colorRandom);
+					startColor.x = startColor.x * MathUtil.lerp(minConstantColor.x, maxConstantColor.x, colorRandom);
+					startColor.y = startColor.y * MathUtil.lerp(minConstantColor.y, maxConstantColor.y, colorRandom);
+					startColor.z = startColor.z * MathUtil.lerp(minConstantColor.z, maxConstantColor.z, colorRandom);
+					startColor.w = startColor.w * MathUtil.lerp(minConstantColor.w, maxConstantColor.w, colorRandom);
 					break;
 				}
 			}
@@ -224,43 +224,43 @@ package laya.d3.core.particleShuriKen {
 				case 0: 
 					if (particleSystem.threeDStartRotation) {
 						var startRotationConstantSeparate:Vector3 = particleSystem.startRotationConstantSeparate;
-						var randomRotationE:Float32Array = _tempVector30.elements;
-						_randomInvertRoationArray(startRotationConstantSeparate.elements, randomRotationE, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-						startRotation[0] = randomRotationE[0];
-						startRotation[1] = randomRotationE[1];
+						var randomRotationE:Vector3 = _tempVector30;
+						_randomInvertRoationArray(startRotationConstantSeparate, randomRotationE, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
+						startRotation[0] = randomRotationE.x;
+						startRotation[1] = randomRotationE.y;
 						if (renderMode !== 4)
-							startRotation[2] = -randomRotationE[2];
+							startRotation[2] = -randomRotationE.z;
 						else
-							startRotation[2] = randomRotationE[2];
+							startRotation[2] = randomRotationE.z;
 					} else {
 						startRotation[0] = _randomInvertRoation(particleSystem.startRotationConstant, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
 						startRotation[1] = 0;
-						startRotation[2] = 0;
+						startRotation[2] = 0;//需要置0,否则上次缓存影响数据。TODO:mesh模式下使用Z,但是这里为什么是X
 					}
 					break;
 				case 2: 
 					if (particleSystem.threeDStartRotation) {
 						var startRotationConstantMinSeparate:Vector3 = particleSystem.startRotationConstantMinSeparate;
 						var startRotationConstantMaxSeparate:Vector3 = particleSystem.startRotationConstantMaxSeparate;
-						var lerpRoationE:Float32Array = _tempVector30.elements;
+						var lerpRoationE:Vector3 = _tempVector30;
 						if (autoRandomSeed) {
-							lerpRoationE[0] = MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random());
-							lerpRoationE[1] = MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random());
-							lerpRoationE[2] = MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random());
+							lerpRoationE.x = MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, Math.random());
+							lerpRoationE.y = MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, Math.random());
+							lerpRoationE.z = MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, Math.random());
 						} else {
 							rand.seed = randomSeeds[5];
-							lerpRoationE[0] = MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, rand.getFloat());
-							lerpRoationE[1] = MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, rand.getFloat());
-							lerpRoationE[2] = MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, rand.getFloat());
+							lerpRoationE.x = MathUtil.lerp(startRotationConstantMinSeparate.x, startRotationConstantMaxSeparate.x, rand.getFloat());
+							lerpRoationE.y = MathUtil.lerp(startRotationConstantMinSeparate.y, startRotationConstantMaxSeparate.y, rand.getFloat());
+							lerpRoationE.z = MathUtil.lerp(startRotationConstantMinSeparate.z, startRotationConstantMaxSeparate.z, rand.getFloat());
 							randomSeeds[5] = rand.seed;
 						}
 						_randomInvertRoationArray(lerpRoationE, lerpRoationE, particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
-						startRotation[0] = lerpRoationE[0];
-						startRotation[1] = lerpRoationE[1];
+						startRotation[0] = lerpRoationE.x;
+						startRotation[1] = lerpRoationE.y;
 						if (renderMode !== 4)
-							startRotation[2] = -lerpRoationE[2];
+							startRotation[2] = -lerpRoationE.z;
 						else
-							startRotation[2] = lerpRoationE[2];
+							startRotation[2] = lerpRoationE.z;
 					} else {
 						if (autoRandomSeed) {
 							startRotation[0] = _randomInvertRoation(MathUtil.lerp(particleSystem.startRotationConstantMin, particleSystem.startRotationConstantMax, Math.random()), particleSystem.randomizeRotationDirection, autoRandomSeed ? null : rand, randomSeeds);
@@ -397,16 +397,16 @@ package laya.d3.core.particleShuriKen {
 			
 			switch (particleSystem.simulationSpace) {
 			case 0: 
-				var positionE:Float32Array = transform.position.elements;
-				simulationWorldPostion[0] = positionE[0];
-				simulationWorldPostion[1] = positionE[1];
-				simulationWorldPostion[2] = positionE[2];
+				var position:Vector3 = transform.position;
+				simulationWorldPostion[0] = position.x;
+				simulationWorldPostion[1] = position.y;
+				simulationWorldPostion[2] = position.z;
 				
-				var rotationE:Float32Array = transform.rotation.elements;
-				simulationWorldRotation[0] = rotationE[0];
-				simulationWorldRotation[1] = rotationE[1];
-				simulationWorldRotation[2] = rotationE[2];
-				simulationWorldRotation[3] = rotationE[3];
+				var rotation:Quaternion = transform.rotation;
+				simulationWorldRotation[0] = rotation.x;
+				simulationWorldRotation[1] = rotation.y;
+				simulationWorldRotation[2] = rotation.z;
+				simulationWorldRotation[3] = rotation.w;
 				break;
 			case 1: 
 				break;

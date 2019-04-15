@@ -14,8 +14,9 @@ uniform vec2 size;
 #ifdef WORLDMAT
 	uniform mat4 mmat;
 #endif
-uniform mat4 u_MvpMatrix;
-
+#ifdef MVP3D
+	uniform mat4 u_MvpMatrix;
+#endif
 varying vec4 v_texcoordAlpha;
 varying vec4 v_color;
 varying float v_useTex;

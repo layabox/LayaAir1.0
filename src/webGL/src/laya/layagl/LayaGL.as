@@ -24,24 +24,6 @@ package laya.layagl {
 		public static const EXECUTE_COPY_TO_RENDER3D:int = 3;			//拷贝3Dbuffer到渲染线程
 		
 		//-------------------------------------------------------------------------------------
-		public static const VALUE_OPERATE_ADD:int = 0;
-		public static const VALUE_OPERATE_SUB:int = 1;
-		public static const VALUE_OPERATE_MUL:int = 2;
-		public static const VALUE_OPERATE_DIV:int = 3;
-		public static const VALUE_OPERATE_M2_MUL:int = 4;
-		public static const VALUE_OPERATE_M3_MUL:int = 5;
-		public static const VALUE_OPERATE_M4_MUL:int = 6;
-		public static const VALUE_OPERATE_M32_MUL:int = 7;
-		public static const VALUE_OPERATE_SET:int = 8;
-		public static const VALUE_OPERATE_M32_TRANSLATE:int = 9;
-		public static const VALUE_OPERATE_M32_SCALE:int = 10;
-		public static const VALUE_OPERATE_M32_ROTATE:int = 11;
-		public static const VALUE_OPERATE_M32_SCALE_PIVOT:int = 12;
-		public static const VALUE_OPERATE_M32_ROTATE_PIVOT:int = 13;
-		public static const VALUE_OPERATE_M32_TRANSFORM_PIVOT:int = 14;
-		public static const VALUE_OPERATE_BYTE4_COLOR_MUL:int = 15;
-		
-		//-------------------------------------------------------------------------------------
 		public static const ARRAY_BUFFER_TYPE_DATA:int = 0;           	//创建ArrayBuffer时的类型为Data
 		public static const ARRAY_BUFFER_TYPE_CMD:int = 1;            	//创建ArrayBuffer时的类型为Command
 		
@@ -83,18 +65,6 @@ package laya.layagl {
 		public static function createArrayBufferRefs(arrayBuffer:*, type:Number, syncRender:Boolean,refType:Number):void 
 		{
 		
-		}
-		public function calcMatrixFromScaleSkewRotation(nArrayBufferID:int, matrixFlag:int, matrixResultID:int, x:int, y:int, pivotX:int, pivotY:int, scaleX:int, scaleY:int, skewX:int, skewY:int, rotate:int):void
-		{
-			
-		}
-		public function setGLTemplate(type:int,templateID:int):void
-		{
-			
-		}
-		public function setEndGLTemplate(type:int,templateID:int):void
-		{
-			
 		}
 		public function matrix4x4Multiply(m1:*,m2:*,out:*):void
 		{

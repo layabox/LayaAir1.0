@@ -12,7 +12,6 @@ package laya.webgl.text {
 	import laya.utils.Stat;
 	import laya.utils.WordText;
 	import laya.webgl.canvas.WebGLContext2D;
-	import laya.webgl.resource.CharPageTexture;
 	import laya.webgl.resource.CharRenderInfo;
 	import laya.webgl.resource.CharRender_Canvas;
 	import laya.webgl.resource.CharRender_Native;
@@ -190,7 +189,7 @@ package laya.webgl.text {
 			if (lineWidth < 0) lineWidth = 0;
 			setFont(font);
 			fontScaleX = fontScaleY = 1.0;
-			if (scaleFontWithCtx) {
+			if (!Render.isConchApp && scaleFontWithCtx) {
 				var sx:Number = 1;
 				var sy:Number = 1;
 				if (Render.isConchApp) {
@@ -293,7 +292,7 @@ package laya.webgl.text {
 							if (Render.isConchApp){
 								add.push( { ri: ri, x: stx, y: sty, w: ri.bmpWidth / fontScaleX, h: ri.bmpHeight / fontScaleY } );
 							}else{
-								add.push( { ri: ri, x: stx+1/fontScaleX, y: sty+1/fontScaleY, w: (ri.bmpWidth-2) / fontScaleX, h: (ri.bmpHeight-2) / fontScaleY } );	// 为了避免边缘像素采样错误，内缩一个像素
+								add.push( { ri: ri, x: stx+1/fontScaleX, y: sty/fontScaleY, w: (ri.bmpWidth-2) / fontScaleX, h: (ri.bmpHeight-1) / fontScaleY } );	// 为了避免边缘像素采样错误，内缩一个像素
 							}
 							stx += ri.width;	// TODO 缩放
 						}
@@ -307,7 +306,7 @@ package laya.webgl.text {
 					if (Render.isConchApp){
 						sameTexData[0] = [{ ri: ri, x: 0, y: 0, w: ri.bmpWidth / fontScaleX, h: ri.bmpHeight / fontScaleY }];
 					}else{
-						sameTexData[0] = [{ ri: ri, x: 1/fontScaleX, y: 1/fontScaleY, w: (ri.bmpWidth-2) / fontScaleX, h: (ri.bmpHeight-2) / fontScaleY }]; // 为了避免边缘像素采样错误，内缩一个像素
+						sameTexData[0] = [{ ri: ri, x: 1/fontScaleX, y: 0/fontScaleY, w: (ri.bmpWidth-2) / fontScaleX, h: (ri.bmpHeight-1) / fontScaleY }]; // 为了避免边缘像素采样错误，内缩一个像素
 					}
 				}
 				
@@ -427,7 +426,7 @@ package laya.webgl.text {
 				// 这里可以直接
 				var tex:TextTexture = TextTexture.getTextTexture(imgdt.width, imgdt.height);
 				tex.addChar(imgdt, 0, 0, ri.uv);
-				ri.tex = tex as CharPageTexture;
+				ri.tex = tex;
 				ri.orix = margin ; // 这里是原始的，不需要乘scale,因为scale的会创建一个scale之前的rect
 				ri.oriy = margin ;
 				tex.ri = ri;
@@ -703,7 +702,7 @@ package laya.webgl.text {
 			var fontstr:String = 'bold ' + standardFontSize+'px ' + font;
 			if (isWan1Wan) {
 				// 这时候无法获得imagedata，只能采取保险测量
-				fontSizeW = charRender.getWidth(fontstr, '国') * 1.5;
+				fontSizeW = charRender.getWidth(fontstr, '有') * 1.5;
 				fontSizeH = standardFontSize * 1.5;
 				var szinfo:int = fontSizeW << 8 | fontSizeH;
 				fontSizeInfo[font] = szinfo;
@@ -730,7 +729,7 @@ package laya.webgl.text {
 			bmpData32 = new Uint32Array(bmpdt.data.buffer);
 			//测量宽度是 tmpRI.width
 			updateBbx(bmpdt, pixelBBX, false);
-			bmpdt = charRender.getCharBmp('国', fontstr, 0, 'red', null, tmpRI, oriy, oriy, marginr, marginb);
+			bmpdt = charRender.getCharBmp('有', fontstr, 0, 'red', null, tmpRI, oriy, oriy, marginr, marginb);// '有'比'国'大
 			if (Render.isConchApp) {
 				//bmpdt.data.buffer = bmpdt.data;
 				bmpdt.data = new __JS__("Uint8ClampedArray(bmpdt.data)");

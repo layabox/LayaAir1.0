@@ -70,20 +70,18 @@ package laya.d3.physics.shape {
 		 */
 		override public function _setScale(value:Vector3):void {
 			var fixScale:Vector3 = _tempVector30;
-			var valueE:Float32Array = value.elements;
-			var fixScaleE:Float32Array = fixScale.elements;
 			switch (orientation) {
 			case ColliderShape.SHAPEORIENTATION_UPX: 
-				fixScaleE[0] = valueE[0];
-				fixScaleE[1] = fixScaleE[2] = Math.max(valueE[1], valueE[2]);
+				fixScale.x = value.x;
+				fixScale.y = fixScale.z = Math.max(value.y, value.z);
 				break;
 			case ColliderShape.SHAPEORIENTATION_UPY: 
-				fixScaleE[1] = valueE[1];
-				fixScaleE[0] = fixScaleE[2] = Math.max(valueE[0], valueE[2]);
+				fixScale.y = value.y;
+				fixScale.x = fixScale.z = Math.max(value.x, value.z);
 				break;
 			case ColliderShape.SHAPEORIENTATION_UPZ: 
-				fixScaleE[2] = valueE[2];
-				fixScaleE[0] = fixScaleE[1] = Math.max(valueE[0], valueE[1]);
+				fixScale.z = value.z;
+				fixScale.x = fixScale.y = Math.max(value.x, value.y);
 				break;
 			default: 
 				throw "CapsuleColliderShape:unknown orientation.";

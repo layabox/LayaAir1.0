@@ -192,6 +192,7 @@ package laya.d3.core.light {
 		 * @inheritDoc
 		 */
 		override protected function _onActive():void {
+			super._onActive();
 			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && ((_scene as Scene3D)._addLight(this));
 		}
 		
@@ -199,6 +200,7 @@ package laya.d3.core.light {
 		 * @inheritDoc
 		 */
 		override protected function _onInActive():void {
+			super._onInActive();
 			(lightmapBakedType !== LIGHTMAPBAKEDTYPE_BAKED) && ((_scene as Scene3D)._removeLight(this));
 		}
 		

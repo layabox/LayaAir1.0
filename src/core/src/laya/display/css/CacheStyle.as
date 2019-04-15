@@ -139,7 +139,7 @@ package laya.display.css {
 		public function _calculateCacheRect(sprite:Sprite, tCacheType:String,x:Number,y:Number):Point
 		{
 			var bWebGL:Boolean = false;
-			if ( Render.isWebGL || Render.isConchApp)
+			if ( Render.isWebGL )
 			{
 				bWebGL = true;
 			}
@@ -150,17 +150,9 @@ package laya.display.css {
 			
 			//计算显示对象的绘图区域
 			if (!bWebGL || tCacheType === "bitmap") {
-				tRec = sprite.getSelfBounds();
-				if ( !Render.isConchApp )
-				{
-					tRec.width = tRec.width + CANVAS_EXTEND_EDGE*2;
-					tRec.height = tRec.height + CANVAS_EXTEND_EDGE*2;
-				}
-				else
-				{
-					tRec.width = tRec.x + tRec.width + CANVAS_EXTEND_EDGE*2;
-					tRec.height = tRec.x + tRec.height + CANVAS_EXTEND_EDGE*2;
-				}
+				tRec = sprite.getSelfBounds();				
+				tRec.width = tRec.width + CANVAS_EXTEND_EDGE*2;
+				tRec.height = tRec.height + CANVAS_EXTEND_EDGE*2;
 				tRec.x = tRec.x-sprite.pivotX;
 				tRec.y = tRec.y-sprite.pivotY;
 				tRec.x = tRec.x - CANVAS_EXTEND_EDGE;

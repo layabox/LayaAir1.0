@@ -1,46 +1,21 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
+	import laya.renders.Render;
+	import laya.d3.math.Native.ConchVector2;
 	
 	/**
 	 * <code>Vector2</code> 类用于创建二维向量。
 	 */
-	public class Vector2 extends BaseVector implements IClone {
+	public class Vector2 implements IClone {
 		/**零向量,禁止修改*/
 		public static const ZERO:Vector2 = new Vector2(0.0, 0.0);
 		/**一向量,禁止修改*/
 		public static const ONE:Vector2 = new Vector2(1.0, 1.0);
 		
-		/**
-		 * 获取X轴坐标。
-		 * @return	X轴坐标。
-		 */
-		public function get x():Number {
-			return this.elements[0];
-		}
-		
-		/**
-		 * 设置X轴坐标。
-		 * @param value X轴坐标。
-		 */
-		public function set x(value:Number):void {
-			this.elements[0] = value;
-		}
-		
-		/**
-		 * 获取Y轴坐标。
-		 * @return Y轴坐标。
-		 */
-		public function get y():Number {
-			return this.elements[1];
-		}
-		
-		/**
-		 * 设置Y轴坐标。
-		 * @param value Y轴坐标。
-		 */
-		public function set y(value:Number):void {
-			this.elements[1] = value;
-		}
+		/**X轴坐标*/
+		public var x:Number;
+		/**Y轴坐标*/
+		public var y:Number;
 		
 		/**
 		 * 创建一个 <code>Vector2</code> 实例。
@@ -48,9 +23,12 @@ package laya.d3.math {
 		 * @param	y  Y轴坐标。
 		 */
 		public function Vector2(x:Number = 0, y:Number = 0) {
-			var v:Float32Array = elements = new Float32Array(2);
-			v[0] = x;
-			v[1] = y;
+			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
+			if (__JS__("(window.conch != null)")) {
+				__JS__("return new ConchVector2(x, y)");
+			}
+			this.x = x;
+			this.y = y;
 		}
 		
 		/**
@@ -60,10 +38,8 @@ package laya.d3.math {
 		 * @param	out 输出二维向量。
 		 */
 		public static function scale(a:Vector2, b:Number, out:Vector2):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = a.elements;
-			e[0] = f[0] * b;
-			e[1] = f[1] * b;
+			out.x = a.x * b;
+			out.y = a.y * b;
 		}
 		
 		/**
@@ -72,8 +48,8 @@ package laya.d3.math {
 		 * @param  offset 数组偏移。
 		 */
 		public function fromArray(array:Array, offset:int = 0):void {
-			elements[0] = array[offset + 0];
-			elements[1] = array[offset + 1];
+			x = array[offset + 0];
+			y = array[offset + 1];
 		}
 		
 		/**
@@ -82,10 +58,8 @@ package laya.d3.math {
 		 */
 		public function cloneTo(destObject:*):void {
 			var destVector2:Vector2 = destObject as Vector2;
-			var destE:Float32Array = destVector2.elements;
-			var s:Float32Array = this.elements;
-			destE[0] = s[0];
-			destE[1] = s[1];
+			destVector2.x = x;
+			destVector2.y = y;
 		}
 		
 		/**
@@ -95,10 +69,7 @@ package laya.d3.math {
 		 * @return   点积。
 		 */
 		public static function dot(a:Vector2, b:Vector2):Number {
-			var ae:Float32Array = a.elements;
-			var be:Float32Array = b.elements;
-			var r:Number = (ae[0] * be[0]) + (ae[1] * be[1]);
-			return r;
+			return (a.x * b.x) + (a.y * b.y);
 		}
 		
 		/**
@@ -107,14 +78,12 @@ package laya.d3.math {
 		 * @param	out 输出三维向量。
 		 */
 		public static function normalize(s:Vector2, out:Vector2):void {
-			var se:Float32Array = s.elements;
-			var oe:Float32Array = out.elements;
-			var x:Number = se[0], y:Number = se[1];
+			var x:Number = s.x, y:Number = s.y;
 			var len:Number = x * x + y * y;
 			if (len > 0) {
 				len = 1 / Math.sqrt(len);
-				oe[0] = se[0] * len;
-				oe[1] = se[1] * len;
+				out.x = x * len;
+				out.y = y * len;
 			}
 		}
 		
@@ -124,8 +93,7 @@ package laya.d3.math {
 		 * @return 标量长度。
 		 */
 		public static function scalarLength(a:Vector2):Number {
-			var f:Float32Array = a.elements;
-			var x:Number = f[0], y:Number = f[1];
+			var x:Number = a.x, y:Number = a.y;
 			return Math.sqrt(x * x + y * y);
 		}
 		

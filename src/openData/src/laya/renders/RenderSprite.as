@@ -1,6 +1,8 @@
 package laya.renders {
+	import laya.Const;
 	import laya.display.Sprite;
 	import laya.display.SpriteConst;
+	import laya.display.Stage;
 	import laya.display.css.CacheStyle;
 	import laya.display.css.SpriteStyle;
 	import laya.display.css.TextStyle;
@@ -228,7 +230,7 @@ package laya.renders {
 		public function _texture(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			var tex:Texture = sprite.texture;
 			if(tex._getSource())
-			context.drawTexture(tex, x-sprite.pivotX, y-sprite.pivotY, sprite._width || tex.width, sprite._height || tex.height);
+			context.drawTexture(tex, x-sprite.pivotX+tex.offsetX, y-sprite.pivotY+tex.offsetY, sprite._width || tex.width, sprite._height || tex.height);
 			var next:RenderSprite = this._next;
 			next._fun.call(next, sprite, context, x, y);
 		}
@@ -282,7 +284,7 @@ package laya.renders {
 			var childs:Array = sprite._children, n:int = childs.length, ele:*;
 			x = x - sprite.pivotX;
 			y = y - sprite.pivotY;
-			
+			var textLastRender:Boolean = sprite._getBit(Const.DRAWCALL_OPTIMIZE) && context.drawCallOptimize(true);
 			if (style.viewport) {
 				var rect:Rectangle = style.viewport;
 				var left:Number = rect.x;
@@ -300,6 +302,7 @@ package laya.renders {
 				for (var i:int = 0; i < n; ++i)
 					(ele = (childs[i] as Sprite))._visible && ele.render(context, x, y);
 			}
+			textLastRender && context.drawCallOptimize(false);
 		}
 		
 		public function _canvas(sprite:Sprite, context:Context, x:Number, y:Number):void {
@@ -312,26 +315,55 @@ package laya.renders {
 				return;
 			}
 			_cacheStyle.cacheAs === 'bitmap' ? (Stat.canvasBitmap++) : (Stat.canvasNormal++);
-			if (sprite._needRepaint() || (!_cacheStyle.canvas)) {
-				_canvas_repaint(sprite, context, x, y);
-			} else {
-				/*
-				var src:RenderTexture = window.__scope_src;
-				var out:RenderTexture = window.__scope_out;
-				var spctx:WebGLContext2D = _cacheStyle.canvas.context as WebGLContext2D;
-				if (src && out) {
-					//window.mainctx._drawRenderTexture(out, 500, 300, out.width, out.height, null, 1.0, RenderTexture.defuv);	
-					//window.mainctx._drawRenderTexture(src, 300, 300, src.width, src.height, null, 1.0, RenderTexture.flipyuv);	
-					//window.mainctx._drawRenderTexture(spctx._targets, 300, 600, src.width, src.height, null, 1.0, RenderTexture.flipyuv);	
+			
+			//检查保存的文字是否失效了
+			var cacheNeedRebuild:Boolean = false;
+			var textNeedRestore:Boolean = false;
+			
+			if (Render.isWebGL && _cacheStyle.canvas) {
+				// 检查文字是否被释放了，以及clip是否改变了，需要重新cache了
+				var canv:* = _cacheStyle.canvas;
+				var ctx:* = canv.context;
+				var charRIs:Array =  canv.touches;
+				if ( charRIs ) {
+					for ( var ci:int = 0; ci < charRIs.length; ci++) {
+						if ( charRIs[ci].deleted) {
+							textNeedRestore = true;
+							break;
+						}
+					}
 				}
-				*/
-				var tRec:Rectangle = _cacheStyle.cacheRect;
-				context.drawCanvas(_cacheStyle.canvas, x + tRec.x, y + tRec.y, tRec.width, tRec.height);
+				cacheNeedRebuild =  canv.isCacheValid && !canv.isCacheValid();
 			}
-		
+			
+			if (sprite._needRepaint() || (!_cacheStyle.canvas) || textNeedRestore ||cacheNeedRebuild || Laya.stage.isGlobalRepaint()) {
+				if (Render.isWebGL && _cacheStyle.cacheAs === 'normal') {
+					if (__JS__('context._targets') ){// 如果有target说明父节点已经是一个cacheas bitmap了，就不再走cacheas normal的流程了
+						_next._fun.call(_next, sprite, context, x, y);
+						return;	//不再继续
+					}else{
+						_canvas_webgl_normal_repaint(sprite, context);
+					}
+				}else{
+					_canvas_repaint(sprite, context, x,y);
+				}
+			} 
+			/*
+			var src:RenderTexture = window.__scope_src;
+			var out:RenderTexture = window.__scope_out;
+			var spctx:WebGLContext2D = _cacheStyle.canvas.context as WebGLContext2D;
+			if (src && out) {
+				//window.mainctx._drawRenderTexture(out, 500, 300, out.width, out.height, null, 1.0, RenderTexture.defuv);	
+				//window.mainctx._drawRenderTexture(src, 300, 300, src.width, src.height, null, 1.0, RenderTexture.flipyuv);	
+				//window.mainctx._drawRenderTexture(spctx._targets, 300, 600, src.width, src.height, null, 1.0, RenderTexture.flipyuv);	
+			}
+			*/
+			var tRec:Rectangle = _cacheStyle.cacheRect;
+			//Stage._dbgSprite.graphics.drawRect(x, y, 30,30, null, 'red');
+			context.drawCanvas(_cacheStyle.canvas, x + tRec.x, y + tRec.y, tRec.width, tRec.height);
 		}
 		
-		public function _canvas_repaint(sprite:Sprite, context:Context, x:Number, y:Number):void {
+		public function _canvas_repaint(sprite:Sprite, context:Context, x:int, y:int):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var _cacheStyle:CacheStyle = sprite._cacheStyle;
 			var _next:RenderSprite = this._next;
@@ -382,11 +414,6 @@ package laya.renders {
 			//清理画布。之前记录的submit会被全部清掉
 			tx.clear();
 			
-			if (tCacheType === 'normal') {
-				//记录需要touch的资源
-				tx.touches = [];
-			}
-			
 			//TODO:测试webgl下是否有缓存模糊
 			if (scaleX != 1 || scaleY != 1) {
 				var ctx:* = tx;
@@ -403,8 +430,31 @@ package laya.renders {
 			
 			if (_cacheStyle.staticCache) _cacheStyle.reCache = false;
 			Stat.canvasReCache++;
+		}
+		
+		public function _canvas_webgl_normal_repaint(sprite:Sprite, context:Context):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var _cacheStyle:CacheStyle = sprite._cacheStyle;
+			var _next:RenderSprite = this._next;
+			var canvas:HTMLCanvas=_cacheStyle.canvas;
 			
-			context.drawCanvas(canvas, x + left, y + top, tRec.width, tRec.height);
+			var tCacheType:String = _cacheStyle.cacheAs;
+			var scaleInfo:Point = _cacheStyle._calculateCacheRect(sprite, tCacheType, 0, 0);
+			
+			if (!canvas) {
+				canvas = _cacheStyle.canvas = __JS__('new Laya.WebGLCacheAsNormalCanvas(context, sprite)');
+			}
+			var tx:Context = canvas.context;
+			
+			
+			canvas['startRec']();
+			_next._fun.call(_next, sprite, tx, sprite.pivotX, sprite.pivotY);	// 由于后面的渲染会减去pivot，而cacheas normal并不希望这样，只希望创建一个原始的图像。所以在这里补偿。
+			sprite._applyFilters();
+			
+			Stat.canvasReCache++;
+			canvas['endRec']();
+			
+			//context.drawCanvas(canvas, x , y , 1, 1); // 这种情况下宽高没用
 		}
 	}
 }

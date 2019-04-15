@@ -40,4 +40,5 @@ void main()
 	#endif
 		
 	v_Color = a_Color;
+	gl_Position=remapGLPositionZ(gl_Position);
 }

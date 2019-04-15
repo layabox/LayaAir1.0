@@ -143,8 +143,13 @@ package laya.resource {
 		 */
 		public function toBase64(type:String, encoderOptions:Number, callBack:Function):void {
 			if (_source) {
-				if (Render.isConchApp && _source.toBase64) {
-					_source.toBase64(type, encoderOptions, callBack);
+				if (Render.isConchApp) {
+					var width:Number = _ctx._targets.sourceWidth;
+					var height:Number = _ctx._targets.sourceHeight;
+					_ctx._targets.getData(0, 0, width, height, function(data:ArrayBuffer):void {
+						__JS__("var base64 = conchToBase64(type, encoderOptions, data, width, height)");
+						__JS__("callBack(base64)");
+					});	
 				}
 				else {
 					var base64Data:String = _source.toDataURL(type, encoderOptions);

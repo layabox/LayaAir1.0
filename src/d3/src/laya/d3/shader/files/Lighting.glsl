@@ -126,3 +126,8 @@ vec2 TransformUV(vec2 texcoord,vec4 tilingOffset) {
 	return transTexcoord;
 }
 
+vec4 remapGLPositionZ(vec4 position) {
+	position.z=position.z * 2.0 - position.w;
+	return position;
+}
+

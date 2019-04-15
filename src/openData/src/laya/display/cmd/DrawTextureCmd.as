@@ -1,5 +1,7 @@
 package laya.display.cmd {
+	import laya.filters.ColorFilter;
 	import laya.maths.Matrix;
+	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.Texture;
 	import laya.utils.Pool;
@@ -42,6 +44,8 @@ package laya.display.cmd {
 		 * （可选）颜色滤镜。
 		 */
 		public var color:String;
+		
+		public var colorFlt:ColorFilter;
 		/**
 		 * （可选）混合模式。
 		 */
@@ -60,6 +64,11 @@ package laya.display.cmd {
 			cmd.alpha = alpha;
 			cmd.color = color;
 			cmd.blendMode = blendMode;
+			if (color) {
+				cmd.colorFlt = new ColorFilter();
+				cmd.colorFlt.setColor(color);
+			}
+			
 			return cmd;
 		}
 		
@@ -75,7 +84,7 @@ package laya.display.cmd {
 		
 		/**@private */
 		public function run(context:Context, gx:Number, gy:Number):void {
-			context.drawTextureWithTransform(texture, x, y, width, height, matrix, gx, gy, alpha, blendMode);
+			context.drawTextureWithTransform(texture, x, y, width, height, matrix, gx, gy, alpha, blendMode, colorFlt);
 		}
 		
 		/**@private */

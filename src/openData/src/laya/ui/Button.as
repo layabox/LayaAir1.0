@@ -319,6 +319,7 @@ package laya.ui {
 		{
 			callLater(changeClips);
 			_setStateChanged();
+			_sizeChanged();
 			event(Event.LOADED);
 		}
 		

@@ -94,11 +94,11 @@ package laya.d3.core.light {
 				var defineDatas:DefineDatas = scene._defineDatas;
 				var shaderValue:ShaderData = scene._shaderValues;
 				Vector3.scale(color, _intensity, _intensityColor);
-				shaderValue.setVector(Scene3D.SPOTLIGHTCOLOR, _intensityColor);
-				shaderValue.setVector(Scene3D.SPOTLIGHTPOS, transform.position);
+				shaderValue.setVector3(Scene3D.SPOTLIGHTCOLOR, _intensityColor);
+				shaderValue.setVector3(Scene3D.SPOTLIGHTPOS, transform.position);
 				transform.worldMatrix.getForward(_direction);
 				Vector3.normalize(_direction, _direction);
-				shaderValue.setVector(Scene3D.SPOTLIGHTDIRECTION, _direction);
+				shaderValue.setVector3(Scene3D.SPOTLIGHTDIRECTION, _direction);
 				shaderValue.setNumber(Scene3D.SPOTLIGHTRANGE, range);
 				shaderValue.setNumber(Scene3D.SPOTLIGHTSPOTANGLE, spotAngle * Math.PI / 180);
 				

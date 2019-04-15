@@ -210,13 +210,13 @@ package laya.display {
 		 * @param	name		位图字体的名称。
 		 * @param	destroy		是否销毁指定的字体文件。
 		 */
-		// public static function unregisterBitmapFont(name:String, destroy:Boolean = true):void {
-		// 	if (_bitmapFonts && _bitmapFonts[name]) {
-		// 		var tBitmapFont:BitmapFont = _bitmapFonts[name];
-		// 		if (destroy) tBitmapFont.destroy();
-		// 		delete _bitmapFonts[name];
-		// 	}
-		// }
+		public static function unregisterBitmapFont(name:String, destroy:Boolean = true):void {
+			if (_bitmapFonts && _bitmapFonts[name]) {
+				// var tBitmapFont:BitmapFont = _bitmapFonts[name];
+				// if (destroy) tBitmapFont.destroy();
+				delete _bitmapFonts[name];
+			}
+		}
 		
 		/**@inheritDoc */
 		override public function destroy(destroyChild:Boolean = true):void {
@@ -380,8 +380,10 @@ package laya.display {
 		}
 		
 		public function set fontSize(value:int):void {
-			_fontSize = value;
-			isChanged = true;
+			if (_fontSize != value){
+				_fontSize = value;
+				isChanged = true;
+			}
 		}
 		
 		/**
@@ -498,6 +500,22 @@ package laya.display {
 		}
 		
 		public function set padding(value:Array):void {
+			if (value is String)
+			{
+				var arr:Array;
+				arr = (value as String).split(",");
+				var i:int, len:int;
+				len = arr.length;
+				while (arr.length < 4)
+				{
+					arr.push(0);
+				}
+				for (i = 0; i < len; i++)
+				{
+					arr[i] = parseFloat(arr[i]) || 0;
+				}
+				value = arr;
+			}
 			_getTextStyle().padding = value;
 			isChanged = true;
 		}
@@ -631,7 +649,7 @@ package laya.display {
 			var lineHeight:Number = leading + _charSize.height;
 			// var tCurrBitmapFont:BitmapFont = (_style as TextStyle).currBitmapFont;
 			// if (tCurrBitmapFont) {
-				// lineHeight = leading + tCurrBitmapFont.getMaxHeight();
+			// 	lineHeight = leading + tCurrBitmapFont.getMaxHeight();
 			// }
 			var startY:Number = padding[0];
 			
@@ -675,7 +693,7 @@ package laya.display {
 					
 				// 	graphics.clipRect(padding[3], padding[0], tClipWidth, tClipHeight);
 				// } else {
-				graphics.clipRect(padding[3], padding[0], _width ? (_width - padding[3] - padding[1]) : _textWidth, _height ? (_height - padding[0] - padding[2]) : _textHeight);
+					graphics.clipRect(padding[3], padding[0], _width ? (_width - padding[3] - padding[1]) : _textWidth, _height ? (_height - padding[0] - padding[2]) : _textHeight);
 				// }
 				repaint();
 			}
@@ -803,7 +821,7 @@ package laya.display {
 			// if ((_style as TextStyle).currBitmapFont)
 			// 	nh = _lines.length * ((_style as TextStyle).currBitmapFont.getMaxHeight() + leading) + padding[0] + padding[2];
 			// else
-			nh = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
+				nh = _lines.length * (_charSize.height + leading) + padding[0] + padding[2];
 			if (nw != _textWidth || nh != _textHeight) {
 				_textWidth = nw;
 				_textHeight = nh;
@@ -981,7 +999,7 @@ package laya.display {
 			// var bitmapFont:BitmapFont = (_style as TextStyle).currBitmapFont;
 			// if (bitmapFont && bitmapFont.autoScaleSize) w = this._width * (bitmapFont.fontSize / fontSize);
 			// else 
-				w = this._width;
+			w = this._width;
 			
 			if (w <= 0) {
 				w = wordWrap ? 100 : Browser.width;

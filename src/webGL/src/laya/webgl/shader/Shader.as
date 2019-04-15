@@ -125,10 +125,6 @@ package laya.webgl.shader {
 			super();
 			if ((!vs) || (!ps)) throw "Shader Error";
 			_attribInfo = bindAttrib;
-			
-			if (Render.isConchApp) {
-				customCompile = true;
-			}
 			_id = ++_count;
 			_vs = vs;
 			_ps = ps;

@@ -186,12 +186,6 @@ package laya.webgl.resource {
 		 * @private
 		 */
 		private function _pharseKTX(arrayBuffer:ArrayBuffer):void {
-			const PVR_FORMAT_2BPP_RGB:int = 0;
-			const PVR_FORMAT_2BPP_RGBA:int = 1;
-			const PVR_FORMAT_4BPP_RGB:int = 2;
-			const PVR_FORMAT_4BPP_RGBA:int = 3;
-			const PVR_FORMAT_ETC1:int = 6;
-			const PVR_MAGIC:int = 0x03525650;
 			const ETC_HEADER_LENGTH:int = 13;
 			const ETC_HEADER_FORMAT:int = 4;
 			const ETC_HEADER_HEIGHT:int = 7;
@@ -204,11 +198,9 @@ package laya.webgl.resource {
 				throw("Invalid fileIdentifier in KTX header");
 			var header:Int32Array = new Int32Array(id.buffer, id.length, ETC_HEADER_LENGTH);
 			var compressedFormat:int = header[ETC_HEADER_FORMAT];
-			var innerFormat:int = _getGLFormat();
-			switch (_format) {
-			case FORMAT_ETC1RGB: 
-				if (compressedFormat !== innerFormat)
-					throw "the format  is not same with texture format FORMAT_ETC1RGB.";
+			switch (compressedFormat) {
+			case WebGLContext._compressedTextureEtc1.COMPRESSED_RGB_ETC1_WEBGL: 
+				_format = FORMAT_ETC1RGB;
 				break;
 			default: 
 				throw "unknown texture format.";
@@ -232,7 +224,6 @@ package laya.webgl.resource {
 			const PVR_FORMAT_2BPP_RGBA:int = 1;
 			const PVR_FORMAT_4BPP_RGB:int = 2;
 			const PVR_FORMAT_4BPP_RGBA:int = 3;
-			const PVR_FORMAT_ETC1:int = 6;
 			const PVR_MAGIC:int = 0x03525650;
 			const PVR_HEADER_LENGTH:int = 13;
 			const PVR_HEADER_MAGIC:int = 0;
@@ -246,29 +237,21 @@ package laya.webgl.resource {
 			if (header[PVR_HEADER_MAGIC] != PVR_MAGIC)
 				throw("Invalid magic number in PVR header");
 			var compressedFormat:int = header[PVR_HEADER_FORMAT];
-			switch (_format) {
-			case FORMAT_ETC1RGB: 
-				if (compressedFormat !== PVR_FORMAT_ETC1)
-					throw "the format  is not same with texture format FORMAT_ETC1RGB.";
+			switch (compressedFormat) {
+			case PVR_FORMAT_2BPP_RGB: 
+				_format = FORMAT_PVRTCRGB_2BPPV;
 				break;
-			case FORMAT_PVRTCRGB_2BPPV: 
-				if (compressedFormat !== PVR_FORMAT_2BPP_RGB)
-					throw "the format  is not same with texture format FORMAT_PVRTCRGB_2BPPV.";
+			case PVR_FORMAT_4BPP_RGB: 
+				_format = FORMAT_PVRTCRGB_4BPPV;
 				break;
-			case FORMAT_PVRTCRGB_4BPPV: 
-				if (compressedFormat !== PVR_FORMAT_4BPP_RGB)
-					throw "the format  is not same with texture format FORMAT_PVRTCRGB_4BPPV.";
+			case PVR_FORMAT_2BPP_RGBA: 
+				_format = FORMAT_PVRTCRGBA_2BPPV;
 				break;
-			case FORMAT_PVRTCRGBA_2BPPV: 
-				if (compressedFormat !== PVR_FORMAT_2BPP_RGBA)
-					throw "the format  is not same with texture format FORMAT_PVRTCRGBA_2BPPV.";
-				break;
-			case FORMAT_PVRTCRGBA_4BPPV: 
-				if (compressedFormat !== PVR_FORMAT_4BPP_RGBA)
-					throw "the format  is not same with texture format FORMAT_PVRTCRGBA_4BPPV.";
+			case PVR_FORMAT_4BPP_RGBA: 
+				_format = FORMAT_PVRTCRGBA_4BPPV;
 				break;
 			default: 
-				throw "unknown texture format.";
+				throw "Texture2D:unknown PVR format.";
 			}
 			
 			var mipLevels:int = header[PVR_HEADER_MIPMAPCOUNT];
@@ -295,8 +278,8 @@ package laya.webgl.resource {
 				var mipDataSize:int = _calcualatesCompressedDataSize(_format, width, height);
 				var mipData:Uint8Array = new Uint8Array(data, offset, mipDataSize);
 				gl.compressedTexImage2D(textureType, i, glFormat, width, height, 0, mipData);
-				width = width >> 1;
-				height = height >> 1;
+				width = Math.max(width >> 1, 1.0);
+				height = Math.max(height >> 1, 1.0);
 				offset += mipDataSize;
 			}
 			var memory:int = offset;
@@ -349,7 +332,7 @@ package laya.webgl.resource {
 					Browser.canvas.clear();
 					Browser.context.drawImage(source, 0, 0, width, height);
 					_pixels = new Uint8Array(Browser.context.getImageData(0, 0, width, height).data.buffer);//TODO:如果为RGB,会错误
-				}				
+				}
 			}
 			_readyed = true;
 			_activeResource();
@@ -391,7 +374,7 @@ package laya.webgl.resource {
 		 * @param	data 压缩数据。
 		 * @param   miplevel 层级。
 		 */
-		public function setCompressData(data:Uint8Array):void {
+		public function setCompressData(data:ArrayBuffer):void {
 			switch (_format) {
 			case FORMAT_DXT1: 
 			case FORMAT_DXT5: 

@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec4 a_Position;
 attribute vec2 a_Texcoord0;
 
@@ -53,4 +55,5 @@ void main()
 			v_lightMVPPos = u_lightShadowVP[0] * vec4(v_PositionWorld,1.0);
 		#endif
 	#endif
+	gl_Position=remapGLPositionZ(gl_Position);
 }

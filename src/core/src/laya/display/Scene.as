@@ -99,7 +99,7 @@ package laya.display {
 		 */
 		public function open(closeOther:Boolean = true, param:* = null):void {
 			if (closeOther) closeAll();
-			root.addChild(scene);
+			root.addChild(this);
 			onOpened(param);
 		}
 		
@@ -114,9 +114,9 @@ package laya.display {
 		 * @param type 关闭的原因，会传递给onClosed函数
 		 */
 		public function close(type:String = null):void {
+			onClosed(type);
 			if (autoDestroyAtClosed) this.destroy();
 			else removeSelf();
-			onClosed(type);
 		}
 		
 		/**关闭完成后，调用此方法（如果有关闭动画，则在动画完成后执行）

@@ -22,11 +22,7 @@ package laya.d3.math {
 		/**默认矩阵,禁止修改*/
 		public static const DEFAULT:Matrix4x4 = new Matrix4x4();
 		/**默认矩阵,禁止修改*/
-		public static const ZERO:Matrix4x4 = new Matrix4x4(
-		0, 0, 0, 0,
-		0, 0, 0, 0,
-		0, 0, 0, 0,
-		0, 0, 0, 0);
+		public static const ZERO:Matrix4x4 = new Matrix4x4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 		
 		/**
 		 * 绕X轴旋转
@@ -99,10 +95,9 @@ package laya.d3.math {
 		 * @param	result 结果矩阵。
 		 */
 		public static function createRotationAxis(axis:Vector3, angle:Number, result:Matrix4x4):void {
-			var axisE:Float32Array = axis.elements;
-			var x:Number = axisE[0];
-			var y:Number = axisE[1];
-			var z:Number = axisE[2];
+			var x:Number = axis.x;
+			var y:Number = axis.y;
+			var z:Number = axis.z;
 			var cos:Number = Math.cos(angle);
 			var sin:Number = Math.sin(angle);
 			var xx:Number = x * x;
@@ -126,13 +121,11 @@ package laya.d3.math {
 			resultE[10] = zz + (cos * (1.0 - zz));
 		}
 		
-		public function setRotation(rotation:Quaternion):void{
-			
-			var rotationE:Float32Array = rotation.elements;
-			var rotationX:Number = rotationE[0];
-			var rotationY:Number = rotationE[1];
-			var rotationZ:Number = rotationE[2];
-			var rotationW:Number = rotationE[3];
+		public function setRotation(rotation:Quaternion):void {
+			var rotationX:Number = rotation.x;
+			var rotationY:Number = rotation.y;
+			var rotationZ:Number = rotation.z;
+			var rotationW:Number = rotation.w;
 			
 			var xx:Number = rotationX * rotationX;
 			var yy:Number = rotationY * rotationY;
@@ -156,14 +149,11 @@ package laya.d3.math {
 			e[10] = 1.0 - (2.0 * (yy + xx));
 		}
 		
-		public function setPosition(position:Vector3):void{
-			
-			var positione:Float32Array = position.elements;
-			
+		public function setPosition(position:Vector3):void {
 			var e:Float32Array = this.elements;
-			e[12] = positione[0];
-			e[13] = positione[1];
-			e[14] = positione[2];
+			e[12] = position.x;
+			e[13] = position.y;
+			e[14] = position.z;
 		}
 		
 		/**
@@ -172,12 +162,11 @@ package laya.d3.math {
 		 * @param	result 输出旋转矩阵
 		 */
 		public static function createRotationQuaternion(rotation:Quaternion, result:Matrix4x4):void {
-			var rotationE:Float32Array = rotation.elements;
 			var resultE:Float32Array = result.elements;
-			var rotationX:Number = rotationE[0];
-			var rotationY:Number = rotationE[1];
-			var rotationZ:Number = rotationE[2];
-			var rotationW:Number = rotationE[3];
+			var rotationX:Number = rotation.x;
+			var rotationY:Number = rotation.y;
+			var rotationZ:Number = rotation.z;
+			var rotationW:Number = rotation.w;
 			
 			var xx:Number = rotationX * rotationX;
 			var yy:Number = rotationY * rotationY;
@@ -209,13 +198,12 @@ package laya.d3.math {
 		 */
 		public static function createTranslate(trans:Vector3, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var te:Float32Array = trans.elements;
 			var oe:Float32Array = out.elements;
 			oe[4] = oe[8] = oe[1] = oe[9] = oe[2] = oe[6] = oe[3] = oe[7] = oe[11] = 0;
 			oe[0] = oe[5] = oe[10] = oe[15] = 1;
-			oe[12] = te[0];
-			oe[13] = te[1];
-			oe[14] = te[2];
+			oe[12] = trans.x;
+			oe[13] = trans.y;
+			oe[14] = trans.z;
 		}
 		
 		/**
@@ -225,11 +213,10 @@ package laya.d3.math {
 		 */
 		public static function createScaling(scale:Vector3, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var se:Float32Array = scale.elements;
 			var oe:Float32Array = out.elements;
-			oe[0] = se[0];
-			oe[5] = se[1];
-			oe[10] = se[2];
+			oe[0] = scale.x;
+			oe[5] = scale.y;
+			oe[10] = scale.z;
 			oe[1] = oe[4] = oe[8] = oe[12] = oe[9] = oe[13] = oe[2] = oe[6] = oe[14] = oe[3] = oe[7] = oe[11] = 0;
 			oe[15] = 1;
 		}
@@ -282,8 +269,7 @@ package laya.d3.math {
 		public static function createFromQuaternion(rotation:Quaternion, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var e:Float32Array = out.elements;
-			var q:Float32Array = rotation.elements;
-			var x:Number = q[0], y:Number = q[1], z:Number = q[2], w:Number = q[3];
+			var x:Number = rotation.x, y:Number = rotation.y, z:Number = rotation.z, w:Number = rotation.w;
 			var x2:Number = x + x;
 			var y2:Number = y + y;
 			var z2:Number = z + z;
@@ -328,14 +314,11 @@ package laya.d3.math {
 		 */
 		public static function createAffineTransformation(trans:Vector3, rot:Quaternion, scale:Vector3, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var te:Float32Array = trans.elements;
-			var re:Float32Array = rot.elements;
-			var se:Float32Array = scale.elements;
 			var oe:Float32Array = out.elements;
 			
-			var x:Number = re[0], y:Number = re[1], z:Number = re[2], w:Number = re[3], x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
+			var x:Number = rot.x, y:Number = rot.y, z:Number = rot.z, w:Number = rot.w, x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
 			var xx:Number = x * x2, xy:Number = x * y2, xz:Number = x * z2, yy:Number = y * y2, yz:Number = y * z2, zz:Number = z * z2;
-			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2, sx:Number = se[0], sy:Number = se[1], sz:Number = se[2];
+			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2, sx:Number = scale.x, sy:Number = scale.y, sz:Number = scale.z;
 			
 			oe[0] = (1 - (yy + zz)) * sx;
 			oe[1] = (xy + wz) * sx;
@@ -349,9 +332,9 @@ package laya.d3.math {
 			oe[9] = (yz - wx) * sz;
 			oe[10] = (1 - (xx + yy)) * sz;
 			oe[11] = 0;
-			oe[12] = te[0];
-			oe[13] = te[1];
-			oe[14] = te[2];
+			oe[12] = trans.x;
+			oe[13] = trans.y;
+			oe[14] = trans.z;
 			oe[15] = 1;
 		}
 		
@@ -392,24 +375,45 @@ package laya.d3.math {
 		}
 		
 		/**
-		 * 计算透视投影矩阵。
+		 * 通过FOV创建透视投影矩阵。
 		 * @param	fov  视角。
 		 * @param	aspect 横纵比。
 		 * @param	near 近裁面。
 		 * @param	far 远裁面。
 		 * @param	out 输出矩阵。
 		 */
-		public static function createPerspective(fov:Number, aspect:Number, near:Number, far:Number, out:Matrix4x4):void {//适用于OPENGL规则
+		public static function createPerspective(fov:Number, aspect:Number, znear:Number, zfar:Number, out:Matrix4x4):void {
+			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
+			var yScale:Number = 1.0 / Math.tan(fov * 0.5);
+			var xScale:Number = yScale / aspect;
+			
+			var halfWidth:Number = znear / xScale;
+			var halfHeight:Number = znear / yScale;
+			createPerspectiveOffCenter(-halfWidth, halfWidth, -halfHeight, halfHeight, znear, zfar, out);
+		}
+		
+		/**
+		 * 创建透视投影矩阵。
+		 * @param	left 视椎左边界。
+		 * @param	right 视椎右边界。
+		 * @param	bottom 视椎底边界。
+		 * @param	top 视椎顶边界。
+		 * @param	znear 视椎近边界。
+		 * @param	zfar 视椎远边界。
+		 * @param	out 输出矩阵。
+		 */
+		public static function createPerspectiveOffCenter(left:Number, right:Number, bottom:Number, top:Number, znear:Number, zfar:Number, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var oe:Float32Array = out.elements;
-			
-			var f:Number = 1.0 / Math.tan(fov / 2), nf:Number = 1 / (near - far);
-			oe[0] = f / aspect;
-			oe[5] = f;
-			oe[10] = (far + near) * nf;
-			oe[11] = -1;
-			oe[14] = (2 * far * near) * nf;
-			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[12] = oe[13] = oe[15] = 0;
+			var zRange:Number = zfar / (zfar - znear);
+			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[12] = oe[13] = oe[15] = 0;
+			oe[0] = 2.0 * znear / (right - left);
+			oe[5] = 2.0 * znear / (top - bottom);
+			oe[8] = (left + right) / (right - left);
+			oe[9] = (top + bottom) / (top - bottom);
+			oe[10] = -zRange;
+			oe[11] = -1.0;
+			oe[14] = -znear * zRange;
 		}
 		
 		/**
@@ -422,21 +426,18 @@ package laya.d3.math {
 		 * @param	far 视椎远边界。
 		 * @param	out 输出矩阵。
 		 */
-		public static function createOrthoOffCenterRH(left:Number, right:Number, bottom:Number, top:Number, near:Number, far:Number, out:Matrix4x4):void {//适用于OPENGL规则
+		public static function createOrthoOffCenter(left:Number, right:Number, bottom:Number, top:Number, znear:Number, zfar:Number, out:Matrix4x4):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var oe:Float32Array = out.elements;
-			
-			var lr:Number = 1 / (left - right);
-			var bt:Number = 1 / (bottom - top);
-			var nf:Number = 1 / (near - far);
-			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[7] = oe[8] = oe[9] = oe[11] = 0;
+			var zRange:Number = 1.0 / (zfar - znear);
+			oe[1] = oe[2] = oe[3] = oe[4] = oe[6] = oe[8] = oe[7] = oe[9] = oe[11] = 0;
 			oe[15] = 1;
-			oe[0] = -2 * lr;
-			oe[5] = -2 * bt;
-			oe[10] = 2 * nf;
-			oe[12] = (left + right) * lr;
-			oe[13] = (top + bottom) * bt;
-			oe[14] = (far + near) * nf;
+			oe[0] = 2.0 / (right - left);
+			oe[5] = 2.0 / (top - bottom);
+			oe[10] = -zRange;
+			oe[12] = (left + right) / (left - right);
+			oe[13] = (top + bottom) / (bottom - top);
+			oe[14] = -znear * zRange;
 		}
 		
 		/**矩阵元素数组*/
@@ -525,23 +526,23 @@ package laya.d3.math {
 		public function decomposeTransRotMatScale(translation:Vector3, rotationMatrix:Matrix4x4, scale:Vector3):Boolean {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var e:Float32Array = this.elements;
-			var te:Float32Array = translation.elements;
+			var te:Vector3 = translation;
 			var re:Float32Array = rotationMatrix.elements;
-			var se:Float32Array = scale.elements;
+			var se:Vector3 = scale;
 			
 			//Get the translation. 
-			te[0] = e[12];
-			te[1] = e[13];
-			te[2] = e[14];
+			te.x = e[12];
+			te.y = e[13];
+			te.z = e[14];
 			
 			//Scaling is the length of the rows. 
 			var m11:Number = e[0], m12:Number = e[1], m13:Number = e[2];
 			var m21:Number = e[4], m22:Number = e[5], m23:Number = e[6];
 			var m31:Number = e[8], m32:Number = e[9], m33:Number = e[10];
 			
-			var sX:Number = se[0] = Math.sqrt((m11 * m11) + (m12 * m12) + (m13 * m13));
-			var sY:Number = se[1] = Math.sqrt((m21 * m21) + (m22 * m22) + (m23 * m23));
-			var sZ:Number = se[2] = Math.sqrt((m31 * m31) + (m32 * m32) + (m33 * m33));
+			var sX:Number = se.x = Math.sqrt((m11 * m11) + (m12 * m12) + (m13 * m13));
+			var sY:Number = se.y = Math.sqrt((m21 * m21) + (m22 * m22) + (m23 * m23));
+			var sZ:Number = se.z = Math.sqrt((m31 * m31) + (m32 * m32) + (m33 * m33));
 			
 			//If any of the scaling factors are zero, than the rotation matrix can not exist. 
 			if (MathUtils3D.isZero(sX) || MathUtils3D.isZero(sY) || MathUtils3D.isZero(sZ)) {
@@ -552,15 +553,13 @@ package laya.d3.math {
 			
 			// Calculate an perfect orthonormal matrix (no reflections)
 			var at:Vector3 = _tempVector0;
-			var atE:Float32Array = at.elements;
-			atE[0] = m31 / sZ;
-			atE[1] = m32 / sZ;
-			atE[2] = m33 / sZ;
+			at.x = m31 / sZ;
+			at.y = m32 / sZ;
+			at.z = m33 / sZ;
 			var tempRight:Vector3 = _tempVector1;
-			var tempRightE:Float32Array = tempRight.elements;
-			tempRightE[0] = m11 / sX;
-			tempRightE[1] = m12 / sX;
-			tempRightE[2] = m13 / sX;
+			tempRight.x = m11 / sX;
+			tempRight.y = m12 / sX;
+			tempRight.z = m13 / sX;
 			var up:Vector3 = _tempVector2;
 			Vector3.cross(at, tempRight, up);
 			var right:Vector3 = _tempVector1;
@@ -596,18 +595,17 @@ package laya.d3.math {
 		 * @return
 		 */
 		public function decomposeYawPitchRoll(yawPitchRoll:Vector3):void {//TODO:经飞仙测试,好像有BUG。
-			var yawPitchRollE:Float32Array = yawPitchRoll.elements;
 			var pitch:Number = Math.asin(-elements[9]);
-			yawPitchRollE[1] = pitch;
+			yawPitchRoll.y = pitch;
 			// Hardcoded constant - burn him, he's a witch
 			// double threshold = 0.001; 
 			var test:Number = Math.cos(pitch);
 			if (test > MathUtils3D.zeroTolerance) {
-				yawPitchRollE[2] = Math.atan2(elements[1], elements[5]);
-				yawPitchRollE[0] = Math.atan2(elements[8], elements[10]);
+				yawPitchRoll.z = Math.atan2(elements[1], elements[5]);
+				yawPitchRoll.x = Math.atan2(elements[8], elements[10]);
 			} else {
-				yawPitchRollE[2] = Math.atan2(-elements[4], elements[0]);
-				yawPitchRollE[0] = 0.0;
+				yawPitchRoll.z = Math.atan2(-elements[4], elements[0]);
+				yawPitchRoll.x = 0.0;
 			}
 		}
 		
@@ -704,45 +702,44 @@ package laya.d3.math {
 		 * @param	cameraForward  相机前向量
 		 * @param	mat            变换矩阵
 		 */
-		public static function billboard(objectPosition:Vector3, cameraPosition:Vector3, cameraRight:Vector3, cameraUp:Vector3, cameraForward:Vector3, mat:Matrix4x4):void{
+		public static function billboard(objectPosition:Vector3, cameraPosition:Vector3, cameraRight:Vector3, cameraUp:Vector3, cameraForward:Vector3, mat:Matrix4x4):void {
 			
 			Vector3.subtract(objectPosition, cameraPosition, _tempVector0);
 			
 			var lengthSq:Number = Vector3.scalarLengthSquared(_tempVector0);
 			
-			if (MathUtils3D.isZero(lengthSq)){
-				Vector3.scale(cameraForward, -1 , _tempVector1);
+			if (MathUtils3D.isZero(lengthSq)) {
+				Vector3.scale(cameraForward, -1, _tempVector1);
 				_tempVector1.cloneTo(_tempVector0);
-			}
-			else{
-				Vector3.scale(_tempVector0, 1 / Math.sqrt(lengthSq) , _tempVector0);
+			} else {
+				Vector3.scale(_tempVector0, 1 / Math.sqrt(lengthSq), _tempVector0);
 			}
 			
 			Vector3.cross(cameraUp, _tempVector0, _tempVector2);
 			Vector3.normalize(_tempVector2, _tempVector2);
 			Vector3.cross(_tempVector0, _tempVector2, _tempVector3);
 			
-			var crosse:Float32Array = _tempVector2.elements;
-			var finale:Float32Array = _tempVector3.elements;
-			var diffee:Float32Array = _tempVector0.elements;
-			var obpose:Float32Array = objectPosition.elements;
+			var crosse:Vector3 = _tempVector2;
+			var finale:Vector3 = _tempVector3;
+			var diffee:Vector3 = _tempVector0;
+			var obpose:Vector3 = objectPosition;
 			
 			var mate:Float32Array = mat.elements;
-			mate[0]  = crosse[0];
-			mate[1]  = crosse[1];
-			mate[2]  = crosse[2];
+			mate[0]  = crosse.x;
+			mate[1]  = crosse.y;
+			mate[2]  = crosse.z;
 			mate[3]  = 0.0;
-			mate[4]  = finale[0];
-			mate[5]  = finale[1];
-			mate[6]  = finale[2];
+			mate[4]  = finale.x;
+			mate[5]  = finale.y;
+			mate[6]  = finale.z;
 			mate[7]  = 0.0;
-			mate[8]  = diffee[0];
-			mate[9]  = diffee[1];
-			mate[10] = diffee[2];
+			mate[8]  = diffee.x;
+			mate[9]  = diffee.y;
+			mate[10] = diffee.z;
 			mate[11] = 0.0;
-			mate[12] = obpose[0];
-			mate[13] = obpose[1];
-			mate[14] = obpose[2];
+			mate[12] = obpose.x;
+			mate[13] = obpose.y;
+			mate[14] = obpose.z;
 			mate[15] = 1.0;
 		}
 		
@@ -781,12 +778,11 @@ package laya.d3.math {
 		}
 		
 		public static function translation(v3:Vector3, out:Matrix4x4):void {
-			var ve:Float32Array = v3.elements;
 			var oe:Float32Array = out.elements;
 			oe[0] = oe[5] = oe[10] = oe[15] = 1;
-			oe[12] = ve[0];
-			oe[13] = ve[1];
-			oe[14] = ve[2];
+			oe[12] = v3.x;
+			oe[13] = v3.y;
+			oe[14] = v3.z;
 		}
 		
 		/**
@@ -795,10 +791,9 @@ package laya.d3.math {
 		 */
 		public function getTranslationVector(out:Vector3):void {
 			var me:Float32Array = this.elements;
-			var te:Float32Array = out.elements;
-			te[0] = me[12];
-			te[1] = me[13];
-			te[2] = me[14];
+			out.x = me[12];
+			out.y = me[13];
+			out.z = me[14];
 		}
 		
 		/**
@@ -807,10 +802,10 @@ package laya.d3.math {
 		 */
 		public function setTranslationVector(translate:Vector3):void {
 			var me:Float32Array = this.elements;
-			var ve:Float32Array = translate.elements;
-			me[12] = ve[0];
-			me[13] = ve[1];
-			me[14] = ve[2];
+			var ve:Vector3 = translate;
+			me[12] = ve.x;
+			me[13] = ve.y;
+			me[14] = ve.z;
 		}
 		
 		/**
@@ -819,10 +814,9 @@ package laya.d3.math {
 		 */
 		public function getForward(out:Vector3):void {
 			var me:Float32Array = this.elements;
-			var te:Float32Array = out.elements;
-			te[0] = -me[8];
-			te[1] = -me[9];
-			te[2] = -me[10];
+			out.x = -me[8];
+			out.y = -me[9];
+			out.z = -me[10];
 		}
 		
 		/**
@@ -831,10 +825,9 @@ package laya.d3.math {
 		 */
 		public function setForward(forward:Vector3):void {
 			var me:Float32Array = this.elements;
-			var ve:Float32Array = forward.elements;
-			me[8] = -ve[0];
-			me[9] = -ve[1];
-			me[10] = -ve[2];
+			me[8] = -forward.x;
+			me[9] = -forward.y;
+			me[10] = -forward.z;
 		}
 	
 	}

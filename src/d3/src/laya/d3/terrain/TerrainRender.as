@@ -48,12 +48,12 @@ package laya.d3.terrain {
 				Vector3.transformCoordinate(meshBoundingSphere.center, transform.worldMatrix, _boundingSphere.center);
 				_boundingSphere.radius = meshBoundingSphere.radius * maxScale;
 				terrainFilter.calcLeafBoudingSphere(transform.worldMatrix, maxScale);
-				if (Render.isConchApp) {//[NATIVE]
-					var centerE:Float32Array=_boundingSphere.center.elements;
+				if (Render.supportWebGLPlusCulling) {//[NATIVE]
+					var centerE:Vector3=_boundingSphere.center;
 					var buffer:Float32Array = FrustumCulling._cullingBuffer;
-					buffer[_cullingBufferIndex + 1] = centerE[0];
-					buffer[_cullingBufferIndex + 2] = centerE[1];
-					buffer[_cullingBufferIndex + 3] = centerE[2];
+					buffer[_cullingBufferIndex + 1] = centerE.x;
+					buffer[_cullingBufferIndex + 2] = centerE.y;
+					buffer[_cullingBufferIndex + 3] = centerE.z;
 					buffer[_cullingBufferIndex + 4] =_boundingSphere.radius;
 				}
 			}

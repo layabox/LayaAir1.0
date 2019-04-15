@@ -31,7 +31,14 @@ package laya.renders {
 			_mainCanvas.source.id = "layaCanvas";
 			_mainCanvas.source.width = width;
 			_mainCanvas.source.height = height;
-			Browser.container.appendChild(_mainCanvas.source);
+			if (Render.isConchApp)
+			{
+				Browser.document.body.appendChild(_mainCanvas.source);
+			}
+			else
+			{
+				Browser.container.appendChild(_mainCanvas.source);
+			}
 			RunDriver.initRender(_mainCanvas, width, height);
 			Browser.window.requestAnimationFrame(loop);
 			function loop(stamp:Number):void {

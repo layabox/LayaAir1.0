@@ -175,6 +175,7 @@ package laya.events {
 		 * 触摸点列表。
 		 */
 		public function get touches():Array {
+			if (!this.nativeEvent) return null;
 			var arr:Array = this.nativeEvent.touches;
 			if (arr) {
 				var stage:Stage = Laya.stage;

@@ -122,6 +122,7 @@ package laya.resource {
 				}
 			}
 		}
+		
 		/**
 		 * 获取texture实例
 		 */
@@ -151,6 +152,5 @@ package laya.resource {
 				}
 			}
 		}
-
 	}
 }

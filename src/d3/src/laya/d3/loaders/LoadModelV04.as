@@ -156,6 +156,13 @@ package laya.d3.loaders {
 			indexBuffer.setData(ibDatas);
 			_mesh._indexBuffer = indexBuffer;
 			memorySize += indexBuffer.indexCount * 2;
+			
+			var bufferState:BufferState = _mesh._bufferState;
+			bufferState.bind();
+			bufferState.applyVertexBuffers(_mesh._vertexBuffers);
+			bufferState.applyIndexBuffer(indexBuffer);
+			bufferState.unBind();
+			
 			_mesh._setCPUMemory(memorySize);
 			_mesh._setGPUMemory(memorySize);
 			
@@ -201,12 +208,6 @@ package laya.d3.loaders {
 			submesh._indices = new Uint16Array(indexBuffer.getData().buffer, ibStart * 2, ibCount);
 			var vertexBuffer:VertexBuffer3D = _mesh._vertexBuffers[vbIndex];
 			submesh._vertexBuffer = vertexBuffer;
-			
-			var bufferState:BufferState = submesh._bufferState;
-			bufferState.bind();
-			bufferState.applyVertexBuffer(vertexBuffer);
-			bufferState.applyIndexBuffer(indexBuffer);
-			bufferState.unBind();
 			
 			var offset:int = _DATA.offset;
 			var subIndexBufferStart:Vector.<int> = submesh._subIndexBufferStart;

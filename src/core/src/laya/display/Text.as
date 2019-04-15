@@ -874,6 +874,7 @@ package laya.display {
 				}else {
 					measureResult = Browser.context.measureText(_testWord);					
 				}
+				if (!measureResult) measureResult = {width:100 };
 				_charSize.width = measureResult.width;
 				_charSize.height = (measureResult.height || fontSize);
 			}

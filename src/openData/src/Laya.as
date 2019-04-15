@@ -1,5 +1,4 @@
 package {
-	// import laya.display.Input;
 	import laya.display.Sprite;
 	import laya.display.Stage;
 	import laya.events.MouseManager;
@@ -8,7 +7,6 @@ package {
 	import laya.renders.Render;
 	import laya.renders.RenderSprite;
 	import laya.resource.Context;
-	import laya.resource.ResourceManager;
 	import laya.runtime.ICPlatformClass;
 	import laya.runtime.IMarket;
 	import laya.utils.Browser;
@@ -40,7 +38,7 @@ package {
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "2.0.0beta3";
+		public static var version:String = "2.0.0";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -51,6 +49,10 @@ package {
 		public static var PlatformClass:ICPlatformClass = __JS__("window.PlatformClass");
 		/**@private */
 		private static var _isinit:Boolean = false;
+		/**是否是微信小游戏子域，默认为false**/
+		public static var isWXOpenDataContext:Boolean = false;
+		/**微信小游戏是否需要在主域中自动将加载的文本数据自动传递到子域，默认 false**/
+		public static var isWXPosMsg:Boolean = false;
 		
 		/**
 		 * 初始化引擎。使用引擎需要先初始化引擎，否则可能会报错。
@@ -91,7 +93,6 @@ package {
 				if (!isWebGLEnabled) __JS__("laya.webgl.WebGL.enable()");
 				RunDriver.enableNative();
 			}
-			ResourceManager.__init__();
 			CacheManger.beginCheck();
 			_currentStage = stage = new Stage();
 			_getUrlPath();
@@ -100,7 +101,6 @@ package {
 			window.stage = stage;
 			RenderSprite.__init__();
 			MouseManager.instance.__init__(stage, Render.canvas);
-			// Input.__init__();
 			return Render.canvas;
 		}
 		

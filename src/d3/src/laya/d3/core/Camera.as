@@ -81,21 +81,10 @@ package laya.d3.core {
 		 * @return 屏幕空间的视口。
 		 */
 		public function get viewport():Viewport {
-			var width:int;
-			var height:int;
-			if (_renderTarget) {
-				width = _renderTarget.width;
-				height = _renderTarget.height;
-			} else {
-				width = RenderContext3D.clientWidth;
-				height = RenderContext3D.clientHeight;
-			}
-			if (width !== _canvasWidth || height !== _canvasHeight) {
-				_calculationViewport(_normalizedViewport, width, height);
-				_canvasWidth = width;
-				_canvasHeight = height;
-			}
-			
+			if (_renderTarget)
+				_calculationViewport(_normalizedViewport, _renderTarget.width, _renderTarget.height);
+			else
+				_calculationViewport(_normalizedViewport, RenderContext3D.clientWidth, RenderContext3D.clientHeight);//屏幕尺寸会动态变化,需要重置
 			return _viewport;
 		}
 		
@@ -107,11 +96,11 @@ package laya.d3.core {
 			var width:int;
 			var height:int;
 			if (_renderTarget) {
-				width = _canvasWidth = _renderTarget.width;
-				height = _canvasHeight = _renderTarget.height;
+				width = _renderTarget.width;
+				height = _renderTarget.height;
 			} else {
-				width = _canvasWidth = RenderContext3D.clientWidth;
-				height = _canvasHeight = RenderContext3D.clientHeight;
+				width = RenderContext3D.clientWidth;
+				height = RenderContext3D.clientHeight;
 			}
 			_normalizedViewport.x = value.x / width;
 			_normalizedViewport.y = value.y / height;
@@ -137,13 +126,14 @@ package laya.d3.core {
 			var width:int;
 			var height:int;
 			if (_renderTarget) {
-				width = _canvasWidth = _renderTarget.width;
-				height = _canvasHeight = _renderTarget.height;
+				width = _renderTarget.width;
+				height = _renderTarget.height;
 			} else {
-				width = _canvasWidth = RenderContext3D.clientWidth;
-				height = _canvasHeight = RenderContext3D.clientHeight;
+				width = RenderContext3D.clientWidth;
+				height = RenderContext3D.clientHeight;
 			}
-			_normalizedViewport = value;
+			if (_normalizedViewport !== value)
+				value.cloneTo(_normalizedViewport);
 			_calculationViewport(value, width, height);
 			_calculateProjectionMatrix();
 		}
@@ -201,26 +191,26 @@ package laya.d3.core {
 		 */
 		public function get boundFrustum():BoundFrustum {
 			_boundFrustum.matrix = projectionViewMatrix;
-			if (Render.isConchApp) {
+			if (Render.supportWebGLPlusCulling) {
 				var near:Plane = _boundFrustum.near;
 				var far:Plane = _boundFrustum.far;
 				var left:Plane = _boundFrustum.left;
 				var right:Plane = _boundFrustum.right;
 				var top:Plane = _boundFrustum.top;
 				var bottom:Plane = _boundFrustum.bottom;
-				var nearNE:Float32Array = near.normal.elements;
-				var farNE:Float32Array = far.normal.elements;
-				var leftNE:Float32Array = left.normal.elements;
-				var rightNE:Float32Array = right.normal.elements;
-				var topNE:Float32Array = top.normal.elements;
-				var bottomNE:Float32Array = bottom.normal.elements;
+				var nearNE:Vector3 = near.normal;
+				var farNE:Vector3 = far.normal;
+				var leftNE:Vector3 = left.normal;
+				var rightNE:Vector3 = right.normal;
+				var topNE:Vector3 = top.normal;
+				var bottomNE:Vector3 = bottom.normal;
 				var buffer:Float32Array = _boundFrustumBuffer;
-				buffer[0] = nearNE[0], buffer[1] = nearNE[1], buffer[2] = nearNE[2], buffer[3] = near.distance;
-				buffer[4] = farNE[0], buffer[5] = farNE[1], buffer[6] = farNE[2], buffer[7] = far.distance;
-				buffer[8] = leftNE[0], buffer[9] = leftNE[1], buffer[10] = leftNE[2], buffer[11] = left.distance;
-				buffer[12] = rightNE[0], buffer[13] = rightNE[1], buffer[14] = rightNE[2], buffer[15] = right.distance;
-				buffer[16] = topNE[0], buffer[17] = topNE[1], buffer[18] = topNE[2], buffer[19] = top.distance;
-				buffer[20] = bottomNE[0], buffer[21] = bottomNE[1], buffer[22] = bottomNE[2], buffer[23] = bottom.distance;
+				buffer[0] = nearNE.x, buffer[1] = nearNE.y, buffer[2] = nearNE.z, buffer[3] = near.distance;
+				buffer[4] = farNE.x, buffer[5] = farNE.y, buffer[6] = farNE.z, buffer[7] = far.distance;
+				buffer[8] = leftNE.x, buffer[9] = leftNE.y, buffer[10] = leftNE.z, buffer[11] = left.distance;
+				buffer[12] = rightNE.x, buffer[13] = rightNE.y, buffer[14] = rightNE.z, buffer[15] = right.distance;
+				buffer[16] = topNE.x, buffer[17] = topNE.y, buffer[18] = topNE.z, buffer[19] = top.distance;
+				buffer[20] = bottomNE.x, buffer[21] = bottomNE.y, buffer[22] = bottomNE.z, buffer[23] = bottom.distance;
 			}
 			
 			return _boundFrustum;
@@ -241,11 +231,20 @@ package laya.d3.core {
 			_normalizedViewport = new Viewport(0, 0, 1, 1);
 			_aspectRatio = aspectRatio;
 			_boundFrustum = new BoundFrustum(Matrix4x4.DEFAULT);
-			if (Render.isConchApp)
+			if (Render.supportWebGLPlusCulling)
 				_boundFrustumBuffer = new Float32Array(24);
 			
 			super(nearPlane, farPlane);
 			transform.on(Event.TRANSFORM_CHANGED, this, _onTransformChanged);
+		}
+		
+		/**
+		 *	通过蒙版值获取蒙版是否显示。
+		 * 	@param  layer 层。
+		 * 	@return 是否显示。
+		 */
+		public function _isLayerVisible(layer:int):Boolean {
+			return (Math.pow(2, layer) & cullingMask) != 0;
 		}
 		
 		/**
@@ -283,11 +282,21 @@ package laya.d3.core {
 				if (_orthographic) {
 					var halfWidth:Number = orthographicVerticalSize * aspectRatio * 0.5;
 					var halfHeight:Number = orthographicVerticalSize * 0.5;
-					Matrix4x4.createOrthoOffCenterRH(-halfWidth, halfWidth, -halfHeight, halfHeight, nearPlane, farPlane, _projectionMatrix);
+					Matrix4x4.createOrthoOffCenter(-halfWidth, halfWidth, -halfHeight, halfHeight, nearPlane, farPlane, _projectionMatrix);
 				} else {
 					Matrix4x4.createPerspective(3.1416 * fieldOfView / 180.0, aspectRatio, nearPlane, farPlane, _projectionMatrix);
 				}
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getCanvasHeight():int {
+			if (_renderTarget)
+				return _renderTarget.height;
+			else
+				return RenderContext3D.clientHeight;
 		}
 		
 		/**
@@ -369,10 +378,8 @@ package laya.d3.core {
 		public function normalizedViewportPointToRay(point:Vector2, out:Ray):void {
 			var finalPoint:Vector2 = _tempVector20;
 			var vp:Viewport = viewport;
-			var nVpPosE:Float32Array = point.elements;
-			var vpPosE:Float32Array = finalPoint.elements;
-			vpPosE[0] = nVpPosE[0] * vp.width;
-			vpPosE[1] = nVpPosE[1] * vp.height;
+			finalPoint.x = point.x * vp.width;
+			finalPoint.y = point.y * vp.height;
 			
 			Picker.calculateCursorRay(finalPoint, viewport, _projectionMatrix, viewMatrix, null, out);
 		}
@@ -385,13 +392,12 @@ package laya.d3.core {
 		public function worldToViewportPoint(position:Vector3, out:Vector3):void {
 			Matrix4x4.multiply(_projectionMatrix, _viewMatrix, _projectionViewMatrix);
 			viewport.project(position, _projectionViewMatrix, out);
-			var outE:Float32Array = out.elements;
 			//if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			//{
 			//outE[0] = outE[1] = outE[2] = NaN;
 			//} else {
-			outE[0] = outE[0] / Laya.stage.clientScaleX;
-			outE[1] = outE[1] / Laya.stage.clientScaleY;
+			out.x = out.x / Laya.stage.clientScaleX;
+			out.y = out.y / Laya.stage.clientScaleY;
 			//}
 		}
 		
@@ -403,13 +409,12 @@ package laya.d3.core {
 		public function worldToNormalizedViewportPoint(position:Vector3, out:Vector3):void {
 			Matrix4x4.multiply(_projectionMatrix, _viewMatrix, _projectionViewMatrix);
 			normalizedViewport.project(position, _projectionViewMatrix, out);
-			var outE:Float32Array = out.elements;
 			//if (out.z < 0.0 || out.z > 1.0)// TODO:是否需要近似判断
 			//{
 			//outE[0] = outE[1] = outE[2] = NaN;
 			//} else {
-			outE[0] = outE[0] / Laya.stage.clientScaleX;
-			outE[1] = outE[1] / Laya.stage.clientScaleY;
+			out.x = out.x / Laya.stage.clientScaleX;
+			out.y = out.y / Laya.stage.clientScaleY;
 			//}
 		}
 		
@@ -425,11 +430,9 @@ package laya.d3.core {
 				var clientHeight:int = RenderContext3D.clientHeight;
 				var ratioX:Number = orthographicVerticalSize * aspectRatio / clientWidth;
 				var ratioY:Number = orthographicVerticalSize / clientHeight;
-				var sE:Array = source.elements;
-				var oE:Array = out.elements;
-				oE[0] = (-clientWidth / 2 + sE[0]) * ratioX;
-				oE[1] = (clientHeight / 2 - sE[1]) * ratioY;
-				oE[2] = (nearPlane - farPlane) * (sE[2] + 1) / 2 - nearPlane;
+				out.x = (-clientWidth / 2 + source.x) * ratioX;
+				out.y = (clientHeight / 2 - source.y) * ratioY;
+				out.z = (nearPlane - farPlane) * (source.z + 1) / 2 - nearPlane;
 				Vector3.transformCoordinate(out, transform.worldMatrix, out);
 				return true;
 			} else {

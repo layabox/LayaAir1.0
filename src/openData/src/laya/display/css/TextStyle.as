@@ -1,5 +1,4 @@
 package laya.display.css {
-	// import laya.display.BitmapFont;
 	import laya.display.Sprite;
 	import laya.resource.Context;
 	import laya.utils.Pool;

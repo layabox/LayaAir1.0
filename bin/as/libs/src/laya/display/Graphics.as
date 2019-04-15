@@ -287,7 +287,7 @@ package laya.display {
 				_sp._setRenderType(_sp._renderType);
 			}
 			
-			if (!Render.isConchApp && !Render.isWebGL && (blendMode || color)) {
+			if (!Render.isWebGL && (blendMode || color)) {
 				var canvas:HTMLCanvas = new HTMLCanvas();
 				canvas.size(width, height);
 				var ctx:Context = canvas.getContext('2d');

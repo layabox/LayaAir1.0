@@ -17,7 +17,7 @@ package laya.resource {
 		 * <p>请使用 <code>HTMLImage.create()<code>创建实例，不要直接使用 <code>new HTMLImage<code> 。</p>
 		 */
 		//TODO:coverage
-		public static var create:Function = function(width:int,height:int):Bitmap {
+		public static var create:Function = function(width:int,height:int,format:int):Bitmap {
 			return new HTMLImage();
 		}
 		

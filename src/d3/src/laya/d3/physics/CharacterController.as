@@ -246,9 +246,8 @@ package laya.d3.physics {
 		 * @param	movement 移动向量。
 		 */
 		public function move(movement:Vector3):void {
-			var movementE:Float32Array = movement.elements;
 			var nativeMovement:* = _nativeVector30;
-			nativeMovement.setValue(-movementE[0], movementE[1], movementE[2]);
+			nativeMovement.setValue(-movement.x, movement.y, movement.z);
 			_nativeKinematicCharacter.setWalkDirection(nativeMovement);
 		}
 		

@@ -91,15 +91,13 @@ package laya.d3.physics {
 		 * @private
 		 */
 		private static function physicVector3TransformQuat(source:Vector3, qx:Number, qy:Number, qz:Number, qw:Number, out:Vector3):void {
-			var destination:Float32Array = out.elements;
-			var se:Float32Array = source.elements;
-			var x:Number = se[0], y:Number = se[1], z:Number = se[2],
+			var x:Number = source.x, y:Number = source.y, z:Number = source.z,
 			
 			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
 			
-			destination[0] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-			destination[1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-			destination[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+			out.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+			out.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+			out.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
 		}
 		
 		/**
@@ -107,21 +105,18 @@ package laya.d3.physics {
 		 */
 		private static function physicQuaternionMultiply(lx:Number, ly:Number, lz:Number, lw:Number, right:Quaternion, out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var re:Float32Array = right.elements;
-			var oe:Float32Array = out.elements;
-			
-			var rx:Number = re[0];
-			var ry:Number = re[1];
-			var rz:Number = re[2];
-			var rw:Number = re[3];
+			var rx:Number = right.x;
+			var ry:Number = right.y;
+			var rz:Number = right.z;
+			var rw:Number = right.w;
 			var a:Number = (ly * rz - lz * ry);
 			var b:Number = (lz * rx - lx * rz);
 			var c:Number = (lx * ry - ly * rx);
 			var d:Number = (lx * rx + ly * ry + lz * rz);
-			oe[0] = (lx * rw + rx * lw) + a;
-			oe[1] = (ly * rw + ry * lw) + b;
-			oe[2] = (lz * rw + rz * lw) + c;
-			oe[3] = lw * rw - d;
+			out.x = (lx * rw + rx * lw) + a;
+			out.y = (ly * rw + ry * lw) + b;
+			out.z = (lz * rw + rz * lw) + c;
+			out.w = lw * rw - d;
 		}
 		
 		/** @private */
@@ -454,21 +449,18 @@ package laya.d3.physics {
 		 */
 		public function _innerDerivePhysicsTransformation(physicTransformOut:*, force:Boolean):void {
 			var transform:Transform3D = (owner as Sprite3D)._transform;
-			var rotationE:Float32Array = transform.rotation.elements;
+			var rotation:Quaternion = transform.rotation;
 			if (force || _getTransformFlag(Transform3D.TRANSFORM_WORLDPOSITION)) {
 				var shapeOffset:Vector3 = _colliderShape.localOffset;
-				var shapeOffsetE:Float32Array = shapeOffset.elements;
 				var position:Vector3 = transform.position;
-				var positionE:Float32Array = position.elements;
 				var nativePosition:* = _nativeVector30;
-				if (shapeOffsetE[0] !== 0 || shapeOffsetE[1] !== 0 || shapeOffsetE[2] !== 0) {
+				if (shapeOffset.x !== 0 || shapeOffset.y !== 0 || shapeOffset.z !== 0) {
 					var physicPosition:Vector3 = _tempVector30;
-					var physicPositionE:Float32Array = physicPosition.elements;
-					physicVector3TransformQuat(shapeOffset, rotationE[0], rotationE[1], rotationE[2], rotationE[3], physicPosition);
+					physicVector3TransformQuat(shapeOffset, rotation.x, rotation.y, rotation.z, rotation.w, physicPosition);
 					Vector3.add(position, physicPosition, physicPosition);
-					nativePosition.setValue(-physicPositionE[0], physicPositionE[1], physicPositionE[2]);
+					nativePosition.setValue(-physicPosition.x, physicPosition.y, physicPosition.z);
 				} else {
-					nativePosition.setValue(-positionE[0], positionE[1], positionE[2]);
+					nativePosition.setValue(-position.x, position.y, position.z);
 				}
 				physicTransformOut.setOrigin(nativePosition);
 				_setTransformFlag(Transform3D.TRANSFORM_WORLDPOSITION, false);
@@ -476,15 +468,13 @@ package laya.d3.physics {
 			
 			if (force || _getTransformFlag(Transform3D.TRANSFORM_WORLDQUATERNION)) {
 				var shapeRotation:Quaternion = _colliderShape.localRotation;
-				var shapeRotationE:Float32Array = shapeRotation.elements;
 				var nativeRotation:* = _nativeQuaternion0;
-				if (shapeRotationE[0] !== 0 || shapeRotationE[1] !== 0 || shapeRotationE[2] !== 0 || shapeRotationE[3] !== 1) {
+				if (shapeRotation.x !== 0 || shapeRotation.y !== 0 || shapeRotation.z !== 0 || shapeRotation.w !== 1) {
 					var physicRotation:Quaternion = _tempQuaternion0;
-					physicQuaternionMultiply(rotationE[0], rotationE[1], rotationE[2], rotationE[3], shapeRotation, physicRotation);
-					var physicRotationE:Float32Array = physicRotation.elements;
-					nativeRotation.setValue(-physicRotationE[0], physicRotationE[1], physicRotationE[2], -physicRotationE[3]);
+					physicQuaternionMultiply(rotation.x, rotation.y, rotation.z, rotation.w, shapeRotation, physicRotation);
+					nativeRotation.setValue(-physicRotation.x, physicRotation.y, physicRotation.z, -physicRotation.w);
 				} else {
-					nativeRotation.setValue(-rotationE[0], rotationE[1], rotationE[2], -rotationE[3]);
+					nativeRotation.setValue(-rotation.x, rotation.y, rotation.z, -rotation.w);
 				}
 				physicTransformOut.setRotation(nativeRotation);
 				_setTransformFlag(Transform3D.TRANSFORM_WORLDQUATERNION, false);
@@ -503,13 +493,10 @@ package laya.d3.physics {
 		public function _updateTransformComponent(physicsTransform:*):void {
 			var localOffset:Vector3 = _colliderShape.localOffset;
 			var localRotation:Quaternion = _colliderShape.localRotation;
-			var shapeOffsetE:Float32Array = localOffset.elements;
-			var shapeRotationE:Float32Array = localRotation.elements;
 			
 			var transform:Transform3D = (owner as Sprite3D)._transform;
 			var position:Vector3 = transform.position;
 			var rotation:Quaternion = transform.rotation;
-			var positionE:Float32Array = position.elements;
 			
 			var nativePosition:* = physicsTransform.getOrigin();
 			var nativeRotation:* = physicsTransform.getRotation();
@@ -518,30 +505,28 @@ package laya.d3.physics {
 			var nativeRotZ:Number = nativeRotation.z();
 			var nativeRotW:Number = -nativeRotation.w();
 			
-			if (shapeOffsetE[0] !== 0 || shapeOffsetE[1] !== 0 || shapeOffsetE[2] !== 0) {
+			if (localOffset.x !== 0 || localOffset.y !== 0 || localOffset.z !== 0) {
 				var rotShapePosition:Vector3 = _tempVector30;
 				physicVector3TransformQuat(localOffset, nativeRotX, nativeRotY, nativeRotZ, nativeRotW, rotShapePosition);
-				var rotShapePositionE:Float32Array = rotShapePosition.elements;
-				positionE[0] = -nativePosition.x() - rotShapePositionE[0];
-				positionE[1] = nativePosition.y() - rotShapePositionE[1];
-				positionE[2] = nativePosition.z() - rotShapePositionE[2];
+				position.x = -nativePosition.x() - rotShapePosition.x;
+				position.y = nativePosition.y() - rotShapePosition.y;
+				position.z = nativePosition.z() - rotShapePosition.z;
 			} else {
-				positionE[0] = -nativePosition.x();
-				positionE[1] = nativePosition.y();
-				positionE[2] = nativePosition.z();
+				position.x = -nativePosition.x();
+				position.y = nativePosition.y();
+				position.z = nativePosition.z();
 			}
 			transform.position = position;
 			
-			if (shapeRotationE[0] !== 0 || shapeRotationE[1] !== 0 || shapeRotationE[2] !== 0 || shapeRotationE[3] !== 1) {
+			if (localRotation.x !== 0 || localRotation.y !== 0 || localRotation.z !== 0 || localRotation.w !== 1) {
 				var invertShapeRotaion:Quaternion = _tempQuaternion0;
 				localRotation.invert(invertShapeRotaion);
 				physicQuaternionMultiply(nativeRotX, nativeRotY, nativeRotZ, nativeRotW, invertShapeRotaion, rotation);
 			} else {
-				var rotationE:Float32Array = rotation.elements;
-				rotationE[0] = nativeRotX;
-				rotationE[1] = nativeRotY;
-				rotationE[2] = nativeRotZ;
-				rotationE[3] = nativeRotW;
+				rotation.x = nativeRotX;
+				rotation.y = nativeRotY;
+				rotation.z = nativeRotZ;
+				rotation.w = nativeRotW;
 			}
 			transform.rotation = rotation;
 		}
@@ -599,6 +584,7 @@ package laya.d3.physics {
 		 * @inheritDoc
 		 */
 		override protected function _onDestroy():void {
+			(_inPhysicUpdateListIndex !== -1) && (_simulation._physicsUpdateList.remove(this));
 			var physics3D:* = Laya3D._physics3D;
 			delete _physicObjectsMap[id];
 			physics3D.destroy(_nativeColliderObject);
@@ -608,6 +594,7 @@ package laya.d3.physics {
 			_colliderShape = null;
 			_simulation = null;
 			(owner as Sprite3D).transform.off(Event.TRANSFORM_CHANGED, this, _onTransformChanged);
+		
 		}
 		
 		/**

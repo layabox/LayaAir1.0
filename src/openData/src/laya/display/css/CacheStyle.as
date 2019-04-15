@@ -67,11 +67,11 @@ package laya.display.css {
 		 * 释放cache的资源
 		 */
 		public function releaseContext():void {
-			if (canvas) {
+			if (canvas && (canvas as Object).size) {
 				Pool.recover("CacheCanvas", canvas);
 				canvas.size(0, 0);
-				canvas = null;
 			}
+			canvas = null;
 		}
 		
 		public function createContext():void {

@@ -1,28 +1,59 @@
 package laya.resource {
-	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
 	import laya.utils.RunDriver;
-	
-	/**
-	 * 加载完成时调度。
-	 * @eventType Event.LOADED
-	 */
-	[Event(name="loaded",type="laya.events.Event")]
 	
 	/**
 	 * @private
 	 * <code>Resource</code> 资源存取类。
 	 */
 	public class Resource extends EventDispatcher implements ICreateResource, IDestroy {
-		/**@private */
+		/** @private */
 		private static var _uniqueIDCounter:int = 0;
-		/**@private */
+		/** @private */
 		private static var _idResourcesMap:Object = {};
-		/**@private */
+		/** @private */
 		private static var _urlResourcesMap:Object = {};
-		/**@private */
-		private static var _groupResourcesMap:Object = {};
+		/** @private 以字节为单位。*/
+		private static var _cpuMemory:int = 0;
+		/** @private 以字节为单位。*/
+		private static var _gpuMemory:int = 0;
+		
+		/**
+		 * 当前内存，以字节为单位。
+		 */
+		public static function get cpuMemory():int {
+			return _cpuMemory;
+		}
+		
+		/**
+		 * 当前显存，以字节为单位。
+		 */
+		public static function get gpuMemory():int {
+			return _gpuMemory;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _addCPUMemory(size:int):void {
+			_cpuMemory += size;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _addGPUMemory(size:int):void {
+			_gpuMemory += size;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _addMemory(cpuSize:int, gpuSize:int):void {
+			_cpuMemory += cpuSize;
+			_gpuMemory += gpuSize;
+		}
 		
 		/**
 		 * 通过资源ID返回已载入资源。
@@ -47,25 +78,11 @@ package laya.resource {
 		 * 销毁当前没有被使用的资源,该函数会忽略lock=true的资源。
 		 * @param group 指定分组。
 		 */
-		public static function destroyUnusedResources(group:String = null):void {
-			var res:Resource;
-			if (group) {
-				var resouList:Vector.<Resource> = _groupResourcesMap[group];
-				if (resouList) {
-					var tempResouList:Vector.<Resource> = resouList.slice();
-					for (var i:int, n:int = tempResouList.length; i < n; i++) {
-						res = tempResouList[i];
-						if (!res.lock && res._referenceCount === 0)
-							res.destroy();
-					}
-				}
-			}
-			else {
-				for (var k:String in _idResourcesMap) {
-					res = _idResourcesMap[k];
-					if (!res.lock && res._referenceCount === 0)
-						res.destroy();
-				}
+		public static function destroyUnusedResources():void {
+			for (var k:String in _idResourcesMap) {
+				var res:Resource = _idResourcesMap[k];
+				if (!res.lock && res._referenceCount === 0)
+					res.destroy();
 			}
 		}
 		
@@ -74,21 +91,14 @@ package laya.resource {
 		/**@private */
 		private var _url:String;
 		/**@private */
-		private var _group:String;
+		private var _cpuMemory:int = 0;
 		/**@private */
-		private var _cpuMemory:int;
-		/**@private */
-		private var _gpuMemory:int;
-		/**@private */
-		private var _released:Boolean;
+		private var _gpuMemory:int = 0;
 		/**@private */
 		private var _destroyed:Boolean;
 		
 		/**@private */
 		protected var _referenceCount:int;
-		
-		/**@private */
-		public var _resourceManager:ResourceManager;
 		
 		/**是否加锁，如果true为不能使用自动释放机制。*/
 		public var lock:Boolean;
@@ -111,27 +121,6 @@ package laya.resource {
 		}
 		
 		/**
-		 * 获取资源组名。
-		 */
-		public function get group():String {
-			return _getGroup();
-		}
-		
-		/**
-		 * 设置资源组名。
-		 */
-		public function set group(value:String):void {
-			_setGroup(value);
-		}
-		
-		/**
-		 * 资源管理员。
-		 */
-		public function get resourceManager():ResourceManager {
-			return _resourceManager;
-		}
-		
-		/**
 		 * 内存大小。
 		 */
 		public function get cpuMemory():int {
@@ -143,13 +132,6 @@ package laya.resource {
 		 */
 		public function get gpuMemory():int {
 			return _gpuMemory;
-		}
-		
-		/**
-		 * 是否已释放。
-		 */
-		public function get released():Boolean {
-			return _released;
 		}
 		
 		/**
@@ -175,20 +157,16 @@ package laya.resource {
 			_destroyed = false;
 			_referenceCount = 0;
 			_idResourcesMap[id] = this;
-			_released = true;
 			lock = false;
-			_gpuMemory = 0;
-			(ResourceManager.currentResourceManager) && (ResourceManager.currentResourceManager.addResource(this)); //资源管理器为空不加入资源管理队列，如受大图合集资源管理
 		}
 		
 		/**
 		 * @private
 		 */
-		//TODO:coverage
 		public function _setCPUMemory(value:int):void {
 			var offsetValue:int = value - _cpuMemory;
 			_cpuMemory = value;
-			//resourceManager && resourceManager.addSize(offsetValue);
+			_addCPUMemory(offsetValue);
 		}
 		
 		/**
@@ -197,13 +175,13 @@ package laya.resource {
 		public function _setGPUMemory(value:int):void {
 			var offsetValue:int = value - _gpuMemory;
 			_gpuMemory = value;
-			resourceManager && resourceManager.addSize(offsetValue);
+			_addGPUMemory(offsetValue);
 		}
 		
 		/**
 		 * @private
 		 */
-		public function _setUrl(url:String):void {
+		public function _setCreateURL(url:String):void {
 			if (_url !== url) {
 				var resList:Vector.<Resource>;
 				if (_url) {
@@ -217,35 +195,6 @@ package laya.resource {
 					resList.push(this);
 				}
 				_url = url;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		//TODO:coverage
-		public function _getGroup():String {
-			return _group;
-		}
-		
-		/**
-		 * @private
-		 */
-		//TODO:coverage
-		public function _setGroup(value:String):void {
-			if (_group !== value) {
-				var groupList:Vector.<Resource>;
-				if (_group) {
-					groupList = _groupResourcesMap[_group];
-					groupList.splice(groupList.indexOf(this), 1);
-					(groupList.length === 0) && (delete _groupResourcesMap[_group]);
-				}
-				if (value) {
-					groupList = _groupResourcesMap[value];
-					(groupList) || (_groupResourcesMap[value] = groupList = new Vector.<Resource>());
-					groupList.push(this);
-				}
-				_group = value;
 			}
 		}
 		
@@ -266,17 +215,8 @@ package laya.resource {
 		/**
 		 * @private
 		 */
-		//TODO:coverage
 		public function _clearReference():void {
 			_referenceCount = 0;
-		}
-		
-		/**
-		 * @private
-		 */
-		//TODO:coverage
-		public function _completeLoad():void {
-			_released = false;
 		}
 		
 		/**
@@ -295,33 +235,7 @@ package laya.resource {
 		 * @private
 		 */
 		protected function _activeResource():void {
-			_released = false;
-		}
 		
-		/**
-		 *@private
-		 */
-		//TODO:coverage
-		public function _onAsynLoaded(data:*, propertyParams:Object = null):void {
-			throw new Error("Resource: must override this function!");
-		}
-		
-		/**
-		 * 释放资源。
-		 * @param force 是否强制释放。
-		 * @return 是否成功释放。
-		 */
-		public function releaseResource(force:Boolean = false):Boolean {
-			if (!force && lock)
-				return false;
-			if (!_released || force) {
-				_disposeResource();
-				_released = true;
-				return true;
-			}
-			else {
-				return false;
-			}
 		}
 		
 		/**
@@ -330,29 +244,21 @@ package laya.resource {
 		public function destroy():void {
 			if (_destroyed)
 				return;
-			if (_resourceManager !== null)
-				_resourceManager.removeResource(this);
 			
 			_destroyed = true;
 			lock = false; //解锁资源，强制清理
-			releaseResource();
+			_disposeResource();
 			delete _idResourcesMap[id];
 			var resList:Vector.<Resource>;
 			if (_url) {
 				resList = _urlResourcesMap[_url];
 				if (resList) {
 					resList.splice(resList.indexOf(this), 1);
-					(resList.length === 0) && (delete _urlResourcesMap[url]);
+					(resList.length === 0) && (delete _urlResourcesMap[_url]);
 				}
 				
 				var resou:Resource = Loader.getRes(_url);
 				(resou == this) && (delete Loader.loadedMap[_url]);
-				RunDriver.cancelLoadByUrl(_url);
-			}
-			if (_group) {
-				resList = _groupResourcesMap[_group];
-				resList.splice(resList.indexOf(this), 1);
-				(resList.length === 0) && (delete _groupResourcesMap[url]);
 			}
 		}
 	}

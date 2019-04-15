@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec4 a_Position;
 uniform mat4 u_MvpMatrix;
 uniform float u_Rotation;
@@ -18,4 +20,5 @@ void main()
 	vec4 position=rotateAroundYInDegrees(a_Position,u_Rotation);
 	gl_Position = (u_MvpMatrix*position).xyww;
 	v_Texcoord=vec3(-a_Position.x,a_Position.yz);//转换坐标系
+	gl_Position=remapGLPositionZ(gl_Position);
 }

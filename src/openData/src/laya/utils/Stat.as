@@ -4,7 +4,7 @@ package laya.utils {
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.HTMLCanvas;
-	import laya.resource.ResourceManager;
+	import laya.resource.Resource;
 	
 	/**
 	 * <p> <code>Stat</code> 是一个性能统计面板，可以实时更新相关的性能参数。</p>
@@ -24,7 +24,7 @@ package laya.utils {
 		/** 着色器请求次数。*/
 		public static var shaderCall:int = 0;
 		/** 描绘次数。*/
-		public static var drawCall:int = 0;
+		public static var renderBatch:int = 0;
 		/** 三角形面数。*/
 		public static var trianglesFaces:int = 0;
 		/** 精灵<code>Sprite</code> 的数量。*/
@@ -45,7 +45,8 @@ package laya.utils {
 		/** 表示当前使用的是否为慢渲染模式。*/
 		public static var renderSlow:Boolean = false;
 		/** 资源管理器所管理资源的累计内存,以字节为单位。*/
-		public static var currentMemorySize:int;
+		public static var gpuMemory:int;
+		public static var cpuMemory:int;
 		
 		private static var _fpsStr:String;
 		private static var _canvasStr:String;
@@ -89,18 +90,19 @@ package laya.utils {
 				_view[0] = {title: "FPS(Canvas)", value: "_fpsStr", color: "yellow", units: "int"};
 			}
 			_view[1] = {title: "Sprite", value: "_spriteStr", color: "white", units: "int"};
-			_view[2] = {title: "DrawCall", value: "drawCall", color: "white", units: "int"};
-			_view[3] = {title: "CurMem", value: "currentMemorySize", color: "yellow", units: "M"};
+			_view[2] = {title: "RenderBatch", value: "renderBatch", color: "white", units: "int"};
+			_view[3] = {title: "CPUMemory", value: "cpuMemory", color: "yellow", units: "M"};
+			_view[4] = {title: "GPUMemory", value: "gpuMemory", color: "yellow", units: "M"};
 			if (Render.isWebGL) {
-				_view[4] = {title: "Shader", value: "shaderCall", color: "white", units: "int"};
+				_view[5] = {title: "Shader", value: "shaderCall", color: "white", units: "int"};
 				if (!Render.is3DMode) {
 					_view[0].title = "FPS(WebGL)";
-					_view[5] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
+					_view[6] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
 				} else {
 					_view[0].title = "FPS(3D)";
-					_view[5] = {title: "TriFaces", value: "trianglesFaces", color: "white", units: "int"};
-					_view[6] = {title: "treeNodeColl", value: "treeNodeCollision", color: "white", units: "int"};
-					_view[7] = {title: "treeSpriteColl", value: "treeSpriteCollision", color: "white", units: "int"};
+					_view[6] = {title: "TriFaces", value: "trianglesFaces", color: "white", units: "int"};
+					//_view[7] = {title: "treeNodeColl", value: "treeNodeCollision", color: "white", units: "int"};
+					//_view[8] = {title: "treeSpriteColl", value: "treeSpriteCollision", color: "white", units: "int"};
 				}
 			} else {
 				//_view[4] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
@@ -215,7 +217,7 @@ package laya.utils {
 		 * 清零性能统计计算相关的数据。
 		 */
 		public static function clear():void {
-			trianglesFaces = drawCall = shaderCall = spriteCount = spriteRenderUseCacheCount = treeNodeCollision = treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
+			trianglesFaces = renderBatch = shaderCall = spriteCount = spriteRenderUseCacheCount = treeNodeCollision = treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
 		}
 		
 		/**
@@ -249,11 +251,11 @@ package laya.utils {
 				trianglesFaces = Math.round(trianglesFaces / count);
 				
 				if (!_useCanvas) {
-					drawCall = Math.round(drawCall / count) - 1;
+					renderBatch = Math.round(renderBatch / count) - 1;
 					shaderCall = Math.round(shaderCall / count);
 					spriteCount = Math.round(spriteCount / count) - 4;
 				} else {
-					drawCall = Math.round(drawCall / count);
+					renderBatch = Math.round(renderBatch / count);
 					shaderCall = Math.round(shaderCall / count);
 					spriteCount = Math.round(spriteCount / count) - 1;
 				}
@@ -268,7 +270,8 @@ package laya.utils {
 				_fpsStr = FPS + (renderSlow ? " slow" : "") + " " + delay;
 				_spriteStr = spriteCount + (spriteRenderUseCacheCount ? ("/" + spriteRenderUseCacheCount) : '');
 				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
-				currentMemorySize = ResourceManager.systemResourceManager.memorySize;
+				cpuMemory = Resource.cpuMemory;
+				gpuMemory = Resource.gpuMemory;
 				if (_useCanvas) {
 					renderInfoPre();
 				} else

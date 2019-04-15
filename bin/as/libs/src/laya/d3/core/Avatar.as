@@ -19,7 +19,7 @@ package laya.d3.core {
 		public static function _parse(data:*, propertyParams:Object = null, constructParams:Array = null):Avatar {
 			var avatar:Avatar = new Avatar();
 			avatar._rootNode = new AnimationNode(new Float32Array(3), new Float32Array(4), new Float32Array(3), new Float32Array(16));//[NATIVE],需要优化
-			if (Render.isConchApp)
+			if (Render.supportWebGLPlusAnimation)
 				avatar._nativeNodeCount++;//[NATIVE]
 			if (data.version) {
 				var rootNode:Object = data.rootNode;
@@ -85,7 +85,7 @@ package laya.d3.core {
 				var childData:Object = childrenData[j];
 				var childBone:AnimationNode = new AnimationNode(new Float32Array(3), new Float32Array(4), new Float32Array(3), new Float32Array(16));//[NATIVE],需要优化
 				node.addChild(childBone);
-				if (Render.isConchApp)
+				if (Render.supportWebGLPlusAnimation)
 					_nativeNodeCount++;//[NATIVE]
 				_parseNode(childData, childBone);
 			}

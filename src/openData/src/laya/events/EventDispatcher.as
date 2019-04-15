@@ -107,7 +107,7 @@ package laya.events {
 		public function off(type:String, caller:*, listener:Function, onceOnly:Boolean = false):EventDispatcher {
 			if (!this._events || !this._events[type]) return this;
 			var listeners:Object = this._events[type];
-			if (listener != null) {
+			if (listeners != null) {
 				if (listeners.run) {
 					if ((!caller || listeners.caller === caller) && (listener==null || listeners.method === listener) && (!onceOnly || listeners.once)) {
 						delete this._events[type];

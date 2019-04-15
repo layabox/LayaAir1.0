@@ -202,50 +202,50 @@ package laya.d3.math {
 			var m44:Number = matrixE[15];
 			
 			//近平面
-			var nearNorE:Float32Array = np.normal.elements;
-			nearNorE[0] = m14 + m13;
-			nearNorE[1] = m24 + m23;
-			nearNorE[2] = m34 + m33;
+			var nearNorE:Vector3 = np.normal;
+			nearNorE.x = m14 + m13;
+			nearNorE.y = m24 + m23;
+			nearNorE.z = m34 + m33;
 			np.distance = m44 + m43;
 			np.normalize();
 			
 			//远平面
-			var farNorE:Float32Array = fp.normal.elements;
-			farNorE[0] = m14 - m13;
-			farNorE[1] = m24 - m23;
-			farNorE[2] = m34 - m33;
+			var farNorE:Vector3 = fp.normal;
+			farNorE.x = m14 - m13;
+			farNorE.y = m24 - m23;
+			farNorE.z = m34 - m33;
 			fp.distance = m44 - m43;
 			fp.normalize();
 			
 			//左平面
-			var leftNorE:Float32Array = lp.normal.elements;
-			leftNorE[0] = m14 + m11;
-			leftNorE[1] = m24 + m21;
-			leftNorE[2] = m34 + m31;
+			var leftNorE:Vector3 = lp.normal;
+			leftNorE.x = m14 + m11;
+			leftNorE.y = m24 + m21;
+			leftNorE.z = m34 + m31;
 			lp.distance = m44 + m41;
 			lp.normalize();
 			
 			//右平面
-			var rightNorE:Float32Array = rp.normal.elements;
-			rightNorE[0] = m14 - m11;
-			rightNorE[1] = m24 - m21;
-			rightNorE[2] = m34 - m31;
+			var rightNorE:Vector3 = rp.normal;
+			rightNorE.x = m14 - m11;
+			rightNorE.y = m24 - m21;
+			rightNorE.z = m34 - m31;
 			rp.distance = m44 - m41;
 			rp.normalize();
 			
 			//顶平面
-			var topNorE:Float32Array = tp.normal.elements;
-			topNorE[0] = m14 - m12;
-			topNorE[1] = m24 - m22;
-			topNorE[2] = m34 - m32;
+			var topNorE:Vector3 = tp.normal;
+			topNorE.x = m14 - m12;
+			topNorE.y = m24 - m22;
+			topNorE.z = m34 - m32;
 			tp.distance = m44 - m42;
 			tp.normalize();
 			
 			//底平面
-			var bottomNorE:Float32Array = bp.normal.elements;
-			bottomNorE[0] = m14 + m12;
-			bottomNorE[1] = m24 + m22;
-			bottomNorE[2] = m34 + m32;
+			var bottomNorE:Vector3 = bp.normal;
+			bottomNorE.x = m14 + m12;
+			bottomNorE.y = m24 + m22;
+			bottomNorE.z = m34 + m32;
 			bp.distance = m44 + m42;
 			bp.normalize();
 		}
@@ -309,7 +309,6 @@ package laya.d3.math {
 			for (var i:int = 0; i < 6; i++) {
 				
 				switch (i) {
-				
 				case 0: 
 					planeResult = CollisionUtils.intersectsPlaneAndPoint(_near, point);
 					break;
@@ -353,11 +352,35 @@ package laya.d3.math {
 		 */
 		public function containsBoundBox(box:BoundBox):int {
 			var p:Vector3 = _tempV30, n:Vector3 = _tempV31;
-			var plane:Plane;
+			var boxMin:Vector3 = box.min;
+			var boxMax:Vector3 = box.max;
 			var result:int = ContainmentType.Contains;
 			for (var i:int = 0; i < 6; i++) {
-				plane = getPlane(i);
-				_getBoxToPlanePVertexNVertex(box, plane.normal, p, n);
+				var plane:Plane = getPlane(i);
+				
+				var planeNor:Vector3 = plane.normal;
+				
+				if (planeNor.x >= 0) {
+					p.x = boxMax.x;
+					n.x = boxMin.x;
+				} else {
+					p.x = boxMin.x;
+					n.x = boxMax.x;
+				}
+				if (planeNor.y >= 0) {
+					p.y = boxMax.y;
+					n.y = boxMin.y;
+				} else {
+					p.y = boxMin.y;
+					n.y = boxMax.y;
+				}
+				if (planeNor.z >= 0) {
+					p.z = boxMax.z;
+					n.z = boxMin.z;
+				} else {
+					p.z = boxMin.z;
+					n.z = boxMax.z;
+				}
 				
 				if (CollisionUtils.intersectsPlaneAndPoint(plane, p) === Plane.PlaneIntersectionType_Back)
 					return ContainmentType.Disjoint;
@@ -374,11 +397,9 @@ package laya.d3.math {
 		 * @param  sphere  包围球。
 		 */
 		public function containsBoundSphere(sphere:BoundSphere):int {
-			
 			var result:int = Plane.PlaneIntersectionType_Front;
 			var planeResult:int = Plane.PlaneIntersectionType_Front;
 			for (var i:int = 0; i < 6; i++) {
-				
 				switch (i) {
 				case 0: 
 					planeResult = CollisionUtils.intersectsPlaneAndSphere(_near, sphere);
@@ -417,41 +438,6 @@ package laya.d3.math {
 			default: 
 				return ContainmentType.Contains;
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _getBoxToPlanePVertexNVertex(box:BoundBox, planeNormal:Vector3, outP:Vector3, outN:Vector3):void {
-			var boxMin:Vector3 = box.min;
-			var boxMinE:Float32Array = boxMin.elements;
-			
-			var boxMax:Vector3 = box.max;
-			var boxMaxE:Float32Array = boxMax.elements;
-			
-			var planeNorE:Float32Array = planeNormal.elements;
-			var planeNorEX:Number = planeNorE[0];
-			var planeNorEY:Number = planeNorE[1];
-			var planeNorEZ:Number = planeNorE[2];
-			
-			boxMin.cloneTo(outP);
-			;
-			var outPE:Float32Array = outP.elements;
-			if (planeNorEX >= 0)
-				outPE[0] = boxMaxE[0];
-			if (planeNorEY >= 0)
-				outPE[1] = boxMaxE[1];
-			if (planeNorEZ >= 0)
-				outPE[2] = boxMaxE[2];
-			
-			boxMax.cloneTo(outN);
-			var outNE:Float32Array = outN.elements;
-			if (planeNorEX >= 0)
-				outNE[0] = boxMinE[0];
-			if (planeNorEY >= 0)
-				outNE[1] = boxMinE[1];
-			if (planeNorEZ >= 0)
-				outNE[2] = boxMinE[2];
 		}
 	}
 

@@ -33,24 +33,24 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @inheritDoc
 		 */
 		override protected function _getShapeBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0]  = minE[2] = -radius;
-			minE[1] = 0;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[2] = radius;
-			maxE[1] = 0;
+			var min:Vector3 = boundBox.min;
+			min.x  = min.z = -radius;
+			min.y = 0;
+			var max:Vector3 = boundBox.max;
+			max.x = max.z = radius;
+			max.y = 0;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] =-1;
-			minE[2] = 0;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[1] = 1;
-			maxE[2] = 0;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y =-1;
+			min.z = 0;
+			var max:Vector3 = boundBox.max;
+			max.x = max.y = 1;
+			max.z = 0;
 		}
 		
 		/**
@@ -59,8 +59,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @param	direction 粒子方向。
 		 */
 		override public function generatePositionAndDirection(position:Vector3, direction:Vector3, rand:Rand = null, randomSeeds:Uint32Array = null):void {
-			var rpE:Float32Array = position.elements;
-			var positionPointE:Float32Array = _tempPositionPoint.elements;
+			var positionPoint:Vector2 = _tempPositionPoint;
 			if (rand) {
 				rand.seed = randomSeeds[16];
 				if (emitFromEdge)
@@ -75,9 +74,9 @@ package laya.d3.core.particleShuriKen.module.shape {
 					ShapeUtils._randomPointInsideUnitArcCircle(arc, _tempPositionPoint);
 			}
 			
-			rpE[0] = -positionPointE[0];
-			rpE[1] = positionPointE[1];
-			rpE[2] = 0;
+			position.x = -positionPoint.x;
+			position.y = positionPoint.y;
+			position.z = 0;
 			
 			Vector3.scale(position, radius, position);
 			

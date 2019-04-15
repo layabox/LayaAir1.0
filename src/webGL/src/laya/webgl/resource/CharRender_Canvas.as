@@ -129,7 +129,7 @@ package laya.webgl.resource {
 			}
 			//ctx.restore();
 			if (rect) {
-				if (rect[2] ==-1) rect[2] = Math.ceil((cri.width+lineWidth) * lastScaleX); // 这个没有考虑左右margin
+				if (rect[2] ==-1) rect[2] = Math.ceil((cri.width+lineWidth*2) * lastScaleX); // 这个没有考虑左右margin
 			}
 			var imgdt:ImageData = rect?(ctx.getImageData( rect[0], rect[1], rect[2], rect[3] )):(ctx.getImageData( 0, 0, w, h ));
 			ctx.restore();

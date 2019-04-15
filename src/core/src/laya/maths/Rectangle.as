@@ -78,6 +78,11 @@ package laya.maths {
 		 * 回收
 		 */
 		public function recover():void {
+			if (this == TEMP || this == EMPTY)
+			{
+				trace("recover Temp or Empty:",this);
+				return;
+			}
 			Pool.recover("Rectangle", reset());
 		}
 		

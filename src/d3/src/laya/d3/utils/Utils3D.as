@@ -9,8 +9,11 @@ package laya.d3.utils {
 	import laya.d3.core.light.PointLight;
 	import laya.d3.core.light.SpotLight;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
+	import laya.d3.core.pixelLine.PixelLineSprite3D;
 	import laya.d3.core.scene.Scene3D;
 	import laya.d3.core.trail.TrailSprite3D;
+	import laya.d3.math.BoundBox;
+	import laya.d3.math.Color;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
@@ -34,22 +37,9 @@ package laya.d3.utils {
 		private static var _tempVector3_1:Vector3 = new Vector3();
 		/** @private */
 		private static var _tempVector3_2:Vector3 = new Vector3();
-		/** @private */
-		private static var _tempVector3_3:Vector3 = new Vector3();
-		/** @private */
-		private static var _tempVector3_4:Vector3 = new Vector3();
-		/** @private */
-		private static var _tempVector3_5:Vector3 = new Vector3();
-		/** @private */
-		private static var _tempVector3_6:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempColor0:Color = new Color();
 		
-		/** @private */
-		private static var _tempVector3Array0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
-		/** @private */
-		private static var _tempVector3Array1:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
-		/** @private */
-		private static var _tempArray4_0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(4);
-		/** @private */
 		private static var _tempArray16_0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(16);
 		/** @private */
 		private static var _tempArray16_1:Float32Array = /*[STATIC SAFE]*/ new Float32Array(16);
@@ -62,18 +52,16 @@ package laya.d3.utils {
 		 * @private
 		 */
 		public static function _convertToLayaVec3(bVector:*, out:Vector3, inverseX:Boolean):void {
-			var outE:Float32Array = out.elements;
-			outE[0] = inverseX ? -bVector.x() : bVector.x();
-			outE[1] = bVector.y();
-			outE[2] = bVector.z();
+			out.x = inverseX ? -bVector.x() : bVector.x();
+			out.y = bVector.y();
+			out.z = bVector.z();
 		}
 		
 		/**
 		 * @private
 		 */
 		public static function _convertToBulletVec3(lVector:Vector3, out:*, inverseX:Boolean):void {
-			var lVectorE:Float32Array = lVector.elements;
-			out.setValue(inverseX ? -lVectorE[0] : lVectorE[0], lVectorE[1], lVectorE[2]);
+			out.setValue(inverseX ? -lVector.x : lVector.x, lVector.y, lVector.z);
 		}
 		
 		/**
@@ -462,8 +450,7 @@ package laya.d3.utils {
 		 * @param	out 输出三维向量。
 		 */
 		public static function transformVector3ArrayByQuat(sourceArray:Float32Array, sourceOffset:int, rotation:Quaternion, outArray:Float32Array, outOffset:int):void {
-			var re:Float32Array = rotation.elements;
-			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3], ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
+			var x:Number = sourceArray[sourceOffset], y:Number = sourceArray[sourceOffset + 1], z:Number = sourceArray[sourceOffset + 2], qx:Number = rotation.x, qy:Number = rotation.y, qz:Number = rotation.z, qw:Number = rotation.w, ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
 			outArray[outOffset] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
 			outArray[outOffset + 1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
 			outArray[outOffset + 2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
@@ -626,9 +613,8 @@ package laya.d3.utils {
 		 * @private
 		 */
 		public static function transformLightingMapTexcoordArray(source:Float32Array, sourceOffset:int, lightingMapScaleOffset:Vector4, result:Float32Array, resultOffset:int):void {
-			var lightingMapScaleOffsetE:Float32Array = lightingMapScaleOffset.elements;
-			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffsetE[0] + lightingMapScaleOffsetE[2];
-			result[resultOffset + 1] = 1.0 - ((1.0 - source[sourceOffset + 1]) * lightingMapScaleOffsetE[1] + lightingMapScaleOffsetE[3]);
+			result[resultOffset + 0] = source[sourceOffset + 0] * lightingMapScaleOffset.x + lightingMapScaleOffset.z;
+			result[resultOffset + 1] = 1.0 - ((1.0 - source[sourceOffset + 1]) * lightingMapScaleOffset.y + lightingMapScaleOffset.w);
 		}
 		
 		/**
@@ -644,33 +630,11 @@ package laya.d3.utils {
 		/**
 		 * @private
 		 */
-		public static function _quaternionCreateFromYawPitchRollArray(yaw:Number, pitch:Number, roll:Number, out:Float32Array):void {
+		public static function _createAffineTransformationArray(trans:Vector3, rot:Quaternion, scale:Vector3, outE:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var halfRoll:Number = roll * 0.5;
-			var halfPitch:Number = pitch * 0.5;
-			var halfYaw:Number = yaw * 0.5;
-			
-			var sinRoll:Number = Math.sin(halfRoll);
-			var cosRoll:Number = Math.cos(halfRoll);
-			var sinPitch:Number = Math.sin(halfPitch);
-			var cosPitch:Number = Math.cos(halfPitch);
-			var sinYaw:Number = Math.sin(halfYaw);
-			var cosYaw:Number = Math.cos(halfYaw);
-			
-			out[0] = (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll);
-			out[1] = (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll);
-			out[2] = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
-			out[3] = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
-		}
-		
-		/**
-		 * @private
-		 */
-		public static function _createAffineTransformationArray(trans:Float32Array, rot:Float32Array, scale:Float32Array, outE:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var x:Number = rot[0], y:Number = rot[1], z:Number = rot[2], w:Number = rot[3], x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
+			var x:Number = rot.x, y:Number = rot.y, z:Number = rot.z, w:Number = rot.w, x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
 			var xx:Number = x * x2, xy:Number = x * y2, xz:Number = x * z2, yy:Number = y * y2, yz:Number = y * z2, zz:Number = z * z2;
-			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2, sx:Number = scale[0], sy:Number = scale[1], sz:Number = scale[2];
+			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2, sx:Number = scale.x, sy:Number = scale.y, sz:Number = scale.z;
 			
 			outE[0] = (1 - (yy + zz)) * sx;
 			outE[1] = (xy + wz) * sx;
@@ -684,9 +648,9 @@ package laya.d3.utils {
 			outE[9] = (yz - wx) * sz;
 			outE[10] = (1 - (xx + yy)) * sz;
 			outE[11] = 0;
-			outE[12] = trans[0];
-			outE[13] = trans[1];
-			outE[14] = trans[2];
+			outE[12] = trans.x;
+			outE[13] = trans.y;
+			outE[14] = trans.z;
 			outE[15] = 1;
 		}
 		
@@ -719,48 +683,6 @@ package laya.d3.utils {
 			}
 		}
 		
-		public static function getYawPitchRoll(quaternion:Float32Array, out:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			transformQuat(Vector3.ForwardRH, quaternion, Quaternion.TEMPVector31/*forwarldRH*/);
-			
-			transformQuat(Vector3.Up, quaternion, Quaternion.TEMPVector32/*up*/);
-			var upe:Float32Array = Quaternion.TEMPVector32.elements;
-			
-			angleTo(Vector3.ZERO, Quaternion.TEMPVector31, Quaternion.TEMPVector33/*angle*/);
-			var anglee:Float32Array = Quaternion.TEMPVector33.elements;
-			
-			if (anglee[0] == Math.PI / 2) {
-				anglee[1] = arcTanAngle(upe[2], upe[0]);
-				anglee[2] = 0;
-			} else if (anglee[0] == -Math.PI / 2) {
-				anglee[1] = arcTanAngle(-upe[2], -upe[0]);
-				anglee[2] = 0;
-			} else {
-				Matrix4x4.createRotationY(-anglee[1], Quaternion.TEMPMatrix0);
-				Matrix4x4.createRotationX(-anglee[0], Quaternion.TEMPMatrix1);
-				
-				Vector3.transformCoordinate(Quaternion.TEMPVector32, Quaternion.TEMPMatrix0, Quaternion.TEMPVector32);
-				Vector3.transformCoordinate(Quaternion.TEMPVector32, Quaternion.TEMPMatrix1, Quaternion.TEMPVector32);
-				anglee[2] = arcTanAngle(upe[1], -upe[0]);
-			}
-			
-			// Special cases.
-			if (anglee[1] <= -Math.PI)
-				anglee[1] = Math.PI;
-			if (anglee[2] <= -Math.PI)
-				anglee[2] = Math.PI;
-			
-			if (anglee[1] >= Math.PI && anglee[2] >= Math.PI) {
-				anglee[1] = 0;
-				anglee[2] = 0;
-				anglee[0] = Math.PI - anglee[0];
-			}
-			
-			out[0] = anglee[1];
-			out[1] = anglee[0];
-			out[2] = anglee[2];
-		}
-		
 		private static function arcTanAngle(x:Number, y:Number):Number {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			if (x == 0) {
@@ -783,149 +705,61 @@ package laya.d3.utils {
 			Vector3.subtract(location, from, Quaternion.TEMPVector30);
 			Vector3.normalize(Quaternion.TEMPVector30, Quaternion.TEMPVector30);
 			
-			angle.elements[0] = Math.asin(Quaternion.TEMPVector30.y);
-			angle.elements[1] = arcTanAngle(-Quaternion.TEMPVector30.z, -Quaternion.TEMPVector30.x);
+			angle.x = Math.asin(Quaternion.TEMPVector30.y);
+			angle.y = arcTanAngle(-Quaternion.TEMPVector30.z, -Quaternion.TEMPVector30.x);
 		}
 		
 		public static function transformQuat(source:Vector3, rotation:Float32Array, out:Vector3):void {
-			var destination:Float32Array = out.elements;
-			var se:Float32Array = source.elements;
 			var re:Float32Array = rotation;
 			
-			var x:Number = se[0], y:Number = se[1], z:Number = se[2], qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
+			var x:Number = source.x, y:Number = source.y, z:Number = source.z, qx:Number = re[0], qy:Number = re[1], qz:Number = re[2], qw:Number = re[3],
 			
 			ix:Number = qw * x + qy * z - qz * y, iy:Number = qw * y + qz * x - qx * z, iz:Number = qw * z + qx * y - qy * x, iw:Number = -qx * x - qy * y - qz * z;
 			
-			destination[0] = ix * qw + iw * -qx + iy * -qz - iz * -qy;
-			destination[1] = iy * qw + iw * -qy + iz * -qx - ix * -qz;
-			destination[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+			out.x = ix * qw + iw * -qx + iy * -qz - iz * -qy;
+			out.y = iy * qw + iw * -qy + iz * -qx - ix * -qz;
+			out.z = iz * qw + iw * -qz + ix * -qy - iy * -qx;
+		}
+		
+		public static function quaternionWeight(f:Quaternion, weight:Number, e:Quaternion):void {
+			e.x = f.x * weight;
+			e.y = f.y * weight;
+			e.z = f.z * weight;
+			e.w = f.w;
 		}
 		
 		/**
 		 * @private
 		 */
-		public static function quaterionNormalize(f:Float32Array, e:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var x:Number = f[0], y:Number = f[1], z:Number = f[2], w:Number = f[3];
-			var len:Number = x * x + y * y + z * z + w * w;
-			if (len > 0) {
-				len = 1 / Math.sqrt(len);
-				e[0] = x * len;
-				e[1] = y * len;
-				e[2] = z * len;
-				e[3] = w * len;
-			}
-		}
-		
-		public static function quaterionSlerp(left:Float32Array, right:Float32Array, t:Number, out:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var ax:Number = left[0], ay:Number = left[1], az:Number = left[2], aw:Number = left[3], bx:Number = right[0], by:Number = right[1], bz:Number = right[2], bw:Number = right[3];
-			
-			var omega:Number, cosom:Number, sinom:Number, scale0:Number, scale1:Number;
-			
-			// calc cosine 
-			cosom = ax * bx + ay * by + az * bz + aw * bw;
-			// adjust signs (if necessary) 
-			if (cosom < 0.0) {
-				cosom = -cosom;
-				bx = -bx;
-				by = -by;
-				bz = -bz;
-				bw = -bw;
-			}
-			// calculate coefficients 
-			if ((1.0 - cosom) > 0.000001) {
-				// standard case (slerp) 
-				omega = Math.acos(cosom);
-				sinom = Math.sin(omega);
-				scale0 = Math.sin((1.0 - t) * omega) / sinom;
-				scale1 = Math.sin(t * omega) / sinom;
-			} else {
-				// "from" and "to" quaternions are very close  
-				//  ... so we can do a linear interpolation 
-				scale0 = 1.0 - t;
-				scale1 = t;
-			}
-			// calculate final values 
-			out[0] = scale0 * ax + scale1 * bx;
-			out[1] = scale0 * ay + scale1 * by;
-			out[2] = scale0 * az + scale1 * bz;
-			out[3] = scale0 * aw + scale1 * bw;
-		}
-		
-		public static function quaternionMultiply(le:Float32Array, re:Float32Array, oe:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var lx:Number = le[0];
-			var ly:Number = le[1];
-			var lz:Number = le[2];
-			var lw:Number = le[3];
-			var rx:Number = re[0];
-			var ry:Number = re[1];
-			var rz:Number = re[2];
-			var rw:Number = re[3];
-			var a:Number = (ly * rz - lz * ry);
-			var b:Number = (lz * rx - lx * rz);
-			var c:Number = (lx * ry - ly * rx);
-			var d:Number = (lx * rx + ly * ry + lz * rz);
-			oe[0] = (lx * rw + rx * lw) + a;
-			oe[1] = (ly * rw + ry * lw) + b;
-			oe[2] = (lz * rw + rz * lw) + c;
-			oe[3] = lw * rw - d;
-		}
-		
-		public static function quaternionWeight(f:Float32Array, weight:Number, e:Float32Array):void {
-			e[0] = f[0] * weight;
-			e[1] = f[1] * weight;
-			e[2] = f[2] * weight;
-			e[3] = f[3];
-		}
-		
-		public static function quaternionInvert(f:Float32Array, e:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			
-			var a0:Number = f[0], a1:Number = f[1], a2:Number = f[2], a3:Number = f[3];
-			var dot:Number = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
-			var invDot:Number = dot ? 1.0 / dot : 0;
-			
-			// TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
-			e[0] = -a0 * invDot;
-			e[1] = -a1 * invDot;
-			e[2] = -a2 * invDot;
-			e[3] = a3 * invDot;
+		public static function quaternionConjugate(value:Quaternion, result:Quaternion):void {
+			result.x = -value.x;
+			result.y = -value.y;
+			result.z = -value.z;
+			result.w = value.w;
 		}
 		
 		/**
 		 * @private
 		 */
-		public static function quaternionConjugate(value:Float32Array, offset:int, result:Float32Array):void {
-			result[0] = -value[offset];
-			result[1] = -value[offset + 1];
-			result[2] = -value[offset + 2];
-			result[3] = value[offset + 3];
+		public static function scaleWeight(s:Vector3, w:Number, out:Vector3):void {
+			var sX:Number = s.x, sY:Number = s.y, sZ:Number = s.z;
+			out.x = sX > 0 ? Math.pow(Math.abs(sX), w) : -Math.pow(Math.abs(sX), w);
+			out.y = sY > 0 ? Math.pow(Math.abs(sY), w) : -Math.pow(Math.abs(sY), w);
+			out.z = sZ > 0 ? Math.pow(Math.abs(sZ), w) : -Math.pow(Math.abs(sZ), w);
 		}
 		
 		/**
 		 * @private
 		 */
-		public static function scaleWeight(s:Float32Array, w:Number, out:Float32Array):void {
-			var sX:Number = s[0], sY:Number = s[1], sZ:Number = s[2];
-			out[0] = sX > 0 ? Math.pow(Math.abs(sX), w) : -Math.pow(Math.abs(sX), w);
-			out[1] = sY > 0 ? Math.pow(Math.abs(sY), w) : -Math.pow(Math.abs(sY), w);
-			out[2] = sZ > 0 ? Math.pow(Math.abs(sZ), w) : -Math.pow(Math.abs(sZ), w);
-		}
-		
-		/**
-		 * @private
-		 */
-		public static function scaleBlend(sa:Float32Array, sb:Float32Array, w:Number, out:Float32Array):void {
-			var saw:Float32Array = _tempVector3Array0;
-			var sbw:Float32Array = _tempVector3Array1;
+		public static function scaleBlend(sa:Vector3, sb:Vector3, w:Number, out:Vector3):void {
+			var saw:Vector3 = _tempVector3_0;
+			var sbw:Vector3 = _tempVector3_1;
 			scaleWeight(sa, 1.0 - w, saw);
 			scaleWeight(sb, w, sbw);
-			var sng:Float32Array = w > 0.5 ? sb : sa;
-			out[0] = sng[0] > 0 ? Math.abs(saw[0] * sbw[0]) : -Math.abs(saw[0] * sbw[0]);
-			out[1] = sng[1] > 0 ? Math.abs(saw[1] * sbw[1]) : -Math.abs(saw[1] * sbw[1]);
-			out[2] = sng[2] > 0 ? Math.abs(saw[2] * sbw[2]) : -Math.abs(saw[2] * sbw[2]);
+			var sng:Vector3 = w > 0.5 ? sb : sa;
+			out.x = sng.x > 0 ? Math.abs(saw.x * sbw.x) : -Math.abs(saw.x * sbw.x);
+			out.y = sng.y > 0 ? Math.abs(saw.y * sbw.y) : -Math.abs(saw.y * sbw.y);
+			out.z = sng.z > 0 ? Math.abs(saw.z * sbw.z) : -Math.abs(saw.z * sbw.z);
 		}
 		
 		public static function matrix4x4MultiplyFFF(a:Float32Array, b:Float32Array, e:Float32Array):void {
@@ -966,13 +800,73 @@ package laya.d3.utils {
 		/**
 		 * @private
 		 */
-		
 		public static function _buildTexture2D(width:int, height:int, format:int, colorFunc:Function, mipmaps:Boolean = false):Texture2D {
 			var texture:Texture2D = new Texture2D(width, height, format, mipmaps, true);
 			texture.anisoLevel = 1;
 			texture.filterMode = BaseTexture.FILTERMODE_POINT;
 			TextureGenerator._generateTexture2D(texture, width, height, colorFunc);
 			return texture;
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function _drawBound(debugLine:PixelLineSprite3D, boundBox:BoundBox, color:Color):void {
+			if (debugLine.lineCount + 12 > debugLine.maxLineCount)
+				debugLine.maxLineCount += 12;
+			
+			var start:Vector3 = _tempVector3_0;
+			var end:Vector3 = _tempVector3_1;
+			var min:Vector3 = boundBox.min;
+			var max:Vector3 = boundBox.max;
+			
+			start.setValue(min.x, min.y, min.z);
+			end.setValue(max.x, min.y, min.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, min.y, min.z);
+			end.setValue(min.x, min.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(max.x, min.y, min.z);
+			end.setValue(max.x, min.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, min.y, max.z);
+			end.setValue(max.x, min.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, min.y, min.z);
+			end.setValue(min.x, max.y, min.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, min.y, max.z);
+			end.setValue(min.x, max.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(max.x, min.y, min.z);
+			end.setValue(max.x, max.y, min.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(max.x, min.y, max.z);
+			end.setValue(max.x, max.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, max.y, min.z);
+			end.setValue(max.x, max.y, min.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, max.y, min.z);
+			end.setValue(min.x, max.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(max.x, max.y, min.z);
+			end.setValue(max.x, max.y, max.z);
+			debugLine.addLine(start, end, color, color);
+			
+			start.setValue(min.x, max.y, max.z);
+			end.setValue(max.x, max.y, max.z);
+			debugLine.addLine(start, end, color, color);
 		}
 	}
 

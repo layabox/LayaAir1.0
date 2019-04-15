@@ -153,14 +153,14 @@ package laya.d3.terrain {
 				__VECTOR3__ = new Vector3();
 				
 			}
-			__VECTOR3__.elements[0] = x;
-			__VECTOR3__.elements[1] = 0;
-			__VECTOR3__.elements[2] = z;
+			__VECTOR3__.x = x;
+			__VECTOR3__.y = 0;
+			__VECTOR3__.z = z;
 			
 			Vector3.transformV3ToV3(__VECTOR3__, TerrainLeaf.__ADAPT_MATRIX_INV__, __VECTOR3__);
 			
-			x = __VECTOR3__.elements[0];
-			z = __VECTOR3__.elements[2];
+			x = __VECTOR3__.x;
+			z = __VECTOR3__.z;
 			
 			if (x < 0 || x > width() || z < 0 || z > depth())
 				return NaN;

@@ -32,20 +32,20 @@ package laya.d3.utils {
 		 */
 		public static function calculateCursorRay(point:Vector2, viewPort:Viewport, projectionMatrix:Matrix4x4, viewMatrix:Matrix4x4, world:Matrix4x4, out:Ray):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var x:Number = point.elements[0];
-			var y:Number = point.elements[1];
+			var x:Number = point.x;
+			var y:Number = point.y;
 			
 			var nearSource:Vector3 = _tempVector30;
-			var nerSourceE:Float32Array = nearSource.elements;
-			nerSourceE[0] = x;
-			nerSourceE[1] = y;
-			nerSourceE[2] = viewPort.minDepth;
+			var nerSourceE:Vector3 = nearSource;
+			nerSourceE.x = x;
+			nerSourceE.y = y;
+			nerSourceE.z = viewPort.minDepth;
 			
 			var farSource:Vector3 = _tempVector31;
-			var farSourceE:Float32Array = farSource.elements;
-			farSourceE[0] = x;
-			farSourceE[1] = y;
-			farSourceE[2] = viewPort.maxDepth;
+			var farSourceE:Vector3 = farSource;
+			farSourceE.x = x;
+			farSourceE.y = y;
+			farSourceE.z = viewPort.maxDepth;
 			
 			var nearPoint:Vector3 = out.origin;
 			var farPoint:Vector3 = _tempVector32;
@@ -53,10 +53,10 @@ package laya.d3.utils {
 			viewPort.unprojectFromWVP(nearSource, projectionMatrix, viewMatrix, world, nearPoint);
 			viewPort.unprojectFromWVP(farSource, projectionMatrix, viewMatrix, world, farPoint);
 			
-			var outDire:Float32Array = out.direction.elements;
-			outDire[0] = farPoint.x - nearPoint.x;
-			outDire[1] = farPoint.y - nearPoint.y;
-			outDire[2] = farPoint.z - nearPoint.z;
+			var outDire:Vector3 = out.direction;
+			outDire.x = farPoint.x - nearPoint.x;
+			outDire.y = farPoint.y - nearPoint.y;
+			outDire.z = farPoint.z - nearPoint.z;
 			Vector3.normalize(out.direction, out.direction);
 		}
 		

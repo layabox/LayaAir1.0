@@ -36,8 +36,6 @@ package laya.d3.core.render {
 		public var _dynamicWorldNormals:Float32Array;
 		
 		/** @private */
-		public var skinnedDatas:Vector.<Float32Array>;
-		/** @private */
 		public var staticBatchIndexStart:int;
 		/** @private */
 		public var staticBatchIndexEnd:int;
@@ -306,7 +304,6 @@ package laya.d3.core.render {
 			super.destroy();
 			_dynamicWorldPositions = null;
 			_dynamicWorldNormals = null;
-			skinnedDatas = null;
 			staticBatch = null;
 			staticBatchElementList = null;
 			dynamicBatchElementList = null;

@@ -47,20 +47,19 @@ package laya.d3.math {
 		 */
 		public static function distanceBoxToPoint(box:BoundBox, point:Vector3):Number {
 			
-			var boxMine:Float32Array = box.min.elements;
-			var boxMineX:Number = boxMine[0];
-			var boxMineY:Number = boxMine[1];
-			var boxMineZ:Number = boxMine[2];
+			var boxMin:Vector3 = box.min;
+			var boxMineX:Number = boxMin.x;
+			var boxMineY:Number = boxMin.y;
+			var boxMineZ:Number = boxMin.z;
 			
-			var boxMaxe:Float32Array = box.max.elements;
-			var boxMaxeX:Number = boxMaxe[0];
-			var boxMaxeY:Number = boxMaxe[1];
-			var boxMaxeZ:Number = boxMaxe[2];
+			var boxMax:Vector3 = box.max;
+			var boxMaxeX:Number = boxMax.x;
+			var boxMaxeY:Number = boxMax.y;
+			var boxMaxeZ:Number = boxMax.z;
 			
-			var pointe:Float32Array = point.elements;
-			var pointeX:Number = pointe[0];
-			var pointeY:Number = pointe[1];
-			var pointeZ:Number = pointe[2];
+			var pointeX:Number = point.x;
+			var pointeY:Number = point.y;
+			var pointeZ:Number = point.z;
 			
 			var distance:Number = 0;
 			
@@ -89,25 +88,25 @@ package laya.d3.math {
 		 */
 		public static function distanceBoxToBox(box1:BoundBox, box2:BoundBox):Number {
 			
-			var box1Mine:Float32Array = box1.min.elements;
-			var box1MineX:Number = box1Mine[0];
-			var box1MineY:Number = box1Mine[1];
-			var box1MineZ:Number = box1Mine[2];
+			var box1Mine:Vector3 = box1.min;
+			var box1MineX:Number = box1Mine.x;
+			var box1MineY:Number = box1Mine.y;
+			var box1MineZ:Number = box1Mine.z;
 			
-			var box1Maxe:Float32Array = box1.max.elements;
-			var box1MaxeX:Number = box1Maxe[0];
-			var box1MaxeY:Number = box1Maxe[1];
-			var box1MaxeZ:Number = box1Maxe[2];
+			var box1Maxe:Vector3 = box1.max;
+			var box1MaxeX:Number = box1Maxe.x;
+			var box1MaxeY:Number = box1Maxe.y;
+			var box1MaxeZ:Number = box1Maxe.z;
 			
-			var box2Mine:Float32Array = box2.min.elements;
-			var box2MineX:Number = box2Mine[0];
-			var box2MineY:Number = box2Mine[1];
-			var box2MineZ:Number = box2Mine[2];
+			var box2Mine:Vector3 = box2.min;
+			var box2MineX:Number = box2Mine.x;
+			var box2MineY:Number = box2Mine.y;
+			var box2MineZ:Number = box2Mine.z;
 			
-			var box2Maxe:Float32Array = box2.max.elements;
-			var box2MaxeX:Number = box2Maxe[0];
-			var box2MaxeY:Number = box2Maxe[1];
-			var box2MaxeZ:Number = box2Maxe[2];
+			var box2Maxe:Vector3 = box2.max;
+			var box2MaxeX:Number = box2Maxe.x;
+			var box2MaxeY:Number = box2Maxe.y;
+			var box2MaxeZ:Number = box2Maxe.z;
 			
 			var distance:Number = 0;
 			var delta:Number;
@@ -184,54 +183,46 @@ package laya.d3.math {
 		public static function intersectsRayAndTriangleRD(ray:Ray, vertex1:Vector3, vertex2:Vector3, vertex3:Vector3, out:Number):Boolean{
 			
 			var rayO:Vector3 = ray.origin;
-			var rayOe:Float32Array = rayO.elements;
-			var rayOeX:Number = rayOe[0];
-			var rayOeY:Number = rayOe[1];
-			var rayOeZ:Number = rayOe[2];
+			var rayOeX:Number = rayO.x;
+			var rayOeY:Number = rayO.y;
+			var rayOeZ:Number = rayO.z;
 			
 			var rayD:Vector3 = ray.direction;
-			var rayDe:Float32Array = rayD.elements;
-			var rayDeX:Number = rayDe[0];
-			var rayDeY:Number = rayDe[1];
-			var rayDeZ:Number = rayDe[2];
+			var rayDeX:Number = rayD.x;
+			var rayDeY:Number = rayD.y;
+			var rayDeZ:Number = rayD.z;
 			
-			var v1e:Float32Array = vertex1.elements;
-			var v1eX:Number = v1e[0];
-			var v1eY:Number = v1e[1];
-			var v1eZ:Number = v1e[2];
+			var v1eX:Number = vertex1.x;
+			var v1eY:Number = vertex1.y;
+			var v1eZ:Number = vertex1.z;
 			
-			var v2e:Float32Array = vertex2.elements;
-			var v2eX:Number = v2e[0];
-			var v2eY:Number = v2e[1];
-			var v2eZ:Number = v2e[2];
+			var v2eX:Number = vertex2.x;
+			var v2eY:Number = vertex2.y;
+			var v2eZ:Number = vertex2.z;
 			
-			var v3e:Float32Array = vertex3.elements;
-			var v3eX:Number = v3e[0];
-			var v3eY:Number = v3e[1];
-			var v3eZ:Number = v3e[2];
+			var v3eX:Number = vertex3.x;
+			var v3eY:Number = vertex3.y;
+			var v3eZ:Number = vertex3.z;
 			
-			var _tempV30e:Float32Array = _tempV30.elements;
-			var _tempV30eX:Number = _tempV30e[0];
-			var _tempV30eY:Number = _tempV30e[1];
-			var _tempV30eZ:Number = _tempV30e[2];
+			var _tempV30eX:Number = _tempV30.x;
+			var _tempV30eY:Number = _tempV30.y;
+			var _tempV30eZ:Number = _tempV30.z;
 			
 			_tempV30eX = v2eX - v1eX;
 			_tempV30eY = v2eY - v1eY;
 			_tempV30eZ = v2eZ - v1eZ;
 			
-			var _tempV31e:Float32Array = _tempV31.elements;
-			var _tempV31eX:Number = _tempV31e[0];
-			var _tempV31eY:Number = _tempV31e[1];
-			var _tempV31eZ:Number = _tempV31e[2];
+			var _tempV31eX:Number = _tempV31.x;
+			var _tempV31eY:Number = _tempV31.y;
+			var _tempV31eZ:Number = _tempV31.z;
 			
 			_tempV31eX = v3eX - v1eX;
 			_tempV31eY = v3eY - v1eY;
 			_tempV31eZ = v3eZ - v1eZ;
 			
-			var _tempV32e:Float32Array = _tempV32.elements;
-			var _tempV32eX:Number = _tempV32e[0];
-			var _tempV32eY:Number = _tempV32e[1];
-			var _tempV32eZ:Number = _tempV32e[2];
+			var _tempV32eX:Number = _tempV32.x;
+			var _tempV32eY:Number = _tempV32.y;
+			var _tempV32eZ:Number = _tempV32.z;
 			
 			_tempV32eX = (rayDeY * _tempV31eZ) - (rayDeZ * _tempV31eY);
 			_tempV32eY = (rayDeZ * _tempV31eX) - (rayDeX * _tempV31eZ);
@@ -247,10 +238,9 @@ package laya.d3.math {
 			
 			var inversedeterminant:Number = 1 / determinant;
 			
-			var _tempV33e:Float32Array = _tempV33.elements;
-			var _tempV33eX:Number = _tempV33e[0];
-			var _tempV33eY:Number = _tempV33e[1];
-			var _tempV33eZ:Number = _tempV33e[2];
+			var _tempV33eX:Number = _tempV33.x;
+			var _tempV33eY:Number = _tempV33.y;
+			var _tempV33eZ:Number = _tempV33.z;
 			
 			_tempV33eX = rayOeX - v1eX;
 			_tempV33eY = rayOeY - v1eY;
@@ -265,10 +255,9 @@ package laya.d3.math {
 				return false;
 			}
 			
-			var _tempV34e:Float32Array = _tempV34.elements;
-			var _tempV34eX:Number = _tempV34e[0];
-			var _tempV34eY:Number = _tempV34e[1];
-			var _tempV34eZ:Number = _tempV34e[2];
+			var _tempV34eX:Number = _tempV34.x;
+			var _tempV34eY:Number = _tempV34.y;
+			var _tempV34eZ:Number = _tempV34.z;
 			
 			_tempV34eX = (_tempV33eY * _tempV30eZ) - (_tempV33eZ * _tempV30eY);
 			_tempV34eY = (_tempV33eZ * _tempV30eX) - (_tempV33eX * _tempV30eZ);
@@ -348,31 +337,27 @@ package laya.d3.math {
 		public static function intersectsRayAndRay(ray1:Ray, ray2:Ray, out:Vector3):Boolean {
 			
 			var ray1o:Vector3 = ray1.origin;
-			var ray1oe:Float32Array = ray1o.elements;
-			var ray1oeX:Number = ray1oe[0];
-			var ray1oeY:Number = ray1oe[1];
-			var ray1oeZ:Number = ray1oe[2];
+			var ray1oeX:Number = ray1o.x;
+			var ray1oeY:Number = ray1o.y;
+			var ray1oeZ:Number = ray1o.z;
 			
 			var ray1d:Vector3 = ray1.direction;
-			var ray1de:Float32Array = ray1d.elements;
-			var ray1deX:Number = ray1de[0];
-			var ray1deY:Number = ray1de[1];
-			var ray1deZ:Number = ray1de[2];
+			var ray1deX:Number = ray1d.x;
+			var ray1deY:Number = ray1d.y;
+			var ray1deZ:Number = ray1d.z;
 			
 			var ray2o:Vector3 = ray2.origin;
-			var ray2oe:Float32Array = ray2o.elements;
-			var ray2oeX:Number = ray2oe[0];
-			var ray2oeY:Number = ray2oe[1];
-			var ray2oeZ:Number = ray2oe[2];
+			var ray2oeX:Number = ray2o.x;
+			var ray2oeY:Number = ray2o.y;
+			var ray2oeZ:Number = ray2o.z;
 			
 			var ray2d:Vector3 = ray2.direction;
-			var ray2de:Float32Array = ray2d.elements;
-			var ray2deX:Number = ray2de[0];
-			var ray2deY:Number = ray2de[1];
-			var ray2deZ:Number = ray2de[2];
+			var ray2deX:Number = ray2d.x;
+			var ray2deY:Number = ray2d.y;
+			var ray2deZ:Number = ray2d.z;
 			
 			Vector3.cross(ray1d, ray2d, _tempV30);
-			var tempV3e:Float32Array = _tempV30.elements;
+			var tempV3:Vector3 = _tempV30;
 			var denominator:Number = Vector3.scalarLength(_tempV30);
 			
 			if (MathUtils3D.isZero(denominator)) {
@@ -391,9 +376,9 @@ package laya.d3.math {
 			var m21:Number = ray2deX;
 			var m22:Number = ray2deY;
 			var m23:Number = ray2deZ;
-			var m31:Number = tempV3e[0];
-			var m32:Number = tempV3e[1];
-			var m33:Number = tempV3e[2];
+			var m31:Number = tempV3.x;
+			var m32:Number = tempV3.y;
+			var m33:Number = tempV3.z;
 			
 			var dets:Number = m11 * m22 * m33 + m12 * m23 * m31 + m13 * m21 * m32 - m11 * m23 * m32 - m12 * m21 * m33 - m13 * m22 * m31;
 			
@@ -412,10 +397,10 @@ package laya.d3.math {
 			Vector3.add(ray1o, _tempV30, _tempV32);
 			Vector3.add(ray2o, _tempV31, _tempV33);
 			
-			var point1e:Float32Array = _tempV32.elements;
-			var point2e:Float32Array = _tempV33.elements;
+			var point1e:Vector3 = _tempV32;
+			var point2e:Vector3 = _tempV33;
 			
-			if (!MathUtils3D.nearEqual(point2e[0], point1e[0]) || !MathUtils3D.nearEqual(point2e[1], point1e[1]) || !MathUtils3D.nearEqual(point2e[2], point1e[2])) {
+			if (!MathUtils3D.nearEqual(point2e.x, point1e.x) || !MathUtils3D.nearEqual(point2e.y, point1e.y) || !MathUtils3D.nearEqual(point2e.z, point1e.z)) {
 				out = Vector3.ZERO;
 				return false;
 			}
@@ -503,25 +488,25 @@ package laya.d3.math {
 		 */
 		public static function intersectsRayAndBoxRD(ray:Ray, box:BoundBox):Number {
 			
-			var rayoe:Float32Array = ray.origin.elements;
-			var rayoeX:Number = rayoe[0];
-			var rayoeY:Number = rayoe[1];
-			var rayoeZ:Number = rayoe[2];
+			var rayoe:Vector3 = ray.origin;
+			var rayoeX:Number = rayoe.x;
+			var rayoeY:Number = rayoe.y;
+			var rayoeZ:Number = rayoe.z;
 			
-			var rayde:Float32Array = ray.direction.elements;
-			var raydeX:Number = rayde[0];
-			var raydeY:Number = rayde[1];
-			var raydeZ:Number = rayde[2];
+			var rayde:Vector3 = ray.direction;
+			var raydeX:Number = rayde.x;
+			var raydeY:Number = rayde.y;
+			var raydeZ:Number = rayde.z;
 			
-			var boxMine:Float32Array = box.min.elements;
-			var boxMineX:Number = boxMine[0];
-			var boxMineY:Number = boxMine[1];
-			var boxMineZ:Number = boxMine[2];
+			var boxMine:Vector3 = box.min;
+			var boxMineX:Number = boxMine.x;
+			var boxMineY:Number = boxMine.y;
+			var boxMineZ:Number = boxMine.z;
 			
-			var boxMaxe:Float32Array = box.max.elements;
-			var boxMaxeX:Number = boxMaxe[0];
-			var boxMaxeY:Number = boxMaxe[1];
-			var boxMaxeZ:Number = boxMaxe[2];
+			var boxMaxe:Vector3 = box.max;
+			var boxMaxeX:Number = boxMaxe.x;
+			var boxMaxeY:Number = boxMaxe.y;
+			var boxMaxeZ:Number = boxMaxe.z;
 			
 			var out:Number = 0;
 			
@@ -724,15 +709,11 @@ package laya.d3.math {
 		 * @return  碰撞状态
 		 */
 		public static function intersectsPlaneAndPoint(plane:Plane, point:Vector3):int {
-			
 			var distance:Number = Vector3.dot(plane.normal, point) + plane.distance;
-			
 			if (distance > 0)
 				return Plane.PlaneIntersectionType_Front;
-				
 		    if (distance < 0)
 				return Plane.PlaneIntersectionType_Back;
-			
 			return Plane.PlaneIntersectionType_Intersecting;
 		}
 		
@@ -794,28 +775,27 @@ package laya.d3.math {
 			var planeD:Number = plane.distance;
 			
 			var planeNor:Vector3 = plane.normal;
-			var planeNore:Float32Array = planeNor.elements;
-			var planeNoreX:Number = planeNore[0];
-			var planeNoreY:Number = planeNore[1];
-			var planeNoreZ:Number = planeNore[2];
+			var planeNoreX:Number = planeNor.x;
+			var planeNoreY:Number = planeNor.y;
+			var planeNoreZ:Number = planeNor.z;
 			
-			var boxMine:Float32Array = box.min.elements;
-			var boxMineX:Number = boxMine[0];
-			var boxMineY:Number = boxMine[1];
-			var boxMineZ:Number = boxMine[2];
+			var boxMine:Vector3 = box.min;
+			var boxMineX:Number = boxMine.x;
+			var boxMineY:Number = boxMine.y;
+			var boxMineZ:Number = boxMine.z;
 			
-			var boxMaxe:Float32Array = box.max.elements;
-			var boxMaxeX:Number = boxMaxe[0];
-			var boxMaxeY:Number = boxMaxe[1];
-			var boxMaxeZ:Number = boxMaxe[2];
+			var boxMaxe:Vector3 = box.max;
+			var boxMaxeX:Number = boxMaxe.x;
+			var boxMaxeY:Number = boxMaxe.y;
+			var boxMaxeZ:Number = boxMaxe.z;
 			
-			_tempV30.elements[0] = (planeNoreX > 0) ? boxMineX : boxMaxeX;
-			_tempV30.elements[1] = (planeNoreY > 0) ? boxMineY : boxMaxeY;
-			_tempV30.elements[2] = (planeNoreZ > 0) ? boxMineZ : boxMaxeZ;
+			_tempV30.x = (planeNoreX > 0) ? boxMineX : boxMaxeX;
+			_tempV30.y = (planeNoreY > 0) ? boxMineY : boxMaxeY;
+			_tempV30.z = (planeNoreZ > 0) ? boxMineZ : boxMaxeZ;
 			
-			_tempV31.elements[0] = (planeNoreX > 0) ? boxMaxeX : boxMineX;
-			_tempV31.elements[1] = (planeNoreY > 0) ? boxMaxeY : boxMineY;
-			_tempV31.elements[2] = (planeNoreZ > 0) ? boxMaxeZ : boxMineZ;
+			_tempV31.x = (planeNoreX > 0) ? boxMaxeX : boxMineX;
+			_tempV31.y = (planeNoreY > 0) ? boxMaxeY : boxMineY;
+			_tempV31.z = (planeNoreZ > 0) ? boxMaxeZ : boxMineZ;
 			
 			var distance:Number = Vector3.dot(planeNor, _tempV30);
 			if (distance + planeD > 0)
@@ -854,16 +834,16 @@ package laya.d3.math {
 		 */
 		public static function intersectsBoxAndBox(box1:BoundBox, box2:BoundBox):Boolean {
 			
-			var box1Mine:Float32Array = box1.min.elements;
-			var box1Maxe:Float32Array = box1.max.elements;
-			var box2Mine:Float32Array = box2.min.elements;
-			var box2Maxe:Float32Array = box2.max.elements;
+			var box1Mine:Vector3 = box1.min;
+			var box1Maxe:Vector3 = box1.max;
+			var box2Mine:Vector3 = box2.min;
+			var box2Maxe:Vector3 = box2.max;
 			
-			if (box1Mine[0] > box2Maxe[0] || box2Mine[0] > box1Maxe[0])
+			if (box1Mine.x > box2Maxe.x || box2Mine.x > box1Maxe.x)
 				return false;
-			if (box1Mine[1] > box2Maxe[1] || box2Mine[1] > box1Maxe[1])
+			if (box1Mine.y > box2Maxe.y || box2Mine.y > box1Maxe.y)
 				return false;
-			if (box1Mine[2] > box2Maxe[2] || box2Mine[2] > box1Maxe[2])
+			if (box1Mine.z > box2Maxe.z || box2Mine.z > box1Maxe.z)
 				return false;
 			return true;
 		}
@@ -904,12 +884,9 @@ package laya.d3.math {
 		 * @return  位置关系:0 不想交,1 包含, 2 相交
 		 */
 		public static function boxContainsPoint(box:BoundBox, point:Vector3):int {
-			
-			var boxMine:Float32Array = box.min.elements;
-			var boxMaxe:Float32Array = box.max.elements;
-			var pointe:Float32Array = point.elements;
-			
-			if (boxMine[0] <= pointe[0] && boxMaxe[0] >= pointe[0] && boxMine[1] <= pointe[1] && boxMaxe[1] >= pointe[1] && boxMine[2] <= pointe[2] && boxMaxe[2] >= pointe[2])
+			var boxMine:Vector3 = box.min;
+			var boxMaxe:Vector3 = box.max;
+			if (boxMine.x <= point.x && boxMaxe.x >= point.x && boxMine.y <= point.y && boxMaxe.y >= point.y && boxMine.z <= point.z && boxMaxe.z >= point.z)
 				return ContainmentType.Contains;
 			return ContainmentType.Disjoint;
 		}
@@ -922,25 +899,25 @@ package laya.d3.math {
 		 */
 		public static function boxContainsBox(box1:BoundBox, box2:BoundBox):int {
 			
-			var box1Mine:Float32Array = box1.min.elements;
-			var box1MineX:Number = box1Mine[0];
-			var box1MineY:Number = box1Mine[1];
-			var box1MineZ:Number = box1Mine[2];
+			var box1Mine:Vector3 = box1.min;
+			var box1MineX:Number = box1Mine.x;
+			var box1MineY:Number = box1Mine.y;
+			var box1MineZ:Number = box1Mine.z;
 			
-			var box1Maxe:Float32Array = box1.max.elements;
-			var box1MaxeX:Number = box1Maxe[0];
-			var box1MaxeY:Number = box1Maxe[1];
-			var box1MaxeZ:Number = box1Maxe[2];
+			var box1Maxe:Vector3 = box1.max;
+			var box1MaxeX:Number = box1Maxe.x;
+			var box1MaxeY:Number = box1Maxe.y;
+			var box1MaxeZ:Number = box1Maxe.z;
 			
-			var box2Mine:Float32Array = box2.min.elements;
-			var box2MineX:Number = box2Mine[0];
-			var box2MineY:Number = box2Mine[1];
-			var box2MineZ:Number = box2Mine[2];
+			var box2Mine:Vector3 = box2.min;
+			var box2MineX:Number = box2Mine.x;
+			var box2MineY:Number = box2Mine.y;
+			var box2MineZ:Number = box2Mine.z;
 			
-			var box2Maxe:Float32Array = box2.max.elements;
-			var box2MaxeX:Number = box2Maxe[0];
-			var box2MaxeY:Number = box2Maxe[1];
-			var box2MaxeZ:Number = box2Maxe[2];
+			var box2Maxe:Vector3 = box2.max;
+			var box2MaxeX:Number = box2Maxe.x;
+			var box2MaxeY:Number = box2Maxe.y;
+			var box2MaxeZ:Number = box2Maxe.z;
 			
 			if (box1MaxeX < box2MineX || box1MineX > box2MaxeX)
 				return ContainmentType.Disjoint;
@@ -951,7 +928,7 @@ package laya.d3.math {
 			if (box1MaxeZ < box2MineZ || box1MineZ > box2MaxeZ)
 				return ContainmentType.Disjoint;
 			
-			if (box1MineX <= box2MineX && box2MaxeX <= box2MaxeX && box1MineY <= box2MineY && box2MaxeY <= box1MaxeY && box1MineZ <= box2MineZ && box2MaxeZ <= box1MaxeZ) {
+			if (box1MineX <= box2MineX && box2MaxeX <= box1MaxeX && box1MineY <= box2MineY && box2MaxeY <= box1MaxeY && box1MineZ <= box2MineZ && box2MaxeZ <= box1MaxeZ) {
 				return ContainmentType.Contains;
 			}
 			
@@ -968,22 +945,19 @@ package laya.d3.math {
 		public static function boxContainsSphere(box:BoundBox, sphere:BoundSphere):int{
 			
 			var boxMin:Vector3 = box.min;
-			var boxMine:Float32Array = boxMin.elements;
-			var boxMineX:Number = boxMine[0];
-			var boxMineY:Number = boxMine[1];
-			var boxMineZ:Number = boxMine[2];
+			var boxMineX:Number = boxMin.x;
+			var boxMineY:Number = boxMin.y;
+			var boxMineZ:Number = boxMin.z;
 			
 			var boxMax:Vector3 = box.max;
-			var boxMaxe:Float32Array = boxMax.elements;
-			var boxMaxeX:Number = boxMaxe[0];
-			var boxMaxeY:Number = boxMaxe[1];
-			var boxMaxeZ:Number = boxMaxe[2];
+			var boxMaxeX:Number = boxMax.x;
+			var boxMaxeY:Number = boxMax.y;
+			var boxMaxeZ:Number = boxMax.z;
 			
 			var sphereC:Vector3 = sphere.center;
-			var sphereCe:Float32Array = sphereC.elements;
-			var sphereCeX:Number = sphereCe[0];
-			var sphereCeY:Number = sphereCe[1];
-			var sphereCeZ:Number = sphereCe[2];
+			var sphereCeX:Number = sphereC.x;
+			var sphereCeY:Number = sphereC.y;
+			var sphereCeZ:Number = sphereC.z;
 			
 			var sphereR:Number = sphere.radius;
 			
@@ -1046,29 +1020,26 @@ package laya.d3.math {
 		public static function sphereContainsBox(sphere:BoundSphere, box:BoundBox):int{
 			
 			var sphereC:Vector3 = sphere.center;
-			var sphereCe:Float32Array = sphereC.elements;
-			var sphereCeX:Number = sphereCe[0];
-			var sphereCeY:Number = sphereCe[1];
-			var sphereCeZ:Number = sphereCe[2];
+			var sphereCeX:Number = sphereC.x;
+			var sphereCeY:Number = sphereC.y;
+			var sphereCeZ:Number = sphereC.z;
 			
 			var sphereR:Number = sphere.radius;
 			
 			var boxMin:Vector3 = box.min;
-			var boxMine:Float32Array = boxMin.elements;
-			var boxMineX:Number = boxMine[0];
-			var boxMineY:Number = boxMine[1];
-			var boxMineZ:Number = boxMine[2];
+			var boxMineX:Number = boxMin.x;
+			var boxMineY:Number = boxMin.y;
+			var boxMineZ:Number = boxMin.z;
 			
 			var boxMax:Vector3 = box.max;
-			var boxMaxe:Float32Array = boxMax.elements;
-			var boxMaxeX:Number = boxMaxe[0];
-			var boxMaxeY:Number = boxMaxe[1];
-			var boxMaxeZ:Number = boxMaxe[2];
+			var boxMaxeX:Number = boxMax.x;
+			var boxMaxeY:Number = boxMax.y;
+			var boxMaxeZ:Number = boxMax.z;
 			
-			var _tempV30e:Float32Array = _tempV30.elements;
-			var _tempV30eX:Number = _tempV30e[0];
-			var _tempV30eY:Number = _tempV30e[1];
-			var _tempV30eZ:Number = _tempV30e[2];
+			var _tempV30e:Vector3 = _tempV30;
+			var _tempV30eX:Number = _tempV30e.x;
+			var _tempV30eY:Number = _tempV30e.y;
+			var _tempV30eZ:Number = _tempV30e.z;
 			
 			if (!intersectsBoxAndSphere(box, sphere))
 				return ContainmentType.Disjoint;

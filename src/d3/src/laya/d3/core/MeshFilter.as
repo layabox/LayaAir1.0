@@ -1,9 +1,4 @@
 package laya.d3.core {
-	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.material.BlinnPhongMaterial;
-	import laya.d3.core.render.BaseRender;
-	import laya.d3.core.render.RenderElement;
-	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.graphics.Vertex.VertexMesh;
 	import laya.d3.graphics.VertexElement;
 	import laya.d3.resource.models.Mesh;
@@ -42,7 +37,7 @@ package laya.d3.core {
 				value._addReference();
 				_sharedMesh = value;
 				defineDatas.add(_getMeshDefine(value));
-				_changeRenderObjectsByMesh();
+				(_owner._render as MeshRenderer)._changeRenderObjectsByMesh(value);
 			}
 			(_owner._render as MeshRenderer)._onMeshChange(value);
 		}
@@ -80,31 +75,6 @@ package laya.d3.core {
 				}
 			}
 			return define;
-		}
-		
-		/**
-		 * @private
-		 */
-		private function _changeRenderObjectsByMesh():void {
-			var renderElementsCount:int = _sharedMesh.subMeshCount;
-			_owner._render._renderElements.length = renderElementsCount;
-			for (var i:int = 0; i < renderElementsCount; i++) {
-				var render:BaseRender = _owner._render;
-				var elements:Vector.<RenderElement> = render._renderElements;
-				
-				var renderElement:RenderElement = elements[i];
-				if (renderElement) {
-					renderElement.setGeometry(_sharedMesh._getSubMesh(i));
-				} else {
-					var material:BaseMaterial = render.sharedMaterials[i];
-					(material) || (material = BlinnPhongMaterial.defaultMaterial);//确保有材质,由默认材质代替。
-					renderElement = elements[i] = new SubMeshRenderElement();
-					renderElement.setTransform(_owner._transform);
-					renderElement.render = render;
-					renderElement.material = material;
-					renderElement.setGeometry(_sharedMesh._getSubMesh(i));
-				}
-			}
 		}
 		
 		/**

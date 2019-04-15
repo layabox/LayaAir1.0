@@ -32,7 +32,7 @@ package laya.d3.resource.models {
 			indexBuffer.setData(indices);
 			mesh._indexBuffer = indexBuffer;
 			
-			var bufferState:BufferState = subMesh._bufferState;
+			var bufferState:BufferState = mesh._bufferState;
 			bufferState.bind();
 			bufferState.applyVertexBuffer(vertexBuffer);
 			bufferState.applyIndexBuffer(indexBuffer);

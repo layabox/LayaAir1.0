@@ -1,4 +1,5 @@
 package laya.net {
+	// import laya.d3.core.scene.Scene3D;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.net.Loader;
@@ -119,7 +120,7 @@ package laya.net {
 					item = items[i];
 					var progressHandler:Handler = progress ? Handler.create(null, onProgress, [item], false) : null;
 					var completeHandler:Handler = (progress || complete) ? Handler.create(null, onComplete, [item]) : null;
-					_createOne(item.url,mainResou, completeHandler, progressHandler, item.type || type, item.constructParams || constructParams, item.propertyParams || propertyParams, item.priority || priority, cache);
+					_createOne(item.url, mainResou, completeHandler, progressHandler, item.type || type, item.constructParams || constructParams, item.propertyParams || propertyParams, item.priority || priority, cache);
 				}
 				function onComplete(item:Object, content:* = null):void {
 					loadedCount++;
@@ -140,7 +141,7 @@ package laya.net {
 					progress2.runWith(v);
 				}
 			} else {
-				_createOne(url,mainResou, complete, progress, type, constructParams, propertyParams, priority, cache);
+				_createOne(url, mainResou, complete, progress, type, constructParams, propertyParams, priority, cache);
 			}
 		}
 		
@@ -151,9 +152,9 @@ package laya.net {
 			var item:* = getRes(url);
 			if (!item) {
 				var extension:String = Utils.getFileExtension(url);
-				(type) || (type = createMap[extension]? createMap[extension][0]:null);
+				(type) || (type = createMap[extension] ? createMap[extension][0] : null);
 				
-				if (!type){
+				if (!type) {
 					load(url, complete, progress, type, priority, cache);
 					return;
 				}
@@ -163,10 +164,13 @@ package laya.net {
 					return;
 				}
 				_createLoad(url, Handler.create(null, onLoaded), progress, type, constructParams, propertyParams, priority, cache, true);
-				function onLoaded(item:*):void {
-					if (!mainResou && item is Resource)
-						item._addReference();
-					complete && complete.runWith(item);
+				function onLoaded(createRes:ICreateResource):void {//加载失败createRes为空
+					if (createRes) {
+						if (!mainResou && createRes is Resource)
+							(createRes as Resource)._addReference();
+						createRes._setCreateURL(url);
+					}
+					complete && complete.runWith(createRes);
 					Laya.loader.event(url);
 				};
 			} else {

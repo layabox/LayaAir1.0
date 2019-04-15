@@ -570,7 +570,7 @@ package laya.d3.core.particleShuriKen {
 				
 				switch (velocityType) {
 				case 0: 
-					shaDat.setVector(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constant);
+					shaDat.setVector3(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constant);
 					break;
 				case 1: 
 					shaDat.setBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientX._elements);
@@ -578,8 +578,8 @@ package laya.d3.core.particleShuriKen {
 					shaDat.setBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTZ, velocity.gradientZ._elements);
 					break;
 				case 2: 
-					shaDat.setVector(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constantMin);
-					shaDat.setVector(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, velocity.constantMax);
+					shaDat.setVector3(ShuriKenParticle3D.VOLVELOCITYCONST, velocity.constantMin);
+					shaDat.setVector3(ShuriKenParticle3D.VOLVELOCITYCONSTMAX, velocity.constantMax);
 					break;
 				case 3: 
 					shaDat.setBuffer(ShuriKenParticle3D.VOLVELOCITYGRADIENTX, velocity.gradientXMin._elements);
@@ -812,7 +812,7 @@ package laya.d3.core.particleShuriKen {
 				switch (rotationType) {
 				case 0: 
 					if (rotationSeparate) {
-						shaDat.setVector(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantSeparate);
+						shaDat.setVector3(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantSeparate);
 					} else {
 						shaDat.setNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constant);
 					}
@@ -828,8 +828,8 @@ package laya.d3.core.particleShuriKen {
 					break;
 				case 2: 
 					if (rotationSeparate) {
-						shaDat.setVector(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantMinSeparate);
-						shaDat.setVector(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, rotation.constantMaxSeparate);
+						shaDat.setVector3(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTSEPRARATE, rotation.constantMinSeparate);
+						shaDat.setVector3(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAXSEPRARATE, rotation.constantMaxSeparate);
 					} else {
 						shaDat.setNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONST, rotation.constantMin);
 						shaDat.setNumber(ShuriKenParticle3D.ROLANGULARVELOCITYCONSTMAX, rotation.constantMax);
@@ -915,10 +915,10 @@ package laya.d3.core.particleShuriKen {
 				if (textureAniType === 1 || textureAniType === 3) {
 					shaDat.setNumber(ShuriKenParticle3D.TEXTURESHEETANIMATIONCYCLES, value.cycles);
 					var title:Vector2 = value.tiles;
-					var _uvLengthE:Float32Array = _uvLength.elements;
-					_uvLengthE[0] = 1.0 / title.x;
-					_uvLengthE[1] = 1.0 / title.y;
-					shaDat.setVector(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, _uvLength);
+					var _uvLengthE:Vector2 = _uvLength;
+					_uvLengthE.x = 1.0 / title.x;
+					_uvLengthE.y = 1.0 / title.y;
+					shaDat.setVector2(ShuriKenParticle3D.TEXTURESHEETANIMATIONSUBUVLENGTH, _uvLength);
 				}
 				switch (textureAniType) {
 				case 1: 
@@ -1040,10 +1040,10 @@ package laya.d3.core.particleShuriKen {
 		 * @private
 		 */
 		public function _generateBoundingSphere():void {//TODO：应在本类内部处理。
-			var centerE:Float32Array = _boundingSphere.center.elements;
-			centerE[0] = 0;
-			centerE[1] = 0;
-			centerE[2] = 0;
+			var centerE:Vector3 = _boundingSphere.center;
+			centerE.x = 0;
+			centerE.y = 0;
+			centerE.z = 0;
 			_boundingSphere.radius = Number.MAX_VALUE;
 		}
 		
@@ -1138,29 +1138,28 @@ package laya.d3.core.particleShuriKen {
 			var transform:Transform3D = _owner.transform;
 			var worldPosition:Vector3 = transform.position;
 			var sizeScale:Vector3 = _tempVector39;
-			var sizeScaleE:Float32Array = sizeScale.elements;
 			var renderMode:int = particleRender.renderMode;
 			
 			switch (scaleMode) {
 			case 0: 
 				var scale:Vector3 = transform.scale;
 				positionScale = scale;
-				sizeScaleE[0] = scale.x;
-				sizeScaleE[1] = scale.z;
-				sizeScaleE[2] = scale.y;
+				sizeScale.x = scale.x;
+				sizeScale.y = scale.z;
+				sizeScale.z = scale.y;
 				(renderMode === 1) && (velocityScale = scale);
 				break;
 			case 1: 
 				var localScale:Vector3 = transform.localScale;
 				positionScale = localScale;
-				sizeScaleE[0] = localScale.x;
-				sizeScaleE[1] = localScale.z;
-				sizeScaleE[2] = localScale.y;
+				sizeScale.x = localScale.x;
+				sizeScale.y = localScale.z;
+				sizeScale.z = localScale.y;
 				(renderMode === 1) && (velocityScale = localScale);
 				break;
 			case 2: 
 				positionScale = transform.scale;
-				sizeScaleE[0] = sizeScaleE[1] = sizeScaleE[2] = 1;
+				sizeScale.x = sizeScale.y = sizeScale.z = 1;
 				(renderMode === 1) && (velocityScale = Vector3.ONE);
 				break;
 			}
@@ -1250,7 +1249,6 @@ package laya.d3.core.particleShuriKen {
 			}
 			
 			var threeDMaxSize:Vector3 = _tempVector30;
-			var threeDMaxSizeE:Float32Array = threeDMaxSize.elements;
 			
 			var rotSize:Number, nonRotSize:Number;
 			switch (renderMode) {
@@ -1305,8 +1303,8 @@ package laya.d3.core.particleShuriKen {
 			case 2: 
 				maxSize *= Math.cos(0.78539816339744830961566084581988);
 				nonRotSize = maxSize * 0.5;
-				threeDMaxSizeE[0] = sizeScale.x * nonRotSize;
-				threeDMaxSizeE[1] = sizeScale.z * nonRotSize;
+				threeDMaxSize.x = sizeScale.x * nonRotSize;
+				threeDMaxSize.y = sizeScale.z * nonRotSize;
 				Vector3.subtract(boundMin, threeDMaxSize, boundMin);
 				Vector3.add(boundMax, threeDMaxSize, boundMax);
 				break;
@@ -1681,11 +1679,9 @@ package laya.d3.core.particleShuriKen {
 				else
 					_shape.generatePositionAndDirection(position, direction, _rand, _randomSeeds);
 			} else {
-				var positionE:Float32Array = position.elements;
-				var directionE:Float32Array = direction.elements;
-				positionE[0] = positionE[1] = positionE[2] = 0;
-				directionE[0] = directionE[1] = 0;
-				directionE[2] = 1;
+				position.x = position.y = position.z = 0;
+				direction.x = direction.y = 0;
+				direction.z = 1;
 			}
 			
 			return addParticle(position, direction,time);//TODO:提前判断优化
@@ -1803,8 +1799,6 @@ package laya.d3.core.particleShuriKen {
 			var subV:Number = ShurikenParticleData.startUVInfo[1];
 			var startU:Number = ShurikenParticleData.startUVInfo[2];
 			var startV:Number = ShurikenParticleData.startUVInfo[3];
-			var positionE:Float32Array = position.elements;
-			var directionE:Float32Array = direction.elements;
 			
 			var meshVertices:Float32Array, meshVertexStride:int, meshPosOffset:int,meshCorOffset:int, meshUVOffset:int, meshVertexIndex:int;
 			var render:ShurikenParticleRenderer = _ownerRender;
@@ -1868,21 +1862,21 @@ package laya.d3.core.particleShuriKen {
 					offset = i + 4;
 				}
 				
-				_vertices[offset++] = positionE[0];
-				_vertices[offset++] = positionE[1];
-				_vertices[offset++] = positionE[2];
+				_vertices[offset++] = position.x;
+				_vertices[offset++] = position.y;
+				_vertices[offset++] = position.z;
 				
 				_vertices[offset++] = ShurikenParticleData.startLifeTime;
 				
-				_vertices[offset++] = directionE[0];
-				_vertices[offset++] = directionE[1];
-				_vertices[offset++] = directionE[2];
+				_vertices[offset++] = direction.x;
+				_vertices[offset++] = direction.y;
+				_vertices[offset++] = direction.z;
 				_vertices[offset++] = time;
 				
-				_vertices[offset++] = ShurikenParticleData.startColor[0];
-				_vertices[offset++] = ShurikenParticleData.startColor[1];
-				_vertices[offset++] = ShurikenParticleData.startColor[2];
-				_vertices[offset++] = ShurikenParticleData.startColor[3];
+				_vertices[offset++] = ShurikenParticleData.startColor.x;
+				_vertices[offset++] = ShurikenParticleData.startColor.y;
+				_vertices[offset++] = ShurikenParticleData.startColor.z;
+				_vertices[offset++] = ShurikenParticleData.startColor.w;
 				
 				_vertices[offset++] = ShurikenParticleData.startSize[0];
 				_vertices[offset++] = ShurikenParticleData.startSize[1];

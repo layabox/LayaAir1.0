@@ -95,7 +95,7 @@ package laya.display.cmd {
 		
 		public function set font(value:String):void {
 			_font = value;
-			if (Render.isWebGL || Render.isConchApp) {
+			if (Render.isWebGL) {
 				_fontObj = FontInfo.Parse(value);
 			}
 			_textIsWorldText && (_text as WordText).cleanCache();

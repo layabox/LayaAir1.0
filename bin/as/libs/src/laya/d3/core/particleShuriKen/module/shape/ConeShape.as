@@ -41,13 +41,13 @@ package laya.d3.core.particleShuriKen.module.shape {
 			const  coneRadius2:Number = radius + length * Math.sin(angle);
 			const  coneLength:Number = length * Math.cos(angle);
 			
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] = -coneRadius2;
-			minE[2] = 0;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y = -coneRadius2;
+			min.z = 0;
 			
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[1] = coneRadius2;
-			maxE[2] = coneLength;//TODO:是否为负
+			var max:Vector3 = boundBox.max;
+			max.x = max.y = coneRadius2;
+			max.z = coneLength;//TODO:是否为负
 		}
 		
 		/**
@@ -55,12 +55,12 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 */
 		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
 			const  sinA:Number = Math.sin(angle);
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] = -sinA;
-			minE[2] = 0;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = minE[1] = sinA;
-			maxE[2] = 1;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y = -sinA;
+			min.z= 0;
+			var max:Vector3 = boundBox.max;
+			max.x = max.y = sinA;
+			max.z = 1;
 		}
 		
 		/**
@@ -69,12 +69,10 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @param	direction 粒子方向。
 		 */
 		override public function generatePositionAndDirection(position:Vector3, direction:Vector3, rand:Rand = null, randomSeeds:Uint32Array = null):void {
-			var rpE:Float32Array = position.elements;
-			var rdE:Float32Array = direction.elements;
-			var positionPointE:Float32Array = _tempPositionPoint.elements;
+			var positionPointE:Vector2 = _tempPositionPoint;
 			var positionX:Number;
 			var positionY:Number;
-			var directionPointE:Float32Array;
+			var directionPointE:Vector2;
 			
 			var dirCosA:Number = Math.cos(angle);
 			var dirSinA:Number = Math.sin(angle);
@@ -87,11 +85,11 @@ package laya.d3.core.particleShuriKen.module.shape {
 				} else {
 					ShapeUtils._randomPointInsideUnitCircle(_tempPositionPoint);
 				}
-				positionX = positionPointE[0];
-				positionY = positionPointE[1];
-				rpE[0] = positionX * radius;
-				rpE[1] = positionY * radius;
-				rpE[2] = 0;
+				positionX = positionPointE.x;
+				positionY = positionPointE.y;
+				position.x = positionX * radius;
+				position.y = positionY * radius;
+				position.z = 0;
 				
 				if (randomDirection) {
 					if (rand) {
@@ -101,14 +99,14 @@ package laya.d3.core.particleShuriKen.module.shape {
 					} else {
 						ShapeUtils._randomPointInsideUnitCircle(_tempDirectionPoint);
 					}
-					directionPointE = _tempDirectionPoint.elements;
-					rdE[0] = directionPointE[0] * dirSinA;
-					rdE[1] = directionPointE[1] * dirSinA;
+					directionPointE = _tempDirectionPoint;
+					direction.x = directionPointE.x * dirSinA;
+					direction.y = directionPointE.y * dirSinA;
 				} else {
-					rdE[0] = positionX * dirSinA;
-					rdE[1] = positionY * dirSinA;
+					direction.x = positionX * dirSinA;
+					direction.y = positionY * dirSinA;
 				}
-				rdE[2] = dirCosA;
+				direction.z = dirCosA;
 				break;
 			case 1: 
 				if (rand) {
@@ -118,11 +116,11 @@ package laya.d3.core.particleShuriKen.module.shape {
 				} else {
 					ShapeUtils._randomPointUnitCircle(_tempPositionPoint);
 				}
-				positionX = positionPointE[0];
-				positionY = positionPointE[1];
-				rpE[0] = positionX * radius;
-				rpE[1] = positionY * radius;
-				rpE[2] = 0;
+				positionX = positionPointE.x;
+				positionY = positionPointE.y;
+				position.x = positionX * radius;
+				position.y = positionY * radius;
+				position.z = 0;
 				
 				if (randomDirection) {
 					if (rand) {
@@ -132,14 +130,14 @@ package laya.d3.core.particleShuriKen.module.shape {
 					} else {
 						ShapeUtils._randomPointInsideUnitCircle(_tempDirectionPoint);
 					}
-					directionPointE = _tempDirectionPoint.elements;
-					rdE[0] = directionPointE[0] * dirSinA;
-					rdE[1] = directionPointE[1] * dirSinA;
+					directionPointE = _tempDirectionPoint;
+					direction.x = directionPointE.x * dirSinA;
+					direction.y = directionPointE.y * dirSinA;
 				} else {
-					rdE[0] = positionX * dirSinA;
-					rdE[1] = positionY * dirSinA;
+					direction.x = positionX * dirSinA;
+					direction.y = positionY * dirSinA;
 				}
-				rdE[2] = dirCosA;
+				direction.z = dirCosA;
 				break;
 			case 2: 
 				if (rand) {
@@ -149,15 +147,15 @@ package laya.d3.core.particleShuriKen.module.shape {
 				} else {
 					ShapeUtils._randomPointInsideUnitCircle(_tempPositionPoint);
 				}
-				positionX = positionPointE[0];
-				positionY = positionPointE[1];
-				rpE[0] = positionX * radius;
-				rpE[1] = positionY * radius;
-				rpE[2] = 0;
+				positionX = positionPointE.x;
+				positionY = positionPointE.y;
+				position.x = positionX * radius;
+				position.y = positionY * radius;
+				position.z = 0;
 				
-				rdE[0] = positionX * dirSinA;
-				rdE[1] = positionY * dirSinA;
-				rdE[2] = dirCosA;
+				direction.x = positionX * dirSinA;
+				direction.y = positionY * dirSinA;
+				direction.z = dirCosA;
 				
 				Vector3.normalize(direction, direction);
 				if (rand) {
@@ -187,15 +185,15 @@ package laya.d3.core.particleShuriKen.module.shape {
 					ShapeUtils._randomPointUnitCircle(_tempPositionPoint);
 				}
 				
-				positionX = positionPointE[0];
-				positionY = positionPointE[1];
-				rpE[0] = positionX * radius;
-				rpE[1] = positionY * radius;
-				rpE[2] = 0;
+				positionX = positionPointE.x;
+				positionY = positionPointE.y;
+				position.x = positionX * radius;
+				position.y = positionY * radius;
+				position.z = 0;
 				
-				rdE[0] = positionX * dirSinA;
-				rdE[1] = positionY * dirSinA;
-				rdE[2] = dirCosA;
+				direction.x = positionX * dirSinA;
+				direction.y = positionY * dirSinA;
+				direction.z = dirCosA;
 				
 				Vector3.normalize(direction, direction);
 				if (rand) {

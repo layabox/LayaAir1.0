@@ -377,7 +377,7 @@ package laya.resource {
 		
 		/**@private */
 		public function clear():void {
-			if(!Render.isConchApp)this.clearRect(0, 0, Render._mainCanvas.width, Render._mainCanvas.height);
+			this.clearRect(0, 0, Render._mainCanvas.width, Render._mainCanvas.height);
 		}
 		
 		//TODO:coverage

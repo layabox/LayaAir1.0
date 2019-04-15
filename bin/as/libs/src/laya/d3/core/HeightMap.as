@@ -55,20 +55,20 @@ package laya.d3.core {
 			
 			var widthSize:Number = maxX - minX;
 			var heightSize:Number = maxZ - minZ;
-			var cellWidth:Number = outCellSize.elements[0] = widthSize / (width - 1);
-			var cellHeight:Number = outCellSize.elements[1] = heightSize / (height - 1);
+			var cellWidth:Number = outCellSize.x = widthSize / (width - 1);
+			var cellHeight:Number = outCellSize.y = heightSize / (height - 1);
 			
 			var heightMap:HeightMap = new HeightMap(width, height, minY, maxY);
 			
 			var ray:Ray = _tempRay;
-			var rayDirE:Float32Array = ray.direction.elements;//Direction
-			rayDirE[0] = 0;
-			rayDirE[1] = -1;
-			rayDirE[2] = 0;
+			var rayDir:Vector3 = ray.direction;//Direction
+			rayDir.x = 0;
+			rayDir.y = -1;
+			rayDir.z = 0;
 			
 			const heightOffset:Number = 0.1;//OriginalY
 			var rayY:Number = maxY + heightOffset;
-			ray.origin.elements[1] = rayY;
+			ray.origin.y = rayY;
 			
 			for (var h:int = 0; h < height; h++) {
 				var posZ:Number = minZ + h * cellHeight;
@@ -76,9 +76,9 @@ package laya.d3.core {
 				for (var w:int = 0; w < width; w++) {
 					var posX:Number = minX + w * cellWidth;
 					
-					var rayOriE:Float32Array = ray.origin.elements;
-					rayOriE[0] = posX;
-					rayOriE[2] = posZ;
+					var rayOri:Vector3 = ray.origin;
+					rayOri.x = posX;
+					rayOri.z = posZ;
 					
 					var closestIntersection:Number = _getPosition(ray, vertices, indexs);
 					heightMap._datas[h][w] = (closestIntersection === Number.MAX_VALUE) ? NaN : rayY - closestIntersection;

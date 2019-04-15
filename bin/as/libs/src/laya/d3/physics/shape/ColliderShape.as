@@ -87,9 +87,9 @@ package laya.d3.physics.shape {
 		/**
 		 * @private
 		 */
-		public static function _createAffineTransformation(trans:Float32Array, rot:Float32Array, outE:Float32Array):void {
+		public static function _createAffineTransformation(trans:Vector3, rot:Quaternion, outE:Float32Array):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var x:Number = rot[0], y:Number = rot[1], z:Number = rot[2], w:Number = rot[3], x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
+			var x:Number = rot.x, y:Number = rot.y, z:Number = rot.z, w:Number = rot.w, x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
 			var xx:Number = x * x2, xy:Number = x * y2, xz:Number = x * z2, yy:Number = y * y2, yz:Number = y * z2, zz:Number = z * z2;
 			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2;
 			
@@ -105,9 +105,9 @@ package laya.d3.physics.shape {
 			outE[9] = (yz - wx);
 			outE[10] = (1 - (xx + yy));
 			outE[11] = 0;
-			outE[12] = trans[0];
-			outE[13] = trans[1];
-			outE[14] = trans[2];
+			outE[12] = trans.x;
+			outE[13] = trans.y;
+			outE[14] = trans.z;
 			outE[15] = 1;
 		}
 		
@@ -198,8 +198,7 @@ package laya.d3.physics.shape {
 			if (_compoundParent) {//TODO:待查,这里有问题
 				updateLocalTransformations();
 			} else {
-				var valueE:Float32Array = value.elements;
-				_nativeScale.setValue(valueE[0], valueE[1], valueE[2]);
+				_nativeScale.setValue(value.x, value.y, value.z);
 				_nativeShape.setLocalScaling(_nativeScale);
 			}
 		}
@@ -225,9 +224,9 @@ package laya.d3.physics.shape {
 			if (_compoundParent) {
 				var offset:Vector3 = _tempVector30;
 				Vector3.multiply(localOffset, _scale, offset);
-				_createAffineTransformation(offset.elements, localRotation.elements, _centerMatrix.elements);
+				_createAffineTransformation(offset, localRotation, _centerMatrix.elements);
 			} else {
-				_createAffineTransformation(localOffset.elements, localRotation.elements, _centerMatrix.elements);
+				_createAffineTransformation(localOffset, localRotation, _centerMatrix.elements);
 			}
 		}
 		

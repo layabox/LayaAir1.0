@@ -42,38 +42,39 @@ varying float v_posViewZ;
 #endif
 
 void main() {
-#ifdef BONE
-	mat4 skinTransform=mat4(0.0);
-	skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
-	skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
-	skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
-	skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
-	gl_Position = mvp*skinTransform*vec4(a_position,1.);
-	mat4 modelMat = modelMatrix*skinTransform;
-#else
-	gl_Position = mvp*vec4(a_position,1.);
-	mat4 modelMat = modelMatrix;
-#endif	
-	vWorldPos = modelMat*vec4(a_position,1.);
-
-#ifdef CASTSHADOW 
-	#if defined(DIFFUSEMAP)&&defined(ALPHATEST)
-		vUv = uv;
+	#ifdef BONE
+		mat4 skinTransform=mat4(0.0);
+		skinTransform += u_Bones[int(a_BoneIndices.x)] * a_BoneWeights.x;
+		skinTransform += u_Bones[int(a_BoneIndices.y)] * a_BoneWeights.y;
+		skinTransform += u_Bones[int(a_BoneIndices.z)] * a_BoneWeights.z;
+		skinTransform += u_Bones[int(a_BoneIndices.w)] * a_BoneWeights.w;
+		gl_Position = mvp*skinTransform*vec4(a_position,1.);
+		mat4 modelMat = modelMatrix*skinTransform;
+	#else
+		gl_Position = mvp*vec4(a_position,1.);
+		mat4 modelMat = modelMatrix;
 	#endif	
-#else
-    vUv = uv;
-	vWorldNorm = normalize((modelMat*vec4(a_normal,0.0)).xyz);
-	#ifdef HAS_TANGENT
-	vWorldTangent = normalize((modelMat*vec4(tangent,0.0)).xyz);
-	vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);
+		vWorldPos = modelMat*vec4(a_position,1.);
+
+	#ifdef CASTSHADOW 
+		#if defined(DIFFUSEMAP)&&defined(ALPHATEST)
+			vUv = uv;
+		#endif	
+	#else
+		vUv = uv;
+		vWorldNorm = normalize((modelMat*vec4(a_normal,0.0)).xyz);
+		#ifdef HAS_TANGENT
+		vWorldTangent = normalize((modelMat*vec4(tangent,0.0)).xyz);
+		vWorldBinormal = normalize((modelMat*vec4(binormal,0.0)).xyz);
+		#endif
+		
+		vViewDir = (vWorldPos.xyz-cameraPosition);//这个不能normalize。否则无法线性差值了
+	#ifdef RECEIVESHADOW
+		v_posViewZ = gl_Position.z;
+		#ifdef SHADOWMAP_PSSM1 
+			v_lightMVPPos = u_lightShadowVP[0] * vWorldPos;
+		#endif
+	#endif	
 	#endif
-    
-    vViewDir = (vWorldPos.xyz-cameraPosition);//这个不能normalize。否则无法线性差值了
-#ifdef RECEIVESHADOW
-	v_posViewZ = gl_Position.z;
-	#ifdef SHADOWMAP_PSSM1 
-		v_lightMVPPos = u_lightShadowVP[0] * vWorldPos;
-	#endif
-#endif	
-#endif
+	gl_Position=remapGLPositionZ(gl_Position);
 }

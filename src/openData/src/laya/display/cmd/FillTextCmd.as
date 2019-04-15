@@ -56,10 +56,15 @@ package laya.display.cmd {
 		
 		/**@private */
 		public function run(context:Context, gx:Number, gy:Number):void {
+			if(Laya.stage.isGlobalRepaint()){
+				_textIsWorldText && (_text as WordText).cleanCache();
+			}
+			
 			if (_textIsWorldText && context._fast_filltext) {
-				__JS__('context._fast_filltext(this._text, this.x + gx, this.y + gy, this._fontObj, this._fontColor, 0, 0, this._nTexAlign, 0);');
-			} else
+				__JS__('context._fast_filltext(this._text, this.x + gx, this.y + gy, this._fontObj, this._color, null, 0, this._nTexAlign, 0);');
+			} else {
 				context.drawText(_text, x + gx, y + gy, _font, _color, _textAlign);
+			}
 		}
 		
 		/**@private */

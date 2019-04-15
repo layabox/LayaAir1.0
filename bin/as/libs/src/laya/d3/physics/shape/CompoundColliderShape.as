@@ -1,4 +1,6 @@
 package laya.d3.physics.shape {
+	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector3;
 	import laya.d3.physics.PhysicsComponent;
 	
 	/**
@@ -53,13 +55,13 @@ package laya.d3.physics.shape {
 		 * @private
 		 */
 		public function _updateChildTransform(shape:ColliderShape):void {
-			var offsetE:Float32Array = shape.localOffset.elements;
-			var rotationE:Float32Array = shape.localRotation.elements;
+			var offset:Vector3 = shape.localOffset;
+			var rotation:Quaternion = shape.localRotation;
 			var nativeOffset:* = _nativeVector30;
 			var nativeQuaternion:* = _nativQuaternion0;
 			var nativeTransform:* = _nativeTransform0;
-			nativeOffset.setValue(-offsetE[0], offsetE[1], offsetE[2]);
-			nativeQuaternion.setValue(-rotationE[0], rotationE[1], rotationE[2], -rotationE[3]);
+			nativeOffset.setValue( -offset.x, offset.y, offset.z);
+			nativeQuaternion.setValue(-rotation.x, rotation.y, rotation.z, -rotation.w);
 			nativeTransform.setOrigin(nativeOffset);
 			nativeTransform.setRotation(nativeQuaternion);
 			_nativeShape.updateChildTransform(shape._indexInCompound, nativeTransform, true);
@@ -77,10 +79,10 @@ package laya.d3.physics.shape {
 			shape._compoundParent = this;
 			shape._indexInCompound = _childColliderShapes.length;
 			_childColliderShapes.push(shape);
-			var offsetE:Float32Array = shape.localOffset.elements;
-			var rotationE:Float32Array = shape.localRotation.elements;
-			_nativeOffset.setValue(-offsetE[0], offsetE[1], offsetE[2]);
-			_nativRotation.setValue(-rotationE[0], rotationE[1], rotationE[2], -rotationE[3]);
+			var offset:Vector3 = shape.localOffset;
+			var rotation:Quaternion = shape.localRotation;
+			_nativeOffset.setValue(-offset.x, offset.y, offset.z);
+			_nativRotation.setValue(-rotation.x, rotation.y, rotation.z, -rotation.w);
 			_nativeTransform.setOrigin(_nativeOffset);
 			_nativeTransform.setRotation(_nativRotation);
 			

@@ -271,8 +271,8 @@ package laya.debug.tools.layout
 		public static function clearItemRelativeInfo(item:Object):void
 		{
 			var Nan:* = "NaN";
-			item.getLayout().left = Nan;
-			item.getLayout().right = Nan;
+			item.left = Nan;
+			item.right = Nan;
 		}
 		
 		public static const RateSign:String = "layoutRate";

@@ -5,6 +5,7 @@ package laya.display {
 	import laya.display.css.SpriteStyle;
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
+	import laya.events.MouseManager;
 	import laya.filters.ColorFilter;
 	import laya.filters.Filter;
 	import laya.maths.GrahamScan;
@@ -225,7 +226,7 @@ package laya.display {
 		/**@private */
 		protected var _repaint:int = SpriteConst.REPAINT_NONE;
 		/**@private */
-		private var _texture:Texture = null;		
+		private var _texture:Texture = null;
 		
 		//以下变量为系统调用，请不要直接使用
 		/**@private */
@@ -330,6 +331,7 @@ package laya.display {
 		public function set cacheAs(value:String):void {
 			if (value === _cacheStyle.userSetCache) return;
 			if ( Render.isConchApp && value != "bitmap") return;
+			if ( mask && value === 'normal') return;
 			_setCacheAs(value);
 			_getCacheStyle().userSetCache = value;
 			_checkCanvasEnable();
@@ -391,6 +393,16 @@ package laya.display {
 			this._y = value;
 		}
 		
+		/**@private */
+		public function _setWidth(texture:Texture, value:Number):void
+		{
+		}
+		
+		/**@private */
+		public function _setHeight(texture:Texture, value:Number):void
+		{
+		}
+		
 		/**表示显示对象相对于父容器的水平方向坐标值。*/
 		public function get x():Number {
 			return this._x;
@@ -444,7 +456,9 @@ package laya.display {
 		public function set width(value:Number):void {
 			if (this._width !== value) {
 				this._width = value;
-				repaint();
+				_setWidth(texture, value);	
+				_setTranformChange();
+				//repaint();
 			}
 		}		
 		
@@ -463,7 +477,9 @@ package laya.display {
 		public function set height(value:Number):void {
 			if (this._height !== value) {
 				this._height = value;
-				repaint();
+                _setHeight(texture, value);
+				_setTranformChange();
+				//repaint();
 			}
 		}
 		
@@ -1236,7 +1252,7 @@ package laya.display {
 			}
 			var ele:Sprite = this;
 			globalNode ||= Laya.stage;
-			while (ele) {
+			while (ele && !ele.destroyed) {
 				if (ele == globalNode) break;
 				point = ele.toParentPoint(point);
 				ele = ele.parent as Sprite;
@@ -1260,7 +1276,7 @@ package laya.display {
 			var ele:Sprite = this;
 			var list:Array = [];
 			globalNode ||= Laya.stage;
-			while (ele) {
+			while (ele && !ele.destroyed) {
 				if (ele == globalNode) break;
 				list.push(ele);
 				ele = ele.parent as Sprite;
@@ -1318,6 +1334,16 @@ package laya.display {
 			point.y += pivotY;
 			return point;
 		}
+
+		/**
+		 * 将Stage坐标系坐标转换到本地坐标系。
+		 * @param point 父容器坐标点。
+		 * @return  转换后的点。
+		 */
+		public function fromStagePoint(point:Point):Point {
+			// TODO 没做
+			return point;
+		}		
 		
 		/**
 		 * <p>增加事件侦听器，以使侦听器能够接收事件通知。</p>
@@ -1393,15 +1419,20 @@ package laya.display {
 		 * @return	返回精灵对象本身。
 		 */
 		public function loadImage(url:String, complete:Handler = null):Sprite {
-			var tex:Texture = Loader.getRes(url);
-			if (!tex) {
-				tex = new Texture();
-				tex.load(url);
-				Loader.cacheRes(url, tex);
-			}
-			this.texture = tex;
-			if (!tex.getIsReady()) tex.once(Event.READY, null, loaded);
-			else loaded();
+			if (url == null){
+				this.texture = null;
+				loaded();
+			}else{
+				var tex:Texture = Loader.getRes(url);
+				if (!tex) {
+					tex = new Texture();
+					tex.load(url);
+					Loader.cacheRes(url, tex);
+				}
+				this.texture = tex;
+				if (!tex.getIsReady()) tex.once(Event.READY, null, loaded);
+				else loaded();
+			}			
 			
 			function loaded():void {
 				this.repaint(SpriteConst.REPAINT_ALL);
@@ -1661,11 +1692,13 @@ package laya.display {
 		public function set texture(value:Texture):void {
 			if (value is String) {
 				loadImage(value as String);
-			}else if (_texture != value) {
+			}else if (_texture != value) {				
 				_texture && _texture._removeReference();
 				_texture = value;
 				value && value._addReference();
 				_setTexture(value);
+				_setWidth(_texture, this.width);
+				_setHeight(_texture, this.height);
 				if (value) _renderType |= SpriteConst.TEXTURE;
 				else _renderType &= ~SpriteConst.TEXTURE;
 				_setRenderType(_renderType);
@@ -1703,8 +1736,7 @@ package laya.display {
 		/**@private */
 		public function _setTranformChange():void{
 			_tfChanged = true;
-			_renderType |= SpriteConst.TRANSFORM
-			_setRenderType(_renderType);
+			_renderType |= SpriteConst.TRANSFORM;
 			parentRepaint(SpriteConst.REPAINT_CACHE);
 		}
 		
@@ -1716,6 +1748,26 @@ package laya.display {
 		/**@private */
 		public function _setBorderStyleColor(x:Number, y:Number, width:Number, height:Number, fillColor:*, borderWidth:Number):void {
 			
+		}
+		
+		/**@private */
+		public function captureMouseEvent(exclusive:Boolean):void {
+			MouseManager.instance.setCapture(this,exclusive);
+		}
+		
+		/**@private */
+		public function releaseMouseEvent():void {
+			MouseManager.instance.releaseCapture();
+		}
+		
+		public function set drawCallOptimize(value:Boolean):void
+		{
+			_setBit(Const.DRAWCALL_OPTIMIZE, value);
+		}
+		
+		public function get drawCallOptimize():Boolean
+		{
+			return _getBit(Const.DRAWCALL_OPTIMIZE);
 		}
 	}
 }

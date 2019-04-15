@@ -1,6 +1,7 @@
 package laya.d3.resource.models {
 	import laya.d3.core.BufferState;
 	import laya.d3.core.GeometryElement;
+	import laya.d3.core.SkinnedMeshRenderer;
 	import laya.d3.core.SkinnedMeshSprite3D;
 	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.core.render.SubMeshRenderElement;
@@ -46,8 +47,6 @@ package laya.d3.resource.models {
 		public var _vertexBuffer:VertexBuffer3D;
 		/**@private [只读]*/
 		public var _indexBuffer:IndexBuffer3D;
-		/** @private */
-		public var _bufferState:BufferState = new BufferState();
 		
 		/**
 		 * 创建一个 <code>SubMesh</code> 实例。
@@ -71,14 +70,19 @@ package laya.d3.resource.models {
 		 * @inheritDoc
 		 */
 		override public function _render(state:RenderContext3D):void {
-			_bufferState.bind();
-			var skinAnimationDatas:Vector.<Float32Array> = (state.renderElement as SubMeshRenderElement).skinnedDatas;
-			var boneIndicesListCount:int = _boneIndicesList.length;
-			var shader:ShaderInstance = state.shader;
-			for (var i:int = 0; i < boneIndicesListCount; i++) {
-				(skinAnimationDatas) && (shader.uploadCustomUniform(SkinnedMeshSprite3D.BONES, skinAnimationDatas[i]));
-				LayaGL.instance.drawElements(WebGLContext.TRIANGLES, _subIndexBufferCount[i], WebGLContext.UNSIGNED_SHORT, _subIndexBufferStart[i] * 2);
+			_mesh._bufferState.bind();
+			var skinnedDatas:Vector.<Vector.<Float32Array>> = (state.renderElement.render as SkinnedMeshRenderer)._skinnedData;
+			if (skinnedDatas) {
+				var subSkinnedDatas:Vector.<Float32Array> = skinnedDatas[_indexInMesh];
+				var boneIndicesListCount:int = _boneIndicesList.length;
+				for (var i:int = 0; i < boneIndicesListCount; i++) {
+					state.shader.uploadCustomUniform(SkinnedMeshSprite3D.BONES, subSkinnedDatas[i]);
+					LayaGL.instance.drawElements(WebGLContext.TRIANGLES, _subIndexBufferCount[i], WebGLContext.UNSIGNED_SHORT, _subIndexBufferStart[i] * 2);
+				}
+			} else {
+				LayaGL.instance.drawElements(WebGLContext.TRIANGLES, _indexCount, WebGLContext.UNSIGNED_SHORT, _indexStart * 2);
 			}
+			
 			Stat.renderBatch++;
 			Stat.trianglesFaces += _indexCount / 3;
 		}
@@ -97,9 +101,7 @@ package laya.d3.resource.models {
 			if (_destroyed)
 				return;
 			super.destroy();
-			_bufferState.destroy();
 			_indexBuffer.destroy();
-			_bufferState = null;
 			_indexBuffer = null;
 			_mesh = null;
 			_boneIndicesList = null;

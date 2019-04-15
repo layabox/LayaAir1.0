@@ -39,6 +39,16 @@ package laya.events {
 		private static var _isTouchRespond:Boolean;
 		public var _event:Event = new Event();
 		private var _stage:Stage;
+		
+		/** @private 希望capture鼠标事件的对象。*/
+		private var _captureSp:Sprite = null; 				
+		/** @private 现在不支持直接把绝对坐标转到本地坐标，只能一级一级做下去，因此记录一下这个链*/
+		private var _captureChain:Vector.<Sprite> = new Vector.<Sprite>();
+		/** @private capture对象独占消息 */
+		private var _captureExlusiveMode:Boolean = false; 
+		/** @private 在发送事件的过程中，是否发送给了_captureSp */
+		private var _hitCaputreSp:Boolean = false; 
+		
 		private var _matrix:Matrix = new Matrix();
 		private var _point:Point = new Point();
 		private var _rect:Rectangle = new Rectangle();
@@ -139,10 +149,12 @@ package laya.events {
 			_this._target = null;
 			
 			_point.setTo(e.pageX || e.clientX, e.pageY || e.clientY);
-			_stage._canvasTransform.invertTransformPoint(_point);
+			if (_stage._canvasTransform ) {
+				_stage._canvasTransform.invertTransformPoint(_point);
+				_this.mouseX = _point.x;
+				_this.mouseY = _point.y;
+			}
 			
-			_this.mouseX = _point.x;
-			_this.mouseY = _point.y;
 			_this._event.touchId = e.identifier || 0;
 			_tTouchID = _this._event.touchId;
 			
@@ -174,7 +186,7 @@ package laya.events {
 			if (Laya.stage.focus && Laya.stage.focus["focus"] && !Laya.stage.focus.contains(_target)) {
 				// 从UI Input组件中取得Input引用
 				// _tf 是TextInput的属性
-				// var pre_input:* = Laya.stage.focus['_tf'] || Laya.stage.focus;
+				var pre_input:* = Laya.stage.focus['_tf'] || Laya.stage.focus;
 				// var new_input:Input = ele['_tf'] || ele;
 				
 				// 新的焦点是Input的情况下，不需要blur；
@@ -182,7 +194,7 @@ package laya.events {
 				// if (new_input is Input && new_input.multiline == pre_input.multiline)
 					// pre_input['_focusOut']();
 				// else
-					// pre_input.focus = false;
+					pre_input.focus = false;
 			}
 			TouchManager.I.onMouseDown(ele, _tTouchID, _isLeftMouse);
 		}
@@ -219,6 +231,13 @@ package laya.events {
 						if (check(child, mouseX, mouseY, callBack)) return true;
 					}
 				}
+				// 检查逻辑子对象
+				for (i = sp._extUIChild.length - 1; i >= 0; i--) {
+					var c:Sprite = sp._extUIChild[i];
+					if (!c.destroyed && c._mouseState > 1 && c._visible) {
+						if (check(c, mouseX, mouseY, callBack)) return true;
+					}
+				}
 			}
 			
 			//避免重复进行碰撞检测，考虑了判断条件的命中率。
@@ -227,6 +246,9 @@ package laya.events {
 			if (isHit) {
 				_target = sp;
 				callBack.call(this, sp);
+				if (_target == _hitCaputreSp) {
+					_hitCaputreSp = true;
+				}
 			} else if (callBack === onMouseUp && sp === _stage) {
 				//如果stage外mouseUP
 				_target = _stage;
@@ -259,6 +281,69 @@ package laya.events {
 			return isHit;
 		}
 		
+		
+		private function _checkAllBaseUI(mousex:Number, mousey:Number, callback:Function):Boolean {
+			var ret:Boolean = handleExclusiveCapture(mouseX, mouseY, callback);
+			if (ret) return true;
+			ret = check(_stage, mouseX, mouseY, callback) ;
+			//ret = check3DUI(mousex,mousey,callback) || ret;		//在这里调结果不对，好像不会调用click
+			return handleCapture(mouseX, mouseY, callback)||ret;
+		}
+		
+		/**
+		 * 处理3d界面。
+		 * @param	mousex
+		 * @param	mousey
+		 * @param	callback
+		 * @return
+		 */
+		public function check3DUI(mousex:Number, mousey:Number, callback:Function):Boolean {
+			var uis:Vector.<Sprite> = _stage._3dUI;
+			var i:int = 0;
+			var ret:Boolean = false;
+			for (; i < uis.length; i++) {
+				var curui:Sprite = uis[i];
+				_stage._curUIBase = curui;
+				if(!curui.destroyed && curui._mouseState > 1 && curui._visible){
+					ret = ret || check(curui, mouseX, mouseY, callback);
+				}
+			}
+			_stage._curUIBase = _stage;
+			return ret;
+		}
+		
+		public function handleExclusiveCapture(mousex:Number, mousey:Number, callback:Function):Boolean {
+			if (_captureExlusiveMode && _captureSp && _captureChain.length > 0) {
+				var cursp:Sprite;
+				// 坐标转到capture对象的相对坐标
+				_point.setTo(mousex, mousey);
+				for (var i:int = 0; i < _captureChain.length; i++) {
+					cursp = _captureChain[i];
+					cursp.fromParentPoint(_point);
+				}
+				_target = cursp;
+				callback.call(this, cursp);
+				return true;
+			}
+			return false;
+		}
+		
+		public function handleCapture(mousex:Number, mousey:Number, callback:Function):Boolean {
+			if (!_hitCaputreSp && _captureSp && _captureChain.length > 0) {
+				var cursp:Sprite;
+				// 坐标转到capture对象的相对坐标
+				_point.setTo(mousex, mousey);
+				for (var i:int = 0; i < _captureChain.length; i++) {
+					cursp = _captureChain[i];
+					cursp.fromParentPoint(_point);
+				}
+				_target = cursp;
+				callback.call(this, cursp);
+				return true;
+			}
+			return false;
+		}
+		
 		/**
 		 * 执行事件处理。
 		 */
@@ -273,29 +358,29 @@ package laya.events {
 			case 'mousedown': 
 				_touchIDs[0] = _id++;
 				if (!_isTouchRespond) {
-					_this._isLeftMouse = evt.button === 0;
-					_this.initEvent(evt);
-					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
+					_isLeftMouse = evt.button === 0;
+					initEvent(evt);
+					_checkAllBaseUI( mouseX, mouseY, onMouseDown);
 				} else
 					_isTouchRespond = false;
 				break;
 			case 'mouseup': 
-				_this._isLeftMouse = evt.button === 0;
-				_this.initEvent(evt);
-				_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+				_isLeftMouse = evt.button === 0;
+				initEvent(evt);
+				_checkAllBaseUI( mouseX, mouseY, onMouseUp);
 				break;
 			case 'mousemove': 
 				if ((Math.abs(_prePoint.x - evt.clientX) + Math.abs(_prePoint.y - evt.clientY)) >= mouseMoveAccuracy) {
 					_prePoint.x = evt.clientX;
 					_prePoint.y = evt.clientY;
-					_this.initEvent(evt);
-					_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
-						//						_this.checkMouseOut();
+					initEvent(evt);
+					_checkAllBaseUI(mouseX, mouseY, onMouseMove);
+						//						checkMouseOut();
 				}
 				break;
 			case "touchstart": 
 				_isTouchRespond = true;
-				_this._isLeftMouse = true;
+				_isLeftMouse = true;
 				var touches:Array = evt.changedTouches;
 				for (i = 0, n = touches.length; i < n; i++) {
 					touch = touches[i];
@@ -305,8 +390,8 @@ package laya.events {
 						//200次点击清理一下id资源
 						if (_id % 200 === 0) _touchIDs = {};
 						_touchIDs[touch.identifier] = _id++;
-						_this.initEvent(touch, evt);
-						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseDown);
+						initEvent(touch, evt);
+						_checkAllBaseUI(mouseX, mouseY, onMouseDown);
 					}
 				}
 				
@@ -314,19 +399,19 @@ package laya.events {
 			case "touchend": 
 			case "touchcancel":
 				_isTouchRespond = true;
-				_this._isLeftMouse = true;
+				_isLeftMouse = true;
 				var touchends:Array = evt.changedTouches;
 				for (i = 0, n = touchends.length; i < n; i++) {
 					touch = touchends[i];
 					//是否禁用多点触控
 					if (multiTouchEnabled || touch.identifier == _curTouchID) {
 						_curTouchID = NaN;
-						_this.initEvent(touch, evt);
+						initEvent(touch, evt);
 						var isChecked:Boolean;
-						isChecked = _this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseUp);
+						isChecked = _checkAllBaseUI( mouseX, mouseY, onMouseUp);
 						if (!isChecked)
 						{
-							_this.onMouseUp(null);
+							onMouseUp(null);
 						}
 					}
 				}
@@ -338,27 +423,49 @@ package laya.events {
 					touch = touchemoves[i];
 					//是否禁用多点触控
 					if (multiTouchEnabled || touch.identifier == _curTouchID) {
-						_this.initEvent(touch, evt);
-						_this.check(_this._stage, _this.mouseX, _this.mouseY, _this.onMouseMove);
+						initEvent(touch, evt);
+						_checkAllBaseUI( mouseX, mouseY, onMouseMove);
 					}
 				}
 				break;
 			case "wheel": 
 			case "mousewheel": 
 			case "DOMMouseScroll": 
-				_this.checkMouseWheel(evt);
+				checkMouseWheel(evt);
 				break;
 			case "mouseout": 
-				//_this._stage.event(Event.MOUSE_OUT, _this._event.setTo(Event.MOUSE_OUT, _this._stage, _this._stage));
+				//_stage.event(Event.MOUSE_OUT, _event.setTo(Event.MOUSE_OUT, _stage, _stage));
 				TouchManager.I.stageMouseOut();
 				break;
 			case "mouseover": 
-				_this._stage.event(Event.MOUSE_OVER, _this._event.setTo(Event.MOUSE_OVER, _this._stage, _this._stage));
+				_stage.event(Event.MOUSE_OVER, _event.setTo(Event.MOUSE_OVER, _stage, _stage));
 				break;
 			}
-				
-			
-
+		}
+		
+		/**
+		 * 
+		 * @param	sp
+		 * @param	exlusive  是否是独占模式
+		 */
+		public function setCapture(sp:Sprite, exclusive:Boolean = false):void {
+			_captureSp = sp;
+			_captureExlusiveMode = exclusive;
+			_captureChain.length = 0;
+			_captureChain.push(sp);
+			var cursp:Sprite = sp;
+			while (true) {
+				if (cursp == Laya.stage) break;
+				if (cursp == Laya.stage._curUIBase) break;
+				cursp = cursp.parent as Sprite;
+				if (!cursp) break;
+				_captureChain.splice(0, 0, cursp);
+			}
+		}
+		
+		public function releaseCapture():void {
+			console.log('release capture');
+			_captureSp = null;
 		}
 	}
 }

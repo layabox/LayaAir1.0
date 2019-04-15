@@ -1,8 +1,5 @@
 package laya.d3.physics {
-	import laya.d3.component.SimpleSingletonList;
 	import laya.d3.component.SingletonList;
-	import laya.d3.core.render.BaseRender;
-	import laya.resource.ISingletonElement;
 	
 	/**
 	 * <code>PhysicsUpdateList</code> 类用于实现物理更新队列。
@@ -24,6 +21,20 @@ package laya.d3.physics {
 				throw "PhysicsUpdateList:element has  in  PhysicsUpdateList.";
 			_add(element);
 			element._inPhysicUpdateListIndex = length++;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function remove(element:PhysicsComponent):void {
+			var index:int = element._inPhysicUpdateListIndex;
+			length--;
+			if (index !== length) {
+				var end:* = elements[length];
+				elements[index] = end;
+				end._inPhysicUpdateListIndex = index;
+			}
+			element._inPhysicUpdateListIndex = -1;
 		}
 	
 	}

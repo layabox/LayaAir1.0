@@ -2,6 +2,7 @@ package laya.d3.core.particleShuriKen.module.shape {
 	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.Rand;
+	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
 	
 	/**
@@ -27,22 +28,22 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @inheritDoc
 		 */
 		override protected function _getShapeBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] =minE[2]= -radius;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[1] = radius;
-			maxE[2] = 0;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y =min.z= -radius;
+			var max:Vector3 = boundBox.max;
+			max.x = max.y = radius;
+			max.z = 0;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] =-1;
-			minE[2]= 0;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[1] =maxE[2]= 1;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y =-1;
+			min.z= 0;
+			var max:Vector3 = boundBox.max;
+			max.x = max.y =max.z= 1;
 		}
 		
 		/**
@@ -51,8 +52,6 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @param	direction 粒子方向。
 		 */
 		override public function generatePositionAndDirection(position:Vector3, direction:Vector3, rand:Rand = null, randomSeeds:Uint32Array = null):void {
-			var rpE:Float32Array = position.elements;
-			
 			if (rand) {
 				rand.seed = randomSeeds[16];
 				if (emitFromShell)
@@ -69,8 +68,8 @@ package laya.d3.core.particleShuriKen.module.shape {
 			
 			Vector3.scale(position, radius, position);
 			
-			var z:Number = rpE[2];
-			(z < 0.0) && (rpE[2] = z * -1.0);
+			var z:Number = position.z;
+			(z < 0.0) && (position.z = z * -1.0);
 			
 			if (randomDirection) {
 				if (rand) {

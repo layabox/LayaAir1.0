@@ -3444,8 +3444,8 @@ var LayoutFuns=(function(){
 
 	LayoutFuns.clearItemRelativeInfo=function(item){
 		var Nan="NaN";
-		item.getLayout().left=Nan;
-		item.getLayout().right=Nan;
+		item.left=Nan;
+		item.right=Nan;
 	}
 
 	LayoutFuns.prepareForLayoutWidth=function(totalWidth,items){
@@ -7802,8 +7802,9 @@ var ColorTool=(function(){
 		return rst;
 	}
 
-	ColorTool.getRGBStr=function(rgb){
-		return "#"+ColorTool.getColorBit(rgb[0])+ColorTool.getColorBit(rgb[1])+ColorTool.getColorBit(rgb[2]);
+	ColorTool.getRGBStr=function(rgb,coefficient){
+		(coefficient===void 0)&& (coefficient=1);
+		return "#"+ColorTool.getColorBit(rgb[0] *coefficient)+ColorTool.getColorBit(rgb[1] *coefficient)+ColorTool.getColorBit(rgb[2] *coefficient);
 	}
 
 	ColorTool.traseHSB=function(hsb){

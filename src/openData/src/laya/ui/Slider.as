@@ -189,8 +189,12 @@ package laya.ui {
 			_tx = Laya.stage.mouseX;
 			_ty = Laya.stage.mouseY;
 			
-			var pow:Number = Math.pow(10, (_tick + "").length - 1);
-			_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			if (_tick != 0)
+			{
+				var pow:Number = Math.pow(10, (_tick + "").length - 1);
+				_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			}
+			
 			if (_value != oldValue) {
 				sendChangeEvent();
 			}
@@ -242,6 +246,7 @@ package laya.ui {
 			} 
 			setBarPoint();
 			callLater(changeValue);
+			_sizeChanged();
 			event(Event.LOADED);
 		}
 		
@@ -321,9 +326,10 @@ package laya.ui {
 		 * 改变滑块的位置值。
 		 */
 		public function changeValue():void {
-			//_value = Math.round(_value / _tick) * _tick;			
-			var pow:Number = Math.pow(10, (_tick + "").length - 1);
-			_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			if (tick != 0){
+				var pow:Number = Math.pow(10, (_tick + "").length - 1);
+				_value = Math.round(Math.round(_value / _tick) * _tick * pow) / pow;
+			}
 			
 			_value = _value > _max ? _max : _value < _min ? _min : _value;
 			var num:Number = _max - _min;

@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec3 a_Position;
 attribute vec3 a_OffsetVector;
 attribute vec4 a_Color;
@@ -140,4 +142,5 @@ void main()
 	#endif
 	
 	gl_Position = u_Projection * u_View * vec4(a_Position + a_OffsetVector * getCurWidth(normalizeTime),1.0);
+	gl_Position=remapGLPositionZ(gl_Position);
 }

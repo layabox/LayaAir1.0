@@ -368,8 +368,11 @@ package laya.resource {
 		 */
 		public function recoverBitmap():void {
 			var url:String=_bitmap.url;
-			if (!_destroyed && (!_bitmap || _bitmap.destroyed) && url)
-				load(url);
+			if (!_destroyed && (!_bitmap || _bitmap.destroyed) && url){
+				Laya.loader.load(url, Handler.create(this, function(bitmap:*):void{
+					_bitmap = bitmap;
+				}), null, "htmlimage", 1, false, null, true);	
+			}
 		}
 		
 		/**
@@ -384,11 +387,13 @@ package laya.resource {
 		/**
 		 * 销毁纹理。
 		 */
-		public function destroy():void {
+		public function destroy(force:Boolean=false):void {
 			if (!_destroyed) {
 				_destroyed = true;
 				if (bitmap) {
 					bitmap._removeReference(_referenceCount);
+					if (bitmap.referenceCount=== 0&&force)
+						bitmap.destroy();
 					bitmap = null;
 				}
 				if (url && this === Laya.loader.getRes(url))

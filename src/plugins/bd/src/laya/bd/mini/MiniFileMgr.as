@@ -104,7 +104,15 @@ package laya.bd.mini {
 				if (data.statusCode === 200)
 					readFile(data.tempFilePath, encoding, callBack, readyUrl,isSaveFile,fileType,isAutoClear);
 				else
-					callBack != null && callBack.runWith([1, data]);
+				{
+					if(data.statusCode === 403)
+					{
+						callBack != null && callBack.runWith([0, fileUrl]);//修复本地加载非本地列表的配置文件处理
+					}else
+					{
+						callBack != null && callBack.runWith([1, data]);
+					}
+				}
 			}, fail: function(data:Object):void {
 				callBack != null && callBack.runWith([1, data]);
 			}});
@@ -160,7 +168,13 @@ package laya.bd.mini {
 						callBack != null && callBack.runWith([0, data.tempFilePath]);
 				}else
 				{
-					callBack != null && callBack.runWith([1, data]);//修复下载文件返回非200状态码的bug
+					if(data.statusCode === 403)
+					{
+						callBack != null && callBack.runWith([0, fileUrl]);//修复本地加载非本地列表的配置文件处理
+					}else
+					{
+						callBack != null && callBack.runWith([1, data]);
+					}
 				}
 			}, fail: function(data:Object):void {
 				callBack != null && callBack.runWith([1, data]);

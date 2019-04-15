@@ -30,28 +30,28 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @inheritDoc
 		 */
 		override protected function _getShapeBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] =-x * 0.5;
-			minE[1] =-y * 0.5;
-			minE[2] =-z * 0.5;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] =x * 0.5;
-			maxE[1] =y * 0.5;
-			maxE[2] =z * 0.5;
+			var min:Vector3 = boundBox.min;
+			min.x =-x * 0.5;
+			min.y =-y * 0.5;
+			min.z =-z * 0.5;
+			var max:Vector3 = boundBox.max;
+			max.x =x * 0.5;
+			max.y =y * 0.5;
+			max.z =z * 0.5;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] =0.0;
-			minE[1] =0.0;
-			minE[2] =0.0;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] =0.0;
-			maxE[1] =1.0;
-			maxE[2] =0.0;
+			var min:Vector3 = boundBox.min;
+			min.x =0.0;
+			min.y =0.0;
+			min.z =0.0;
+			var max:Vector3 = boundBox.max;
+			max.x =0.0;
+			max.y =1.0;
+			max.z =0.0;
 		}
 		
 		/**
@@ -60,8 +60,6 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @param	direction 粒子方向。
 		 */
 		override public function generatePositionAndDirection(position:Vector3, direction:Vector3, rand:Rand = null, randomSeeds:Uint32Array = null):void {
-			var rpE:Float32Array = position.elements;
-			var rdE:Float32Array = direction.elements;
 			if (rand) {
 				rand.seed = randomSeeds[16];
 				ShapeUtils._randomPointInsideHalfUnitBox(position, rand);
@@ -69,9 +67,9 @@ package laya.d3.core.particleShuriKen.module.shape {
 			} else {
 				ShapeUtils._randomPointInsideHalfUnitBox(position);
 			}
-			rpE[0] = x * rpE[0];
-			rpE[1] = y * rpE[1];
-			rpE[2] = z * rpE[2];
+			position.x = x * position.x;
+			position.y = y * position.y;
+			position.z = z * position.z;
 			if (randomDirection) {
 				if (rand) {
 					rand.seed = randomSeeds[17];
@@ -81,9 +79,9 @@ package laya.d3.core.particleShuriKen.module.shape {
 					ShapeUtils._randomPointUnitSphere(direction);
 				}
 			} else {
-				rdE[0] = 0.0;
-				rdE[1] = 0.0;
-				rdE[2] = 1.0;
+				direction.x = 0.0;
+				direction.y = 0.0;
+				direction.z = 1.0;
 			}
 		}
 		

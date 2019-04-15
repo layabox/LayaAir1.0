@@ -9,11 +9,12 @@ package laya.webgl.resource {
 		//TODO:coverage
 		public override function getWidth(font:String, str:String):Number {
 			if (!window.conchTextCanvas) return 0;
-			if (lastFont != font) {
+			//TODO 先取消判断，保证字体信息一致
+			//if (lastFont != font) { 
 				window.conchTextCanvas.font	= font;
 				lastFont = font;
 				//console.log('use font ' + font);
-			}					
+			//}					
 			//getTextBitmapData
 			return window.conchTextCanvas.measureText(str).width;
 		}
@@ -34,10 +35,12 @@ package laya.webgl.resource {
 
 			if (!window.conchTextCanvas) return null;
 			//window.conchTextCanvas.getTextBitmapData();
-			if(lastFont!=font){
+			
+			//TODO 先取消判断，保证字体信息一致
+			//if(lastFont!=font){
 				window.conchTextCanvas.font	= font;
 				lastFont = font;
-			}						
+			//}						
 			var w:int = size.width = window.conchTextCanvas.measureText(char).width;
 			var h:int = size.height ;
 			w += (margin_left + margin_right);

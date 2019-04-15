@@ -1,4 +1,6 @@
 package laya.d3.component {
+	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector3;
 	
 	/**
 	 * @private
@@ -49,33 +51,33 @@ package laya.d3.component {
 					crossFixedValue = pro[proPat[m]];
 					break;
 				case 1: 
-					var locPosE:Float32Array = pro.localPosition.elements;
-					crossFixedValue || (crossFixedValue = new Float32Array(3));
-					crossFixedValue[0] = locPosE[0];
-					crossFixedValue[1] = locPosE[1];
-					crossFixedValue[2] = locPosE[2];
+					var locPos:Vector3 = pro.localPosition;
+					crossFixedValue || (crossFixedValue = new Vector3());
+					crossFixedValue.x = locPos.x;
+					crossFixedValue.y = locPos.y;
+					crossFixedValue.z = locPos.z;
 					break;
 				case 2: 
-					var locRotE:Float32Array = pro.localRotation.elements;
-					crossFixedValue || (crossFixedValue = new Float32Array(4));
-					crossFixedValue[0] = locRotE[0];
-					crossFixedValue[1] = locRotE[1];
-					crossFixedValue[2] = locRotE[2];
-					crossFixedValue[3] = locRotE[3];
+					var locRot:Quaternion = pro.localRotation;
+					crossFixedValue || (crossFixedValue = new Quaternion());
+					crossFixedValue.x = locRot.x;
+					crossFixedValue.y = locRot.y;
+					crossFixedValue.z = locRot.z;
+					crossFixedValue.w = locRot.w;
 					break;
 				case 3: 
-					var locScaE:Float32Array = pro.localScale.elements;
-					crossFixedValue || (crossFixedValue = new Float32Array(3));
-					crossFixedValue[0] = locScaE[0];
-					crossFixedValue[1] = locScaE[1];
-					crossFixedValue[2] = locScaE[2];
+					var locSca:Vector3 = pro.localScale;
+					crossFixedValue || (crossFixedValue = new Vector3());
+					crossFixedValue.x = locSca.x;
+					crossFixedValue.y = locSca.y;
+					crossFixedValue.z = locSca.z;
 					break;
 				case 4: 
-					var locEulE:Float32Array = pro.localRotationEuler.elements;
-					crossFixedValue || (crossFixedValue = new Float32Array(3));
-					crossFixedValue[0] = locEulE[0];
-					crossFixedValue[1] = locEulE[1];
-					crossFixedValue[2] = locEulE[2];
+					var locEul:Vector3 = pro.localRotationEuler;
+					crossFixedValue || (crossFixedValue = new Vector3());
+					crossFixedValue.x = locEul.x;
+					crossFixedValue.y = locEul.y;
+					crossFixedValue.z = locEul.z;
 					break;
 				default: 
 					throw "Animator:unknown type.";

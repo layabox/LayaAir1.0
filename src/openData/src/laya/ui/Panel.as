@@ -8,7 +8,6 @@ package laya.ui {
 	 * <code>Panel</code> 是一个面板容器类。
 	 */
 	public class Panel extends Box {
-		
 		/**@private */
 		protected var _content:Box;
 		/**@private */
@@ -19,6 +18,8 @@ package laya.ui {
 		protected var _scrollChanged:Boolean;
 		/**@private */
 		protected var _usedCache:String = null;
+		/**@private */
+		protected var _elasticEnabled:Boolean = false;
 		
 		/**
 		 * 创建一个新的 <code>Panel</code> 类实例。
@@ -160,7 +161,7 @@ package laya.ui {
 			var max:Number = 0;
 			for (var i:int = _content.numChildren - 1; i > -1; i--) {
 				var comp:Sprite = _content.getChildAt(i) as Sprite;
-				max = Math.max(comp._x + comp.width * comp.scaleX, max);
+				max = Math.max(comp._x + comp.width * comp.scaleX - comp.pivotX, max);
 			}
 			return max;
 		}
@@ -173,7 +174,7 @@ package laya.ui {
 			var max:Number = 0;
 			for (var i:int = _content.numChildren - 1; i > -1; i--) {
 				var comp:Sprite = _content.getChildAt(i) as Sprite;
-				max = Math.max(comp._y + comp.height * comp.scaleY, max);
+				max = Math.max(comp._y + comp.height * comp.scaleY - comp.pivotY, max);
 			}
 			return max;
 		}
@@ -219,6 +220,7 @@ package laya.ui {
 				super.addChild(_vScrollBar = new VScrollBar());
 				_vScrollBar.on(Event.CHANGE, this, onScrollBarChange, [_vScrollBar]);
 				_vScrollBar.target = _content;
+				_vScrollBar.elasticDistance = _elasticEnabled ? 200 : 0;
 				_setScrollChanged();
 			}
 			_vScrollBar.skin = value;
@@ -236,6 +238,7 @@ package laya.ui {
 				super.addChild(_hScrollBar = new HScrollBar());
 				_hScrollBar.on(Event.CHANGE, this, onScrollBarChange, [_hScrollBar]);
 				_hScrollBar.target = _content;
+				_hScrollBar.elasticDistance = _elasticEnabled ? 200 : 0;
 				_setScrollChanged();
 			}
 			_hScrollBar.skin = value;
@@ -304,6 +307,21 @@ package laya.ui {
 			} else {
 				_hScrollBar && _hScrollBar.off(Event.START, this, onScrollStart);
 				_vScrollBar && _vScrollBar.off(Event.START, this, onScrollStart);
+			}
+		}
+		
+		/**是否开启橡皮筋效果*/
+		public function get elasticEnabled():Boolean {
+			return _elasticEnabled;
+		}
+		
+		public function set elasticEnabled(value:Boolean):void {
+			_elasticEnabled = value;
+			if (_vScrollBar) {
+				_vScrollBar.elasticDistance = value ? 200 : 0;
+			}
+			if (_hScrollBar) {
+				_hScrollBar.elasticDistance = value ? 200 : 0;
 			}
 		}
 		

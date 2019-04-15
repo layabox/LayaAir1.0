@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec4 a_Position;
 attribute vec3 a_Normal;
 attribute vec4 a_Tangent0;
@@ -33,4 +35,5 @@ void main()
 	
 	v_ViewDir = u_CameraPos - positionWorld.xyz;
 	gl_Position = position;
+	gl_Position=remapGLPositionZ(gl_Position);
 }

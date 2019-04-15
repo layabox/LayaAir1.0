@@ -14,8 +14,19 @@ package laya.renders {
 		/** @private 主画布。canvas和webgl渲染都用这个画布*/
 		public static var _mainCanvas:HTMLCanvas;
 		
+		public static var supportWebGLPlusCulling:Boolean = false;
+		public static var supportWebGLPlusAnimation:Boolean = false;
+		public static var supportWebGLPlusRendering:Boolean = false;
 		/**是否是加速器 只读*/
-		public static var isConchApp:Boolean=__JS__("(window.conch != null)");
+		public static var isConchApp:Boolean = false;
+		{
+			isConchApp = __JS__("(window.conch != null)");
+			if (isConchApp)  {
+				supportWebGLPlusCulling = true;
+				supportWebGLPlusAnimation = true;
+				supportWebGLPlusRendering = true;
+			}
+		}
 		/**是否是WebGL模式*/
 		public static var isWebGL:Boolean = false;
 		/** 表示是否是 3D 模式。*/

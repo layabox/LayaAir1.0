@@ -138,7 +138,7 @@ package laya.display {
 		/**@private */
 		private var _safariOffsetY:Number = 0;
 		/**@private */
-		private var _frameStartTime:Number;
+		private var _frameStartTime:Number = 0;
 		/**@private */
 		private var _previousOrientation:int = Browser.window.orientation;
 		/**@private */
@@ -147,6 +147,20 @@ package laya.display {
 		private var _isVisibility:Boolean;
 		/**@private webgl Color*/
 		public var _wgColor:Array = [0, 0, 0, 1];
+		/**@private */
+		public var _scene3Ds:Array=[];
+		
+		/**@private */
+		private var _globalRepaintSet:Boolean = false;		// 设置全局重画标志。这个是给IDE用的。IDE的Image无法在onload的时候通知对应的sprite重画。
+		/**@private */
+		private var _globalRepaintGet:Boolean = false;		// 一个get一个set是为了把标志延迟到下一帧的开始，防止部分对象接收不到。
+		/**@private */
+		public static var _dbgSprite:Sprite = new Sprite();
+		
+		/**@private */
+		public var _3dUI:Vector.<Sprite> = new Vector.<Sprite>();
+		/**@private */
+		public var _curUIBase:Sprite = null; 		// 给鼠标事件capture用的。用来找到自己的根。因为3d界面的根不是stage（界面链会被3d对象打断）
 		
 		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
@@ -159,6 +173,8 @@ package laya.display {
 			this._setBit(Const.ACTIVE_INHIERARCHY, true);
 			this._isFocused = true;
 			this._isVisibility = true;
+			
+			//this.drawCallOptimize=true;
 			
 			var window:* = Browser.window;
 			var _me:Stage = this;	//for TS 。 TS的_this是有特殊用途的
@@ -207,12 +223,12 @@ package laya.display {
 				// 处理屏幕旋转。旋转后收起输入法。
 				var orientation:* = Browser.window.orientation;
 				// if (orientation != null && orientation != _previousOrientation && _me._isInputting()) {
-					// Input["inputElement"].target.focus = false;
+				// 	Input["inputElement"].target.focus = false;
 				// }
 				_previousOrientation = orientation;
 				
 				// 弹出输入法不应对画布进行resize。
-				// if (_me._isInputting()) return;
+				if (_me._isInputting()) return;
 				
 				// Safari横屏工具栏偏移
 				if (Browser.onSafari)
@@ -234,9 +250,9 @@ package laya.display {
 		 * @private
 		 * 在移动端输入时，输入法弹出期间不进行画布尺寸重置。
 		 */
-		// private function _isInputting():Boolean {
-		// 	return (Browser.onMobile && Input.isInputting);
-		// }
+		private function _isInputting():Boolean {
+			return (Browser.onMobile);
+		}
 		
 		/**@inheritDoc */
 		override public function set width(value:Number):void {
@@ -418,6 +434,8 @@ package laya.display {
 			mat.d = _formatData(mat.d);
 			mat.tx = _formatData(mat.tx);
 			mat.ty = _formatData(mat.ty);
+			
+			this.transform = this.transform;
 			canvasStyle.transformOrigin = canvasStyle.webkitTransformOrigin = canvasStyle.msTransformOrigin = canvasStyle.mozTransformOrigin = canvasStyle.oTransformOrigin = "0px 0px 0px";
 			canvasStyle.transform = canvasStyle.webkitTransform = canvasStyle.msTransform = canvasStyle.mozTransform = canvasStyle.oTransform = "matrix(" + mat.toString() + ")";
 			//修正用户自行设置的偏移
@@ -576,6 +594,8 @@ package laya.display {
 		
 		/**@private */
 		public function _loop():Boolean {
+			_globalRepaintGet = _globalRepaintSet;
+			_globalRepaintSet = false;
 			render(Render._context, 0, 0);
 			return true;
 		}
@@ -609,29 +629,27 @@ package laya.display {
 		
 		/**@inheritDoc */
 		override public function render(context:Context, x:Number, y:Number):void {
+			//临时
+			_dbgSprite.graphics.clear();
+			
 			if (_frameRate === FRAME_SLEEP) {
 				var now:Number = Browser.now();
 				if (now - _frameStartTime >= 1000) _frameStartTime = now;
 				else return;
+			} else {
+				if (!this._visible) {
+					_renderCount++;
+					if (_renderCount % 5 === 0) {
+						CallLater.I._update();
+						Stat.loopCount++;
+						_updateTimers();
+					}
+					return;
+				}
+				_frameStartTime = Browser.now();
 			}
 			
 			_renderCount++;
-			
-			if (!this._visible) {
-				if (_renderCount % 5 === 0) {
-					CallLater.I._update();
-					Stat.loopCount++;
-					Laya.systemTimer._update();
-					Laya.startTimer._update();
-					Laya.physicsTimer._update();
-					Laya.updateTimer._update();
-					Laya.lateTimer._update();
-					Laya.timer._update();
-				}
-				return;
-			}
-			
-			_frameStartTime = Browser.now();
 			var frameMode:String = _frameRate === FRAME_MOUSE ? (((_frameStartTime - _mouseMoveTime) < 2000) ? FRAME_FAST : FRAME_SLOW) : _frameRate;
 			var isFastMode:Boolean = (frameMode !== FRAME_SLOW);
 			var isDoubleLoop:Boolean = (_renderCount % 2 === 0);
@@ -643,37 +661,36 @@ package laya.display {
 				Stat.loopCount++;
 				
 				if (!Render.isConchApp) {
-					//var sttm:Number = __JS__("Date.now()");
 					if (Render.isWebGL && renderingEnabled) {
+						for (var i:int = 0, n:int = _scene3Ds.length; i < n;i++)//更新3D场景,必须提出来,否则在脚本中移除节点会导致BUG
+							_scene3Ds[i]._update();
 						context.clear();
 						super.render(context, x, y);
 						Stat._show && Stat._sp && Stat._sp.render(context, x, y);
 					}
-					//var dt1:Number = __JS__("Date.now()") - sttm;
-					//PerfHUD.inst && PerfHUD.inst.updateValue(1, dt1);
 				}
 			}
 			
-			if (renderingEnabled && (isFastMode || !isDoubleLoop)) {
-				//sttm = 0;
-				//if (!Render.isConchApp) {
-				//sttm = __JS__("Date.now()");
-				//}
-				if (Render.isWebGL) {
-					RunDriver.clear(_bgColor);
-					context.flush();
-					VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
-				} else {
-					RunDriver.clear(_bgColor);
-					super.render(context, x, y);
-					Stat._show && Stat._sp && Stat._sp.render(context, x, y);
-					if (Render.isConchApp) context.gl.commit();
+			_dbgSprite.render(context, 0, 0);
+			
+			if (isFastMode || !isDoubleLoop) {
+				if (renderingEnabled) {
+					if (Render.isWebGL) {
+						RunDriver.clear(_bgColor);
+						context.flush();
+						VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
+					} else {
+						RunDriver.clear(_bgColor);
+						super.render(context, x, y);
+						Stat._show && Stat._sp && Stat._sp.render(context, x, y);
+						if (Render.isConchApp) context.gl.commit();
+					}
 				}
-				//if (!Render.isConchApp) {
-				//var dt:Number = __JS__("Date.now()") - sttm;
-				//PerfHUD.inst && PerfHUD.inst.updateValue(2, dt);
-				//}
+				_updateTimers();
 			}
+		}
+		
+		private function _updateTimers():void {
 			Laya.systemTimer._update();
 			Laya.startTimer._update();
 			Laya.physicsTimer._update();
@@ -686,34 +703,28 @@ package laya.display {
 			_renderCount++;
 			Stat.loopCount++;
 			if (!this._visible) {
-				if (_renderCount % 5 === 0) 
-				{
+				if (_renderCount % 5 === 0) {
 					CallLater.I._update();
 					Stat.loopCount++;
-					Laya.systemTimer._update();
-					Laya.startTimer._update();
-					Laya.physicsTimer._update();
-					Laya.updateTimer._update();
-					Laya.lateTimer._update();
-					Laya.timer._update();
+					_updateTimers();
+					CallLater.I._update();
 				}
 				return;
 			}
 			//update
+			/*
+			调用两次 CallLater.I._update();是有原因的，是因为在updateTimers中，可能又设置了CallLater
+			为了渲染同步所以调用两次
+			*/
 			CallLater.I._update();
-			Laya.systemTimer._update();
-			Laya.startTimer._update();
-			Laya.physicsTimer._update();
-			Laya.updateTimer._update();
-			Laya.lateTimer._update();
-			Laya.timer._update();
+			_updateTimers();
+			CallLater.I._update();
 			//render
-			if (renderingEnabled)
-			{
+			if (renderingEnabled) {
 				RunDriver.clear(_bgColor);
 				super.render(context, x, y);
 				Stat._show && Stat._sp && Stat._sp.render(context, x, y);
-				context.gl.commit();		
+				context.gl.commit();
 			}
 		}
 		
@@ -741,38 +752,29 @@ package laya.display {
 			}
 		}
 		
-		public function get frameRate():String 
-		{
-			if (!Render.isConchApp)
-			{
+		public function get frameRate():String {
+			if (!Render.isConchApp) {
 				return _frameRate;
-			}
-			else
-			{
+			} else {
 				return __JS__("this._frameRateNative");
 			}
 		}
 		
-		public function set frameRate(value:String):void 
-		{
-			if (!Render.isConchApp)
-			{
+		public function set frameRate(value:String):void {
+			if (!Render.isConchApp) {
 				_frameRate = value;
-			}
-			else
-			{
-				switch(value)
-				{
-				case FRAME_FAST:
+			} else {
+				switch (value) {
+				case FRAME_FAST: 
 					window.conch.config.setLimitFPS(60);
 					break;
-				case FRAME_MOUSE:
+				case FRAME_MOUSE: 
 					window.conch.config.setMouseFrame(2000);
 					break;
-				case FRAME_SLOW:
+				case FRAME_SLOW: 
 					window.conch.config.setSlowFrame(true);
 					break;
-				case FRAME_SLEEP:
+				case FRAME_SLEEP: 
 					window.conch.config.setLimitFPS(1);
 					break;
 				}
@@ -809,6 +811,34 @@ package laya.display {
 			} else if (document.webkitExitFullscreen) {
 				document.webkitExitFullscreen();
 			}
+		}
+		
+		/**@private */
+		public function isGlobalRepaint():Boolean {
+			return _globalRepaintGet;
+		}
+		
+		/**@private */
+		public function setGlobalRepaint():void {
+			_globalRepaintSet = true;
+		}
+		
+		/**@private */
+		public function add3DUI(uibase:Sprite):void {
+			var uiroot:Sprite = __JS__('uibase.rootView');
+			if (_3dUI.indexOf(uiroot) >= 0) return;
+			_3dUI.push(uiroot);
+		}
+		
+		/**@private */
+		public function remove3DUI(uibase:Sprite):Boolean {
+			var uiroot:Sprite = __JS__('uibase.rootView');
+			var p:int = _3dUI.indexOf(uiroot);
+			if (p >= 0) {
+				_3dUI.splice(p, 1);
+				return true;
+			}
+			return false;
 		}
 	}
 }

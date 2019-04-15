@@ -196,7 +196,7 @@ package laya.ui {
 				if (needClip) restore();
 				
 				//缓存命令
-				//if (autoCacheCmd && !Render.isConchApp) WeakObject.I.set(_key, this.cmds);
+				//if (autoCacheCmd) WeakObject.I.set(_key, this.cmds);
 			}
 			_repaint();
 		}

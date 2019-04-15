@@ -296,7 +296,7 @@ package laya.d3.shadowMap {
 			var sceneSV:ShaderData = _scene._shaderValues;
 			sceneSV.setVector(Scene3D.SHADOWDISTANCE, _shaderValueDistance);
 			sceneSV.setBuffer(Scene3D.SHADOWLIGHTVIEWPROJECT, _shaderValueLightVP);
-			sceneSV.setVector(Scene3D.SHADOWMAPPCFOFFSET, _shadowPCFOffset);
+			sceneSV.setVector2(Scene3D.SHADOWMAPPCFOFFSET, _shadowPCFOffset);
 			switch (_shadowMapCount) {
 			case 3: 
 				sceneSV.setTexture(Scene3D.SHADOWMAPTEXTURE1, cameras[1].renderTarget);
@@ -357,72 +357,72 @@ package laya.d3.shadowMap {
 				height = distance * halfTanValue;
 				width = height * aspectRatio;
 				
-				var temp:Float32Array = _frustumPos[i * 4 + 0].elements;
-				temp[0] = -width;// distance * 0.0 - height * 0.0 + width * -1.0
-				temp[1] = -height;//distance * 0.0 - height * 1.0 + width * 0.0
-				temp[2] = -distance;// distance * -1.0 - height * 0.0 + width * 0.0
+				var temp:* = _frustumPos[i * 4 + 0];
+				temp.x = -width;// distance * 0.0 - height * 0.0 + width * -1.0
+				temp.y = -height;//distance * 0.0 - height * 1.0 + width * 0.0
+				temp.z = -distance;// distance * -1.0 - height * 0.0 + width * 0.0
 				
-				temp = _frustumPos[i * 4 + 1].elements;
-				temp[0] = width;// distance * 0.0 - height * 0.0 - width * -1.0
-				temp[1] = -height;// distance * 0.0 - height * 1.0 - width * 0.0
-				temp[2] = -distance;//distance * -1.0 - height * 0.0 - width * 0.0
+				temp = _frustumPos[i * 4 + 1];
+				temp.x = width;// distance * 0.0 - height * 0.0 - width * -1.0
+				temp.y = -height;// distance * 0.0 - height * 1.0 - width * 0.0
+				temp.z = -distance;//distance * -1.0 - height * 0.0 - width * 0.0
 				
-				temp = _frustumPos[i * 4 + 2].elements;
-				temp[0] = -width;// distance * 0.0 + width * -1 + height * 0.0
-				temp[1] = height;// distance * 0.0 + width * 0.0 + height * 1.0
-				temp[2] = -distance;// distance * -1.0 + width * 0.0 + height * 0.0
+				temp = _frustumPos[i * 4 + 2];
+				temp.x = -width;// distance * 0.0 + width * -1 + height * 0.0
+				temp.y = height;// distance * 0.0 + width * 0.0 + height * 1.0
+				temp.z = -distance;// distance * -1.0 + width * 0.0 + height * 0.0
 				
-				temp = _frustumPos[i * 4 + 3].elements;
-				temp[0] = width;// distance * 0.0 - width * -1 + height * 0.0
-				temp[1] = height;// distance * 0.0 - width * 0.0 + height * 1.0
-				temp[2] = -distance;// distance * -1.0 - width * 0.0 + height * 0.0
+				temp = _frustumPos[i * 4 + 3];
+				temp.x = width;// distance * 0.0 - width * -1 + height * 0.0
+				temp.y = height;// distance * 0.0 - width * 0.0 + height * 1.0
+				temp.z = -distance;// distance * -1.0 - width * 0.0 + height * 0.0
 				
-				temp = _dimension[i].elements;
-				temp[0] = width;
-				temp[1] = height;
+				temp = _dimension[i];
+				temp.x = width;
+				temp.y = height;
 			}
 			
-			var d:Float32Array;
-			var min:Float32Array;
-			var max:Float32Array;
-			var center:Float32Array;
+			var d:Vector2;
+			var min:Vector3;
+			var max:Vector3;
+			var center:Vector3;
 			for (i = 1; i <= _shadowMapCount; i++) {
 				
-				d = _dimension[i].elements;
-				min = _boundingBox[i].min.elements;
+				d = _dimension[i];
+				min = _boundingBox[i].min;
 				
-				min[0] = -d[0];
-				min[1] = -d[1];
-				min[2] = -_spiltDistance[i];
+				min.x = -d.x;
+				min.y = -d.y;
+				min.z = -_spiltDistance[i];
 				
-				max = _boundingBox[i].max.elements;
-				max[0] = d[0];
-				max[1] = d[1];
-				max[2] = -_spiltDistance[i - 1];
+				max = _boundingBox[i].max;
+				max.x = d.x;
+				max.y = d.y;
+				max.z = -_spiltDistance[i - 1];
 				
-				center = _boundingSphere[i].center.elements;
-				center[0] = (min[0] + max[0]) * 0.5;
-				center[1] = (min[1] + max[1]) * 0.5;
-				center[2] = (min[2] + max[2]) * 0.5;
-				_boundingSphere[i].radius = Math.sqrt(Math.pow(max[0] - min[0], 2) + Math.pow(max[1] - min[1], 2) + Math.pow(max[2] - min[2], 2)) * 0.5;
+				center = _boundingSphere[i].center;
+				center.x = (min.x + max.x) * 0.5;
+				center.y = (min.y + max.y) * 0.5;
+				center.z = (min.z + max.z) * 0.5;
+				_boundingSphere[i].radius = Math.sqrt(Math.pow(max.x - min.x, 2) + Math.pow(max.y - min.y, 2) + Math.pow(max.z - min.z, 2)) * 0.5;
 			}
 			
-			min = _boundingBox[0].min.elements;
-			d = _dimension[_shadowMapCount].elements;
-			min[0] = -d[0];
-			min[1] = -d[1];
-			min[2] = -_spiltDistance[_shadowMapCount];
+			min = _boundingBox[0].min;
+			d = _dimension[_shadowMapCount];
+			min.x = -d.x;
+			min.y = -d.y;
+			min.z = -_spiltDistance[_shadowMapCount];
 			
-			max = _boundingBox[0].max.elements;
-			max[0] = d[0];
-			max[1] = d[1];
-			max[2] = -_spiltDistance[0];
+			max = _boundingBox[0].max;
+			max.x = d.x;
+			max.y = d.y;
+			max.z = -_spiltDistance[0];
 			
-			center = _boundingSphere[0].center.elements;
-			center[0] = (min[0] + max[0]) * 0.5;
-			center[1] = (min[1] + max[1]) * 0.5;
-			center[2] = (min[2] + max[2]) * 0.5;
-			_boundingSphere[0].radius = Math.sqrt(Math.pow(max[0] - min[0], 2) + Math.pow(max[1] - min[1], 2) + Math.pow(max[2] - min[2], 2)) * 0.5;
+			center = _boundingSphere[0].center;
+			center.x = (min.x + max.x) * 0.5;
+			center.y = (min.y + max.y) * 0.5;
+			center.z = (min.z + max.z) * 0.5;
+			_boundingSphere[0].radius = Math.sqrt(Math.pow(max.x - min.x, 2) + Math.pow(max.y - min.y, 2) + Math.pow(max.z - min.z, 2)) * 0.5;
 		}
 		
 		public function calcSplitFrustum(sceneCamera:BaseCamera):void {
@@ -469,29 +469,29 @@ package laya.d3.shadowMap {
 			var radius:Number = boundSphere.radius;
 			boundSphere.center.cloneTo(_tempLookAt3);
 			Vector3.transformV3ToV4(_tempLookAt3, cameraMatViewInv, _tempLookAt4);
-			var lookAt3Element:Float32Array = _tempLookAt3.elements;
-			var lookAt4Element:Float32Array = _tempLookAt4.elements;
-			lookAt3Element[0] = lookAt4Element[0];
-			lookAt3Element[1] = lookAt4Element[1];
-			lookAt3Element[2] = lookAt4Element[2];
-			var lightUpElement:Float32Array = _tempLightUp.elements;
+			var lookAt3Element:Vector3 = _tempLookAt3;
+			var lookAt4Element:Vector4 = _tempLookAt4;
+			lookAt3Element.x = lookAt4Element.x;
+			lookAt3Element.y = lookAt4Element.y;
+			lookAt3Element.z = lookAt4Element.z;
+			var lightUpElement:Vector3 = _tempLightUp;
 			sceneCamera.transform.worldMatrix.getForward(_tempVector30);
-			var sceneCameraDir:Float32Array = _tempVector30.elements;
-			lightUpElement[0] = sceneCameraDir[0];
-			lightUpElement[1] = 1.0;
-			lightUpElement[2] = sceneCameraDir[2];
+			var sceneCameraDir:Vector3 = _tempVector30;
+			lightUpElement.x = sceneCameraDir.x;
+			lightUpElement.y = 1.0;
+			lightUpElement.z = sceneCameraDir.z;
 			Vector3.normalize(_tempLightUp, _tempLightUp);
 			Vector3.scale(_globalParallelLightDir, boundSphere.radius * 4, _tempPos);
 			Vector3.subtract(_tempLookAt3, _tempPos, _tempPos);
 			var curLightCamera:Camera = cameras[_currentPSSM];
 			curLightCamera.transform.position = _tempPos;
 			curLightCamera.transform.lookAt(_tempLookAt3, _tempLightUp, false);
-			var tempMaxElements:Float32Array = _tempMax.elements;
-			var tempMinElements:Float32Array = _tempMin.elements;
-			tempMaxElements[0] = tempMaxElements[1] = tempMaxElements[2] = -100000.0;
-			tempMaxElements[3] = 1.0;
-			tempMinElements[0] = tempMinElements[1] = tempMinElements[2] = 100000.0;
-			tempMinElements[3] = 1.0;
+			var tempMax:Vector4 = _tempMax;
+			var tempMin:Vector4 = _tempMin;
+			tempMax.x = tempMax.y = tempMax.z = -100000.0;
+			tempMax.w = 1.0;
+			tempMin.x = tempMin.y = tempMin.z = 100000.0;
+			tempMin.w = 1.0;
 			/*
 			   var offSet:int; var offSet1:int; var offSet2:int;
 			   if (_currentPSSM == 0) {
@@ -522,42 +522,42 @@ package laya.d3.shadowMap {
 			   }
 			 */
 			Matrix4x4.multiply(curLightCamera.viewMatrix, cameraMatViewInv, _tempMatrix44);
-			var tempValueElement:Float32Array = _tempValue.elements;
+			var tempValueElement:Vector4 = _tempValue;
 			var corners:Vector.<Vector3> = new Vector.<Vector3>();
 			corners.length = 8;
 			_boundingBox[_currentPSSM].getCorners(corners);
 			for (var i:int = 0; i < 8; i++) {
-				var frustumPosElements:Float32Array = corners[i].elements;
-				tempValueElement[0] = frustumPosElements[0];
-				tempValueElement[1] = frustumPosElements[1];
-				tempValueElement[2] = frustumPosElements[2];
-				tempValueElement[3] = 1.0;
+				var frustumPosElements:Vector3 = corners[i];
+				tempValueElement.x = frustumPosElements.x;
+				tempValueElement.y = frustumPosElements.y;
+				tempValueElement.z = frustumPosElements.z;
+				tempValueElement.w = 1.0;
 				Vector4.transformByM4x4(_tempValue, _tempMatrix44, _tempValue);
-				tempMinElements[0] = (tempValueElement[0] < tempMinElements[0]) ? tempValueElement[0] : tempMinElements[0];
-				tempMinElements[1] = (tempValueElement[1] < tempMinElements[1]) ? tempValueElement[1] : tempMinElements[1];
-				tempMinElements[2] = (tempValueElement[2] < tempMinElements[2]) ? tempValueElement[2] : tempMinElements[2];
-				tempMaxElements[0] = (tempValueElement[0] > tempMaxElements[0]) ? tempValueElement[0] : tempMaxElements[0];
-				tempMaxElements[1] = (tempValueElement[1] > tempMaxElements[1]) ? tempValueElement[1] : tempMaxElements[1];
-				tempMaxElements[2] = (tempValueElement[2] > tempMaxElements[2]) ? tempValueElement[2] : tempMaxElements[2];
+				tempMin.x = (tempValueElement.x < tempMin.x) ? tempValueElement.x : tempMin.x;
+				tempMin.y = (tempValueElement.y < tempMin.y) ? tempValueElement.y : tempMin.y;
+				tempMin.z = (tempValueElement.z < tempMin.z) ? tempValueElement.z : tempMin.z;
+				tempMax.x = (tempValueElement.x > tempMax.x) ? tempValueElement.x : tempMax.x;
+				tempMax.y = (tempValueElement.y > tempMax.y) ? tempValueElement.y : tempMax.y;
+				tempMax.z = (tempValueElement.z > tempMax.z) ? tempValueElement.z : tempMax.z;
 			}
 			//现在tempValueElement变成了center
 			Vector4.add(_tempMax, _tempMin, _tempValue);
-			tempValueElement[0] *= 0.5;
-			tempValueElement[1] *= 0.5;
-			tempValueElement[2] *= 0.5;
-			tempValueElement[3] = 1;
+			tempValueElement.x *= 0.5;
+			tempValueElement.y *= 0.5;
+			tempValueElement.z *= 0.5;
+			tempValueElement.w = 1;
 			Vector4.transformByM4x4(_tempValue, curLightCamera.transform.worldMatrix, _tempValue);
 			var distance:Number = Math.abs(-_tempMax.z);
 			var farPlane:Number = distance > _maxDistance ? distance : _maxDistance;
 			//build light's view and project matrix
 			Vector3.scale(_globalParallelLightDir, farPlane, _tempPos);
-			var tempPosElement:Float32Array = _tempPos.elements;
-			tempPosElement[0] = tempValueElement[0] - tempPosElement[0];
-			tempPosElement[1] = tempValueElement[1] - tempPosElement[1];
-			tempPosElement[2] = tempValueElement[2] - tempPosElement[2];
+			var tempPosElement:Vector3 = _tempPos;
+			tempPosElement.x = tempValueElement.x - tempPosElement.x;
+			tempPosElement.y = tempValueElement.y - tempPosElement.y;
+			tempPosElement.z = tempValueElement.z - tempPosElement.z;
 			curLightCamera.transform.position = _tempPos;
 			curLightCamera.transform.lookAt(_tempLookAt3, _tempLightUp, false);
-			Matrix4x4.createOrthoOffCenterRH(tempMinElements[0], tempMaxElements[0], tempMinElements[1], tempMaxElements[1], 1.0, farPlane + 0.5 * (tempMaxElements[2] - tempMinElements[2]), curLightCamera.projectionMatrix);
+			Matrix4x4.createOrthoOffCenter(tempMin.x, tempMax.x, tempMin.y, tempMax.y, 1.0, farPlane + 0.5 * (tempMax.z - tempMin.z), curLightCamera.projectionMatrix);
 			
 			//calc frustum
 			var projectView:Matrix4x4 = curLightCamera.projectionViewMatrix;

@@ -38,6 +38,9 @@ package laya.display {
 		/**@private 子对象集合，请不要直接修改此对象。*/
 		public var _children:Array = ARRAY_EMPTY;
 		
+		/**@private 仅仅用来处理输入事件的,并不是真正意义上的子对象 */
+		public var _extUIChild:Array = ARRAY_EMPTY;
+		
 		/**@private 父节点对象*/
 		public var _parent:Node = null;
 		
@@ -191,6 +194,25 @@ package laya.display {
 			}
 			
 			return node;
+		}
+		
+		public function addInputChild(node:Node):Node {
+			if (_extUIChild == ARRAY_EMPTY) {
+				_extUIChild = [node];
+			} else {
+				if (_extUIChild.indexOf(node) >= 0) {
+					return null;
+				}
+				_extUIChild.push(node);
+			}
+			return null;
+		}
+		
+		public function removeInputChild(node:Node):void {
+			var idx:int = _extUIChild.indexOf(node);
+			if (idx >= 0) {
+				_extUIChild.splice(idx, 1);
+			}
 		}
 		
 		/**
@@ -576,6 +598,8 @@ package laya.display {
 		//============================组件化支持==============================
 		/** @private */
 		private var _components:Array;
+		/**@private */
+		private var _activeChangeScripts:Array;//TODO:可用对象池
 		
 		/**@private */
 		public var _scene:Node;
@@ -601,15 +625,25 @@ package laya.display {
 		 * @param	value 是否激活。
 		 */
 		public function set active(value:Boolean):void {
+			value = !!value;
 			if (!_getBit(Const.NOT_ACTIVE) !== value) {
-				_setBit(Const.NOT_ACTIVE, !value);
-				if (_parent) {
-					if (_parent.activeInHierarchy) {
-						if (value) _activeHierarchy();
-						else _inActiveHierarchy();
+				if (_activeChangeScripts && _activeChangeScripts.length !== 0) {
+					if (value)
+						throw "Node: can't set the main inActive node active in hierarchy,if the operate is in main inActive node or it's children script's onDisable Event.";
+					else
+						throw "Node: can't set the main active node inActive in hierarchy,if the operate is in main active node or it's children script's onEnable Event.";
+				} else {
+					_setBit(Const.NOT_ACTIVE, !value);
+					if (_parent) {
+						if (_parent.activeInHierarchy) {
+							if (value) _processActive();
+							else _processInActive();
+						}
 					}
+					
 				}
 			}
+		
 		}
 		
 		/**
@@ -688,27 +722,6 @@ package laya.display {
 		}
 		
 		/**
-		 * @private
-		 */
-		public function _activeHierarchy():void {
-			_setBit(Const.ACTIVE_INHIERARCHY, true);
-			if (_components) {
-				for (var i:int = 0, n:int = _components.length; i < n; i++)
-					_components[i]._setActive(true);
-			}
-			_onActive();
-			for (i = 0, n = _children.length; i < n; i++) {
-				var child:Node = _children[i];
-				(!child._getBit(Const.NOT_ACTIVE)) && (child._activeHierarchy());
-			}
-			if (!_getBit(Const.AWAKED)) {
-				_setBit(Const.AWAKED, true);
-				onAwake();
-			}
-			onEnable();
-		}
-		
-		/**
 		 * 组件被激活后执行，此时所有节点和组件均已创建完毕，次方法只执行一次
 		 * 此方法为虚方法，使用时重写覆盖即可
 		 */
@@ -727,18 +740,84 @@ package laya.display {
 		/**
 		 * @private
 		 */
-		public function _inActiveHierarchy():void {
-			_onInActive();
+		public function _processActive():void {
+			(_activeChangeScripts) || (_activeChangeScripts = []);
+			_activeHierarchy(_activeChangeScripts);//处理属性,保证属性的正确性和即时性
+			_activeScripts();//延时处理组件
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _activeHierarchy(activeChangeScripts:Array):void {
+			_setBit(Const.ACTIVE_INHIERARCHY, true);
+			
 			if (_components) {
-				for (var i:int = 0, n:int = _components.length; i < n; i++)
-					_components[i]._setActive(false);
+				for (var i:int = 0, n:int = _components.length; i < n; i++) {
+					var comp:Component = _components[i];
+					comp._setActive(true);
+					(comp._isScript()) && (activeChangeScripts.push(comp));
+				}
 			}
-			_setBit(Const.ACTIVE_INHIERARCHY, false);
+			
+			_onActive();
 			for (i = 0, n = _children.length; i < n; i++) {
 				var child:Node = _children[i];
-				(!child._getBit(Const.NOT_ACTIVE)) && (child._inActiveHierarchy());
+				(!child._getBit(Const.NOT_ACTIVE)) && (child._activeHierarchy(activeChangeScripts));
+			}
+			if (!_getBit(Const.AWAKED)) {
+				_setBit(Const.AWAKED, true);
+				onAwake();
+			}
+			onEnable();
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _activeScripts():void {
+			for (var i:int = 0, n:int = _activeChangeScripts.length; i < n; i++)
+				_activeChangeScripts[i].onEnable();
+			_activeChangeScripts.length = 0;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _processInActive():void {
+			(_activeChangeScripts) || (_activeChangeScripts = []);
+			_inActiveHierarchy(_activeChangeScripts);//处理属性,保证属性的正确性和即时性
+			_inActiveScripts();//延时处理组件
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _inActiveHierarchy(activeChangeScripts:Array):void {
+			_onInActive();
+			if (_components) {
+				for (var i:int = 0, n:int = _components.length; i < n; i++) {
+					var comp:Component = _components[i];
+					comp._setActive(false);
+					(comp._isScript()) && (activeChangeScripts.push(comp));
+				}
+			}
+			_setBit(Const.ACTIVE_INHIERARCHY, false);
+			
+			for (i = 0, n = _children.length; i < n; i++) {
+				var child:Node = _children[i];
+				(child && !child._getBit(Const.NOT_ACTIVE)) && (child._inActiveHierarchy(activeChangeScripts));
 			}
 			onDisable();
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _inActiveScripts():void {
+			for (var i:int = 0, n:int = _activeChangeScripts.length; i < n; i++)
+				_activeChangeScripts[i].onDisable();
+			_activeChangeScripts.length = 0;
 		}
 		
 		/**
@@ -753,17 +832,28 @@ package laya.display {
 		 * @private
 		 */
 		protected function _onAdded():void {
-			var parentScene:Node = _parent.scene;
-			parentScene && _setBelongScene(parentScene);
-			(_parent.activeInHierarchy && active) && _activeHierarchy();
+			if (_activeChangeScripts && _activeChangeScripts.length !== 0) {
+				throw "Node: can't set the main inActive node active in hierarchy,if the operate is in main inActive node or it's children script's onDisable Event.";
+			} else {
+				var parentScene:Node = _parent.scene;
+				parentScene && _setBelongScene(parentScene);
+				(_parent.activeInHierarchy && active) && _processActive();
+				
+			}
+		
 		}
 		
 		/**
 		 * @private
 		 */
 		protected function _onRemoved():void {
-			(_parent.activeInHierarchy && active) && _inActiveHierarchy();
-			_parent.scene && _setUnBelongScene();
+			if (_activeChangeScripts && _activeChangeScripts.length !== 0) {
+				throw "Node: can't set the main active node inActive in hierarchy,if the operate is in main active node or it's children script's onEnable Event.";
+			} else {
+				(_parent.activeInHierarchy && active) && _processInActive();
+				_parent.scene && _setUnBelongScene();
+				
+			}
 		}
 		
 		/**
@@ -775,7 +865,10 @@ package laya.display {
 			
 			comp.owner = this;
 			comp._onAdded();
-			activeInHierarchy && comp._setActive(true);
+			if (activeInHierarchy){
+				comp._setActive(true);
+				(comp._isScript()) && ((comp as Object).onEnable());
+			} 
 			_scene && comp._setActiveInScene(true);
 		}
 		

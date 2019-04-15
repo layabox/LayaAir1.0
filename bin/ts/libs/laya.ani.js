@@ -905,7 +905,7 @@ var BoneSlot=(function(){
 								}else {
 								tResultMatrix=BoneSlot._tempResultMatrix;
 							}
-							if ((!Render.isWebGL && !Render.isConchApp && this.currDisplayData.uvs)|| ((Render.isWebGL || Render.isConchApp)&& this._diyTexture && this.currDisplayData.uvs)){
+							if ((!Render.isWebGL && this.currDisplayData.uvs)|| (Render.isWebGL && this._diyTexture && this.currDisplayData.uvs)){
 								var tTestMatrix=BoneSlot._tempMatrix;
 								tTestMatrix.identity();
 								if (this.currDisplayData.uvs[1] > this.currDisplayData.uvs[5]){

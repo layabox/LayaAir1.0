@@ -61,8 +61,13 @@ var MiniFileMgr$1=(function(){
 		var downloadTask=MiniFileMgr.wxdown({url:fileUrl,success:function (data){
 				if (data.statusCode===200)
 					MiniFileMgr.readFile(data.tempFilePath,encoding,callBack,readyUrl,isSaveFile,fileType,isAutoClear);
-				else
-				callBack !=null && callBack.runWith([1,data]);
+				else{
+					if(data.statusCode===403){
+						callBack !=null && callBack.runWith([0,fileUrl]);
+						}else{
+						callBack !=null && callBack.runWith([1,data]);
+					}
+				}
 				},fail:function (data){
 				callBack !=null && callBack.runWith([1,data]);
 		}});
@@ -103,7 +108,11 @@ var MiniFileMgr$1=(function(){
 					else
 					callBack !=null && callBack.runWith([0,data.tempFilePath]);
 					}else{
-					callBack !=null && callBack.runWith([1,data]);
+					if(data.statusCode===403){
+						callBack !=null && callBack.runWith([0,fileUrl]);
+						}else{
+						callBack !=null && callBack.runWith([1,data]);
+					}
 				}
 				},fail:function (data){
 				callBack !=null && callBack.runWith([1,data]);
@@ -338,7 +347,7 @@ var MiniImage$1=(function(){
 			isTransformUrl=true;
 			url=URL.formatURL(url);
 			}else{
-			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+			if (url.indexOf("http://usr/")==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
 				if(MiniFileMgr$1.loadPath !=""){
 					url=url.split(MiniFileMgr$1.loadPath)[1];
 					}else{
@@ -370,7 +379,7 @@ var MiniImage$1=(function(){
 			}
 		}
 		if (!MiniFileMgr$1.getFileInfo(url)){
-			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+			if (url.indexOf('http://usr/')==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
 				if(BMiniAdapter.isZiYu){
 					MiniImage.onCreateImage(url,thisLoader,true);
 					}else{
@@ -432,7 +441,6 @@ var MiniImage$1=(function(){
 		if (thisLoader._type=="nativeimage"){
 			var onload=function (){
 				clear();
-				thisLoader._url=URL.formatURL(thisLoader._url);
 				thisLoader.onLoaded(image);
 			};
 			image=new Browser.window.Image();
@@ -444,7 +452,6 @@ var MiniImage$1=(function(){
 			}else {
 			var imageSource=new Browser.window.Image();
 			onload=function (){
-				thisLoader._url=URL.formatURL(thisLoader._url);
 				image=HTMLImage.create(imageSource.width,imageSource.height);
 				image.loadImageSource(imageSource,true);
 				image._setCreateURL(fileNativeUrl);
@@ -1002,6 +1009,10 @@ var MiniLoader$1=(function(_super){
 		(ignoreCache===void 0)&& (ignoreCache=false);
 		var thisLoader=this;
 		thisLoader._url=url;
+		if (!url){
+			thisLoader.onLoaded(null);
+			return;
+		}
 		url=URL.customFormat(url);
 		if (url.indexOf("data:image")===0)thisLoader._type=type=/*laya.net.Loader.IMAGE*/"image";
 		else {
@@ -1059,9 +1070,9 @@ var MiniLoader$1=(function(_super){
 					}
 					MiniFileMgr$1.read(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]));
 					return;
-				}
-				url=URL.formatURL(url);
-				if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1 && !BMiniAdapter.AutoCacheDownFile){
+				};
+				var tempurl=URL.formatURL(url);
+				if (tempurl.indexOf("http://usr/")==-1&& (tempurl.indexOf("http://")!=-1 || tempurl.indexOf("https://")!=-1)&& !BMiniAdapter.AutoCacheDownFile){
 					BMiniAdapter.EnvConfig.load.call(thisLoader,url,type,cache,group,ignoreCache);
 					}else {
 					MiniFileMgr$1.readFile(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]),url);
@@ -1156,7 +1167,11 @@ var MiniSound$1=(function(_super){
 					}
 					this.onDownLoadCallBack(url,0);
 					}else{
-					MiniFileMgr$1.downOtherFiles(url,Handler.create(this,this.onDownLoadCallBack,[url]),url);
+					if (!MiniFileMgr$1.isLocalNativeFile(url)&& (url.indexOf("http://")==-1 && url.indexOf("https://")==-1)|| (url.indexOf("http://usr/")!=-1)){
+						this.onDownLoadCallBack(url,0);
+						}else{
+						MiniFileMgr$1.downOtherFiles(url,Handler.create(this,this.onDownLoadCallBack,[url]),url);
+					}
 				}
 			}
 		}
@@ -1168,11 +1183,21 @@ var MiniSound$1=(function(_super){
 			var fileNativeUrl;
 			if(BMiniAdapter.autoCacheFile){
 				if (MiniFileMgr$1.isLocalNativeFile(sourceUrl)){
-					fileNativeUrl=sourceUrl;
+					var tempStr=URL.rootPath !="" ? URL.rootPath :URL.basePath;
+					var tempUrl=sourceUrl;
+					if(tempStr !="" && (sourceUrl.indexOf("http://")!=-1 || sourceUrl.indexOf("https://")!=-1))
+						fileNativeUrl=sourceUrl.split(tempStr)[1];
+					if(!fileNativeUrl){
+						fileNativeUrl=tempUrl;
+					}
 					}else{
 					var fileObj=MiniFileMgr$1.getFileInfo(sourceUrl);
-					var fileMd5Name=fileObj.md5;
-					fileNativeUrl=MiniFileMgr$1.getFileNativePath(fileMd5Name);
+					if(fileObj && fileObj.md5){
+						var fileMd5Name=fileObj.md5;
+						fileNativeUrl=MiniFileMgr$1.getFileNativePath(fileMd5Name);
+						}else{
+						fileNativeUrl=sourceUrl;
+					}
 				}
 				this._sound=MiniSound._createSound();
 				this._sound.src=this.url=fileNativeUrl;

@@ -181,9 +181,8 @@ package laya.d3 {
 			touchHitResult.succeeded = false;
 			var x:Number = _mouseTouch.mousePositionX;
 			var y:Number = _mouseTouch.mousePositionY;
-			var touchPosE:Float32Array = touchPos.elements;
-			touchPosE[0] = x;
-			touchPosE[1] = y;
+			touchPos.x = x;
+			touchPos.y = y;
 			for (var i:int = cameras.length - 1; i >= 0; i--) {
 				var camera:Camera = cameras[i] as Camera;
 				var viewport:Viewport = camera.viewport;
@@ -234,7 +233,7 @@ package laya.d3 {
 				if (!_multiTouchEnabled && identifier !== 0)
 					continue;
 				var touch:Touch = _getTouch(identifier);
-				var posE:Float32Array = touch._position.elements;
+				var pos:Vector2 = touch._position;
 				var mousePoint:Point = _tempPoint;
 				mousePoint.setTo(nativeTouch.pageX,nativeTouch.pageY);
 				Laya.stage._canvasTransform.invertTransformPoint(mousePoint);//考虑画布缩放	
@@ -252,12 +251,12 @@ package laya.d3 {
 					offsetY -= posY;
 					break;
 				case 2://change 
-					offsetX = posX - posE[0];
-					offsetY = posY - posE[1];
+					offsetX = posX - pos.x;
+					offsetY = posY - pos.y;
 					break;
 				}
-				posE[0] = posX;
-				posE[1] = posY;
+				pos.x= posX;
+				pos.y = posY;
 			}
 			
 			var touchCount:int = _touches.length;

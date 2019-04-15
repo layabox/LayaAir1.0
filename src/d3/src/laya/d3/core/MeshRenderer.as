@@ -1,6 +1,10 @@
 package laya.d3.core {
+	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.BlinnPhongMaterial;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.render.RenderElement;
+	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.graphics.MeshRenderStaticBatchManager;
 	import laya.d3.math.BoundBox;
@@ -16,6 +20,11 @@ package laya.d3.core {
 	 * <code>MeshRenderer</code> 类用于网格渲染器。
 	 */
 	public class MeshRenderer extends BaseRender {
+		/**@private */
+		private static var _tempVector30:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector31:Vector3 = new Vector3();
+		
 		/** @private */
 		protected var _projectionViewWorldMatrix:Matrix4x4;
 		
@@ -35,7 +44,6 @@ package laya.d3.core {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
-			_octreeNodeNeedChange = true;
 		}
 		
 		/**
@@ -44,12 +52,12 @@ package laya.d3.core {
 		protected function _calculateBoundingSphereByInitSphere(boundSphere:BoundSphere):void {
 			var maxScale:Number;
 			var transform:Transform3D = _owner.transform;
-			var scaleE:Float32Array = transform.scale.elements;
-			var scaleX:Number = scaleE[0];
+			var scale:Vector3 = transform.scale;
+			var scaleX:Number = scale.x;
 			scaleX || (scaleX = -scaleX);
-			var scaleY:Number = scaleE[1];
+			var scaleY:Number = scale.y;
 			scaleY || (scaleY = -scaleY);
-			var scaleZ:Number = scaleE[2];
+			var scaleZ:Number = scale.z;
 			scaleZ || (scaleZ = -scaleZ);
 			
 			if (scaleX >= scaleY && scaleX >= scaleZ)
@@ -59,12 +67,12 @@ package laya.d3.core {
 			Vector3.transformCoordinate(boundSphere.center, transform.worldMatrix, _boundingSphere.center);
 			_boundingSphere.radius = boundSphere.radius * maxScale;
 			
-			if (Render.isConchApp) {//[NATIVE]
-				var centerE:Float32Array = _boundingSphere.center.elements;
+			if (Render.supportWebGLPlusCulling) {//[NATIVE]
+				var center:Vector3 = _boundingSphere.center;
 				var buffer:Float32Array = FrustumCulling._cullingBuffer;
-				buffer[_cullingBufferIndex + 1] = centerE[0];
-				buffer[_cullingBufferIndex + 2] = centerE[1];
-				buffer[_cullingBufferIndex + 3] = centerE[2];
+				buffer[_cullingBufferIndex + 1] = center.x;
+				buffer[_cullingBufferIndex + 2] = center.y;
+				buffer[_cullingBufferIndex + 3] = center.z;
 				buffer[_cullingBufferIndex + 4] = _boundingSphere.radius;
 			}
 		}
@@ -72,11 +80,9 @@ package laya.d3.core {
 		/**
 		 * @private
 		 */
-		protected function _calculateBoundBoxByInitCorners(corners:Vector.<Vector3>):void {
+		protected function _calculateBoundBoxByInitCorners(localBound:BoundBox):void {
 			var worldMat:Matrix4x4 = (_owner as MeshSprite3D).transform.worldMatrix;
-			for (var i:int = 0; i < 8; i++)
-				BoundBox.createfromPoints(_tempBoundBoxCorners, _boundingBox);
-			Vector3.transformCoordinate(corners[i], worldMat, _tempBoundBoxCorners[i]);
+			localBound.tranform(worldMat, _boundingBox);
 		}
 		
 		/**
@@ -98,7 +104,26 @@ package laya.d3.core {
 			if (sharedMesh == null || sharedMesh.boundingBox == null)
 				_boundingBox.toDefault();
 			else
-				_calculateBoundBoxByInitCorners(sharedMesh.boundingBoxCorners);
+				_calculateBoundBoxByInitCorners(sharedMesh.boundingBox);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _changeRenderObjectsByMesh(mesh:Mesh):void {
+			var count:int = mesh.subMeshCount;
+			_renderElements.length = count;
+			for (var i:int = 0; i < count; i++) {
+				var renderElement:RenderElement = _renderElements[i];
+				if (!renderElement) {
+					var material:BaseMaterial = sharedMaterials[i];
+					renderElement = _renderElements[i] = new SubMeshRenderElement();
+					renderElement.setTransform(_owner._transform);
+					renderElement.render = this;
+					renderElement.material = material ? material : BlinnPhongMaterial.defaultMaterial;//确保有材质,由默认材质代替。
+				}
+				renderElement.setGeometry(mesh._getSubMesh(i));
+			}
 		}
 		
 		/**
@@ -106,7 +131,8 @@ package laya.d3.core {
 		 */
 		override public function _needRender(boundFrustum:BoundFrustum):Boolean {
 			if (boundFrustum)
-				return boundFrustum.containsBoundSphere(boundingSphere) !== ContainmentType.Disjoint;
+				//return boundFrustum.containsBoundSphere(boundingSphere) !== ContainmentType.Disjoint;
+				return boundFrustum.containsBoundBox(boundingBox) !== ContainmentType.Disjoint;
 			else
 				return true;
 		}

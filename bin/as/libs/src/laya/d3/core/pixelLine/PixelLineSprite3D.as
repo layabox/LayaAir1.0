@@ -26,7 +26,7 @@ package laya.d3.core.pixelLine {
 		 */
 		public function set maxLineCount(value:int):void {
 			_geometryFilter._resizeLineData(value);
-			_geometryFilter._lineCount = Math.min(_geometryFilter._lineCount,value);
+			_geometryFilter._lineCount = Math.min(_geometryFilter._lineCount, value);
 		}
 		
 		/**

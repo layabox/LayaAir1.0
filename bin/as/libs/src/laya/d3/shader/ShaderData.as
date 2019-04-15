@@ -1,7 +1,9 @@
 package laya.d3.shader {
 	import laya.d3.core.IClone;
-	import laya.d3.math.BaseVector;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Native.ConchVector2;
+	import laya.d3.math.Native.ConchVector3;
+	import laya.d3.math.Native.ConchVector4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
@@ -104,11 +106,47 @@ package laya.d3.shader {
 		}
 		
 		/**
+		 * 获取Vector2向量。
+		 * @param	index shader索引。
+		 * @return Vector2向量。
+		 */
+		public function getVector2(index:int):Vector2 {
+			return _data[index];
+		}
+		
+		/**
+		 * 设置Vector2向量。
+		 * @param	index shader索引。
+		 * @param	value Vector2向量。
+		 */
+		public function setVector2(index:int, value:Vector2):void {
+			_data[index] = value;
+		}
+		
+		/**
+		 * 获取Vector3向量。
+		 * @param	index shader索引。
+		 * @return Vector3向量。
+		 */
+		public function getVector3(index:int):Vector3 {
+			return _data[index];
+		}
+		
+		/**
+		 * 设置Vector3向量。
+		 * @param	index shader索引。
+		 * @param	value Vector3向量。
+		 */
+		public function setVector3(index:int, value:Vector3):void {
+			_data[index] = value;
+		}
+		
+		/**
 		 * 获取颜色。
 		 * @param	index shader索引。
 		 * @return 颜色向量。
 		 */
-		public function getVector(index:int):BaseVector {
+		public function getVector(index:int):Vector4 {
 			return _data[index];
 		}
 		
@@ -117,7 +155,7 @@ package laya.d3.shader {
 		 * @param	index shader索引。
 		 * @param	value 向量。
 		 */
-		public function setVector(index:int, value:BaseVector):void {
+		public function setVector(index:int, value:Vector4):void {
 			_data[index] = value;
 		}
 		
@@ -300,17 +338,17 @@ package laya.d3.shader {
 					} else if (value is Boolean) {
 						destData[i] = value;
 						dest.setBool(i, value);
-					} else if (value is Vector2) {
+					} else if (value is ConchVector2) {
 						var v2:Vector2 = (destData[i]) || (destData[i] = new Vector2());
 						(value as Vector2).cloneTo(v2);
 						destData[i] = v2;
-						dest.setVector(i, v2);
-					} else if (value is Vector3) {
+						dest.setVector2(i, v2);
+					} else if (value is ConchVector3) {
 						var v3:Vector3 = (destData[i]) || (destData[i] = new Vector3());
 						(value as Vector3).cloneTo(v3);
 						destData[i] = v3;
-						dest.setVector(i, v3);
-					} else if (value is Vector4) {
+						dest.setVector3(i, v3);
+					} else if (value is ConchVector4) {
 						var v4:Vector4 = (destData[i]) || (destData[i] = new Vector4());
 						(value as Vector4).cloneTo(v4);
 						destData[i] = v4;
@@ -437,20 +475,53 @@ package laya.d3.shader {
 		/**
 		 *@private [NATIVE]
 		 */
-		public function getVectorForNative(index:int):BaseVector {
+		public function getVectorForNative(index:int):* {
 			return _nativeArray[index];
 		}
 		
 		/**
 		 *@private [NATIVE]
 		 */
-		public function setVectorForNative(index:int, value:BaseVector):void {
+		public function setVectorForNative(index:int, value:*):void {
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
 			var nPtrID:int = setReferenceForNative(value.elements);
 			_int32Data[index] = nPtrID;
 		}
 		
+		/**
+		 *@private [NATIVE]
+		 */
+		public function getVector2ForNative(index:int):* {
+			return _nativeArray[index];
+		}
+		
+		/**
+		 *@private [NATIVE]
+		 */
+		public function setVector2ForNative(index:int, value:*):void {
+			needRenewArrayBufferForNative(index);
+			_nativeArray[index] = value;//保存引用
+			var nPtrID:int = setReferenceForNative(value.elements);
+			_int32Data[index] = nPtrID;
+		}
+		
+		/**
+		 *@private [NATIVE]
+		 */
+		public function getVector3ForNative(index:int):* {
+			return _nativeArray[index];
+		}
+		
+		/**
+		 *@private [NATIVE]
+		 */
+		public function setVector3ForNative(index:int, value:*):void {
+			needRenewArrayBufferForNative(index);
+			_nativeArray[index] = value;//保存引用
+			var nPtrID:int = setReferenceForNative(value.elements);
+			_int32Data[index] = nPtrID;
+		}
 		/**
 		 *@private [NATIVE]
 		 */
@@ -462,7 +533,7 @@ package laya.d3.shader {
 		/**
 		 *@private [NATIVE]
 		 */
-		public function setQuaternionForNative(index:int, value:Quaternion):void {
+		public function setQuaternionForNative(index:int, value:*):void {
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
 			var nPtrID:int = setReferenceForNative(value.elements);

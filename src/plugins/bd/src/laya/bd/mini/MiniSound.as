@@ -73,9 +73,13 @@ package laya.bd.mini {
                         onDownLoadCallBack(url,0);
 					}else
 					{
-                        MiniFileMgr.downOtherFiles(url,Handler.create(this,onDownLoadCallBack,[url]),url);
+						if (!MiniFileMgr.isLocalNativeFile(url) &&  (url.indexOf("http://") == -1 && url.indexOf("https://") == -1) || (url.indexOf("http://usr/") != -1)) {
+							this.onDownLoadCallBack(url, 0);
+						}else
+						{
+							MiniFileMgr.downOtherFiles(url,Handler.create(this,onDownLoadCallBack,[url]),url);
+						}
 					}
-
 				}
 			}
 		}
@@ -88,14 +92,26 @@ package laya.bd.mini {
 				var fileNativeUrl:String;
 				if(BMiniAdapter.autoCacheFile)
 				{
-                    if (MiniFileMgr.isLocalNativeFile(sourceUrl))
-					{
-                        fileNativeUrl = sourceUrl;
+					if (MiniFileMgr.isLocalNativeFile(sourceUrl)) {
+						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						var tempUrl:String = sourceUrl;
+						if(tempStr != "" && (sourceUrl.indexOf("http://") != -1 || sourceUrl.indexOf("https://") != -1))
+							fileNativeUrl = sourceUrl.split(tempStr)[1];//去掉http头
+						if(!fileNativeUrl)
+						{
+							fileNativeUrl = tempUrl;
+						}
 					}else
 					{
-                        var fileObj:Object = MiniFileMgr.getFileInfo(sourceUrl);
-                        var fileMd5Name:String = fileObj.md5;
-                        fileNativeUrl = MiniFileMgr.getFileNativePath(fileMd5Name);
+						var fileObj:Object = MiniFileMgr.getFileInfo(sourceUrl);
+						if(fileObj && fileObj.md5)
+						{
+							var fileMd5Name:String = fileObj.md5;
+							fileNativeUrl = MiniFileMgr.getFileNativePath(fileMd5Name);
+						}else
+						{
+							fileNativeUrl = sourceUrl;
+						}
 					}
 					_sound = _createSound();
 					_sound.src = url =  fileNativeUrl;

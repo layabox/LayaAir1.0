@@ -224,6 +224,13 @@ package laya.d3.loaders {
 			var indexBuffer:IndexBuffer3D = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, ibLength / 2, WebGLContext.STATIC_DRAW, true);
 			indexBuffer.setData(ibDatas);
 			_mesh._indexBuffer = indexBuffer;
+			
+			var bufferState:BufferState = _mesh._bufferState;
+			bufferState.bind();
+			bufferState.applyVertexBuffers(_mesh._vertexBuffers);
+			bufferState.applyIndexBuffer(indexBuffer);
+			bufferState.unBind();
+			
 			memorySize += indexBuffer.indexCount * 2;
 			_mesh._setCPUMemory(memorySize);
 			_mesh._setGPUMemory(memorySize);
@@ -265,13 +272,7 @@ package laya.d3.loaders {
 			submesh._indexCount = ibCount;
 			submesh._indices = new Uint16Array(indexBuffer.getData().buffer, ibStart * 2, ibCount);
 			var vertexBuffer:VertexBuffer3D = _mesh._vertexBuffers[vbIndex];
-			submesh._vertexBuffer = vertexBuffer;
-			
-			var bufferState:BufferState = submesh._bufferState;
-			bufferState.bind();
-			bufferState.applyVertexBuffer(vertexBuffer);
-			bufferState.applyIndexBuffer(indexBuffer);
-			bufferState.unBind();
+			submesh._vertexBuffer = vertexBuffer;	
 			
 			var offset:int = _DATA.offset;
 			var subIndexBufferStart:Vector.<int> = submesh._subIndexBufferStart;

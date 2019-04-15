@@ -86,7 +86,7 @@ package laya.webgl.text {
 				v1 = (y + data.height) / _texH;
 			}else{
 				u0 = (x+1) / _texW;	// +1 表示内缩一下，反正文字总是有留白。否则会受到旁边的一个像素的影响
-				v0 = (y+1) / _texH;
+				v0 = (y) / _texH;
 				u1 = (x + data.width-1) / _texW;	// 注意是-1,不是-2
 				v1 = (y + data.height-1) / _texH;
 			}

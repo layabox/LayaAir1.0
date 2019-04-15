@@ -1,6 +1,7 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
-	
+	import laya.d3.math.Native.ConchQuaternion;
+	import laya.renders.Render;
 	/**
 	 * <code>Quaternion</code> 类用于创建四元数。
 	 */
@@ -25,47 +26,6 @@ package laya.d3.math {
 		/**无效矩阵,禁止修改*/
 		public static const NAN:Quaternion = new Quaternion(NaN, NaN, NaN, NaN);
 		
-		/**
-		 * @private
-		 */
-		public static function _dotArray(l:Float32Array, r:Float32Array):Number {			
-			return l[0] * r[0] + l[1] * r[1] + l[2] * r[2] + l[3] * r[3];
-		}
-		
-		/**
-		 * @private
-		 */
-		public static function _normalizeArray(f:Float32Array, o:Float32Array):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var x:Number = f[0], y:Number = f[1], z:Number = f[2], w:Number = f[3];
-			var len:Number = x * x + y * y + z * z + w * w;
-			if (len > 0) {
-				len = 1 / Math.sqrt(len);
-				o[0] = x * len;
-				o[1] = y * len;
-				o[2] = z * len;
-				o[3] = w * len;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
-		public static function _lerpArray(l:Float32Array, r:Float32Array, amount:Number, o:Float32Array):void {
-			var inverse:Number = 1.0 - amount;
-			if (_dotArray(l, r) >= 0) {
-				o[0] = (inverse * l[0]) + (amount * r[0]);
-				o[1] = (inverse * l[1]) + (amount * r[1]);
-				o[2] = (inverse * l[2]) + (amount * r[2]);
-				o[3] = (inverse * l[3]) + (amount * r[3]);
-			} else {
-				o[0] = (inverse * l[0]) - (amount * r[0]);
-				o[1] = (inverse * l[1]) - (amount * r[1]);
-				o[2] = (inverse * l[2]) - (amount * r[2]);
-				o[3] = (inverse * l[3]) - (amount * r[3]);
-			}
-			_normalizeArray(o, o);
-		}
 		
 		/**
 		 *  从欧拉角生成四元数（顺序为Yaw、Pitch、Roll）
@@ -87,11 +47,11 @@ package laya.d3.math {
 			var sinYaw:Number = Math.sin(halfYaw);
 			var cosYaw:Number = Math.cos(halfYaw);
 			
-			var oe:Float32Array = out.elements;
-			oe[0] = (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll);
-			oe[1] = (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll);
-			oe[2] = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
-			oe[3] = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
+
+			out.x = (cosYaw * sinPitch * cosRoll) + (sinYaw * cosPitch * sinRoll);
+			out.y = (sinYaw * cosPitch * cosRoll) - (cosYaw * sinPitch * sinRoll);
+			out.z = (cosYaw * cosPitch * sinRoll) - (sinYaw * sinPitch * cosRoll);
+			out.w = (cosYaw * cosPitch * cosRoll) + (sinYaw * sinPitch * sinRoll);
 		}
 		
 		/**
@@ -102,26 +62,22 @@ package laya.d3.math {
 		 */
 		public static function multiply(left:Quaternion, right:Quaternion, out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var le:Float32Array = left.elements;
-			var re:Float32Array = right.elements;
-			var oe:Float32Array = out.elements;
-			
-			var lx:Number = le[0];
-			var ly:Number = le[1];
-			var lz:Number = le[2];
-			var lw:Number = le[3];
-			var rx:Number = re[0];
-			var ry:Number = re[1];
-			var rz:Number = re[2];
-			var rw:Number = re[3];
+			var lx:Number = left.x;
+			var ly:Number = left.y;
+			var lz:Number = left.z;
+			var lw:Number = left.w;
+			var rx:Number = right.x;
+			var ry:Number = right.y;
+			var rz:Number = right.z;
+			var rw:Number = right.w;
 			var a:Number = (ly * rz - lz * ry);
 			var b:Number = (lz * rx - lx * rz);
 			var c:Number = (lx * ry - ly * rx);
 			var d:Number = (lx * rx + ly * ry + lz * rz);
-			oe[0] = (lx * rw + rx * lw) + a;
-			oe[1] = (ly * rw + ry * lw) + b;
-			oe[2] = (lz * rw + rz * lw) + c;
-			oe[3] = lw * rw - d;
+			out.x = (lx * rw + rx * lw) + a;
+			out.y = (ly * rw + ry * lw) + b;
+			out.z = (lz * rw + rz * lw) + c;
+			out.w = lw * rw - d;
 		}
 		
 		private static function arcTanAngle(x:Number, y:Number):Number {
@@ -146,8 +102,8 @@ package laya.d3.math {
 			Vector3.subtract(location, from, TEMPVector30);
 			Vector3.normalize(TEMPVector30, TEMPVector30);
 			
-			angle.elements[0] = Math.asin(TEMPVector30.y);
-			angle.elements[1] = arcTanAngle(-TEMPVector30.z, -TEMPVector30.x);
+			angle.x = Math.asin(TEMPVector30.y);
+			angle.y = arcTanAngle(-TEMPVector30.z, -TEMPVector30.x);
 		}
 		
 		/**
@@ -157,58 +113,14 @@ package laya.d3.math {
 		 * @param	out  输出四元数
 		 */
 		public static function createFromAxisAngle(axis:Vector3, rad:Number, out:Quaternion):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = axis.elements;
-			
 			rad = rad * 0.5;
 			var s:Number = Math.sin(rad);
-			e[0] = s * f[0];
-			e[1] = s * f[1];
-			e[2] = s * f[2];
-			e[3] = Math.cos(rad);
+			out.x = s * axis.x;
+			out.y = s * axis.y;
+			out.z = s * axis.z;
+			out.w = Math.cos(rad);
 		}
 		
-		/**
-		 * 根据3x3矩阵计算四元数
-		 * @param	sou 源矩阵
-		 * @param	out 输出四元数
-		 */
-		public static function createFromMatrix3x3(sou:Matrix3x3, out:Quaternion):void {
-			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var e:Float32Array = out.elements;
-			var f:Float32Array = sou.elements;
-			
-			var fTrace:Number = f[0] + f[4] + f[8];
-			var fRoot:Number;
-			if (fTrace > 0.0) {
-				// |w| > 1/2, may as well choose w > 1/2
-				fRoot = Math.sqrt(fTrace + 1.0);  // 2w
-				e[3] = 0.5 * fRoot;
-				fRoot = 0.5 / fRoot;  // 1/(4w)
-				e[0] = (f[5] - f[7]) * fRoot;
-				e[1] = (f[6] - f[2]) * fRoot;
-				e[2] = (f[1] - f[3]) * fRoot;
-			} else {
-				// |w| <= 1/2
-				var i:Number = 0;
-				if (f[4] > f[0])
-					i = 1;
-				if (f[8] > f[i * 3 + i])
-					i = 2;
-				var j:Number = (i + 1) % 3;
-				var k:Number = (i + 2) % 3;
-				
-				fRoot = Math.sqrt(f[i * 3 + i] - f[j * 3 + j] - f[k * 3 + k] + 1.0);
-				e[i] = 0.5 * fRoot;
-				fRoot = 0.5 / fRoot;
-				e[3] = (f[j * 3 + k] - f[k * 3 + j]) * fRoot;
-				e[j] = (f[j * 3 + i] + f[i * 3 + j]) * fRoot;
-				e[k] = (f[k * 3 + i] + f[i * 3 + k]) * fRoot;
-			}
-			
-			return;
-		
-		}
 		
 		/**
 		 *  从旋转矩阵计算四元数
@@ -218,7 +130,6 @@ package laya.d3.math {
 		public static function createFromMatrix4x4(mat:Matrix4x4, out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			var me:Float32Array = mat.elements;
-			var oe:Float32Array = out.elements;
 			
 			var sqrt:Number;
 			var half:Number;
@@ -226,36 +137,36 @@ package laya.d3.math {
 			
 			if (scale > 0.0) {
 				sqrt = Math.sqrt(scale + 1.0);
-				oe[3] = sqrt * 0.5;
+				out.w = sqrt * 0.5;
 				sqrt = 0.5 / sqrt;
 				
-				oe[0] = (me[6] - me[9]) * sqrt;
-				oe[1] = (me[8] - me[2]) * sqrt;
-				oe[2] = (me[1] - me[4]) * sqrt;
+				out.x = (me[6] - me[9]) * sqrt;
+				out.y = (me[8] - me[2]) * sqrt;
+				out.z = (me[1] - me[4]) * sqrt;
 			} else if ((me[0] >= me[5]) && (me[0] >= me[10])) {
 				sqrt = Math.sqrt(1.0 + me[0] - me[5] - me[10]);
 				half = 0.5 / sqrt;
 				
-				oe[0] = 0.5 * sqrt;
-				oe[1] = (me[1] + me[4]) * half;
-				oe[2] = (me[2] + me[8]) * half;
-				oe[3] = (me[6] - me[9]) * half;
+				out.x = 0.5 * sqrt;
+				out.y = (me[1] + me[4]) * half;
+				out.z = (me[2] + me[8]) * half;
+				out.w = (me[6] - me[9]) * half;
 			} else if (me[5] > me[10]) {
 				sqrt = Math.sqrt(1.0 + me[5] - me[0] - me[10]);
 				half = 0.5 / sqrt;
 				
-				oe[0] = (me[4] + me[1]) * half;
-				oe[1] = 0.5 * sqrt;
-				oe[2] = (me[9] + me[6]) * half;
-				oe[3] = (me[8] - me[2]) * half;
+				out.x = (me[4] + me[1]) * half;
+				out.y = 0.5 * sqrt;
+				out.z = (me[9] + me[6]) * half;
+				out.w = (me[8] - me[2]) * half;
 			} else {
 				sqrt = Math.sqrt(1.0 + me[10] - me[0] - me[5]);
 				half = 0.5 / sqrt;
 				
-				oe[0] = (me[8] + me[2]) * half;
-				oe[1] = (me[9] + me[6]) * half;
-				oe[2] = 0.5 * sqrt;
-				oe[3] = (me[1] - me[4]) * half;
+				out.x = (me[8] + me[2]) * half;
+				out.y = (me[9] + me[6]) * half;
+				out.z = 0.5 * sqrt;
+				out.w = (me[1] - me[4]) * half;
 			}
 		
 		}
@@ -268,12 +179,9 @@ package laya.d3.math {
 		 * @param	out 输出四元数
 		 * @return   输出Float32Array
 		 */
-		public static function slerp(left:Quaternion, right:Quaternion, t:Number, out:Quaternion):Float32Array {
+		public static function slerp(left:Quaternion, right:Quaternion, t:Number, out:Quaternion):Quaternion {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var a:Float32Array = left.elements;
-			var b:Float32Array = right.elements;
-			var oe:Float32Array = out.elements;
-			var ax:Number = a[0], ay:Number = a[1], az:Number = a[2], aw:Number = a[3], bx:Number = b[0], by:Number = b[1], bz:Number = b[2], bw:Number = b[3];
+			var ax:Number = left.x, ay:Number = left.y, az:Number = left.z, aw:Number = left.w, bx:Number = right.x, by:Number = right.y, bz:Number = right.z, bw:Number = right.w;
 			
 			var omega:Number, cosom:Number, sinom:Number, scale0:Number, scale1:Number;
 			
@@ -301,12 +209,12 @@ package laya.d3.math {
 				scale1 = t;
 			}
 			// calculate final values 
-			oe[0] = scale0 * ax + scale1 * bx;
-			oe[1] = scale0 * ay + scale1 * by;
-			oe[2] = scale0 * az + scale1 * bz;
-			oe[3] = scale0 * aw + scale1 * bw;
+			out.x = scale0 * ax + scale1 * bx;
+			out.y = scale0 * ay + scale1 * by;
+			out.z = scale0 * az + scale1 * bz;
+			out.w = scale0 * aw + scale1 * bw;
 			
-			return oe;
+			return out;
 		}
 		
 		/**
@@ -317,7 +225,19 @@ package laya.d3.math {
 		 * @param	out 输出四元数
 		 */
 		public static function lerp(left:Quaternion, right:Quaternion, amount:Number, out:Quaternion):void {
-			_lerpArray(left.elements, right.elements, amount, out.elements);
+			var inverse:Number = 1.0 - amount;
+			if (dot(left, right) >= 0) {
+				out.x = (inverse * left.x) + (amount * right.x);
+				out.y = (inverse * left.y) + (amount * right.y);
+				out.z = (inverse * left.z) + (amount * right.z);
+				out.w = (inverse * left.w) + (amount * right.w);
+			} else {
+				out.x = (inverse * left.x) - (amount * right.x);
+				out.y = (inverse * left.y) - (amount * right.y);
+				out.z = (inverse * left.z) - (amount * right.z);
+				out.w = (inverse * left.w) - (amount * right.w);
+			}
+			out.normalize(out);
 		}
 		
 		/**
@@ -327,14 +247,10 @@ package laya.d3.math {
 		 * @param	out 输出四元数
 		 */
 		public static function add(left:Quaternion, right:Quaternion, out:Quaternion):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = left.elements;
-			var g:Float32Array = right.elements;
-			
-			e[0] = f[0] + g[0];
-			e[1] = f[1] + g[1];
-			e[2] = f[2] + g[2];
-			e[3] = f[3] + g[3];
+			out.x = left.x + right.x;
+			out.y = left.y + right.y;
+			out.z = left.z + right.z;
+			out.w = left.w + right.w;
 		}
 		
 		/**
@@ -344,39 +260,17 @@ package laya.d3.math {
 		 * @return  点积
 		 */
 		public static function dot(left:Quaternion, right:Quaternion):Number {
-			return _dotArray(left.elements,right.elements);
+			return left.x * right.x + left.y * right.y + left.z * right.z + left.w * right.w;
 		}
 		
-		/**四元数元素数组*/
-		public var elements:Float32Array;
-		
-		/**
-		 * 获取四元数的x值
-		 */
-		public function get x():Number {
-			return this.elements[0];
-		}
-		
-		/**
-		 * 获取四元数的y值
-		 */
-		public function get y():Number {
-			return this.elements[1];
-		}
-		
-		/**
-		 * 获取四元数的z值
-		 */
-		public function get z():Number {
-			return this.elements[2];
-		}
-		
-		/**
-		 * 获取四元数的w值
-		 */
-		public function get w():Number {
-			return this.elements[3];
-		}
+		/**X轴坐标*/
+		public var x:Number;
+		/**Y轴坐标*/
+		public var y:Number;
+		/**Z轴坐标*/
+		public var z:Number;
+		/**W轴坐标*/
+		public var w:Number;
 		
 		/**
 		 * 创建一个 <code>Quaternion</code> 实例。
@@ -386,18 +280,14 @@ package laya.d3.math {
 		 * @param	w 四元数的w值
 		 */
 		public function Quaternion(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 1, nativeElements:Float32Array = null/*[NATIVE]*/) {
-			var v:Float32Array;
-			if (nativeElements) {///*[NATIVE]*/
-				v = nativeElements;
-			} else {
-				v = new Float32Array(4);
+			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
+			if (__JS__("(window.conch != null)")) {
+				__JS__("return new ConchQuaternion(x, y, z, w, nativeElements)");
 			}
-			
-			v[0] = x;
-			v[1] = y;
-			v[2] = z;
-			v[3] = w;
-			elements = v;	
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.w = w;
 		}
 		
 		/**
@@ -406,13 +296,10 @@ package laya.d3.math {
 		 * @param	out 输出四元数
 		 */
 		public function scaling(scaling:Number, out:Quaternion):void {
-			var e:Float32Array = out.elements;
-			var f:Float32Array = this.elements;
-			
-			e[0] = f[0] * scaling;
-			e[1] = f[1] * scaling;
-			e[2] = f[2] * scaling;
-			e[3] = f[3] * scaling;
+			out.x = x * scaling;
+			out.y = y * scaling;
+			out.z = z * scaling;
+			out.w = w * scaling;
 		}
 		
 		/**
@@ -421,7 +308,14 @@ package laya.d3.math {
 		 */
 		public function normalize(out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			_normalizeArray(elements, out.elements);
+			var len:Number = x * x + y * y + z * z + w * w;
+			if (len > 0) {
+				len = 1 / Math.sqrt(len);
+				out.x = x * len;
+				out.y = y * len;
+				out.z = z * len;
+				out.w = w * len;
+			}
 		}
 		
 		/**
@@ -430,9 +324,6 @@ package laya.d3.math {
 		 */
 		public function length():Number {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var f:Float32Array = this.elements;
-			
-			var x:Number = f[0], y:Number = f[1], z:Number = f[2], w:Number = f[3];
 			return Math.sqrt(x * x + y * y + z * z + w * w);
 		}
 		
@@ -443,18 +334,14 @@ package laya.d3.math {
 		 */
 		public function rotateX(rad:Number, out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var e:Float32Array = out.elements;
-			var f:Float32Array = this.elements;
-			
 			rad *= 0.5;
 			
-			var ax:Number = f[0], ay:Number = f[1], az:Number = f[2], aw:Number = f[3];
 			var bx:Number = Math.sin(rad), bw:Number = Math.cos(rad);
 			
-			e[0] = ax * bw + aw * bx;
-			e[1] = ay * bw + az * bx;
-			e[2] = az * bw - ay * bx;
-			e[3] = aw * bw - ax * bx;
+			out.x = x * bw + w * bx;
+			out.y = y * bw + z * bx;
+			out.z = z * bw - y * bx;
+			out.w = w * bw - x * bx;
 		}
 		
 		/**
@@ -464,17 +351,14 @@ package laya.d3.math {
 		 */
 		public function rotateY(rad:Number, out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var e:Float32Array = out.elements;
-			var f:Float32Array = this.elements;
-			
 			rad *= 0.5;
 			
-			var ax:Number = f[0], ay:Number = f[1], az:Number = f[2], aw:Number = f[3], by:Number = Math.sin(rad), bw:Number = Math.cos(rad);
+			var by:Number = Math.sin(rad), bw:Number = Math.cos(rad);
 			
-			e[0] = ax * bw - az * by;
-			e[1] = ay * bw + aw * by;
-			e[2] = az * bw + ax * by;
-			e[3] = aw * bw - ay * by;
+			out.x = x * bw - z * by;
+			out.y = y * bw + w * by;
+			out.z = z * bw + x * by;
+			out.w = w * bw - y * by;
 		}
 		
 		/**
@@ -484,17 +368,13 @@ package laya.d3.math {
 		 */
 		public function rotateZ(rad:Number, out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var e:Float32Array = out.elements;
-			var f:Float32Array = this.elements;
-			
 			rad *= 0.5;
+			var bz:Number = Math.sin(rad), bw:Number = Math.cos(rad);
 			
-			var ax:Number = f[0], ay:Number = f[1], az:Number = f[2], aw:Number = f[3], bz:Number = Math.sin(rad), bw:Number = Math.cos(rad);
-			
-			e[0] = ax * bw + ay * bz;
-			e[1] = ay * bw - ax * bz;
-			e[2] = az * bw + aw * bz;
-			e[3] = aw * bw - az * bz;
+			out.x = x * bw + y * bz;
+			out.y = y * bw - x * bz;
+			out.z = z * bw + w * bz;
+			out.w = w * bw - z * bz;
 		}
 		
 		/**
@@ -507,42 +387,42 @@ package laya.d3.math {
 			Vector3.transformQuat(Vector3.ForwardRH, this, TEMPVector31/*forwarldRH*/);
 			
 			Vector3.transformQuat(Vector3.Up, this, TEMPVector32/*up*/);
-			var upe:Float32Array = TEMPVector32.elements;
+			var upe:Vector3 = TEMPVector32;
 			
 			angleTo(Vector3.ZERO, TEMPVector31, TEMPVector33/*angle*/);
-			var anglee:Float32Array = TEMPVector33.elements;
+			var angle:Vector3 = TEMPVector33;
 			
-			if (anglee[0] == Math.PI / 2) {
-				anglee[1] = arcTanAngle(upe[2], upe[0]);
-				anglee[2] = 0;
-			} else if (anglee[0] == -Math.PI / 2) {
-				anglee[1] = arcTanAngle(-upe[2], -upe[0]);
-				anglee[2] = 0;
+			if (angle.x == Math.PI / 2) {
+				angle.y = arcTanAngle(upe.z, upe.x);
+				angle.z = 0;
+			} else if (angle.x == -Math.PI / 2) {
+				angle.y = arcTanAngle(-upe.z, -upe.x);
+				angle.z = 0;
 			} else {
-				Matrix4x4.createRotationY(-anglee[1], TEMPMatrix0);
-				Matrix4x4.createRotationX(-anglee[0], TEMPMatrix1);
+				Matrix4x4.createRotationY(-angle.y, TEMPMatrix0);
+				Matrix4x4.createRotationX(-angle.x, TEMPMatrix1);
 				
 				Vector3.transformCoordinate(TEMPVector32, TEMPMatrix0, TEMPVector32);
 				Vector3.transformCoordinate(TEMPVector32, TEMPMatrix1, TEMPVector32);
-				anglee[2] = arcTanAngle(upe[1], -upe[0]);
+				angle.z = arcTanAngle(upe.y, -upe.x);
 			}
 			
 			// Special cases.
-			if (anglee[1] <= -Math.PI)
-				anglee[1] = Math.PI;
-			if (anglee[2] <= -Math.PI)
-				anglee[2] = Math.PI;
+			if (angle.y <= -Math.PI)
+				angle.y = Math.PI;
+			if (angle.z <= -Math.PI)
+				angle.z = Math.PI;
 			
-			if (anglee[1] >= Math.PI && anglee[2] >= Math.PI) {
-				anglee[1] = 0;
-				anglee[2] = 0;
-				anglee[0] = Math.PI - anglee[0];
+			if (angle.y >= Math.PI && angle.z >= Math.PI) {
+				angle.y = 0;
+				angle.z = 0;
+				angle.x = Math.PI - angle.x;
 			}
 			
-			var oe:Float32Array = out.elements;
-			oe[0] = anglee[1];
-			oe[1] = anglee[0];
-			oe[2] = anglee[2];
+			var oe:Vector3 = out;
+			oe.x = angle.y;
+			oe.y = angle.x;
+			oe.z = angle.z;
 		}
 		
 		/**
@@ -551,18 +431,15 @@ package laya.d3.math {
 		 */
 		public function invert(out:Quaternion):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var e:Float32Array = out.elements;
-			var f:Float32Array = this.elements;
-			
-			var a0:Number = f[0], a1:Number = f[1], a2:Number = f[2], a3:Number = f[3];
+			var a0:Number = x, a1:Number = y, a2:Number = z, a3:Number = w;
 			var dot:Number = a0 * a0 + a1 * a1 + a2 * a2 + a3 * a3;
 			var invDot:Number = dot ? 1.0 / dot : 0;
 			
 			// TODO: Would be faster to return [0,0,0,0] immediately if dot == 0
-			e[0] = -a0 * invDot;
-			e[1] = -a1 * invDot;
-			e[2] = -a2 * invDot;
-			e[3] = a3 * invDot;
+			out.x = -a0 * invDot;
+			out.y = -a1 * invDot;
+			out.z = -a2 * invDot;
+			out.w = a3 * invDot;
 		}
 		
 		/**
@@ -570,11 +447,10 @@ package laya.d3.math {
 		 * @param out  输出四元数
 		 */
 		public function identity():void {
-			var e:Float32Array = this.elements;
-			e[0] = 0;
-			e[1] = 0;
-			e[2] = 0;
-			e[3] = 1;
+			x = 0;
+			y = 0;
+			z = 0;
+			w = 1;
 		}
 		
 		/**
@@ -583,10 +459,10 @@ package laya.d3.math {
 		 * @param  offset 数组偏移。
 		 */
 		public function fromArray(array:Array, offset:int = 0):void {
-			elements[0] = array[offset + 0];
-			elements[1] = array[offset + 1];
-			elements[2] = array[offset + 2];
-			elements[3] = array[offset + 3];
+			x = array[offset + 0];
+			y = array[offset + 1];
+			z = array[offset + 2];
+			w = array[offset + 3];
 		}
 		
 		/**
@@ -595,15 +471,13 @@ package laya.d3.math {
 		 */
 		public function cloneTo(destObject:*):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			var i:int, s:Float32Array, d:Float32Array;
-			s = this.elements;
-			d = destObject.elements;
-			if (s === d) {
+			if (this === destObject) {
 				return;
 			}
-			for (i = 0; i < 4; ++i) {
-				d[i] = s[i];
-			}
+			destObject.x = x;
+			destObject.y = y;
+			destObject.z = z;
+			destObject.w = w;
 		}
 		
 		/**
@@ -617,11 +491,7 @@ package laya.d3.math {
 		}
 		
 		public function equals(b:Quaternion):Boolean {
-			
-			var ae:Float32Array = this.elements;
-			var be:Float32Array = b.elements;
-			
-			return MathUtils3D.nearEqual(ae[0], be[0]) && MathUtils3D.nearEqual(ae[1], be[1]) && MathUtils3D.nearEqual(ae[2], be[2]) && MathUtils3D.nearEqual(ae[3], be[3]);
+			return MathUtils3D.nearEqual(x, b.x) && MathUtils3D.nearEqual(y, b.y) && MathUtils3D.nearEqual(z, b.z) && MathUtils3D.nearEqual(w, b.w);
 		}
 		
 		/**
@@ -651,10 +521,6 @@ package laya.d3.math {
 		 * @return 长度的平方。
 		 */
 		public function lengthSquared():Number {
-			var x:Number = elements[0];
-			var y:Number = elements[1];
-			var z:Number = elements[2];
-			var w:Number = elements[3];
 			return (x * x) + (y * y) + (z * z) + (w * w);
 		}
 		
@@ -664,16 +530,14 @@ package laya.d3.math {
 		 * @param	out 逆四元数。
 		 */
 		public static function invert(value:Quaternion, out:Quaternion):void {
-			var vE:Float32Array = value.elements;
-			var oE:Float32Array = out.elements;
 			var lengthSq:Number = value.lengthSquared();
 			if (!MathUtils3D.isZero(lengthSq)) {
 				lengthSq = 1.0 / lengthSq;
 				
-				oE[0] = -vE[0] * lengthSq;
-				oE[1] = -vE[1] * lengthSq;
-				oE[2] = -vE[2] * lengthSq;
-				oE[3] = vE[3] * lengthSq;
+				out.x = -value.x * lengthSq;
+				out.y = -value.y * lengthSq;
+				out.z = -value.z * lengthSq;
+				out.w = value.w * lengthSq;
 			}
 		}
 		
@@ -694,48 +558,46 @@ package laya.d3.math {
 			var m32:Number = me[7];
 			var m33:Number = me[8];
 			
-			var oe:Float32Array = out.elements;
-			
 			var sqrt:Number, half:Number;
 			var scale:Number = m11 + m22 + m33;
 			
 			if (scale > 0) {
 				
 				sqrt = Math.sqrt(scale + 1);
-				oe[3] = sqrt * 0.5;
+				out.w = sqrt * 0.5;
 				sqrt = 0.5 / sqrt;
 				
-				oe[0] = (m23 - m32) * sqrt;
-				oe[1] = (m31 - m13) * sqrt;
-				oe[2] = (m12 - m21) * sqrt;
+				out.x = (m23 - m32) * sqrt;
+				out.y = (m31 - m13) * sqrt;
+				out.z = (m12 - m21) * sqrt;
 				
 			} else if ((m11 >= m22) && (m11 >= m33)) {
 				
 				sqrt = Math.sqrt(1 + m11 - m22 - m33);
 				half = 0.5 / sqrt;
 				
-				oe[0] = 0.5 * sqrt;
-				oe[1] = (m12 + m21) * half;
-				oe[2] = (m13 + m31) * half;
-				oe[3] = (m23 - m32) * half;
+				out.x = 0.5 * sqrt;
+				out.y = (m12 + m21) * half;
+				out.z = (m13 + m31) * half;
+				out.w = (m23 - m32) * half;
 			} else if (m22 > m33) {
 				
 				sqrt = Math.sqrt(1 + m22 - m11 - m33);
 				half = 0.5 / sqrt;
 				
-				oe[0] = (m21 + m12) * half;
-				oe[1] = 0.5 * sqrt;
-				oe[2] = (m32 + m23) * half;
-				oe[3] = (m31 - m13) * half;
+				out.x = (m21 + m12) * half;
+				out.y = 0.5 * sqrt;
+				out.z = (m32 + m23) * half;
+				out.w = (m31 - m13) * half;
 			} else {
 				
 				sqrt = Math.sqrt(1 + m33 - m11 - m22);
 				half = 0.5 / sqrt;
 				
-				oe[0] = (m31 + m13) * half;
-				oe[1] = (m32 + m23) * half;
-				oe[2] = 0.5 * sqrt;
-				oe[3] = (m12 - m21) * half;
+				out.x = (m31 + m13) * half;
+				out.y = (m32 + m23) * half;
+				out.z = 0.5 * sqrt;
+				out.w = (m12 - m21) * half;
 			}
 		}
 	}

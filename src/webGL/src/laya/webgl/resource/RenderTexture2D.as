@@ -189,6 +189,7 @@ package laya.webgl.resource {
 			var gl:WebGLContext = LayaGL.instance;
 			//(memorySize == 0) && recreateResource();
 			LayaGL.instance.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
+			_lastRT = _currentActive;
 			_currentActive = this;
 			_readyed = true;
 			

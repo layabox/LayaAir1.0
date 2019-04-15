@@ -105,10 +105,10 @@ package laya.d3.core {
 		 */
 		private function _disableRotation():void {
 			var rotation:Quaternion = transform.rotation;
-			rotation.elements[0] = 0;
-			rotation.elements[1] = 0;
-			rotation.elements[2] = 0;
-			rotation.elements[3] = 1;
+			rotation.x = 0;
+			rotation.y = 0;
+			rotation.z = 0;
+			rotation.w = 1;
 			transform.rotation = rotation;
 		}
 		
@@ -177,8 +177,8 @@ package laya.d3.core {
 			var widthSize:Number = maxX - minX;
 			var heightSize:Number = maxZ - minZ;
 			
-			_cellSize.elements[0] = widthSize / (_heightMap.width - 1);
-			_cellSize.elements[1] = heightSize / (_heightMap.height - 1);
+			_cellSize.x = widthSize / (_heightMap.width - 1);
+			_cellSize.y = heightSize / (_heightMap.height - 1);
 		}
 		
 		/**
@@ -195,17 +195,17 @@ package laya.d3.core {
 		 * @param z Z轴坐标。
 		 */
 		public function getHeight(x:Number, z:Number):Number {
-			_tempVector3.elements[0] = x;
-			_tempVector3.elements[1] = 0;
-			_tempVector3.elements[2] = z;
+			_tempVector3.x = x;
+			_tempVector3.y = 0;
+			_tempVector3.z = z;
 			
 			_disableRotation();
 			var worldMat:Matrix4x4 = transform.worldMatrix;
 			worldMat.invert(_tempMatrix4x4);
 			
 			Vector3.transformCoordinate(_tempVector3, _tempMatrix4x4, _tempVector3);
-			x = _tempVector3.elements[0];
-			z = _tempVector3.elements[2];
+			x = _tempVector3.x;
+			z = _tempVector3.z;
 			
 			var c:Number = (x - _minX) / _cellSize.x;
 			var d:Number = (z - _minZ) / _cellSize.y;

@@ -11,8 +11,8 @@
 	var Utils=laya.utils.Utils,WeakObject=laya.utils.WeakObject;
 Laya.interface('laya.ui.IBox');
 Laya.interface('laya.ui.IItem');
-Laya.interface('laya.ui.IRender');
 Laya.interface('laya.ui.ISelect');
+Laya.interface('laya.ui.IRender');
 /**
 *<code>UIUtils</code> 是文本工具集。
 */
@@ -1854,12 +1854,18 @@ var ScrollBar=(function(_super){
 //class laya.ui.Box extends laya.ui.UIComponent
 var Box=(function(_super){
 	function Box(){
-		Box.__super.call(this);;
+		this._bgColor=null;
+		Box.__super.call(this);
 	}
 
 	__class(Box,'laya.ui.Box',_super);
 	var __proto=Box.prototype;
 	Laya.imps(__proto,{"laya.ui.IBox":true})
+	__proto._onResize=function(e){
+		this.graphics.clear();
+		this.graphics.drawRect(0,0,this.width,this.height,this._bgColor);
+	}
+
 	/**@inheritDoc */
 	__getset(0,__proto,'dataSource',_super.prototype._$get_dataSource,function(value){
 		this._dataSource=value;
@@ -1867,6 +1873,20 @@ var Box=(function(_super){
 			var comp=this.getChildByName(name);
 			if (comp)comp.dataSource=value[name];
 			else if (this.hasOwnProperty(name)&& !((typeof (this[name])=='function')))this[name]=value[name];
+		}
+	});
+
+	/**背景颜色*/
+	__getset(0,__proto,'bgColor',function(){
+		return this._bgColor;
+		},function(value){
+		this._bgColor=value;
+		if (value){
+			this._onResize(null);
+			this.on(/*laya.events.Event.RESIZE*/"resize",this,this._onResize);
+			}else {
+			this.graphics.clear();
+			this.off(/*laya.events.Event.RESIZE*/"resize",this,this._onResize);
 		}
 	});
 
@@ -6431,9 +6451,9 @@ var AdvImage=(function(_super){
 			}else if(Browser.onMiniGame){
 			if(this.isSupportJump()){
 				/*__JS__ */wx.navigateToMiniProgram({
-					appId:advsObj.gameid,
-					path:path,
-					extraData:extendInfo,
+					appId:this._appid,
+					path:"",
+					extraData:"",
 					envVersion:"release",
 					success:function success (){
 						console.log("-------------跳转成功--------------");
@@ -9264,51 +9284,6 @@ var HSlider=(function(_super){
 
 
 /**
-*自适应缩放容器，容器设置大小后，容器大小始终保持stage大小，子内容按照原始最小宽高比缩放
-*/
-//class laya.ui.ScaleBox extends laya.ui.Box
-var ScaleBox=(function(_super){
-	function ScaleBox(){
-		this._oldW=0;
-		this._oldH=0;
-		ScaleBox.__super.call(this);
-	}
-
-	__class(ScaleBox,'laya.ui.ScaleBox',_super);
-	var __proto=ScaleBox.prototype;
-	__proto.onEnable=function(){
-		Laya.stage.on("resize",this,this.onResize);
-		this.onResize();
-	}
-
-	__proto.onDisable=function(){
-		Laya.stage.off("resize",this,this.onResize);
-	}
-
-	__proto.onResize=function(){
-		if (this.width > 0 && this.height > 0){
-			var scale=Math.min(Laya.stage.width / this._oldW,Laya.stage.height / this._oldH);
-			Laya.superSet(Box,this,'width',Laya.stage.width);
-			Laya.superSet(Box,this,'height',Laya.stage.height);
-			this.scale(scale,scale);
-		}
-	}
-
-	__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
-		Laya.superSet(Box,this,'width',value);
-		this._oldW=value;
-	});
-
-	__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
-		Laya.superSet(Box,this,'height',value);
-		this._oldH=value;
-	});
-
-	return ScaleBox;
-})(Box)
-
-
-/**
 *<code>Radio</code> 控件使用户可在一组互相排斥的选择中做出一种选择。
 *用户一次只能选择 <code>Radio</code> 组中的一个成员。选择未选中的组成员将取消选择该组中当前所选的 <code>Radio</code> 控件。
 *@see laya.ui.RadioGroup
@@ -9367,6 +9342,51 @@ var Radio=(function(_super){
 
 	return Radio;
 })(Button)
+
+
+/**
+*自适应缩放容器，容器设置大小后，容器大小始终保持stage大小，子内容按照原始最小宽高比缩放
+*/
+//class laya.ui.ScaleBox extends laya.ui.Box
+var ScaleBox=(function(_super){
+	function ScaleBox(){
+		this._oldW=0;
+		this._oldH=0;
+		ScaleBox.__super.call(this);
+	}
+
+	__class(ScaleBox,'laya.ui.ScaleBox',_super);
+	var __proto=ScaleBox.prototype;
+	__proto.onEnable=function(){
+		Laya.stage.on("resize",this,this.onResize);
+		this.onResize();
+	}
+
+	__proto.onDisable=function(){
+		Laya.stage.off("resize",this,this.onResize);
+	}
+
+	__proto.onResize=function(){
+		if (this.width > 0 && this.height > 0){
+			var scale=Math.min(Laya.stage.width / this._oldW,Laya.stage.height / this._oldH);
+			Laya.superSet(Box,this,'width',Laya.stage.width);
+			Laya.superSet(Box,this,'height',Laya.stage.height);
+			this.scale(scale,scale);
+		}
+	}
+
+	__getset(0,__proto,'width',_super.prototype._$get_width,function(value){
+		Laya.superSet(Box,this,'width',value);
+		this._oldW=value;
+	});
+
+	__getset(0,__proto,'height',_super.prototype._$get_height,function(value){
+		Laya.superSet(Box,this,'height',value);
+		this._oldH=value;
+	});
+
+	return ScaleBox;
+})(Box)
 
 
 /**

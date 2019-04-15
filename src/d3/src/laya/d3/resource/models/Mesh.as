@@ -1,4 +1,5 @@
 package laya.d3.resource.models {
+	import laya.d3.core.BufferState;
 	import laya.d3.core.GeometryElement;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.Vertex.VertexMesh;
@@ -50,8 +51,6 @@ package laya.d3.resource.models {
 		protected var _boundingBox:BoundBox;
 		/** @private */
 		protected var _boundingSphere:BoundSphere;
-		/** @private */
-		protected var _boundingBoxCorners:Vector.<Vector3>;
 		
 		/** @private */
 		public var _subMeshCount:int;
@@ -75,6 +74,8 @@ package laya.d3.resource.models {
 		public var _skinDataPathMarks:Vector.<Array>;
 		/** @private */
 		public var _vertexCount:int = 0;
+		/** @private */
+		public var _bufferState:BufferState = new BufferState();
 		
 		/**
 		 * 获取网格的全局默认绑定动作逆矩阵。
@@ -116,14 +117,6 @@ package laya.d3.resource.models {
 		}
 		
 		/**
-		 * 获取包围球顶点,禁止修改其数据。
-		 * @return 包围球。
-		 */
-		public function get boundingBoxCorners():Vector.<Vector3> {
-			return _boundingBoxCorners;
-		}
-		
-		/**
 		 * 创建一个 <code>Mesh</code> 实例,禁止使用。
 		 * @param url 文件地址。
 		 */
@@ -132,7 +125,6 @@ package laya.d3.resource.models {
 			_subMeshes = new Vector.<SubMesh>();
 			_vertexBuffers = new Vector.<VertexBuffer3D>();
 			_skinDataPathMarks = new Vector.<Array>();
-			_boundingBoxCorners = new Vector.<Vector3>(8);
 		}
 		
 		/**
@@ -143,7 +135,6 @@ package laya.d3.resource.models {
 			BoundSphere.createfromPoints(_positions, _boundingSphere);
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			BoundBox.createfromPoints(_positions, _boundingBox);
-			_boundingBox.getCorners(_boundingBoxCorners);
 		}
 		
 		/**
@@ -207,6 +198,8 @@ package laya.d3.resource.models {
 			_indexBuffer.destroy();
 			_setCPUMemory(0);
 			_setGPUMemory(0);
+			_bufferState.destroy();
+			_bufferState = null;
 			_vertexBuffers = null;
 			_indexBuffer = null;
 			

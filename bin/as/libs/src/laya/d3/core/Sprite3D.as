@@ -9,6 +9,7 @@ package laya.d3.core {
 	import laya.d3.utils.Utils3D;
 	import laya.display.Node;
 	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.resource.ICreateResource;
 	import laya.utils.Handler;
 	
@@ -168,7 +169,7 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _setCreateURL(url:String):void {
-			_url = url;//perfab根节点会设置URL
+			_url = URL.formatURL(url);//perfab根节点会设置URL
 		}
 		
 		/**

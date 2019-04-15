@@ -40,9 +40,9 @@ package laya.debug.tools
 			rst = rst.length > 1 ? rst : "0" + rst;
 			return rst;
 		}
-		public static function getRGBStr(rgb:Array):String
+		public static function getRGBStr(rgb:Array, coefficient:int = 1):String
 		{
-			return "#" + getColorBit(rgb[0]) + getColorBit(rgb[1]) + getColorBit(rgb[2]);
+			return "#" + getColorBit(rgb[0] * coefficient) + getColorBit(rgb[1] * coefficient) + getColorBit(rgb[2] * coefficient);
 		}
 		public static function traseHSB(hsb:Array):void
 		{

@@ -41,7 +41,7 @@
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "2.0.0";
+		public static var version:String = "2.0.1";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -91,7 +91,7 @@
 					if (typeof plugins[i] === "WebGL") isWebGLEnabled = true;
 				}
 			}
-			//必须在webgl.enable之后
+			//这样写是为了在加速器中，调用Init没有传入WebGL，也调用WebGL的方式
 			if (Render.isConchApp) {
 				if (!isWebGLEnabled) __JS__("laya.webgl.WebGL.enable()");
 				RunDriver.enableNative();

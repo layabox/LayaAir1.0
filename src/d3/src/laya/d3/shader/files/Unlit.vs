@@ -42,4 +42,5 @@ void main() {
 	#if defined(COLOR)&&defined(ENABLEVERTEXCOLOR)
 		v_Color = a_Color;
 	#endif
+	gl_Position=remapGLPositionZ(gl_Position);
 }

@@ -3,7 +3,7 @@ package laya.display {
 	import laya.display.Sprite;
 	import laya.events.Event;
 	import laya.net.Loader;
-	// import laya.net.SceneLoader;
+	import laya.net.SceneLoader;
 	import laya.resource.Resource;
 	import laya.utils.ClassUtils;
 	import laya.utils.Handler;
@@ -19,6 +19,8 @@ package laya.display {
 		public static var unDestroyedScenes:Array = [];
 		/**获取根节点*/
 		private static var _root:Sprite;
+		/**@private */
+		private static var _loadPage:Scene;
 		
 		/**场景被关闭后，是否自动销毁（销毁节点和使用到的资源），默认为false*/
 		public var autoDestroyAtClosed:Boolean = false;
@@ -58,8 +60,16 @@ package laya.display {
 			if (view) {
 				createView(view);
 			} else {
-				Laya.loader.load(url, Handler.create(this, createView), null, Loader.JSON);
+				Laya.loader.resetProgress();
+				var loader:SceneLoader = new SceneLoader();
+				loader.on(Event.COMPLETE, this, this._onSceneLoaded, [url]);
+				loader.load(url);
+					//Laya.loader.load(url, Handler.create(this, createView), null, Loader.JSON);
 			}
+		}
+		
+		private function _onSceneLoaded(url:String):void {
+			createView(Loader.getRes(url));
 		}
 		
 		/**
@@ -85,33 +95,35 @@ package laya.display {
 		/**
 		 * 打开场景。【注意】被关闭的场景，如果没有设置autoDestroyAtRemoved=true，则资源可能不能被回收，需要自己手动回收
 		 * @param	closeOther	是否关闭其他场景，默认为true（可选）
+		 * @param	param		打开页面的参数，会传递给onOpened方法（可选）
 		 */
-		public function open(closeOther:Boolean = true):void {
+		public function open(closeOther:Boolean = true, param:* = null):void {
 			if (closeOther) closeAll();
 			root.addChild(scene);
-			onOpened();
+			onOpened(param);
 		}
 		
 		/**场景打开完成后，调用此方法（如果有弹出动画，则在动画完成后执行）*/
-		public function onOpened():void {
+		public function onOpened(param:*):void {
 			//trace("onOpened");
 		}
 		
 		/**
 		 * 关闭场景
 		 * 【注意】被关闭的场景，如果没有设置autoDestroyAtRemoved=true，则资源可能不能被回收，需要自己手动回收
+		 * @param type 关闭的原因，会传递给onClosed函数
 		 */
-		public function close():void {
+		public function close(type:String = null):void {
 			if (autoDestroyAtClosed) this.destroy();
 			else removeSelf();
-			onClosed();
+			onClosed(type);
 		}
 		
 		/**关闭完成后，调用此方法（如果有关闭动画，则在动画完成后执行）
 		 * @param type 如果是点击默认关闭按钮触发，则传入关闭按钮的名字(name)，否则为null。
 		 */
 		public function onClosed(type:String = null):void {
-			trace("onClosed");
+			//trace("onClosed");
 		}
 		
 		/**@inheritDoc */
@@ -119,7 +131,7 @@ package laya.display {
 			_idMap = null;
 			super.destroy(destroyChild);
 			var list:Array = Scene.unDestroyedScenes;
-			for (var i:int = 0, n:int = list.length; i < n; i++) {
+			for (var i:int = list.length-1; i >-1; i--) {
 				if (list[i] === this) {
 					list.splice(i, 1);
 					return;
@@ -216,30 +228,46 @@ package laya.display {
 		 * 加载场景及场景使用到的资源
 		 * @param	url			场景地址
 		 * @param	complete	加载完成回调，返回场景实例（可选）
+		 * @param	progress	加载进度回调（可选）
 		 */
-		public static function load(url:String, complete:Handler = null):void {
+		public static function load(url:String, complete:Handler = null, progress:Handler = null):void {
 			Laya.loader.resetProgress();
-			// var loader:SceneLoader = new SceneLoader();
-			// loader.on(Event.COMPLETE, null, create);
-			// loader.load(url);
+			var loader:SceneLoader = new SceneLoader();
+			loader.on(Event.PROGRESS, null, onProgress);
+			loader.once(Event.COMPLETE, null, create);
+			loader.load(url);
+			
+			function onProgress(value:Number):void {
+				if (_loadPage) _loadPage.event("progress", value);
+				progress && progress.runWith(value);
+			}
 			
 			function create():void {
+				loader.off(Event.PROGRESS, null, onProgress);
 				var obj:Object = Loader.getRes(url);
 				if (!obj) throw "Can not find scene:" + url;
-				var runtime:String = (obj.props && obj.props.runtime) ? obj.props.runtime : obj.type;
-				var scene:Scene = ClassUtils.getInstance(runtime);
+				if (!obj.props) throw "Scene data is error:" + url;
+				var runtime:String = obj.props.runtime ? obj.props.runtime : obj.type;
+				var clas:* = ClassUtils.getClass(runtime);
+				if (obj.props.renderType == "instance") {
+					var scene:Scene = clas.instance || (clas.instance = new clas());
+				} else {
+					scene = new clas();
+				}
 				if (scene && scene is Node) {
 					scene.url = url;
-					if (!scene._getBit(Const.NOT_READY)) complete.runWith(scene);
-					else {
+					if (!scene._getBit(Const.NOT_READY)) {
+						complete && complete.runWith(scene);
+					} else {
 						scene.on("onViewCreated", null, function():void {
 							complete && complete.runWith(scene)
 						})
 						scene.createView(obj);
 					}
-				}else {
-					throw "Can not find scene:"+runtime;
-				}				
+					hideLoadingPage();
+				} else {
+					throw "Can not find scene:" + runtime;
+				}
 			}
 		}
 		
@@ -247,15 +275,24 @@ package laya.display {
 		 * 加载并打开场景
 		 * @param	url			场景地址
 		 * @param	closeOther	是否关闭其他场景，默认为true（可选），【注意】被关闭的场景，如果没有设置autoDestroyAtRemoved=true，则资源可能不能被回收，需要自己手动回收
+		 * @param	param		打开页面的参数，会传递给onOpened方法（可选）
 		 * @param	complete	打开完成回调，返回场景实例（可选）
+		 * @param	progress	加载进度回调（可选）
 		 */
-		public static function open(url:String, closeOther:Boolean = true, complete:Handler = null):void {
-			load(url, Handler.create(null, _onSceneLoaded, [closeOther, complete]));
+		public static function open(url:String, closeOther:Boolean = true, param:* = null, complete:Handler = null, progress:Handler = null):void {
+			//兼容处理
+			if (param is Handler) {
+				var temp:* = complete;
+				complete = param;
+				param = temp;
+			}
+			showLoadingPage();
+			load(url, Handler.create(null, _onSceneLoaded, [closeOther, complete, param]), progress);
 		}
 		
 		/**@private */
-		private static function _onSceneLoaded(closeOther:Boolean, complete:Handler, scene:Scene):void {
-			scene.open(closeOther);
+		private static function _onSceneLoaded(closeOther:Boolean, complete:Handler, param:*, scene:Scene):void {
+			scene.open(closeOther, param);
 			if (complete) complete.runWith(scene);
 		}
 		
@@ -270,7 +307,7 @@ package laya.display {
 			var list:Array = Scene.unDestroyedScenes;
 			for (var i:int = 0, n:int = list.length; i < n; i++) {
 				var scene:Scene = list[i];
-				if (scene.parent && scene.url === url && scene.name == name) {
+				if (scene && scene.parent && scene.url === url && scene.name == name) {
 					scene.close();
 					flag = true;
 				}
@@ -287,6 +324,7 @@ package laya.display {
 			for (var i:int = 0, n:int = root.numChildren; i < n; i++) {
 				var scene:Scene = root.getChildAt(0) as Scene;
 				if (scene is Scene) scene.close();
+				else scene.removeSelf();
 			}
 		}
 		
@@ -311,10 +349,53 @@ package laya.display {
 		
 		/**
 		 * 销毁当前没有被使用的资源,该函数会忽略lock=true的资源。
-		 * @param group 指定分组。
 		 */
-		public static function gc(group:String = null):void {
-			Resource.destroyUnusedResources(group);
+		public static function gc():void {
+			Resource.destroyUnusedResources();
+		}
+		
+		/**
+		 * 设置loading界面，引擎会在调用open方法后，延迟打开loading界面，在页面添加到舞台之后，关闭loading界面
+		 * @param	loadPage 	load界面实例
+		 */
+		public static function setLoadingPage(loadPage:Scene):void {
+			if (_loadPage != loadPage) {
+				_loadPage = loadPage;
+			}
+		}
+		
+		/**
+		 * 显示loading界面
+		 * @param	param 打开参数，如果是scene，则会传递给onOpened方法
+		 * @param	delay 延迟打开时间，默认500毫秒
+		 */
+		public static function showLoadingPage(param:Object = null, delay:int = 500):void {
+			if (_loadPage) {
+				Laya.systemTimer.clear(null, _showLoading);
+				Laya.systemTimer.clear(null, _hideLoading);
+				Laya.systemTimer.once(delay, null, _showLoading, [param], false);
+			}
+		}
+		
+		private static function _showLoading(param:Object):void {
+			Laya.stage.addChild(_loadPage);
+			_loadPage.onOpened(param);
+		}
+		
+		private static function _hideLoading():void {
+			_loadPage.close();
+		}
+		
+		/**
+		 * 隐藏loading界面
+		 * @param	delay 延迟关闭时间，默认500毫秒
+		 */
+		public static function hideLoadingPage(delay:int = 500):void {
+			if (_loadPage) {
+				Laya.systemTimer.clear(null, _showLoading);
+				Laya.systemTimer.clear(null, _hideLoading);
+				Laya.systemTimer.once(delay, null, _hideLoading);
+			}
 		}
 	}
 }

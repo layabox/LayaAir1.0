@@ -3,8 +3,10 @@ package laya.d3.shader {
 	import laya.d3.core.material.BaseMaterial;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.scene.Scene3D;
-	import laya.d3.math.BaseVector;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector2;
+	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.layagl.CommandEncoder;
 	import laya.layagl.LayaGL;
 	import laya.layagl.LayaGLRunner;
@@ -98,22 +100,12 @@ package laya.d3.shader {
 			var materialParms:Array = [];
 			var customParms:Array = [];
 			_customUniformParamsMap = [];
-			var nUniformNum:int = 0;
-			if (Render.isConchApp) {
-				nUniformNum = (gl as Object).getProgramParameterEx(_vs, _ps, "", WebGLContext.ACTIVE_UNIFORMS);
-			} else {
-				nUniformNum = gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS);
-			}
+			var nUniformNum:int = gl.getProgramParameter(_program, WebGLContext.ACTIVE_UNIFORMS);
 			WebGLContext.useProgram(gl, _program);
 			_curActTexIndex = 0;
 			var one:ShaderVariable, i:int, n:int;
 			for (i = 0; i < nUniformNum; i++) {
-				var uniformData:* = null;
-				if (Render.isConchApp) {
-					uniformData = (gl as Object).getActiveUniformEx(_vs, _ps, "", i);
-				} else {
-					uniformData = gl.getActiveUniform(_program, i);
-				}
+				var uniformData:* = gl.getActiveUniform(_program, i);
 				var uniName:String = uniformData.name;
 				one = new ShaderVariable();
 				one.location = gl.getUniformLocation(_program, uniName);
@@ -300,11 +292,10 @@ package laya.d3.shader {
 		/**
 		 * @private
 		 */
-		public function _uniform_vec2(one:*, v:BaseVector):int {
-			var value:Float32Array = v.elements;
+		public function _uniform_vec2(one:*, v:Vector2):int {
 			var uploadedValue:Array = one.uploadedValue;
-			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1]) {
-				LayaGL.instance.uniform2f(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1]);
+			if (uploadedValue[0] !== v.x || uploadedValue[1] !== v.y) {
+				LayaGL.instance.uniform2f(one.location, uploadedValue[0] = v.x, uploadedValue[1] = v.y);
 				return 1;
 			}
 			return 0;
@@ -334,11 +325,10 @@ package laya.d3.shader {
 		/**
 		 * @private
 		 */
-		public function _uniform_vec3(one:*, v:BaseVector):int {
-			var value:Float32Array = v.elements;
+		public function _uniform_vec3(one:*, v:Vector3):int {
 			var uploadedValue:Array = one.uploadedValue;
-			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2]) {
-				LayaGL.instance.uniform3f(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1], uploadedValue[2] = value[2]);
+			if (uploadedValue[0] !== v.x || uploadedValue[1] !== v.y || uploadedValue[2] !== v.z) {
+				LayaGL.instance.uniform3f(one.location, uploadedValue[0] = v.x, uploadedValue[1] = v.y, uploadedValue[2] = v.z);
 				return 1;
 			}
 			return 0;
@@ -355,11 +345,10 @@ package laya.d3.shader {
 		/**
 		 * @private
 		 */
-		public function _uniform_vec4(one:*, v:BaseVector):int {
-			var value:Float32Array = v.elements;
+		public function _uniform_vec4(one:*, v:Vector4):int {
 			var uploadedValue:Array = one.uploadedValue;
-			if (uploadedValue[0] !== value[0] || uploadedValue[1] !== value[1] || uploadedValue[2] !== value[2] || uploadedValue[3] !== value[3]) {
-				LayaGL.instance.uniform4f(one.location, uploadedValue[0] = value[0], uploadedValue[1] = value[1], uploadedValue[2] = value[2], uploadedValue[3] = value[3]);
+			if (uploadedValue[0] !== v.x || uploadedValue[1] !== v.y || uploadedValue[2] !== v.z || uploadedValue[3] !== v.w) {
+				LayaGL.instance.uniform4f(one.location, uploadedValue[0] = v.x, uploadedValue[1] = v.y, uploadedValue[2] = v.z, uploadedValue[3] = v.w);
 				return 1;
 			}
 			return 0;

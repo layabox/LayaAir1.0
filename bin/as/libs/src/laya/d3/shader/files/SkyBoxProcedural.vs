@@ -194,4 +194,5 @@ void main () {
 	#elif defined(SUN_SIMPLE) 
 		v_SunColor = simpleSundiskIntensityFactor * clamp(cOut * sunScale,0.0,1.0) * u_DirectionLight.Color / lightColorIntensity;
 	#endif
+	gl_Position=remapGLPositionZ(gl_Position);
 }

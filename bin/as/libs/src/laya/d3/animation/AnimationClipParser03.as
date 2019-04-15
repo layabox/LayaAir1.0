@@ -1,7 +1,11 @@
 package laya.d3.animation {
-	import laya.d3.core.FloatArrayKeyframe;
 	import laya.d3.core.FloatKeyframe;
+	import laya.d3.core.QuaternionKeyframe;
+	import laya.d3.core.Vector3Keyframe;
+	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
+	import laya.renders.Render;
 	import laya.utils.Byte;
 	
 	/**
@@ -138,10 +142,10 @@ package laya.d3.animation {
 				case 1: 
 				case 3: 
 				case 4: 
-					node.data = new Float32Array(3);
+					node.data = new Vector3();
 					break;
 				case 2: 
-					node.data = new Float32Array(4);
+					node.data = new Quaternion();
 					break;
 				default: 
 					throw "AnimationClipParser03:unknown type.";
@@ -159,35 +163,72 @@ package laya.d3.animation {
 					case 1: 
 					case 3: 
 					case 4: 
-						var floatArrayKeyframe:FloatArrayKeyframe = new FloatArrayKeyframe();
+						var floatArrayKeyframe:Vector3Keyframe = new Vector3Keyframe();
 						node._setKeyframeByIndex(j, floatArrayKeyframe);
+						
 						startTime = floatArrayKeyframe.time = startTimeTypes[reader.getUint16()];
-						var data:Float32Array = floatArrayKeyframe.data = new Float32Array(3 * 3);
-						for (var k:int = 0; k < 3; k++)
-							data[k] = reader.getFloat32();
-						for (k = 0; k < 3; k++)
-							data[3 + k] = reader.getFloat32();
-						for (k = 0; k < 3; k++)
-							data[6 + k] = reader.getFloat32();
+						
+						if (Render.supportWebGLPlusAnimation) {
+							
+							var data:Float32Array = (floatArrayKeyframe as Object).data = new Float32Array(3 * 3);
+							for (var k:int = 0; k < 3; k++)
+								data[k] = reader.getFloat32();
+							for (k = 0; k < 3; k++)
+								data[3 + k] = reader.getFloat32();
+							for (k = 0; k < 3; k++)
+								data[6 + k] = reader.getFloat32();
+						}
+						else {
+							var inTangent:Vector3 = floatArrayKeyframe.inTangent;
+							var outTangent:Vector3 = floatArrayKeyframe.outTangent;
+							var value:Vector3 = floatArrayKeyframe.value;
+							inTangent.x = reader.getFloat32();
+							inTangent.y = reader.getFloat32();
+							inTangent.z = reader.getFloat32();
+							outTangent.x = reader.getFloat32();
+							outTangent.y = reader.getFloat32();
+							outTangent.z = reader.getFloat32();
+							value.x = reader.getFloat32();
+							value.y = reader.getFloat32();
+							value.z = reader.getFloat32();
+						}
 						break;
 					case 2: 
-						floatArrayKeyframe = new FloatArrayKeyframe();
-						node._setKeyframeByIndex(j, floatArrayKeyframe);
-						startTime = floatArrayKeyframe.time = startTimeTypes[reader.getUint16()];
-						data = floatArrayKeyframe.data = new Float32Array(3 * 4);
-						for (k = 0; k < 4; k++)
-							data[k] = reader.getFloat32();
-						for (k = 0; k < 4; k++)
-							data[4 + k] = reader.getFloat32();
-						for (k = 0; k < 4; k++)
-							data[8 + k] = reader.getFloat32();
+						var quaArrayKeyframe:QuaternionKeyframe = new QuaternionKeyframe();
+						node._setKeyframeByIndex(j, quaArrayKeyframe);
+						startTime = quaArrayKeyframe.time = startTimeTypes[reader.getUint16()];
+						if (Render.supportWebGLPlusAnimation) {
+							data = (quaArrayKeyframe as Object).data  = new Float32Array(3 * 4);
+							for (k = 0; k < 4; k++)
+								data[k] = reader.getFloat32();
+							for (k = 0; k < 4; k++)
+								data[4 + k] = reader.getFloat32();
+							for (k = 0; k < 4; k++)
+								data[8 + k] = reader.getFloat32();
+						}
+						else {
+							var inTangentQua:Vector4 = quaArrayKeyframe.inTangent;
+							var outTangentQua:Vector4 = quaArrayKeyframe.outTangent;
+							var valueQua:Quaternion = quaArrayKeyframe.value;
+							inTangentQua.x = reader.getFloat32();
+							inTangentQua.y = reader.getFloat32();
+							inTangentQua.z = reader.getFloat32();
+							inTangentQua.w = reader.getFloat32();
+							outTangentQua.x = reader.getFloat32();
+							outTangentQua.y = reader.getFloat32();
+							outTangentQua.z = reader.getFloat32();
+							outTangentQua.w = reader.getFloat32();
+							valueQua.x = reader.getFloat32();
+							valueQua.y = reader.getFloat32();
+							valueQua.z = reader.getFloat32();
+							valueQua.w = reader.getFloat32();
+						}
 						break;
 					default: 
 						throw "AnimationClipParser03:unknown type.";
 					}
 				}
 			}
-			
 			var eventCount:int = reader.getUint16();
 			for (i = 0; i < eventCount; i++) {
 				var event:AnimationEvent = new AnimationEvent();

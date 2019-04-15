@@ -113,9 +113,13 @@ package laya.wx.mini {
                         onDownLoadCallBack(url,0);
 					}else
 					{
-                        MiniFileMgr.downOtherFiles(url,Handler.create(this,onDownLoadCallBack,[url]),url);
+						if (!MiniFileMgr.isLocalNativeFile(url) &&  (url.indexOf("http://") == -1 && url.indexOf("https://") == -1) || (url.indexOf("http://usr/") != -1)) {
+							this.onDownLoadCallBack(url, 0);
+						}else
+						{
+							MiniFileMgr.downOtherFiles(url, Handler.create(this, this.onDownLoadCallBack, [url]), url);
+						}
 					}
-
 				}
 			}
 		}

@@ -1,4 +1,5 @@
 package laya.renders {
+	import laya.Const;
 	import laya.display.Sprite;
 	import laya.display.SpriteConst;
 	import laya.display.css.SpriteStyle;
@@ -69,7 +70,7 @@ package laya.renders {
 			if ((alpha = style.alpha) > 0.01 || sprite._needRepaint()) {
 				var temp:Number = context.globalAlpha;
 				context.globalAlpha *= alpha;
-				context.drawTexture(tex, x-style.pivotX, y-style.pivotY, sprite._width || tex.width, sprite._height || tex.height);
+				context.drawTexture(tex, x-style.pivotX+tex.offsetX, y-style.pivotY+tex.offsetY, sprite._width || tex.width, sprite._height || tex.height);
 				context.globalAlpha = temp;
 			}
 		}
@@ -84,7 +85,7 @@ package laya.renders {
 				
 				context.saveTransform(curMat);
 				context.transformByMatrix(sprite.transform, x, y);
-				context.drawTexture(tex, -style.pivotX, -style.pivotY, sprite._width || tex.width, sprite._height || tex.height);
+				context.drawTexture(tex, -style.pivotX+tex.offsetX, -style.pivotY+tex.offsetY, sprite._width || tex.width, sprite._height || tex.height);
 				context.restoreTransform(curMat);
 				
 				context.globalAlpha = temp;
@@ -139,6 +140,8 @@ package laya.renders {
 		
 		static public function transform_drawNodes(sprite:Sprite, context:Context, x:Number, y:Number):void {
 			//var transform:Matrix = sprite.transform;
+			var textLastRender:Boolean = sprite._getBit(Const.DRAWCALL_OPTIMIZE) && context.drawCallOptimize(true);
+			
 			var style:SpriteStyle = sprite._style;
 			context.saveTransform(curMat);
 			context.transformByMatrix(sprite.transform, x, y);
@@ -169,9 +172,13 @@ package laya.renders {
 			}
 			
 			context.restoreTransform(curMat);
+			textLastRender && context.drawCallOptimize(false);
 		}
 		
 		static public function drawLayaGL_drawNodes(sprite:Sprite, context:Context, x:Number, y:Number):void {
+			
+			var textLastRender:Boolean = sprite._getBit(Const.DRAWCALL_OPTIMIZE) && context.drawCallOptimize(true);
+			
 			var style:SpriteStyle = sprite._style;
 			x = x-style.pivotX;
 			y = y-style.pivotY;
@@ -195,6 +202,8 @@ package laya.renders {
 				for (var i:int = 0; i < n; ++i)
 					(ele = (childs[i] as Sprite))._visible && ele.render(context, x, y);
 			}
+			
+			textLastRender && context.drawCallOptimize(false);
 		}
 	}
 }

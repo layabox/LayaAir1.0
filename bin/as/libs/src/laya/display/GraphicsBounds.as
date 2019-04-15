@@ -308,13 +308,15 @@ package laya.display {
 			var rst:Array = _tempPoints;
 			_tempPoints.length = 0;
 			rst.push(x, y);
-			var dP:Number = Math.PI / 10;
+			var delta:Number =  (endAngle - startAngle) % 360;
+			if (delta < 0) delta += 360;
+			var segnum:int = 32;
+			var step:Number = delta / segnum;		
 			var i:Number;
-			for (i = startAngle; i < endAngle; i += dP) {
-				rst.push(x + radius * Math.cos(i), y + radius * Math.sin(i));
-			}
-			if (endAngle != i) {
-				rst.push(x + radius * Math.cos(endAngle), y + radius * Math.sin(endAngle));
+			var angle:Number = startAngle;
+			for (i = 0; i <= segnum; i++) {
+				rst.push(x + radius * Math.cos(angle), y + radius * Math.sin(angle));
+				angle += step;
 			}
 			return rst;
 		}

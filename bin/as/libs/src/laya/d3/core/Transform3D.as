@@ -118,7 +118,7 @@ package laya.d3.core {
 		 * @return	局部位置X轴分量。
 		 */
 		public function get localPositionX():Number {
-			return _localPosition.elements[0];
+			return _localPosition.x;
 		}
 		
 		/**
@@ -126,7 +126,7 @@ package laya.d3.core {
 		 * @param x	局部位置X轴分量。
 		 */
 		public function set localPositionX(x:Number):void {
-			_localPosition.elements[0] = x;
+			_localPosition.x = x;
 			localPosition = _localPosition;
 		}
 		
@@ -135,7 +135,7 @@ package laya.d3.core {
 		 * @return	局部位置Y轴分量。
 		 */
 		public function get localPositionY():Number {
-			return _localPosition.elements[1];
+			return _localPosition.y;
 		}
 		
 		/**
@@ -143,7 +143,7 @@ package laya.d3.core {
 		 * @param y	局部位置Y轴分量。
 		 */
 		public function set localPositionY(y:Number):void {
-			_localPosition.elements[1] = y;
+			_localPosition.y = y;
 			localPosition = _localPosition;
 		}
 		
@@ -152,7 +152,7 @@ package laya.d3.core {
 		 * @return	局部位置Z轴分量。
 		 */
 		public function get localPositionZ():Number {
-			return _localPosition.elements[2];
+			return _localPosition.z;
 		}
 		
 		/**
@@ -160,7 +160,7 @@ package laya.d3.core {
 		 * @param z	局部位置Z轴分量。
 		 */
 		public function set localPositionZ(z:Number):void {
-			_localPosition.elements[2] = z;
+			_localPosition.z = z;
 			localPosition = _localPosition;
 		}
 		
@@ -189,7 +189,7 @@ package laya.d3.core {
 		 * @return	局部旋转四元数X分量。
 		 */
 		public function get localRotationX():Number {
-			return localRotation.elements[0];
+			return localRotation.x;
 		}
 		
 		/**
@@ -197,7 +197,7 @@ package laya.d3.core {
 		 * @param x	局部旋转四元数X分量。
 		 */
 		public function set localRotationX(x:Number):void {
-			_localRotation.elements[0] = x;
+			_localRotation.x = x;
 			localRotation = _localRotation;
 		}
 		
@@ -206,7 +206,7 @@ package laya.d3.core {
 		 * @return	局部旋转四元数Y分量。
 		 */
 		public function get localRotationY():Number {
-			return localRotation.elements[1];
+			return localRotation.y;
 		}
 		
 		/**
@@ -214,7 +214,7 @@ package laya.d3.core {
 		 * @param y	局部旋转四元数Y分量。
 		 */
 		public function set localRotationY(y:Number):void {
-			_localRotation.elements[1] = y;
+			_localRotation.y = y;
 			localRotation = _localRotation;
 		}
 		
@@ -223,7 +223,7 @@ package laya.d3.core {
 		 * @return	局部旋转四元数Z分量。
 		 */
 		public function get localRotationZ():Number {
-			return localRotation.elements[2];
+			return localRotation.z;
 		}
 		
 		/**
@@ -231,7 +231,7 @@ package laya.d3.core {
 		 * @param z	局部旋转四元数Z分量。
 		 */
 		public function set localRotationZ(z:Number):void {
-			_localRotation.elements[2] = z;
+			_localRotation.z = z;
 			localRotation = _localRotation;
 		}
 		
@@ -240,7 +240,7 @@ package laya.d3.core {
 		 * @return	局部旋转四元数W分量。
 		 */
 		public function get localRotationW():Number {
-			return localRotation.elements[3];
+			return localRotation.w;
 		}
 		
 		/**
@@ -248,7 +248,7 @@ package laya.d3.core {
 		 * @param w	局部旋转四元数W分量。
 		 */
 		public function set localRotationW(w:Number):void {
-			_localRotation.elements[3] = w;
+			_localRotation.w = w;
 			localRotation = _localRotation;
 		}
 		
@@ -258,8 +258,8 @@ package laya.d3.core {
 		 */
 		public function get localRotation():Quaternion {
 			if (_getTransformFlag(TRANSFORM_LOCALQUATERNION)) {
-				var eulerE:Float32Array = _localRotationEuler.elements;
-				Quaternion.createFromYawPitchRoll(eulerE[1] / _angleToRandin, eulerE[0] / _angleToRandin, eulerE[2] / _angleToRandin, _localRotation);
+				var eulerE:Vector3 = _localRotationEuler;
+				Quaternion.createFromYawPitchRoll(eulerE.y / _angleToRandin, eulerE.x / _angleToRandin, eulerE.z / _angleToRandin, _localRotation);
 				_setTransformFlag(TRANSFORM_LOCALQUATERNION, false);
 			}
 			return _localRotation;
@@ -286,7 +286,7 @@ package laya.d3.core {
 		 * @return	局部缩放X。
 		 */
 		public function get localScaleX():Number {
-			return _localScale.elements[0];
+			return _localScale.x;
 		}
 		
 		/**
@@ -294,7 +294,7 @@ package laya.d3.core {
 		 * @param	value 局部缩放X。
 		 */
 		public function set localScaleX(value:Number):void {
-			_localScale.elements[0] = value;
+			_localScale.x = value;
 			localScale = _localScale;
 		}
 		
@@ -303,7 +303,7 @@ package laya.d3.core {
 		 * @return	局部缩放Y。
 		 */
 		public function get localScaleY():Number {
-			return _localScale.elements[1];
+			return _localScale.y;
 		}
 		
 		/**
@@ -311,7 +311,7 @@ package laya.d3.core {
 		 * @param	value 局部缩放Y。
 		 */
 		public function set localScaleY(value:Number):void {
-			_localScale.elements[1] = value;
+			_localScale.y = value;
 			localScale = _localScale;
 		}
 		
@@ -320,7 +320,7 @@ package laya.d3.core {
 		 * @return	局部缩放Z。
 		 */
 		public function get localScaleZ():Number {
-			return _localScale.elements[2];
+			return _localScale.z;
 		}
 		
 		/**
@@ -328,7 +328,7 @@ package laya.d3.core {
 		 * @param	value 局部缩放Z。
 		 */
 		public function set localScaleZ(value:Number):void {
-			_localScale.elements[2] = value;
+			_localScale.z = value;
 			localScale = _localScale;
 		}
 		
@@ -359,7 +359,7 @@ package laya.d3.core {
 		 * @return	局部空间的X轴欧拉角。
 		 */
 		public function get localRotationEulerX():Number {
-			return localRotationEuler.elements[0];
+			return localRotationEuler.x;
 		}
 		
 		/**
@@ -367,7 +367,7 @@ package laya.d3.core {
 		 * @param	value 局部空间的X轴欧拉角。
 		 */
 		public function set localRotationEulerX(value:Number):void {
-			_localRotationEuler.elements[0] = value;
+			_localRotationEuler.x = value;
 			localRotationEuler = _localRotationEuler;
 		}
 		
@@ -376,7 +376,7 @@ package laya.d3.core {
 		 * @return	局部空间的Y轴欧拉角。
 		 */
 		public function get localRotationEulerY():Number {
-			return localRotationEuler.elements[1];
+			return localRotationEuler.y;
 		}
 		
 		/**
@@ -384,7 +384,7 @@ package laya.d3.core {
 		 * @param	value 局部空间的Y轴欧拉角。
 		 */
 		public function set localRotationEulerY(value:Number):void {
-			_localRotationEuler.elements[1] = value;
+			_localRotationEuler.y = value;
 			localRotationEuler = _localRotationEuler;
 		}
 		
@@ -393,7 +393,7 @@ package laya.d3.core {
 		 * @return	局部空间的Z轴欧拉角。
 		 */
 		public function get localRotationEulerZ():Number {
-			return localRotationEuler.elements[2];
+			return localRotationEuler.z;
 		}
 		
 		/**
@@ -401,7 +401,7 @@ package laya.d3.core {
 		 * @param	value 局部空间的Z轴欧拉角。
 		 */
 		public function set localRotationEulerZ(value:Number):void {
-			_localRotationEuler.elements[2] = value;
+			_localRotationEuler.z = value;
 			localRotationEuler = _localRotationEuler;
 		}
 		
@@ -412,11 +412,11 @@ package laya.d3.core {
 		public function get localRotationEuler():Vector3 {
 			if (_getTransformFlag(TRANSFORM_LOCALEULER)) {
 				_localRotation.getYawPitchRoll(_tempVector30);
-				var eulerE:Float32Array = _tempVector30.elements;
-				var localRotationEulerE:Float32Array = _localRotationEuler.elements;
-				localRotationEulerE[0] = eulerE[1] * _angleToRandin;
-				localRotationEulerE[1] = eulerE[0] * _angleToRandin;
-				localRotationEulerE[2] = eulerE[2] * _angleToRandin;
+				var euler:Vector3 = _tempVector30;
+				var localRotationEuler:Vector3 = _localRotationEuler;
+				localRotationEuler.x = euler.y * _angleToRandin;
+				localRotationEuler.y = euler.x * _angleToRandin;
+				localRotationEuler.z = euler.z * _angleToRandin;
 				_setTransformFlag(TRANSFORM_LOCALEULER, false);
 			}
 			return _localRotationEuler;
@@ -488,14 +488,13 @@ package laya.d3.core {
 		public function set position(value:Vector3):void {
 			if (_parent != null) {
 				Vector3.subtract(value, _parent.position, _localPosition);
-				var parentScaleE:Float32Array = _parent.scale.elements;
-				var psX:Number = parentScaleE[0], psY:Number = parentScaleE[1], psZ:Number = parentScaleE[2];
+				var parentScale:Vector3 = _parent.scale;
+				var psX:Number = parentScale.x, psY:Number = parentScale.y, psZ:Number = parentScale.z;
 				if (psX !== 1.0 || psY !== 1.0 || psZ !== 1.0) {
 					var invertScale:Vector3 = _tempVector30;
-					var invertScaleE:Float32Array = invertScale.elements;
-					invertScaleE[0] = 1.0 / psX;
-					invertScaleE[1] = 1.0 / psY;
-					invertScaleE[2] = 1.0 / psZ;
+					invertScale.x = 1.0 / psX;
+					invertScale.y = 1.0 / psY;
+					invertScale.z = 1.0 / psZ;
 					Vector3.multiply(_localPosition, invertScale, _localPosition);
 				}
 				var parentRotation:Quaternion = _parent.rotation;
@@ -565,11 +564,11 @@ package laya.d3.core {
 		 */
 		public function set scale(value:Vector3):void {
 			if (_parent !== null) {
-				var pScaleE:Float32Array = _parent.scale.elements;
-				var invPScaleE:Float32Array = _tempVector30.elements;
-				invPScaleE[0] = 1.0 / pScaleE[0];
-				invPScaleE[1] = 1.0 / pScaleE[1];
-				invPScaleE[2] = 1.0 / pScaleE[2];
+				var pScaleE:Vector3 = _parent.scale;
+				var invPScaleE:Vector3 = _tempVector30;
+				invPScaleE.x = 1.0 / pScaleE.x;
+				invPScaleE.y = 1.0 / pScaleE.y;
+				invPScaleE.z = 1.0 / pScaleE.z;
 				Vector3.multiply(value, _tempVector30, _localScale);
 			} else {
 				value.cloneTo(_localScale);
@@ -587,11 +586,11 @@ package laya.d3.core {
 		public function get rotationEuler():Vector3 {
 			if (_getTransformFlag(TRANSFORM_WORLDEULER)) {
 				rotation.getYawPitchRoll(_tempVector30);//使用rotation属性,可能需要更新
-				var eulerE:Float32Array = _tempVector30.elements;
-				var rotationEulerE:Float32Array = _rotationEuler.elements;
-				rotationEulerE[0] = eulerE[1] * _angleToRandin;
-				rotationEulerE[1] = eulerE[0] * _angleToRandin;
-				rotationEulerE[2] = eulerE[2] * _angleToRandin;
+				var eulerE:Vector3 = _tempVector30;
+				var rotationEulerE:Vector3 = _rotationEuler;
+				rotationEulerE.x = eulerE.y * _angleToRandin;
+				rotationEulerE.y = eulerE.x * _angleToRandin;
+				rotationEulerE.z = eulerE.z * _angleToRandin;
 				_setTransformFlag(TRANSFORM_WORLDEULER, false);
 			}
 			return _rotationEuler;
@@ -650,9 +649,9 @@ package laya.d3.core {
 		 */
 		public function get forward():Vector3 {
 			var worldMatElem:Float32Array = worldMatrix.elements;
-			_forward.elements[0] = -worldMatElem[8];
-			_forward.elements[1] = -worldMatElem[9];
-			_forward.elements[2] = -worldMatElem[10];
+			_forward.x = -worldMatElem[8];
+			_forward.y = -worldMatElem[9];
+			_forward.z = -worldMatElem[10];
 			return _forward;
 		}
 		
@@ -662,9 +661,9 @@ package laya.d3.core {
 		 */
 		public function get up():Vector3 {
 			var worldMatElem:Float32Array = worldMatrix.elements;
-			_up.elements[0] = worldMatElem[4];
-			_up.elements[1] = worldMatElem[5];
-			_up.elements[2] = worldMatElem[6];
+			_up.x = worldMatElem[4];
+			_up.y = worldMatElem[5];
+			_up.z = worldMatElem[6];
 			return _up;
 		}
 		
@@ -674,9 +673,9 @@ package laya.d3.core {
 		 */
 		public function get right():Vector3 {
 			var worldMatElem:Float32Array = worldMatrix.elements;
-			_right.elements[0] = worldMatElem[0];
-			_right.elements[1] = worldMatElem[1];
-			_right.elements[2] = worldMatElem[2];
+			_right.x = worldMatElem[0];
+			_right.y = worldMatElem[1];
+			_right.z = worldMatElem[2];
 			return _right;
 		}
 		
@@ -870,11 +869,10 @@ package laya.d3.core {
 		 * @param	isLocal 是否局部空间。
 		 */
 		public function lookAt(target:Vector3, up:Vector3, isLocal:Boolean = false):void {
-			var targetE:Float32Array = target.elements;
-			var eyeE:Float32Array;
+			var eye:Vector3;
 			if (isLocal) {
-				eyeE = _localPosition.elements;
-				if (Math.abs(eyeE[0] - targetE[0]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[1] - targetE[1]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[2] - targetE[2]) < MathUtils3D.zeroTolerance)
+				eye = _localPosition;
+				if (Math.abs(eye.x - target.x) < MathUtils3D.zeroTolerance && Math.abs(eye.y - target.y) < MathUtils3D.zeroTolerance && Math.abs(eye.z - target.z) < MathUtils3D.zeroTolerance)
 					return;
 				
 				Quaternion.lookAt(_localPosition, target, up, _localRotation);
@@ -882,8 +880,8 @@ package laya.d3.core {
 				localRotation = _localRotation;
 			} else {
 				var worldPosition:Vector3 = position;
-				eyeE = worldPosition.elements;
-				if (Math.abs(eyeE[0] - targetE[0]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[1] - targetE[1]) < MathUtils3D.zeroTolerance && Math.abs(eyeE[2] - targetE[2]) < MathUtils3D.zeroTolerance)
+				eye = worldPosition;
+				if (Math.abs(eye.x - target.x) < MathUtils3D.zeroTolerance && Math.abs(eye.y - target.y) < MathUtils3D.zeroTolerance && Math.abs(eye.z - target.z) < MathUtils3D.zeroTolerance)
 					return;
 				
 				Quaternion.lookAt(worldPosition, target, up, _rotation);

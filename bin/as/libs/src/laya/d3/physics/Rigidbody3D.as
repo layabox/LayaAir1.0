@@ -321,10 +321,10 @@ package laya.d3.physics {
 		public function get totalTorque():Vector3 {
 			if (_nativeColliderObject) {
 				var nativeTotalTorque:* = _nativeColliderObject.getTotalTorque();
-				var totalTorqueE:Float32Array = _totalTorque.elements;
-				totalTorqueE[0] = -nativeTotalTorque.x;
-				totalTorqueE[1] = nativeTotalTorque.y;
-				totalTorqueE[2] = nativeTotalTorque.z;
+				var totalTorque:Vector3 = _totalTorque;
+				totalTorque.x = -nativeTotalTorque.x;
+				totalTorque.y = nativeTotalTorque.y;
+				totalTorque.z = nativeTotalTorque.z;
 			}
 			return null;
 		}
@@ -642,12 +642,10 @@ package laya.d3.physics {
 			if (_nativeColliderObject == null)
 				throw "Attempted to call a Physics function that is avaliable only when the Entity has been already added to the Scene.";
 			var nativeForce:* = _nativeTempVector30;
-			var forceE:Float32Array = force.elements;
-			nativeForce.setValue(-forceE[0], forceE[1], forceE[2]);
+			nativeForce.setValue(-force.x, force.y, force.z);
 			if (localOffset) {
-				var localOffsetE:Float32Array = localOffset.elements;
 				var nativeOffset:* = _nativeTempVector31;
-				nativeOffset.setValue(-localOffsetE[0], localOffsetE[1], localOffsetE[2]);
+				nativeOffset.setValue(-localOffset.x, localOffset.y, localOffset.z);
 				_nativeColliderObject.applyForce(nativeForce, nativeOffset);
 			} else {
 				_nativeColliderObject.applyCentralForce(nativeForce);
@@ -663,8 +661,7 @@ package laya.d3.physics {
 				throw "Attempted to call a Physics function that is avaliable only when the Entity has been already added to the Scene.";
 			
 			var nativeTorque:* = _nativeTempVector30;
-			var torqueE:Float32Array = torque.elements;
-			nativeTorque.setValue(-torqueE[0], torqueE[1], torqueE[2]);
+			nativeTorque.setValue(-torque.x, torque.y, torque.z);
 			_nativeColliderObject.applyTorque(nativeTorque);
 		}
 		
@@ -676,11 +673,9 @@ package laya.d3.physics {
 		public function applyImpulse(impulse:Vector3, localOffset:Vector3 = null):void {
 			if (_nativeColliderObject == null)
 				throw "Attempted to call a Physics function that is avaliable only when the Entity has been already added to the Scene.";
-			var impulseE:Float32Array = impulse.elements;
-			_nativeImpulse.setValue(-impulseE[0], impulseE[1], impulseE[2]);
+			_nativeImpulse.setValue(-impulse.x, impulse.y, impulse.z);
 			if (localOffset) {
-				var localOffsetE:Float32Array = localOffset.elements;
-				_nativeImpulseOffset.setValue(-localOffsetE[0], localOffsetE[1], localOffsetE[2]);
+				_nativeImpulseOffset.setValue(-localOffset.x, localOffset.y, localOffset.z);
 				_nativeColliderObject.applyImpulse(_nativeImpulse, _nativeImpulseOffset);
 			} else {
 				_nativeColliderObject.applyCentralImpulse(_nativeImpulse);
@@ -695,8 +690,7 @@ package laya.d3.physics {
 			if (_nativeColliderObject == null)
 				throw "Attempted to call a Physics function that is avaliable only when the Entity has been already added to the Scene.";
 			var nativeTorqueImpulse:* = _nativeTempVector30;
-			var torqueImpulseE:Float32Array = torqueImpulse.elements;
-			nativeTorqueImpulse.setValue(-torqueImpulseE[0], torqueImpulseE[1], torqueImpulseE[2]);
+			nativeTorqueImpulse.setValue(-torqueImpulse.x, torqueImpulse.y, torqueImpulse.z);
 			_nativeColliderObject.applyTorqueImpulse(nativeTorqueImpulse);
 		}
 		

@@ -347,11 +347,17 @@ package laya.resource {
 			if (Render.isWebGL) {
 				return RunDriver.getTexturePixels(this, x, y, width, height);
 			} else if (Render.isConchApp) {
-				return this._nativeObj.getImageData(0, 0, width, height);
+				return this._nativeObj.getImageData(x, y, width, height);
 			} else {
+				var texw:int = this.width;
+				var texh:int = this.height;
+				if (x + width > texw) width -= (x + width) - texw;
+				if (y + height > texh) height -= (y + height) - texh;
+				if (width <= 0 || height <= 0) return null;
+				
 				Browser.canvas.size(width, height);
 				Browser.canvas.clear();
-				Browser.context.drawImage(this, -x, -y, this.width, this.height, 0, 0);
+				Browser.context.drawImage(this.bitmap._source, x, y, width, height, 0,0,width,height);
 				var info:* = Browser.context.getImageData(0, 0, width, height);
 				return info.data;
 			}
@@ -361,6 +367,7 @@ package laya.resource {
 		 * 通过url强制恢复bitmap。
 		 */
 		public function recoverBitmap():void {
+			var url:String=_bitmap.url;
 			if (!_destroyed && (!_bitmap || _bitmap.destroyed) && url)
 				load(url);
 		}

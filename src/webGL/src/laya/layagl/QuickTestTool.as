@@ -80,7 +80,6 @@ package laya.layagl
 		 */
 		//TODO:coverage
 		public function render(context:Context, x:Number, y:Number):void {
-			Stat.spriteCount++;
 			_addType(_renderType);
 			showRenderTypeInfo(_renderType);
 			//if (_renderType == (SpriteConst.IMAGE | SpriteConst.GRAPHICS | SpriteConst.CHILDS))

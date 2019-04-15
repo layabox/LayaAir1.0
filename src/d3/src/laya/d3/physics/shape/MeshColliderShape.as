@@ -92,8 +92,7 @@ package laya.d3.physics.shape {
 			if (_compoundParent) {//TODO:待查,这里有问题
 				updateLocalTransformations();//TODO:
 			} else {
-				var valueE:Float32Array = value.elements;
-				_nativeScale.setValue(valueE[0], valueE[1], valueE[2]);
+				_nativeScale.setValue(value.x, value.y, value.z);
 				_nativeShape.setLocalScaling(_nativeScale);
 				_nativeShape.updateBound();//更新缩放后需要更新包围体,有性能损耗
 			}

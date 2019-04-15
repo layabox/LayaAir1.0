@@ -92,7 +92,6 @@ package laya.components {
 			if (this.onPreRender !== proto.onPreRender) {
 				Laya.lateTimer.frameLoop(1, this, this.onPreRender);
 			}
-			onEnable();
 		}
 		
 		/**
@@ -104,7 +103,13 @@ package laya.components {
 			Laya.startTimer.clearAll(this);
 			Laya.updateTimer.clearAll(this);
 			Laya.lateTimer.clearAll(this);
-			onDisable();
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		override public function _isScript():Boolean {
+			return true;
 		}
 		
 		/**

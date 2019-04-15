@@ -4,7 +4,8 @@ package laya.d3.core.render {
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
-	import laya.d3.core.scene.OctreeNode;
+	import laya.d3.core.scene.BoundsOctreeNode;
+	import laya.d3.core.scene.IOctreeObject;
 	import laya.d3.core.scene.Scene3D;
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.math.BoundBox;
@@ -23,7 +24,7 @@ package laya.d3.core.render {
 	/**
 	 * <code>Render</code> 类用于渲染器的父类，抽象类不允许实例。
 	 */
-	public class BaseRender extends EventDispatcher implements ISingletonElement {
+	public class BaseRender extends EventDispatcher implements ISingletonElement, IOctreeObject {
 		/**@private */
 		public static var _tempBoundBoxCorners:Vector.<Vector3> = new <Vector3>[new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 		
@@ -61,8 +62,6 @@ package laya.d3.core.render {
 		protected var _boundingBoxNeedChange:Boolean;
 		/** @private */
 		protected var _boundingBoxCenterNeedChange:Boolean;
-		/** @private */
-		protected var _octreeNodeNeedChange:Boolean;
 		
 		/** @private */
 		public var _enable:Boolean;
@@ -84,7 +83,9 @@ package laya.d3.core.render {
 		/**@private */
 		public var _visible:Boolean = true;//初始值为默认可见,否则会造成第一帧动画不更新等，TODO:还有个包围盒更新好像浪费了
 		/** @private */
-		public var _treeNode:OctreeNode;
+		public var _octreeNode:BoundsOctreeNode;
+		/** @private */
+		public var _indexInOctreeMotionList:int = -1;
 		
 		/** @private */
 		public var _updateLoopCount:int;
@@ -359,7 +360,7 @@ package laya.d3.core.render {
 			_boundingBox = new BoundBox(new Vector3(), new Vector3());
 			_boundingBoxCenter = new Vector3();
 			_boundingSphere = new BoundSphere(new Vector3(), 0);
-			if (Render.isConchApp) {//[NATIVE]
+			if (Render.supportWebGLPlusCulling) {//[NATIVE]
 				var length:int = FrustumCulling._cullingBufferLength;
 				_cullingBufferIndex = length;
 				var cullingBuffer:Float32Array = FrustumCulling._cullingBuffer;
@@ -376,7 +377,6 @@ package laya.d3.core.render {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
-			_octreeNodeNeedChange = true;
 			_materials = new Vector.<BaseMaterial>();
 			_renderElements = new Vector.<RenderElement>();
 			_owner = owner;
@@ -389,6 +389,34 @@ package laya.d3.core.render {
 			receiveShadow = false;
 			sortingFudge = 0.0;
 			(owner) && (_owner.transform.on(Event.TRANSFORM_CHANGED, this, _onWorldMatNeedChange));//如果为合并BaseRender,owner可能为空
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getOctreeNode():BoundsOctreeNode {//[实现IOctreeObject接口]
+			return _octreeNode;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setOctreeNode(value:BoundsOctreeNode):void {//[实现IOctreeObject接口]
+			_octreeNode = value;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _getIndexInMotionList():int {//[实现IOctreeObject接口]
+			return _indexInOctreeMotionList;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _setIndexInMotionList(value:int):void {//[实现IOctreeObject接口]
+			_indexInOctreeMotionList = value;
 		}
 		
 		/**
@@ -432,11 +460,18 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		protected function _onWorldMatNeedChange():void {
+		protected function _onWorldMatNeedChange(flag:int):void {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
-			_octreeNodeNeedChange = true;
+			
+			if (_octreeNode) {
+				flag &= Transform3D.TRANSFORM_WORLDPOSITION | Transform3D.TRANSFORM_WORLDQUATERNION | Transform3D.TRANSFORM_WORLDSCALE;//过滤有用TRANSFORM标记
+				if (flag) {
+					if (_indexInOctreeMotionList === -1)//_octreeNode表示在八叉树队列中
+						_octreeNode._octree.addMotionObject(this);
+				}
+			}
 		}
 		
 		/**
@@ -508,18 +543,8 @@ package laya.d3.core.render {
 		/**
 		 * @private
 		 */
-		public function _updateOctreeNode():void {
-			var treeNode:OctreeNode = _treeNode;
-			if (treeNode && _octreeNodeNeedChange) {
-				treeNode.updateObject(this);
-				_octreeNodeNeedChange = false;
-			}
-		}
-		
-		/**
-		 * @private
-		 */
 		public function _destroy():void {
+			(_indexInOctreeMotionList !== -1) && (_octreeNode._octree.removeMotionObject(this));
 			offAll();
 			var i:int = 0, n:int = 0;
 			for (i = 0, n = _renderElements.length; i < n; i++)

@@ -9,7 +9,6 @@ package laya.d3.math {
 		public var extents:Vector3;
 		/**这个矩阵表示包围盒的位置和缩放,它的平移向量表示该包围盒的中心*/
 		public var transformation:Matrix4x4;
-		
 		/** @private */
 		private static var _tempV30:Vector3 = new Vector3();
 		/** @private */
@@ -47,6 +46,12 @@ package laya.d3.math {
 		private static var _boxBound2:BoundBox = new BoundBox(new Vector3(), new Vector3());
 		/** @private */
 		private static var _boxBound3:BoundBox = new BoundBox(new Vector3(), new Vector3());
+		/** @private */
+		private static var _vsepAe:Float32Array = new Float32Array();
+		/** @private */
+		private static var _sizeBe:Float32Array = new Float32Array();
+		/** @private */
+		private static var _sizeAe:Float32Array = new Float32Array();
 		
 		/**
 		 * 创建一个 <code>OrientedBoundBox</code> 实例。
@@ -104,25 +109,21 @@ package laya.d3.math {
 		 * @param	corners 返回顶点的输出队列。
 		 */
 		public function getCorners(corners:Vector.<Vector3>):void {
-			var xve:Float32Array = _tempV30.elements;//_tempV30 xv 
-			var yve:Float32Array = _tempV31.elements;//_tempV31 yv 
-			var zve:Float32Array = _tempV32.elements;//_tempV32 zv 
+
+			_tempV30.x = extents.x;
+			_tempV30.y = _tempV30.z = 0;
 			
-			var extentsE:Float32Array = extents.elements;
-			xve[0] = extentsE[0];
-			xve[1] = xve[2] = 0;
+			_tempV31.y = extents.y;
+			_tempV31.x = _tempV31.z = 0;
 			
-			yve[1] = extentsE[1];
-			yve[0] = yve[2] = 0;
-			
-			zve[2] = extentsE[2];
-			zve[0] = zve[1] = 0;
+			_tempV32.z = extents.z;
+			_tempV32.x = _tempV32.y = 0;
 			
 			Vector3.TransformNormal(_tempV30, transformation, _tempV30);
 			Vector3.TransformNormal(_tempV31, transformation, _tempV31);
 			Vector3.TransformNormal(_tempV32, transformation, _tempV32);
 			
-			var center:Vector3 = _tempV33;//_tempV33 center
+			var center:Vector3 = _tempV33;
 			transformation.getTranslationVector(center);
 			
 			corners.length = 8;
@@ -203,19 +204,19 @@ package laya.d3.math {
 		 */
 		public function getSize(out:Vector3):void {
 			
-			var extentsE:Float32Array = extents.elements;
-			_tempV30.x = extentsE[0];
-			_tempV31.y = extentsE[1];
-			_tempV32.z = extentsE[2];
+
+			_tempV30.x = extents.x;
+			_tempV31.y = extents.y;
+			_tempV32.z = extents.z;
 			
 			Vector3.TransformNormal(_tempV30, transformation, _tempV30);
 			Vector3.TransformNormal(_tempV31, transformation, _tempV31);
 			Vector3.TransformNormal(_tempV31, transformation, _tempV32);
 			
-			var oe:Float32Array = out.elements;
-			oe[0] = Vector3.scalarLength(_tempV30);
-			oe[1] = Vector3.scalarLength(_tempV31);
-			oe[2] = Vector3.scalarLength(_tempV32);
+	
+			out.x= Vector3.scalarLength(_tempV30);
+			out.y = Vector3.scalarLength(_tempV31);
+			out.z = Vector3.scalarLength(_tempV32);
 		}
 		
 		/**
@@ -224,19 +225,19 @@ package laya.d3.math {
 		 */
 		public function getSizeSquared(out:Vector3):void {
 			
-			var extentsE:Float32Array = extents.elements;
-			_tempV30.x = extentsE[0];
-			_tempV31.y = extentsE[1];
-			_tempV32.z = extentsE[2];
+
+			_tempV30.x = extents.x;
+			_tempV31.y = extents.y;
+			_tempV32.z = extents.z;
 			
 			Vector3.TransformNormal(_tempV30, transformation, _tempV30);
 			Vector3.TransformNormal(_tempV31, transformation, _tempV31);
 			Vector3.TransformNormal(_tempV31, transformation, _tempV32);
 			
-			var oe:Float32Array = out.elements;
-			oe[0] = Vector3.scalarLengthSquared(_tempV30);
-			oe[1] = Vector3.scalarLengthSquared(_tempV31);
-			oe[2] = Vector3.scalarLengthSquared(_tempV32);
+
+			out.x = Vector3.scalarLengthSquared(_tempV30);
+			out.y = Vector3.scalarLengthSquared(_tempV31);
+			out.z = Vector3.scalarLengthSquared(_tempV32);
 		}
 		
 		/**
@@ -253,19 +254,19 @@ package laya.d3.math {
 		 */
 		public function containsPoint(point:Vector3):int {
 			
-			var extentsE:Float32Array = extents.elements;
-			var extentsEX:Number = extentsE[0];
-			var extentsEY:Number = extentsE[1];
-			var extentsEZ:Number = extentsE[2];
+		
+			var extentsEX:Number = extents.x;
+			var extentsEY:Number = extents.y;
+			var extentsEZ:Number = extents.z;
 			
 			transformation.invert(_tempM0);
 			
 			Vector3.transformCoordinate(point, _tempM0, _tempV30);
 			
-			var _tempV30e:Float32Array = _tempV30.elements;
-			var _tempV30ex:Number = Math.abs(_tempV30e[0]);
-			var _tempV30ey:Number = Math.abs(_tempV30e[1]);
-			var _tempV30ez:Number = Math.abs(_tempV30e[2]);
+	
+			var _tempV30ex:Number = Math.abs(_tempV30.x);
+			var _tempV30ey:Number = Math.abs(_tempV30.y);
+			var _tempV30ez:Number = Math.abs(_tempV30.z);
 			
 			if (MathUtils3D.nearEqual(_tempV30ex, extentsEX) && MathUtils3D.nearEqual(_tempV30ey, extentsEY) && MathUtils3D.nearEqual(_tempV30ez, extentsEZ))
 				return ContainmentType.Intersects;
@@ -282,10 +283,10 @@ package laya.d3.math {
 		 */
 		public function containsPoints(points:Vector.<Vector3>):int {
 			
-			var extentse:Float32Array = extents.elements;
-			var extentsex:Number = extentse[0];
-			var extentsey:Number = extentse[1];
-			var extentsez:Number = extentse[2];
+
+			var extentsex:Number = extents.x;
+			var extentsey:Number = extents.y;
+			var extentsez:Number = extents.z;
 			
 			transformation.invert(_tempM0);
 			
@@ -296,10 +297,10 @@ package laya.d3.math {
 				
 				Vector3.transformCoordinate(points[i], _tempM0, _tempV30);
 				
-				var _tempV30e:Float32Array = _tempV30.elements;
-				var _tempV30ex:Number = Math.abs(_tempV30e[0]);
-				var _tempV30ey:Number = Math.abs(_tempV30e[1]);
-				var _tempV30ez:Number = Math.abs(_tempV30e[2]);
+	
+				var _tempV30ex:Number = Math.abs(_tempV30.x);
+				var _tempV30ey:Number = Math.abs(_tempV30.y);
+				var _tempV30ez:Number = Math.abs(_tempV30.z);
 				
 				if (MathUtils3D.nearEqual(_tempV30ex, extentsex) && MathUtils3D.nearEqual(_tempV30ey, extentsey) && MathUtils3D.nearEqual(_tempV30ez, extentsez))
 					containsAny = true;
@@ -325,10 +326,10 @@ package laya.d3.math {
 		 */
 		public function containsSphere(sphere:BoundSphere, ignoreScale:Boolean = false):int {
 			
-			var extentsE:Float32Array = extents.elements;
-			var extentsEX:Number = extentsE[0];
-			var extentsEY:Number = extentsE[1];
-			var extentsEZ:Number = extentsE[2];
+
+			var extentsEX:Number = extents.x;
+			var extentsEY:Number = extents.y;
+			var extentsEZ:Number = extents.z;
 			
 			var sphereR:Number = sphere.radius;
 			
@@ -354,15 +355,15 @@ package laya.d3.math {
 			if (distance > locRadius * locRadius)
 				return ContainmentType.Disjoint;
 			
-			var tempV30e:Float32Array = _tempV30.elements;
-			var tempV30ex:Number = tempV30e[0];
-			var tempV30ey:Number = tempV30e[1];
-			var tempV30ez:Number = tempV30e[2];
+		
+			var tempV30ex:Number = _tempV30.x;
+			var tempV30ey:Number = _tempV30.y;
+			var tempV30ez:Number = _tempV30.z;
 			
-			var tempV32e:Float32Array = _tempV32.elements;
-			var tempV32ex:Number = tempV32e[0];
-			var tempV32ey:Number = tempV32e[1];
-			var tempV32ez:Number = tempV32e[2];
+		
+			var tempV32ex:Number = _tempV32.x;
+			var tempV32ey:Number = _tempV32.y;
+			var tempV32ez:Number = _tempV32.z;
 			
 			if ((((tempV32ex + locRadius <= tempV30ex) && (tempV30ex <= extentsEX - locRadius)) && ((extentsEX - tempV32ex > locRadius) && (tempV32ey + locRadius <= tempV30ey))) && (((tempV30ey <= extentsEY - locRadius) && (extentsEY - tempV32ey > locRadius)) && (((tempV32ez + locRadius <= tempV30ez) && (tempV30ez <= extentsEZ - locRadius)) && (extentsEZ - tempV32ez > locRadius)))) {
 				return ContainmentType.Contains;
@@ -376,20 +377,20 @@ package laya.d3.math {
 			
 			var mate:Float32Array = mat.elements;
 			
-			var row0e:Float32Array = out[0].elements;
-			row0e[0] = mate[0];
-			row0e[1] = mate[1];
-			row0e[2] = mate[2];
+
+			out[0].x = mate[0];
+			out[0].y = mate[1];
+			out[0].z = mate[2];
 			
-			var row1e:Float32Array = out[1].elements;
-			row1e[0] = mate[4];
-			row1e[1] = mate[5];
-			row1e[2] = mate[6];
 			
-			var row2e:Float32Array = out[2].elements;
-			row2e[0] = mate[8];
-			row2e[1] = mate[9];
-			row2e[2] = mate[10];
+			out[1].x = mate[4];
+			out[1].y = mate[5];
+			out[1].z = mate[6];
+			
+		
+			out[2].x = mate[8];
+			out[2].y = mate[9];
+			out[2].z = mate[10];
 		}
 		
 		/**
@@ -405,10 +406,15 @@ package laya.d3.math {
 			var cornersCheck:int = containsPoints(_corners);
 			if (cornersCheck != ContainmentType.Disjoint)
 				return cornersCheck;
-			
-			var sizeAe:Float32Array = extents.elements;
+	
+			_sizeAe[0] = extents.x;
+			_sizeAe[1] = extents.y;
+			_sizeAe[2] = extents.z;
 			obb.extents.cloneTo(_tempV35);
-			var sizeBe:Float32Array = _tempV35.elements;
+	
+			_sizeBe[0] = _tempV35.x;
+			_sizeBe[1] = _tempV35.y;
+			_sizeBe[2] = _tempV35.z;
 			
 			_getRows(transformation, _rows1);
 			_getRows(obb.transformation, _rows2);
@@ -431,23 +437,26 @@ package laya.d3.math {
 			getCenter(_tempV36);
 			Vector3.subtract(_tempV34, _tempV36, _tempV30);
 			
-			var vsepAe:Float32Array = _tempV31.elements;
-			vsepAe[0] = Vector3.dot(_tempV30, _rows1[0]);
-			vsepAe[1] = Vector3.dot(_tempV30, _rows1[1]);
-			vsepAe[2] = Vector3.dot(_tempV30, _rows1[2]);
 			
-			var _tempV32e:Float32Array = _tempV32.elements;
-			var _tempV33e:Float32Array = _tempV33.elements;
+			_tempV31.x = Vector3.dot(_tempV30, _rows1[0]);
+			_tempV31.y = Vector3.dot(_tempV30, _rows1[1]);
+			_tempV31.z = Vector3.dot(_tempV30, _rows1[2]);
+		
+			_vsepAe[0] = _tempV31.x;
+			_vsepAe[1] = _tempV31.y;
+			_vsepAe[2] = _tempV31.z;
+			
+			
 			
 			for (i = 0; i < 3; i++) {
 				
-				_tempV32e[0] = _tempM1.getElementByRowColumn(i, 0);
-				_tempV32e[1] = _tempM1.getElementByRowColumn(i, 1);
-				_tempV32e[2] = _tempM1.getElementByRowColumn(i, 2);
+				_tempV32.x = _tempM1.getElementByRowColumn(i, 0);
+				_tempV32.y = _tempM1.getElementByRowColumn(i, 1);
+				_tempV32.z = _tempM1.getElementByRowColumn(i, 2);
 				
-				extentA = sizeAe[i];
+				extentA = _sizeAe[i];
 				extentB = Vector3.dot(_tempV35, _tempV32);
-				separation = Math.abs(vsepAe[i]);
+				separation = Math.abs(_vsepAe[i]);
 				
 				if (separation > extentA + extentB)
 					return ContainmentType.Disjoint;
@@ -455,16 +464,16 @@ package laya.d3.math {
 			
 			for (k = 0; k < 3; k++) {
 				
-				_tempV32e[0] = _tempM1.getElementByRowColumn(0, k);
-				_tempV32e[1] = _tempM1.getElementByRowColumn(1, k);
-				_tempV32e[2] = _tempM1.getElementByRowColumn(2, k);
+				_tempV32.x = _tempM1.getElementByRowColumn(0, k);
+				_tempV32.y = _tempM1.getElementByRowColumn(1, k);
+				_tempV32.z = _tempM1.getElementByRowColumn(2, k);
 				
-				_tempV33e[0] = _tempM0.getElementByRowColumn(0, k);
-				_tempV33e[1] = _tempM0.getElementByRowColumn(1, k);
-				_tempV33e[2] = _tempM0.getElementByRowColumn(2, k);
+				_tempV33.x = _tempM0.getElementByRowColumn(0, k);
+				_tempV33.y = _tempM0.getElementByRowColumn(1, k);
+				_tempV33.z = _tempM0.getElementByRowColumn(2, k);
 				
 				extentA = Vector3.dot(extents, _tempV32);
-				extentB = sizeBe[k];
+				extentB = _sizeBe[k];
 				separation = Math.abs(Vector3.dot(_tempV31, _tempV33));
 				
 				if (separation > extentA + extentB)
@@ -477,9 +486,9 @@ package laya.d3.math {
 					
 					var i1:Number = (i + 1) % 3, i2:Number = (i + 2) % 3;
 					var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
-					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeAe[i2] * _tempM1.getElementByRowColumn(i1, k);
-					extentB = sizeBe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
-					separation = Math.abs(vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
+					extentA = _sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + _sizeAe[i2] * _tempM1.getElementByRowColumn(i1, k);
+					extentB = _sizeBe[k1] * _tempM1.getElementByRowColumn(i, k2) + _sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
+					separation = Math.abs(_vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - _vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
 					if (separation > extentA + extentB)
 						return ContainmentType.Disjoint;
 				}
@@ -503,10 +512,10 @@ package laya.d3.math {
 			if (cornersCheck != ContainmentType.Disjoint)
 				return cornersCheck;
 			
-			var extentsE:Float32Array = extents.elements;
-			var extentsX:Number = extentsE[0];
-			var extentsY:Number = extentsE[1];
-			var extentsZ:Number = extentsE[2];
+
+			var extentsX:Number = extents.x;
+			var extentsY:Number = extents.y;
+			var extentsZ:Number = extents.z;
 			
 			transformation.invert(_tempM0);
 			Vector3.transformCoordinate(point1, _tempM0, _tempV30);
@@ -516,20 +525,20 @@ package laya.d3.math {
 			Vector3.scale(_tempV32, 0.5, _tempV32);
 			Vector3.subtract(_tempV30, _tempV32, _tempV33);
 			
-			var _tempV33e:Float32Array = _tempV33.elements;
-			var _tempV33X:Number = _tempV33e[0];
-			var _tempV33Y:Number = _tempV33e[1];
-			var _tempV33Z:Number = _tempV33e[2];
+		
+			var _tempV33X:Number = _tempV33.x;
+			var _tempV33Y:Number = _tempV33.y;
+			var _tempV33Z:Number = _tempV33.z;
 			
-			var _tempV34e:Float32Array = _tempV34.elements;
-			var _tempV34X:Number = _tempV34e[0] = Math.abs(_tempV33e[0]);
-			var _tempV34Y:Number = _tempV34e[1] = Math.abs(_tempV33e[1]);
-			var _tempV34Z:Number = _tempV34e[2] = Math.abs(_tempV33e[2]);
+		
+			var _tempV34X:Number =_tempV34.x = Math.abs(_tempV33.x);
+			var _tempV34Y:Number =_tempV34.y = Math.abs(_tempV33.y);
+			var _tempV34Z:Number =_tempV34.z = Math.abs(_tempV33.z);
 			
-			var _tempV32e:Float32Array = _tempV32.elements;
-			var _tempV32X:Number = _tempV32e[0];
-			var _tempV32Y:Number = _tempV32e[1];
-			var _tempV32Z:Number = _tempV32e[2];
+		
+			var _tempV32X:Number = _tempV32.x;
+			var _tempV32Y:Number = _tempV32.y;
+			var _tempV32Z:Number = _tempV32.z;
 			
 			if (Math.abs(_tempV32X) > extentsX + _tempV34X)
 				return ContainmentType.Disjoint;
@@ -575,8 +584,15 @@ package laya.d3.math {
 			
 			Vector3.subtract(max, _tempV30, _tempV31);
 			
-			var sizeAe:Float32Array = extents.elements;
-			var sizeBe:Float32Array = _tempV31.elements;
+	
+			_sizeAe[0] = extents.x;
+			_sizeAe[1] = extents.y;
+			_sizeAe[2] = extents.z;
+	
+			_sizeBe[0] = _tempV31.x;
+			_sizeBe[1] = _tempV31.y;
+			_sizeBe[2] = _tempV31.z;
+			
 			
 			_getRows(transformation, _rows1);
 			transformation.invert(_tempM0);
@@ -592,23 +608,26 @@ package laya.d3.math {
 			getCenter(_tempV35);
 			Vector3.subtract(_tempV30, _tempV35, _tempV32);
 			
-			var vsepAe:Float32Array = _tempV31.elements;
-			vsepAe[0] = Vector3.dot(_tempV32, _rows1[0]);
-			vsepAe[1] = Vector3.dot(_tempV32, _rows1[1]);
-			vsepAe[2] = Vector3.dot(_tempV32, _rows1[2]);
+
+			_tempV31.x = Vector3.dot(_tempV32, _rows1[0]);
+			_tempV31.y = Vector3.dot(_tempV32, _rows1[1]);
+			_tempV31.z = Vector3.dot(_tempV32, _rows1[2]);
+
+			_vsepAe[0] = _tempV31.x;
+			_vsepAe[1] = _tempV31.y;
+			_vsepAe[2] = _tempV31.z;
 			
-			var _tempV33e:Float32Array = _tempV33.elements;
-			var _tempV34e:Float32Array = _tempV34.elements;
+	
 			
 			for (i = 0; i < 3; i++) {
 				
-				_tempV33e[0] = _tempM1.getElementByRowColumn(i, 0);
-				_tempV33e[1] = _tempM1.getElementByRowColumn(i, 1);
-				_tempV33e[2] = _tempM1.getElementByRowColumn(i, 2);
+				_tempV33.x = _tempM1.getElementByRowColumn(i, 0);
+				_tempV33.y = _tempM1.getElementByRowColumn(i, 1);
+				_tempV33.z = _tempM1.getElementByRowColumn(i, 2);
 				
-				extentA = sizeAe[i];
+				extentA = _sizeAe[i];
 				extentB = Vector3.dot(_tempV31, _tempV33);
-				separation = Math.abs(vsepAe[i]);
+				separation = Math.abs(_vsepAe[i]);
 				
 				if (separation > extentA + extentB)
 					return ContainmentType.Disjoint;
@@ -616,16 +635,16 @@ package laya.d3.math {
 			
 			for (k = 0; k < 3; k++) {
 				
-				_tempV33e[0] = _tempM1.getElementByRowColumn(0, k);
-				_tempV33e[1] = _tempM1.getElementByRowColumn(1, k);
-				_tempV33e[2] = _tempM1.getElementByRowColumn(2, k);
+				_tempV33.x = _tempM1.getElementByRowColumn(0, k);
+				_tempV33.y = _tempM1.getElementByRowColumn(1, k);
+				_tempV33.z = _tempM1.getElementByRowColumn(2, k);
 				
-				_tempV34e[0] = _tempM0.getElementByRowColumn(0, k);
-				_tempV34e[1] = _tempM0.getElementByRowColumn(1, k);
-				_tempV34e[2] = _tempM0.getElementByRowColumn(2, k);
+				_tempV34.x = _tempM0.getElementByRowColumn(0, k);
+				_tempV34.y = _tempM0.getElementByRowColumn(1, k);
+				_tempV34.z = _tempM0.getElementByRowColumn(2, k);
 				
 				extentA = Vector3.dot(extents, _tempV33);
-				extentB = sizeBe[k];
+				extentB = _sizeBe[k];
 				separation = Math.abs(Vector3.dot(_tempV31, _tempV34));
 				
 				if (separation > extentA + extentB)
@@ -637,9 +656,9 @@ package laya.d3.math {
 					
 					var i1:Number = (i + 1) % 3, i2:Number = (i + 2) % 3;
 					var k1:Number = (k + 1) % 3, k2:Number = (k + 2) % 3;
-					extentA = sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + sizeAe[i2] * _tempM1.getElementByRowColumn(i1, k);
-					extentB = sizeBe[k1] * _tempM1.getElementByRowColumn(i, k2) + sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
-					separation = Math.abs(vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
+					extentA = _sizeAe[i1] * _tempM1.getElementByRowColumn(i2, k) + _sizeAe[i2] * _tempM1.getElementByRowColumn(i1, k);
+					extentB = _sizeBe[k1] * _tempM1.getElementByRowColumn(i, k2) + _sizeBe[k2] * _tempM1.getElementByRowColumn(i, k1);
+					separation = Math.abs(_vsepAe[i2] * _tempM0.getElementByRowColumn(i1, k) - _vsepAe[i1] * _tempM0.getElementByRowColumn(i2, k));
 					if (separation > extentA + extentB)
 						return ContainmentType.Disjoint;
 				}
@@ -678,11 +697,11 @@ package laya.d3.math {
 			
 			corners.length = 8;
 			
-			var extentsE:Float32Array = extents.elements;
+	
 			
-			_tempV30.x = extentsE[0];
-			_tempV31.y = extentsE[1];
-			_tempV32.z = extentsE[2];
+			_tempV30.x = extents.x;
+			_tempV31.y = extents.y;
+			_tempV32.z = extents.z;
 			
 			Vector3.add(_tempV30, _tempV31, _tempV33);
 			Vector3.add(_tempV33, _tempV32, corners[0]);
@@ -786,7 +805,7 @@ package laya.d3.math {
 			Vector3.subtract(box3Max, _tempV32, ae);
 			
 			Vector3.transformCoordinate(_tempV32, at, _tempV33);
-			//_tempV33.cloneTo(at.getTranslationVector());//TODO:WZY
+
 		
 		}
 		

@@ -19,7 +19,7 @@ package laya.particle {
 	 */
 	public class Particle2D extends Sprite {
 		/**@private */
-		private var _matrix4:Array = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];//默认4x4矩阵
+		private var _matrix4:Float32Array = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);//默认4x4矩阵
 		/**@private */
 		private var _particleTemplate:ParticleTemplateBase;
 		/**@private */
@@ -63,27 +63,15 @@ package laya.particle {
 		public function setParticleSetting(setting:ParticleSetting):void {
 			if (!setting) return stop();
 			ParticleSetting.checkSetting(setting);
-			//_renderType |= RenderSprite.CUSTOM;
-			if (Render.isConchApp) {
+			if (Render.isWebGL) {
+				customRenderEnable = true;//设置custom渲染
 				_particleTemplate = new ParticleTemplate2D(setting);
-				var sBlendMode:String = BlendMode.NAMES[setting.blendState];
-				blendMode = sBlendMode;
-				tempCmd = this.graphics._saveToCmd(null, DrawParticleCmd.create.call(this.graphics, _particleTemplate as ParticleTemplate2D));
-				//this.graphics._saveToCmd(_setGraphicsCallBack, null);
-				this._setGraphicsCallBack();
+				//this.graphics._saveToCmd(Render.context._drawParticle, [_particleTemplate]);
+				this.graphics._saveToCmd(null, DrawParticleCmd.create(_particleTemplate as ParticleTemplate2D));
 			}
-			else
-			{
-				if (Render.isWebGL) {
-					customRenderEnable = true;//设置custom渲染
-					_particleTemplate = new ParticleTemplate2D(setting);
-					//this.graphics._saveToCmd(Render.context._drawParticle, [_particleTemplate]);
-					this.graphics._saveToCmd(null, DrawParticleCmd.create(_particleTemplate as ParticleTemplate2D));
-				}
-				else {
-					_particleTemplate = _canvasTemplate = new ParticleTemplateCanvas(setting);			
-				}        
-			}
+			else {
+				_particleTemplate = _canvasTemplate = new ParticleTemplateCanvas(setting);			
+			}        
 			if (!_emitter) {
 				_emitter = new Emitter2D(_particleTemplate);
 			} else {

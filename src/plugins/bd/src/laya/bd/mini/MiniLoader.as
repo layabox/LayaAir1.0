@@ -25,6 +25,11 @@ package laya.bd.mini {
 		private function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false):void {
 			var thisLoader:* = this;
 			thisLoader._url = url;
+			if (!url)
+			{
+				thisLoader.onLoaded(null);
+				return;
+			}
 			url = URL.customFormat(url);
 			if (url.indexOf("data:image") === 0) thisLoader._type = type = Loader.IMAGE;
 			else {
@@ -99,8 +104,9 @@ package laya.bd.mini {
 						MiniFileMgr.read(url,encoding,new Handler(MiniLoader, onReadNativeCallBack, [encoding, url, type, cache, group, ignoreCache, thisLoader]));
 						return;
 					}
-					url = URL.formatURL(url);
-					if (url.indexOf("http://") != -1 || url.indexOf("https://") != -1 && !BMiniAdapter.AutoCacheDownFile) {
+					//xiaosong20190301修复资源版本管理的bug
+					var tempurl:String=URL.formatURL(url);
+					if (tempurl.indexOf("http://usr/") == -1&& (tempurl.indexOf("http://") != -1 || tempurl.indexOf("https://") != -1) && !BMiniAdapter.AutoCacheDownFile) {
 						//远端文件加载走xmlhttprequest
 						BMiniAdapter.EnvConfig.load.call(thisLoader, url, type, cache, group, ignoreCache);
 					} else {

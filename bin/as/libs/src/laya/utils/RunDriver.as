@@ -82,10 +82,7 @@ package laya.utils {
 		/** @private */
 		//TODO:coverage
 		public static var clear:Function = function(value:String):void {
-			if ( !Render.isConchApp )
-			{
-				Render._context.clear();
-			}
+			Render._context.clear();
 		};
 		
 		/** @private */

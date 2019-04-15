@@ -25,7 +25,7 @@ package laya.wx.mini {
 				url = URL.formatURL(url);
 			}else
 			{
-				if (url.indexOf("http://") != -1 || url.indexOf("https://") != -1)
+				if (url.indexOf("http://usr/") == -1&&(url.indexOf("http://") != -1 || url.indexOf("https://") != -1))
 				{
 					if(MiniFileMgr.loadPath != "")
 					{
@@ -66,8 +66,9 @@ package laya.wx.mini {
 					}
 				}
 			}
-			if (!MiniFileMgr.getFileInfo(url)) {
-				if (url.indexOf("http://") != -1 || url.indexOf("https://") != -1)
+			if (!MiniFileMgr.getFileInfo(url)) 
+			{
+				if (url.indexOf('http://usr/') == -1&&(url.indexOf("http://") != -1 || url.indexOf("https://") != -1))
 				{
 					//小游戏在子域里不能远端加载图片资源
 					if(MiniAdpter.isZiYu)
@@ -164,7 +165,8 @@ package laya.wx.mini {
 			if (thisLoader._type == "nativeimage") {
 				var onload:Function = function():void {
 					clear();
-					thisLoader._url = URL.formatURL(thisLoader._url);
+					//xiaosong20190301
+					//thisLoader._url = URL.formatURL(thisLoader._url);
 					thisLoader.onLoaded(image);
 				};
 				image = new Browser.window.Image();
@@ -177,10 +179,12 @@ package laya.wx.mini {
 			} else {
 				var imageSource:* = new Browser.window.Image();
 				onload = function():void {
-					thisLoader._url = URL.formatURL(thisLoader._url);
+					//xiaosong20190301
+					//thisLoader._url = URL.formatURL(thisLoader._url);
 					image = HTMLImage.create(imageSource.width, imageSource.height);
 					image.loadImageSource(imageSource, true);
 					image._setCreateURL(fileNativeUrl);
+//					image._setUrl(fileNativeUrl);
 					clear();
 					thisLoader.onLoaded(image);
 				};

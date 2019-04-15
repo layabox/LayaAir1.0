@@ -21,8 +21,6 @@ package laya.components {
 		/** @private */
 		public var _enabled:Boolean;
 		/** @private */
-		private var _active:Boolean;
-		/** @private */
 		private var _awaked:Boolean;
 		
 		/**
@@ -56,8 +54,10 @@ package laya.components {
 		public function set enabled(value:Boolean):void {
 			_enabled = value;
 			if (owner) {
-				if (value) owner.activeInHierarchy && _onEnable();
-				else _active && _onDisable();
+				if (value)
+					owner.activeInHierarchy && _onEnable();
+				else
+					owner.activeInHierarchy && _onDisable();
 			}
 		}
 		
@@ -79,10 +79,16 @@ package laya.components {
 		/**
 		 * @private
 		 */
+		public function _isScript():Boolean {
+			return false;
+		}
+		
+		/**
+		 * @private
+		 */
 		private function _resetComp():void {
 			this._indexInList = -1;
 			this._enabled = true;
-			this._active = false;
 			this._awaked = false;
 			this.owner = null;
 		}
@@ -186,9 +192,6 @@ package laya.components {
 		 * @private
 		 */
 		public function _setActive(value:Boolean):void {
-			if (_active === value) return;
-			if (!owner.activeInHierarchy) return;
-			_active = value;
 			if (value) {
 				if (!_awaked) {
 					_awaked = true;
@@ -219,7 +222,10 @@ package laya.components {
 		 * @private
 		 */
 		public function _destroy():void {
-			_active && _setActive(false);
+			if (owner.activeInHierarchy && _enabled){
+				_setActive(false);
+				(_isScript()) && ((this as Object).onDisable());
+			}
 			owner._scene && _setActiveInScene(false);
 			_onDestroy();
 			_destroyed = true;

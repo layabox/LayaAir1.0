@@ -390,11 +390,6 @@ package laya.display {
 				transform.d = _formatData(scaleY / (realHeight / canvasHeight));
 			}
 			
-			if (Render.isConchApp) {
-				this._conchData._float32Data[SpriteConst.POSSCALEX] = _formatData(scaleX / (realWidth / canvasWidth));
-				this._conchData._float32Data[SpriteConst.POSSCALEY] = _formatData(scaleY / (realHeight / canvasHeight));
-				this._conchData._float32Data[SpriteConst.POSTRANSFORM_FLAG] = 1;
-			}
 			//处理canvas大小			
 			canvas.size(canvasWidth, canvasHeight);
 			RunDriver.changeWebGLSize(canvasWidth, canvasHeight);
@@ -530,11 +525,6 @@ package laya.display {
 			} else {
 				Render.canvas.style.background = "none";
 			}
-			if (Render.isConchApp) {
-				this._renderType |= SpriteConst.STYLE;
-				this._setBgStyleColor(0, 0, this.width, this.height, value);
-				this._setRenderType(this._renderType);
-			}
 		}
 		
 		/**鼠标在 Stage 上的 X 轴坐标。*/
@@ -581,11 +571,6 @@ package laya.display {
 		/**@inheritDoc */
 		override public function repaint(type:int = SpriteConst.REPAINT_CACHE):void {
 			_repaint |= type;
-		}
-		
-		/**@inheritDoc */
-		public function repaintForNative(type:int = SpriteConst.REPAINT_CACHE):void {
-			this._conchData._int32Data[SpriteConst.POSREPAINT] |= type;
 		}
 		
 		/**@inheritDoc */
@@ -660,15 +645,14 @@ package laya.display {
 				CallLater.I._update();
 				Stat.loopCount++;
 				
-				if (!Render.isConchApp) {
-					if (Render.isWebGL && renderingEnabled) {
-						for (var i:int = 0, n:int = _scene3Ds.length; i < n;i++)//更新3D场景,必须提出来,否则在脚本中移除节点会导致BUG
-							_scene3Ds[i]._update();
-						context.clear();
-						super.render(context, x, y);
-						Stat._show && Stat._sp && Stat._sp.render(context, x, y);
-					}
+				if (Render.isWebGL && renderingEnabled) {
+					for (var i:int = 0, n:int = _scene3Ds.length; i < n;i++)//更新3D场景,必须提出来,否则在脚本中移除节点会导致BUG
+						_scene3Ds[i]._update();
+					context.clear();
+					super.render(context, x, y);
+					Stat._show && Stat._sp && Stat._sp.render(context, x, y);
 				}
+			
 			}
 			
 			_dbgSprite.render(context, 0, 0);
@@ -683,11 +667,41 @@ package laya.display {
 						RunDriver.clear(_bgColor);
 						super.render(context, x, y);
 						Stat._show && Stat._sp && Stat._sp.render(context, x, y);
-						if (Render.isConchApp) context.gl.commit();
 					}
 				}
 				_updateTimers();
 			}
+		}
+		
+		public function renderToNative(context:Context, x:Number, y:Number):void {
+			_renderCount++;
+			if (!this._visible) {
+				if (_renderCount % 5 === 0) {
+					CallLater.I._update();
+					Stat.loopCount++;
+					_updateTimers();
+				}
+				return;
+			}
+			//update
+			CallLater.I._update();
+			Stat.loopCount++;
+			
+			//render
+			if (Render.isWebGL && renderingEnabled) {
+				for (var i:int = 0, n:int = _scene3Ds.length; i < n;i++)//更新3D场景,必须提出来,否则在脚本中移除节点会导致BUG
+					_scene3Ds[i]._update();
+				context.clear();
+				super.render(context, x, y);
+				Stat._show && Stat._sp && Stat._sp.render(context, x, y);
+			}
+			//commit submit
+			if (renderingEnabled) {
+				RunDriver.clear(_bgColor);
+				context.flush();
+				VectorGraphManager.instance && VectorGraphManager.getInstance().endDispose();
+			}
+			_updateTimers();
 		}
 		
 		private function _updateTimers():void {
@@ -697,35 +711,6 @@ package laya.display {
 			Laya.updateTimer._update();
 			Laya.lateTimer._update();
 			Laya.timer._update();
-		}
-		
-		public function renderToNative(context:Context, x:Number, y:Number):void {
-			_renderCount++;
-			Stat.loopCount++;
-			if (!this._visible) {
-				if (_renderCount % 5 === 0) {
-					CallLater.I._update();
-					Stat.loopCount++;
-					_updateTimers();
-					CallLater.I._update();
-				}
-				return;
-			}
-			//update
-			/*
-			调用两次 CallLater.I._update();是有原因的，是因为在updateTimers中，可能又设置了CallLater
-			为了渲染同步所以调用两次
-			*/
-			CallLater.I._update();
-			_updateTimers();
-			CallLater.I._update();
-			//render
-			if (renderingEnabled) {
-				RunDriver.clear(_bgColor);
-				super.render(context, x, y);
-				Stat._show && Stat._sp && Stat._sp.render(context, x, y);
-				context.gl.commit();
-			}
 		}
 		
 		/**

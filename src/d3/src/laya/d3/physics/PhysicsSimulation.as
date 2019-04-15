@@ -162,9 +162,8 @@ package laya.d3.physics {
 				throw "Simulation:Cannot perform this action when the physics engine is set to CollisionsOnly";
 			
 			_gravity = value;
-			var gravityE:Float32Array = value.elements;
 			var nativeGravity:* = _nativeTempVector30;
-			nativeGravity.setValue(-gravityE[0], gravityE[1], gravityE[2]);//TODO:是否先get省一个变量
+			nativeGravity.setValue(-value.x, value.y, value.z);//TODO:是否先get省一个变量
 			_nativeDiscreteDynamicsWorld.setGravity(nativeGravity);
 		}
 		
@@ -323,10 +322,8 @@ package laya.d3.physics {
 			var rayResultCall:* = _nativeClosestRayResultCallback;
 			var rayFrom:* = _nativeTempVector30;
 			var rayTo:* = _nativeTempVector31;
-			var fromE:Float32Array = from.elements;
-			var toE:Float32Array = to.elements;
-			rayFrom.setValue(-fromE[0], fromE[1], fromE[2]);
-			rayTo.setValue(-toE[0], toE[1], toE[2]);
+			rayFrom.setValue(-from.x, from.y, from.z);
+			rayTo.setValue(-to.x, to.y, to.z);
 			rayResultCall.set_m_rayFromWorld(rayFrom);
 			rayResultCall.set_m_rayToWorld(rayTo);
 			rayResultCall.set_m_collisionFilterGroup(collisonGroup);
@@ -341,15 +338,15 @@ package laya.d3.physics {
 					out.collider = PhysicsComponent._physicObjectsMap[rayResultCall.get_m_collisionObject().getUserIndex()];
 					out.hitFraction = rayResultCall.get_m_closestHitFraction();
 					var nativePoint:* = rayResultCall.get_m_hitPointWorld();
-					var pointE:Float32Array = out.point.elements;
-					pointE[0] = -nativePoint.x();
-					pointE[1] = nativePoint.y();
-					pointE[2] = nativePoint.z();
+					var point:Vector3 = out.point;
+					point.x = -nativePoint.x();
+					point.y = nativePoint.y();
+					point.z = nativePoint.z();
 					var nativeNormal:* = rayResultCall.get_m_hitNormalWorld();
-					var normalE:Float32Array = out.normal.elements;
-					normalE[0] = -nativeNormal.x();
-					normalE[1] = nativeNormal.y();
-					normalE[2] = nativeNormal.z();
+					var normal:Vector3 = out.normal;
+					normal.x = -nativeNormal.x();
+					normal.y = nativeNormal.y();
+					normal.z = nativeNormal.z();
 				}
 				return true;
 			} else {
@@ -374,10 +371,8 @@ package laya.d3.physics {
 			var rayTo:* = _nativeTempVector31;
 			
 			out.length = 0;
-			var fromE:Float32Array = from.elements;
-			var toE:Float32Array = to.elements;
-			rayFrom.setValue(-fromE[0], fromE[1], fromE[2]);
-			rayTo.setValue(-toE[0], toE[1], toE[2]);
+			rayFrom.setValue(-from.x, from.y, from.z);
+			rayTo.setValue(-to.x, to.y, to.z);
 			rayResultCall.set_m_rayFromWorld(rayFrom);
 			rayResultCall.set_m_rayToWorld(rayTo);
 			rayResultCall.set_m_collisionFilterGroup(collisonGroup);
@@ -405,15 +400,15 @@ package laya.d3.physics {
 					hitResult.collider = PhysicsComponent._physicObjectsMap[collisionObjects.at(i).getUserIndex()];
 					hitResult.hitFraction = nativeFractions.at(i);
 					var nativePoint:* = nativePoints.at(i);//取出后需要立即赋值,防止取出法线时被覆盖
-					var pointE:Float32Array = hitResult.point.elements;
-					pointE[0] = -nativePoint.x();
-					pointE[1] = nativePoint.y();
-					pointE[2] = nativePoint.z();
+					var pointE:Vector3 = hitResult.point;
+					pointE.x = -nativePoint.x();
+					pointE.y = nativePoint.y();
+					pointE.z = nativePoint.z();
 					var nativeNormal:* = nativeNormals.at(i);
-					var normalE:Float32Array = hitResult.normal.elements;
-					normalE[0] = -nativeNormal.x();
-					normalE[1] = nativeNormal.y();
-					normalE[2] = nativeNormal.z();
+					var normalE:Vector3 = hitResult.normal;
+					normalE.x = -nativeNormal.x();
+					normalE.y = nativeNormal.y();
+					normalE.z = nativeNormal.z();
 				}
 				return true;
 			} else {
@@ -473,17 +468,15 @@ package laya.d3.physics {
 			var convexResultCall:* = _nativeClosestConvexResultCallback;
 			var convexPosFrom:* = _nativeTempVector30;
 			var convexPosTo:* = _nativeTempVector31;
-			var convexRotFrom:* = _nativeTempVector30;
-			var convexRotTo:* = _nativeTempVector31;
+			var convexRotFrom:* = _nativeTempQuaternion0;
+			var convexRotTo:* = _nativeTempQuaternion1;
 			var convexTransform:* = _nativeTempTransform0;
 			var convexTransTo:* = _nativeTempTransform1;
 			
 			var sweepShape:* = shape._nativeShape;
 			
-			var fromPositionE:Float32Array = fromPosition.elements;
-			var toPositionE:Float32Array = toPosition.elements;
-			convexPosFrom.setValue(-fromPositionE[0], fromPositionE[1], fromPositionE[2]);
-			convexPosTo.setValue(-toPositionE[0], toPositionE[1], toPositionE[2]);
+			convexPosFrom.setValue(-fromPosition.x, fromPosition.y, fromPosition.z);
+			convexPosTo.setValue(-toPosition.x, toPosition.y, toPosition.z);
 			//convexResultCall.set_m_convexFromWorld(convexPosFrom);
 			//convexResultCall.set_m_convexToWorld(convexPosTo);
 			convexResultCall.set_m_collisionFilterGroup(collisonGroup);
@@ -493,15 +486,13 @@ package laya.d3.physics {
 			convexTransTo.setOrigin(convexPosTo);
 			
 			if (fromRotation) {
-				var fromRotationE:Float32Array = fromRotation.elements;
-				convexRotFrom.setValue(-fromRotationE[0], fromRotationE[1], fromRotationE[2], -fromRotationE[3]);
+				convexRotFrom.setValue(-fromRotation.x, fromRotation.y, fromRotation.z, -fromRotation.w);
 				convexTransform.setRotation(convexRotFrom);
 			} else {
 				convexTransform.setRotation(_nativeDefaultQuaternion);
 			}
 			if (toRotation) {
-				var toRotationE:Float32Array = toRotation.elements;
-				convexRotTo.setValue(-toRotationE[0], toRotationE[1], toRotationE[2], -toRotationE[2]);
+				convexRotTo.setValue(-toRotation.x, toRotation.y, toRotation.z, -toRotation.w);
 				convexTransTo.setRotation(convexRotTo);
 			} else {
 				convexTransTo.setRotation(_nativeDefaultQuaternion);
@@ -517,14 +508,14 @@ package laya.d3.physics {
 					out.hitFraction = convexResultCall.get_m_closestHitFraction();
 					var nativePoint:* = convexResultCall.get_m_hitPointWorld();
 					var nativeNormal:* = convexResultCall.get_m_hitNormalWorld();
-					var pointE:Float32Array = out.point.elements;
-					var normalE:Float32Array = out.normal.elements;
-					pointE[0] = -nativePoint.x();
-					pointE[1] = nativePoint.y();
-					pointE[2] = nativePoint.z();
-					normalE[0] = -nativeNormal.x();
-					normalE[1] = nativeNormal.y();
-					normalE[2] = nativeNormal.z();
+					var point:Vector3 = out.point;
+					var normal:Vector3 = out.normal;
+					point.x = -nativePoint.x();
+					point.y = nativePoint.y();
+					point.z = nativePoint.z();
+					normal.x = -nativeNormal.x();
+					normal.y = nativeNormal.y();
+					normal.z = nativeNormal.z();
 				}
 				return true;
 			} else {
@@ -550,18 +541,16 @@ package laya.d3.physics {
 			var convexResultCall:* = _nativeAllConvexResultCallback;
 			var convexPosFrom:* = _nativeTempVector30;
 			var convexPosTo:* = _nativeTempVector31;
-			var convexRotFrom:* = _nativeTempVector30;
-			var convexRotTo:* = _nativeTempVector31;
+			var convexRotFrom:* = _nativeTempQuaternion0;
+			var convexRotTo:* = _nativeTempQuaternion1;
 			var convexTransform:* = _nativeTempTransform0;
 			var convexTransTo:* = _nativeTempTransform1;
 			
 			var sweepShape:* = shape._nativeShape;
 			
 			out.length = 0;
-			var fromPositionE:Float32Array = fromPosition.elements;
-			var toPositionE:Float32Array = toPosition.elements;
-			convexPosFrom.setValue(-fromPositionE[0], fromPositionE[1], fromPositionE[2]);
-			convexPosTo.setValue(-toPositionE[0], toPositionE[1], toPositionE[2]);
+			convexPosFrom.setValue(-fromPosition.x, fromPosition.y, fromPosition.z);
+			convexPosTo.setValue(-toPosition.x, toPosition.y, toPosition.z);
 			
 			//convexResultCall.set_m_convexFromWorld(convexPosFrom);
 			//convexResultCall.set_m_convexToWorld(convexPosTo);
@@ -572,15 +561,13 @@ package laya.d3.physics {
 			convexTransform.setOrigin(convexPosFrom);
 			convexTransTo.setOrigin(convexPosTo);
 			if (fromRotation) {
-				var fromRotationE:Float32Array = fromRotation.elements;
-				convexRotFrom.setValue(-fromRotationE[0], fromRotationE[1], fromRotationE[2], -fromRotationE[3]);
+				convexRotFrom.setValue(-fromRotation.x, fromRotation.y, fromRotation.z, -fromRotation.w);
 				convexTransform.setRotation(convexRotFrom);
 			} else {
 				convexTransform.setRotation(_nativeDefaultQuaternion);
 			}
 			if (toRotation) {
-				var toRotationE:Float32Array = toRotation.elements;
-				convexRotTo.setValue(-toRotationE[0], toRotationE[1], toRotationE[2], -toRotationE[2]);
+				convexRotTo.setValue(-toRotation.x, toRotation.y, toRotation.z, -toRotation.w);
 				convexTransTo.setRotation(convexRotTo);
 			} else {
 				convexTransTo.setRotation(_nativeDefaultQuaternion);
@@ -601,15 +588,15 @@ package laya.d3.physics {
 					hitResult.collider = PhysicsComponent._physicObjectsMap[collisionObjects.at(i).getUserIndex()];
 					hitResult.hitFraction = nativeFractions.at(i);
 					var nativePoint:* = nativePoints.at(i);
-					var pointE:Float32Array = hitResult.point.elements;
-					pointE[0] = -nativePoint.x();
-					pointE[1] = nativePoint.y();
-					pointE[2] = nativePoint.z();
+					var point:Vector3 = hitResult.point;
+					point.x = -nativePoint.x();
+					point.y = nativePoint.y();
+					point.z = nativePoint.z();
 					var nativeNormal:* = nativeNormals.at(i);
-					var normalE:Float32Array = hitResult.normal.elements;
-					normalE[0] = -nativeNormal.x();
-					normalE[1] = nativeNormal.y();
-					normalE[2] = nativeNormal.z();
+					var normal:Vector3 = hitResult.normal;
+					normal.x = -nativeNormal.x();
+					normal.y = nativeNormal.y();
+					normal.z = nativeNormal.z();
 				}
 				return true;
 			} else {
@@ -708,20 +695,20 @@ package laya.d3.physics {
 								contactPoint.colliderB = componentB;
 								contactPoint.distance = distance;
 								var nativeNormal:* = pt.get_m_normalWorldOnB();
-								var normalE:Float32Array = contactPoint.normal.elements;
-								normalE[0] = -nativeNormal.x();
-								normalE[1] = nativeNormal.y();
-								normalE[2] = nativeNormal.z();
+								var normal:Vector3 = contactPoint.normal;
+								normal.x = -nativeNormal.x();
+								normal.y = nativeNormal.y();
+								normal.z = nativeNormal.z();
 								var nativePostionA:* = pt.get_m_positionWorldOnA();
-								var positionOnAE:Float32Array = contactPoint.positionOnA.elements;
-								positionOnAE[0] = -nativePostionA.x();
-								positionOnAE[1] = nativePostionA.y();
-								positionOnAE[2] = nativePostionA.z();
+								var positionOnA:Vector3 = contactPoint.positionOnA;
+								positionOnA.x = -nativePostionA.x();
+								positionOnA.y = nativePostionA.y();
+								positionOnA.z = nativePostionA.z();
 								var nativePostionB:* = pt.get_m_positionWorldOnB();
-								var positionOnBE:Float32Array = contactPoint.positionOnB.elements;
-								positionOnBE[0] = -nativePostionB.x();
-								positionOnBE[1] = nativePostionB.y();
-								positionOnBE[2] = nativePostionB.z();
+								var positionOnB:Vector3 = contactPoint.positionOnB;
+								positionOnB.x = -nativePostionB.x();
+								positionOnB.y = nativePostionB.y();
+								positionOnB.z = nativePostionB.z();
 								
 								if (!collision) {
 									collision = _collisionsUtils.getCollision(componentA, componentB);

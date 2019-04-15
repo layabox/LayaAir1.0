@@ -155,9 +155,9 @@ package laya.ui
 				if(isSupportJump())
 				{
 					__JS__('wx').navigateToMiniProgram({
-						appId:advsObj.gameid,
-						path:path,
-						extraData:extendInfo,
+						appId:_appid,
+						path:"",
+						extraData:"",
 						envVersion:"release",
 						success:function success():void{
 							trace("-------------跳转成功--------------");

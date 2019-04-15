@@ -74,7 +74,7 @@ package laya.net {
 		public static const TERRAINRES:String = "TERRAIN";
 		
 		/**文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"ttf": "ttf","png": "image", "jpg": "image", "jpeg": "image", "txt": "text", "json": "json", "prefab": "prefab", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "pkm": "pkm", "plf": "plf", "scene": "json","ani":"json","sk":"arraybuffer"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"ttf": "ttf", "png": "image", "jpg": "image", "jpeg": "image", "ktx": "image", "pvr": "image", "txt": "text", "json": "json", "prefab": "prefab", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "plf": "plf", "scene": "json", "ani": "json", "sk": "arraybuffer"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析。*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/**每帧加载完成回调使用的最大超时时间，如果超时，则下帧再处理，防止帧卡顿。*/
@@ -127,11 +127,11 @@ package laya.net {
 		 * @param	useWorkerLoader(default = false)是否使用worker加载（只针对IMAGE类型和ATLAS类型，并且浏览器支持的情况下生效）
 		 */
 		public function load(url:String, type:String = null, cache:Boolean = true, group:String = null, ignoreCache:Boolean = false, useWorkerLoader:Boolean = false):void {
-			if (!url)
-			{
+			if (!url) {
 				onLoaded(null);
 				return;
 			}
+			
 			setGroup(url, "666");
 			this._url = url;
 			if (url.indexOf("data:image") === 0) type = IMAGE;
@@ -247,20 +247,47 @@ package laya.net {
 				//增加引用，防止垃圾回收
 				_imgCache[url] = image;
 			} else {
-				var imageSource:* = new Browser.window.Image();
-				onload = function():void {
-					image = HTMLImage.create(imageSource.width, imageSource.height);
-					image.loadImageSource(imageSource, true);
-					image._setCreateURL(url);
-					clear();
-					_this.onLoaded(image);
-				};
-				imageSource.crossOrigin = "";
-				imageSource.onload = onload;
-				imageSource.onerror = onerror;
-				imageSource.src = url;
-				image = imageSource;
-				_imgCache[url] = imageSource;//增加引用，防止垃圾回收
+				var ext:String = Utils.getFileExtension(url);
+				if (ext === "ktx" || ext === "pvr") {
+					onload = function(imageData:ArrayBuffer):void {
+						var format:int;
+						switch (ext) {
+						case "ktx": 
+							format = /*BaseTexture.FORMAT_ETC1RGB*/5;
+							break;
+						case "pvr": 
+							format = /*BaseTexture.FORMAT_PVRTCRGBA_4BPPV*/12;
+							break;
+						}
+						image = HTMLImage.create(0, 0, format);
+						image.setCompressData(imageData);
+						image._setCreateURL(url);
+						clear();
+						_this.onLoaded(image);
+					};
+					var tempHttp:HttpRequest;
+					//if (!_http) {
+						tempHttp = new HttpRequest();
+						tempHttp.on(Event.ERROR, null, onerror);
+						tempHttp.on(Event.COMPLETE, null, onload);
+					//}
+					tempHttp.send(url, null, "get", Loader.BUFFER);
+				} else {
+					var imageSource:* = new Browser.window.Image();
+					onload = function():void {
+						image = HTMLImage.create(imageSource.width, imageSource.height,1/* BaseTexture.FORMAT_R8G8B8A8*/);
+						image.loadImageSource(imageSource, true);
+						image._setCreateURL(url);
+						clear();
+						_this.onLoaded(image);
+					};
+					imageSource.crossOrigin = "";
+					imageSource.onload = onload;
+					imageSource.onerror = onerror;
+					imageSource.src = url;
+					image = imageSource;
+					_imgCache[url] = imageSource;//增加引用，防止垃圾回收
+				}
 			}
 		}
 		
@@ -329,11 +356,28 @@ package laya.net {
 							var split:String = _url.indexOf("/") >= 0 ? "/" : "\\";
 							var idx:int = _url.lastIndexOf(split);
 							var folderPath:String = idx >= 0 ? _url.substr(0, idx + 1) : "";
+							var changeType:String;
+							
+							if (Browser.onAndroid && data.meta.compressTextureAndroid)
+							{
+								changeType = ".ktx";
+							}
+							if (Browser.onIOS && data.meta.compressTextureIOS)
+							{
+								changeType = ".pvr";
+							}
 							//idx = _url.indexOf("?");
 							//var ver:String;
 							//ver = idx >= 0 ? _url.substr(idx) : "";
 							for (var i:int = 0, len:int = toloadPics.length; i < len; i++) {
-								toloadPics[i] = folderPath + toloadPics[i];
+								if (changeType)
+								{
+									toloadPics[i] = folderPath + toloadPics[i].replace(".png",changeType);
+								}else
+								{
+									toloadPics[i] = folderPath + toloadPics[i];
+								}
+								
 							}
 						} else {
 							//不带图片信息

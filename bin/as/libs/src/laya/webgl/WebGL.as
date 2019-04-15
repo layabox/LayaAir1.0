@@ -5,11 +5,8 @@ package laya.webgl {
 	import laya.filters.Filter;
 	import laya.layagl.CommandEncoder;
 	import laya.layagl.ConchPropertyAdpt;
-	import laya.layagl.ConchSpriteAdpt;
 	import laya.layagl.LayaGL;
-	import laya.layagl.LayaGLRenderingContext;
 	import laya.layagl.LayaGLRunner;
-	import laya.layagl.LayaNative2D;
 	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.maths.Rectangle;
@@ -33,6 +30,7 @@ package laya.webgl {
 	import laya.webgl.shader.d2.Shader2D;
 	import laya.webgl.shader.d2.ShaderDefines2D;
 	import laya.webgl.shader.d2.value.Value2D;
+	import laya.webgl.shader.Shader;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitCMD;
 	import laya.webgl.utils.Buffer2D;
@@ -105,6 +103,10 @@ package laya.webgl {
 				return tex;
 			}
 			WebGLContext.__init_native();
+			Shader.prototype.uploadTexture2D = function(value:*):void {
+				var CTX:* = WebGLContext;
+				CTX.bindTexture(WebGL.mainContext, CTX.TEXTURE_2D, value);
+			}
 			RenderState2D.width = Browser.window.innerWidth;
 			RenderState2D.height = Browser.window.innerHeight;
 			RunDriver.measureText = function(txt:String, font:String):* {
@@ -112,45 +114,18 @@ package laya.webgl {
 				return window["conchTextCanvas"].measureText(txt);
 			}
 			RunDriver.enableNative = function():void {
-				(LayaGLRunner as Object).uploadShaderUniforms = LayaGLRunner.uploadShaderUniformsForNative;
-				var stage:* = Stage;
-				stage.prototype.repaint = stage.prototype.repaintForNative;
-				stage.prototype.render = stage.prototype.renderToNative;
-				
-				var bufferStateBase:* = BufferStateBase;
-				bufferStateBase.prototype.bind = BufferStateBase.prototype.bindForNative;
-				bufferStateBase.prototype.unBind = BufferStateBase.prototype.unBindForNative;
-				if (Render.isConchApp) {
+				if (Render.supportWebGLPlusRendering) {
+					(LayaGLRunner as Object).uploadShaderUniforms = LayaGLRunner.uploadShaderUniformsForNative;
 					//替换buffer的函数
 					__JS__("CommandEncoder = window.GLCommandEncoder");
 					__JS__("LayaGL = window.LayaGLContext");
-					
-					var prototypeContext:* = __JS__("window.CanvasRenderingContext.prototype");
-					var protoLast:* = LayaGLRenderingContext.prototype;
-					__JS__("LayaGLRenderingContext = window.CanvasRenderingContext");
-					prototypeContext.drawImage = protoLast.drawImage;
-					prototypeContext.drawTexture = protoLast.drawTexture;
-					prototypeContext.fillText = protoLast.fillText;
-					prototypeContext.save = protoLast.save;
-					prototypeContext.restore = protoLast.restore;
-					prototypeContext.translate = protoLast.translate;
-					prototypeContext.scale = protoLast.scale;
-					prototypeContext.rotate = protoLast.rotate;
-					prototypeContext.transform = protoLast.transform;
-					prototypeContext.beginRT = protoLast.beginRT;
-					prototypeContext.endRT = protoLast.endRT;
-					prototypeContext.drawCanvas = protoLast.drawCanvas;
-					prototypeContext.drawTarget = protoLast.drawTarget;
-					prototypeContext._$get_asBitmap = protoLast._$get_asBitmap;
-					prototypeContext._$set_asBitmap = protoLast._$set_asBitmap;
-					prototypeContext.toBase64 = protoLast.toBase64;
-					prototypeContext.getImageData = protoLast.getImageData;
-					__JS__("__getset (0, prototypeContext,'asBitmap',prototypeContext._$get_asBitmap,prototypeContext._$set_asBitmap)");
-					
+				}
+				var stage:* = Stage;
+				stage.prototype.render = stage.prototype.renderToNative;
+				if (Render.isConchApp) 
+				{
 					ConchPropertyAdpt.rewriteProperties();
 				}
-				ConchSpriteAdpt.init();
-				LayaNative2D.__init__();
 			}
 			RunDriver.clear = function(color:String):void {
 				var c:Array = ColorUtils.create(color).arrColor;
@@ -158,48 +133,44 @@ package laya.webgl {
 				if (c) gl.clearColor(c[0], c[1], c[2], c[3]);
 				gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT);
 			}
-			
 			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
-				var canvas:HTMLCanvas = new HTMLCanvas(true);
-				canvas.size(canvasWidth, canvasHeight);
-				var context:* = canvas.getContext("2d");
-				context.asBitmap = true;
+				offsetX -= sprite.x;
+				offsetY -= sprite.y;
+				offsetX |= 0;
+				offsetY |= 0;
+				canvasWidth |= 0;
+				canvasHeight |= 0;
 				
-				var canvasCmd:CommandEncoder = LayaGL.instance.createCommandEncoder(128, 64, false);
-				canvasCmd.beginEncoding();
-				canvasCmd.clearEncoding();
-				var layagl:* = LayaGL.instance;
+				var canv:HTMLCanvas = new HTMLCanvas(false);
+				var ctx:Context = canv.getContext('2d');
+				canv.size(canvasWidth, canvasHeight);
 				
-				//切换canvas
-				var lastContext:* = layagl.getCurrentContext();
-				layagl.setCurrentContext(context);
-				context.beginRT();
-				
-				layagl.save();
-				var temp:Float32Array = ConchSpriteAdpt._tempFloatArrayMatrix;
-				temp[0] = 1;
-				temp[1] = 0;
-				temp[2] = 0;
-				temp[3] = 1;
-				//_tempFloatArrayMatrix[4] = -left; _tempFloatArrayMatrix[5] = -top;
-				temp[4] = offsetX;
-				temp[5] = offsetY;
-				layagl.setGlobalValue(LayaNative2D.GLOBALVALUE_MATRIX32, LayaGL.VALUE_OPERATE_SET, temp);
-				
-				//写入节点数据
-				(sprite as Object).writeBlockToNative();
-				
-				layagl.restore();
-				
-				layagl.setCurrentContext(lastContext);
-				layagl.commitContextToGPU(context);
-				context.endRT();
-				
-				canvasCmd.endEncoding();
-				//执行数据流
-				layagl.useCommandEncoder(canvasCmd.getPtrID(), -1, 0);
-				return canvas;
+				ctx.asBitmap = true;
+				ctx._targets.start();
+				RenderSprite.renders[_renderType]._fun(sprite, ctx, offsetX, offsetY);
+				ctx.flush();
+				ctx._targets.end();
+				ctx._targets.restore();
+				return canv;
 			}
+			RenderTexture2D.prototype.getData = function(x:Number, y:Number, width:Number, height:Number, callBack:Function):void {
+				var gl:* = LayaGL.instance;
+				gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, this._frameBuffer);
+				gl.readPixelsAsync(x, y, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, function(data:ArrayBuffer):void {
+					__JS__("callBack(data)");
+				});
+				gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
+			}
+			RenderTexture2D.prototype._uv = RenderTexture2D.flipyuv;
+			Object["defineProperty"](RenderTexture2D.prototype, "uv", {
+					"get":function():* {
+						return this._uv;
+					},
+					"set":function(v:*):void {
+							this._uv = v;
+					}
+				}
+			);
 			HTMLCanvas.prototype.getTexture = function():Texture {
 				if (!this._texture) {
 					this._texture = this.context._targets;
@@ -266,8 +237,8 @@ package laya.webgl {
 				return true;
 			}
 			
-			HTMLImage.create = function(width:int, height:int):Bitmap {
-				var tex:Texture2D = new Texture2D(width, height, BaseTexture.FORMAT_R8G8B8A8, false, false);
+			HTMLImage.create = function(width:int, height:int,format:int):Bitmap {
+				var tex:Texture2D = new Texture2D(width, height,format, false, false);
 				tex.wrapModeU = BaseTexture.WARPMODE_CLAMP;
 				tex.wrapModeV = BaseTexture.WARPMODE_CLAMP;
 				return tex;
@@ -558,11 +529,10 @@ package laya.webgl {
 			Browser.__init__();
 			if (!Browser._supportWebGL)
 				return false;
-			//webgl的实现只能是原生WebGL和native
-			if (Render.isConchApp) {
+			_webglRender_enable();
+			if (Render.isConchApp) 
+			{
 				_nativeRender_enable();
-			} else {
-				_webglRender_enable();
 			}
 			return true;
 		}

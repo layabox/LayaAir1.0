@@ -33,7 +33,7 @@ package laya.ui {
 	 */
 	public class ScrollBar extends UIComponent {
 		/**滚动衰减系数*/
-		public var rollRatio:Number = 0.95
+		public var rollRatio:Number = 0.97;
 		/**滚动变化时回调，回传value参数。*/
 		public var changeHandler:Handler;
 		/**是否缩放滑动条，默认值为true。 */
@@ -116,6 +116,7 @@ package laya.ui {
 		/**@inheritDoc */
 		override protected function initialize():void {
 			slider.showLabel = false;
+			slider.tick = 0;
 			slider.on(Event.CHANGE, this, onSliderChange);
 			slider.setSlider(0, 0, 0);
 			upButton.on(Event.MOUSE_DOWN, this, onButtonMouseDown);
@@ -169,6 +170,7 @@ package laya.ui {
 		}
 		
 		public function set skin(value:String):void {
+			if (value == " ") return;
 			if (_skin != value) {
 				_skin = value;
 				if (_skin&&!Loader.getRes(_skin))
@@ -185,6 +187,7 @@ package laya.ui {
 		{
 			slider.skin = _skin;
 			callLater(changeScrollBar);
+			_sizeChanged();
 			event(Event.LOADED);
 		}
 		
@@ -423,8 +426,12 @@ package laya.ui {
 			target = _target;
 		}
 		
+		public var isLockedFun:Function;
+		
 		/**@private */
 		protected function onTargetMouseDown(e:Event):void {
+			if ((isLockedFun as Boolean) && !isLockedFun(e)) return;
+			event(Event.END);
 			_clickOnly = true;
 			_lastOffset = 0;
 			_checkElastic = false;
@@ -437,6 +444,66 @@ package laya.ui {
 			Laya.timer.frameLoop(1, this, loop);
 		}
 		
+		public function startDragForce():void
+		{
+			_clickOnly = true;
+			_lastOffset = 0;
+			_checkElastic = false;
+			_lastPoint || (_lastPoint = new Point());
+			_lastPoint.setTo(Laya.stage.mouseX, Laya.stage.mouseY);
+			Laya.timer.clear(this, tweenMove);
+			Tween.clearTween(this);
+			Laya.stage.once(Event.MOUSE_UP, this, onStageMouseUp2);
+			Laya.stage.once(Event.MOUSE_OUT, this, onStageMouseUp2);
+			Laya.timer.frameLoop(1, this, loop);
+		}
+		
+		private function cancelDragOp():void
+		{
+			Laya.stage.off(Event.MOUSE_UP, this, onStageMouseUp2);
+			Laya.stage.off(Event.MOUSE_OUT, this, onStageMouseUp2);
+			Laya.timer.clear(this, tweenMove);
+			Laya.timer.clear(this, loop);
+			_target.mouseEnabled = true;
+		}
+		
+		
+		public var triggerDownDragLimit:Function;
+		public var triggerUpDragLimit:Function;
+		
+		private function checkTriggers(isTweenMove:Boolean=false):Boolean
+		{
+			if (this.value >= 0&&this.value-_lastOffset<=0)
+			{
+				if ((triggerDownDragLimit as Boolean) && triggerDownDragLimit(isTweenMove))
+				{
+					cancelDragOp();
+					this.value = 0;
+					return true;
+				}
+			}
+			if (this.value <= max && (this.value-_lastOffset >= max))
+			{
+				if ((triggerUpDragLimit as Boolean) && triggerUpDragLimit(isTweenMove))
+				{
+					cancelDragOp();
+					this.value = max;
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		public function get lastOffset():Number
+		{
+			return _lastOffset;
+		}
+		
+		public function startTweenMoveForce(lastOffset:Number):void
+		{
+			_lastOffset = lastOffset;
+			Laya.timer.frameLoop(1, this, tweenMove, [200]);
+		}
 		/**@private */
 		protected function loop():void {
 			var mouseY:Number = Laya.stage.mouseY;
@@ -446,6 +513,7 @@ package laya.ui {
 			if (_clickOnly) {
 				if (Math.abs(_lastOffset * (isVertical ? Laya.stage._canvasTransform.getScaleY() : Laya.stage._canvasTransform.getScaleX())) > 1) {
 					_clickOnly = false;
+					if (checkTriggers()) return;
 					_offsets || (_offsets = []);
 					_offsets.length = 0;
 					_target.mouseEnabled = false;
@@ -455,6 +523,9 @@ package laya.ui {
 					}
 					event(Event.START);
 				} else return;
+			}else
+			{
+				if (checkTriggers()) return;
 			}
 			_offsets.push(_lastOffset);
 			
@@ -477,11 +548,29 @@ package laya.ui {
 					_checkElastic = true;
 				}
 			}
+
 			if (this._isElastic) {
 				if (_value <= min) {
-					value -= _lastOffset * Math.max(0, (1 - ((min - _value) / elasticDistance)));
+					if (_lastOffset > 0)
+					{
+						value -= _lastOffset * Math.max(0, (1 - ((min - _value) / elasticDistance)));
+					}else
+					{
+						value -= _lastOffset * 0.5;
+						if(_value>=min)
+						_checkElastic = false;
+					}
 				} else if (_value >= max) {
-					value -= _lastOffset * Math.max(0, (1 - ((_value - max) / elasticDistance)));
+					if (_lastOffset < 0)
+					{
+						value -= _lastOffset * Math.max(0, (1 - ((_value - max) / elasticDistance)));
+					}else
+					{
+						value -= _lastOffset * 0.5;
+						if(_value<=max)
+						_checkElastic = false;
+					}
+					
 				}
 			} else {
 				value -= _lastOffset;
@@ -525,8 +614,8 @@ package laya.ui {
 					event(Event.END);
 					return;
 				}
-				if (offset > 60) _lastOffset = _lastOffset > 0 ? 60 : -60;
-				var dis:int = Math.round(Math.abs(elasticDistance * (_lastOffset / 240)));
+				if (offset > 250) _lastOffset = _lastOffset > 0 ? 250 : -250;
+				var dis:int = Math.round(Math.abs(elasticDistance * (_lastOffset / 150)));
 				Laya.timer.frameLoop(1, this, tweenMove, [dis]);
 			}
 		}
@@ -543,6 +632,10 @@ package laya.ui {
 		/**@private */
 		protected function tweenMove(maxDistance:Number):void {
 			_lastOffset *= rollRatio;
+			if (checkTriggers(true))
+			{
+				return;
+			}
 			var tarSpeed:Number;
 			if (maxDistance > 0) {
 				if (_lastOffset > 0 && value <= min) {
@@ -558,7 +651,7 @@ package laya.ui {
 			
 			value -= _lastOffset;
 			//if (Math.abs(_lastOffset) < 1 || value == max || value == min) 
-			if (Math.abs(_lastOffset) < 1) {
+			if (Math.abs(_lastOffset) < 0.1) {
 				Laya.timer.clear(this, tweenMove);
 				if (_isElastic) {
 					if (_value < min) {

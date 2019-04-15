@@ -5,6 +5,7 @@ package laya.d3.core.pixelLine {
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
 	import laya.d3.shader.ShaderData;
 	
 	/**
@@ -24,24 +25,24 @@ package laya.d3.core.pixelLine {
 		 * @inheritDoc
 		 */
 		override protected function _calculateBoundingBox():void {
-			var minE:Float32Array = _boundingBox.min.elements;
-			minE[0] = -Number.MAX_VALUE;
-			minE[1] = -Number.MAX_VALUE;
-			minE[2] = -Number.MAX_VALUE;
-			var maxE:Float32Array = _boundingBox.min.elements;
-			maxE[0] = Number.MAX_VALUE;
-			maxE[1] = Number.MAX_VALUE;
-			maxE[2] = Number.MAX_VALUE;
+			var min:Vector3 = _boundingBox.min;
+			min.x = -Number.MAX_VALUE;
+			min.y = -Number.MAX_VALUE;
+			min.z = -Number.MAX_VALUE;
+			var max:Vector3 = _boundingBox.max;
+			max.x = Number.MAX_VALUE;
+			max.y = Number.MAX_VALUE;
+			max.z = Number.MAX_VALUE;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override protected function _calculateBoundingSphere():void {
-			var centerE:Float32Array = _boundingSphere.center.elements;
-			centerE[0] = 0;
-			centerE[1] = 0;
-			centerE[2] = 0;
+			var center:Vector3 = _boundingSphere.center;
+			center.x = 0;
+			center.y = 0;
+			center.z = 0;
 			_boundingSphere.radius = Number.MAX_VALUE;
 		}
 		

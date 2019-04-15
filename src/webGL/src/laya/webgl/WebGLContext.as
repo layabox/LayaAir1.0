@@ -349,13 +349,11 @@ package laya.webgl
 		 * @private
 		 */
 		public static function __init__(gl:WebGLContext):void {
-			__init_native();
 			WebGLContext._checkExtensions(gl);
-			
-			if (!WebGL._isWebGL2) {
+			if (!WebGL._isWebGL2 && !Render.isConchApp) {
 				VertexArrayObject;//强制引用
 				if (window._setupVertexArrayObject){//兼容VAO
-					if (Browser.onMiniGame||Browser.onLimixiu)
+					if (Browser.onBDMiniGame||Browser.onLimixiu)
 						window._forceSetupVertexArrayObject(gl);
 					else
 						window._setupVertexArrayObject(gl);	
@@ -399,13 +397,16 @@ package laya.webgl
 			return null;
 		}
 		
+		/**
+		 * @private
+		 */
 		public static function __init_native():void
 		{
-			if (!Render.isConchApp) return;
+			if (!Render.supportWebGLPlusRendering) return;
 			var webGLContext:*= WebGLContext;
-			webGLContext.useProgram = webGLContext.useProgramForNative;
 			webGLContext.activeTexture = webGLContext.activeTextureForNative;
 			webGLContext.bindTexture = webGLContext.bindTextureForNative;
+			/*webGLContext.useProgram = webGLContext.useProgramForNative;
 			webGLContext.bindVertexArray = webGLContext.bindVertexArrayForNative;
 			webGLContext.setDepthTest = webGLContext.setDepthTestForNative;
 			webGLContext.setDepthMask = webGLContext.setDepthMaskForNative;
@@ -413,11 +414,8 @@ package laya.webgl
 			webGLContext.setBlend = webGLContext.setBlendForNative;
 			webGLContext.setBlendFunc = webGLContext.setBlendFuncForNative;
 			webGLContext.setCullFace = webGLContext.setCullFaceForNative;
-			webGLContext.setFrontFace = webGLContext.setFrontFaceForNative;
-			
-			webGLContext._checkExtensions(Browser.window.LayaGLContext.instance);
+			webGLContext.setFrontFace = webGLContext.setFrontFaceForNative;*/
 		}
-		
 		/**
 		 * @private
 		 */

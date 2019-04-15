@@ -34,16 +34,8 @@ package laya.particle {
 		
 		protected function initialize():void {
 			var floatStride:Number = 0;
-			if ( Render.isConchApp )
-			{
-				_vertices = _conchMesh._float32Data;
-				floatStride = MeshParticle2D.const_stride / 4;
-			}
-			else
-			{
-				_vertices = _mesh._vb.getFloat32Array();
-				floatStride = _mesh._stride / 4;
-			}
+			_vertices = _mesh._vb.getFloat32Array();
+			floatStride = _mesh._stride / 4;
 			var bufi:int = 0;
 			var bufStart:int = 0;
 			for (var i:int = 0; i < settings.maxPartices; i++) {

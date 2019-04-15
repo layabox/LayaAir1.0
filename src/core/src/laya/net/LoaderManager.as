@@ -202,7 +202,7 @@ package laya.net {
 				//增加延迟回掉，防止快速回掉导致执行顺序错误
 				Laya.systemTimer.frameOnce(1, null, function():void {
 					progress && progress.runWith(1);
-					complete && complete.runWith(content);
+					complete && complete.runWith(content is Array?[content]:content);
 					//判断是否全部加载，如果是则抛出complete事件
 					_loaderCount || event(Event.COMPLETE);
 				});

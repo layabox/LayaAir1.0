@@ -45,18 +45,16 @@ package laya.ui {
 		 * 父容器的 <code>Event.RESIZE</code> 事件侦听处理函数。
 		 */
 		protected function _onParentResize():void {
-			this.resetLayoutX();
-			this.resetLayoutY();
-			this.owner.event(Event.RESIZE);
+			if (this.resetLayoutX() || this.resetLayoutY()) this.owner.event(Event.RESIZE);
 		}
 		
 		/**
 		 * <p>重置对象的 <code>X</code> 轴（水平方向）布局。</p>
 		 * @private
 		 */
-		public function resetLayoutX():void {
+		public function resetLayoutX():Boolean {
 			var owner:Sprite = this.owner as Sprite;
-			if (!owner) return;
+			if (!owner) return false;
 			var parent:Sprite = owner.parent as Sprite;
 			if (parent) {
 				if (!isNaN(centerX)) {
@@ -65,21 +63,26 @@ package laya.ui {
 					owner.x = Math.round(left + owner.pivotX * owner.scaleX);
 					if (!isNaN(right)) {
 						//TODO:如果用width，会死循环
-						owner.width = (parent._width - left - right) / (owner.scaleX || 0.01);
+						var temp:Number = (parent._width - left - right) / (owner.scaleX || 0.01);
+						if (temp != owner.width) {
+							owner.width = temp;
+							return true;
+						}
 					}
 				} else if (!isNaN(right)) {
 					owner.x = Math.round(parent.width - owner.displayWidth - right + owner.pivotX * owner.scaleX);
 				}
 			}
+			return false;
 		}
 		
 		/**
 		 * <p>重置对象的 <code>Y</code> 轴（垂直方向）布局。</p>
 		 * @private
 		 */
-		public function resetLayoutY():void {
+		public function resetLayoutY():Boolean {
 			var owner:Sprite = this.owner as Sprite;
-			if (!owner) return;
+			if (!owner) return false;
 			var parent:Sprite = owner.parent as Sprite;
 			if (parent) {
 				if (!isNaN(centerY)) {
@@ -88,12 +91,17 @@ package laya.ui {
 					owner.y = Math.round(top + owner.pivotY * owner.scaleY);
 					if (!isNaN(bottom)) {
 						//TODO:
-						owner.height = (parent._height - top - bottom) / (owner.scaleY || 0.01);
+						var temp:Number = (parent._height - top - bottom) / (owner.scaleY || 0.01);
+						if (temp != owner.height) {
+							owner.height = temp;
+							return true;
+						}
 					}
 				} else if (!isNaN(bottom)) {
 					owner.y = Math.round(parent.height - owner.displayHeight - bottom + owner.pivotY * owner.scaleY);
 				}
 			}
+			return false;
 		}
 		
 		/**

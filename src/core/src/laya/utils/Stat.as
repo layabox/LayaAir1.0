@@ -31,10 +31,10 @@ package laya.utils {
 		public static var spriteCount:int = 0;
 		/** 精灵渲染使用缓存<code>Sprite</code> 的数量。*/
 		public static var spriteRenderUseCacheCount:int = 0;
-		/** 八叉树节点检测次数。*/
-		public static var treeNodeCollision:int = 0;
-		/** 八叉树精灵碰撞检测次数。*/
-		public static var treeSpriteCollision:int = 0;
+		/** 视锥剔除次数。*/
+		public static var frustumCulling:int = 0;
+		/**	八叉树节点剔除次数。*/
+		public static var octreeNodeCulling:int = 0;
 		
 		/** 画布 canvas 使用标准渲染的次数。*/
 		public static var canvasNormal:int = 0;
@@ -81,14 +81,10 @@ package laya.utils {
 		 * @param	y Y轴显示位置。
 		 */
 		public static function show(x:Number = 0, y:Number = 0):void {
-			if (!Browser.onMiniGame && !Browser.onLimixiu) _useCanvas = true;
+			if (!Browser.onMiniGame && !Browser.onLimixiu && !Render.isConchApp) _useCanvas = true;
 			_show = true;
 			_fpsData.length = 60;
-			if (Render.isConchApp) {
-				_view[0] = {title: "FPS", value: "_fpsStr", color: "yellow", units: "int"};
-			} else {
 				_view[0] = {title: "FPS(Canvas)", value: "_fpsStr", color: "yellow", units: "int"};
-			}
 			_view[1] = {title: "Sprite", value: "_spriteStr", color: "white", units: "int"};
 			_view[2] = {title: "RenderBatch", value: "renderBatch", color: "white", units: "int"};
 			_view[3] = {title: "CPUMemory", value: "cpuMemory", color: "yellow", units: "M"};
@@ -101,8 +97,8 @@ package laya.utils {
 				} else {
 					_view[0].title = "FPS(3D)";
 					_view[6] = {title: "TriFaces", value: "trianglesFaces", color: "white", units: "int"};
-					//_view[7] = {title: "treeNodeColl", value: "treeNodeCollision", color: "white", units: "int"};
-					//_view[8] = {title: "treeSpriteColl", value: "treeSpriteCollision", color: "white", units: "int"};
+					_view[7] = {title: "FrustumCulling", value: "frustumCulling", color: "white", units: "int"};
+					_view[8] = {title: "OctreeNodeCulling", value: "octreeNodeCulling", color: "white", units: "int"};
 				}
 			} else {
 				//_view[4] = {title: "Canvas", value: "_canvasStr", color: "white", units: "int"};
@@ -118,28 +114,14 @@ package laya.utils {
 		
 		private static function createUIPre(x:Number, y:Number):void {
 			var pixel:Number = Browser.pixelRatio;
-			_width = pixel * 130;
-			_vx = pixel * 75;
+			_width = pixel * 170;
+			_vx = pixel * 110;
 			_height = pixel * (_view.length * 12 + 3 * pixel) + 4;
 			_fontSize = 12 * pixel;
 			for (var i:int = 0; i < _view.length; i++) {
 				_view[i].x = 4;
 				_view[i].y = i * _fontSize + 2 * pixel;
 			}
-			if (Render.isConchApp) {
-				_sp = new Sprite();
-				_titleSp = new Sprite();
-				_bgSp = new Sprite();
-				_bgSp.graphics.drawRect(x, y, _width, _height, "#969696");
-				_bgSp.alpha = 0.8;
-				
-				_sp.zOrder = 100000;	// 让stat显示在最前面
-				_titleSp.zOrder = 100000;
-				_bgSp.zOrder = 100000;
-				_bgSp.addChild(_sp);
-				_bgSp.addChild(_titleSp);
-				Laya.stage.addChild(_bgSp);
-			} else {
 				if (!_canvas) {
 					_canvas = new HTMLCanvas(true);
 					_canvas.size(_width, _height);
@@ -150,7 +132,7 @@ package laya.utils {
 					_canvas.source.style.cssText = "pointer-events:none;background:rgba(150,150,150,0.8);z-index:100000;position: absolute;direction:ltr;left:" + x + "px;top:" + y + "px;width:" + (_width / pixel) + "px;height:" + (_height / pixel) + "px;";
 				}
 				Browser.container.appendChild(_canvas.source);
-			}
+		
 			_first = true;
 			loop();
 			_first = false;
@@ -217,7 +199,7 @@ package laya.utils {
 		 * 清零性能统计计算相关的数据。
 		 */
 		public static function clear():void {
-			trianglesFaces = renderBatch = shaderCall = spriteCount = spriteRenderUseCacheCount = treeNodeCollision = treeSpriteCollision = canvasNormal = canvasBitmap = canvasReCache = 0;
+			trianglesFaces = renderBatch = shaderCall = spriteRenderUseCacheCount = frustumCulling = octreeNodeCulling = canvasNormal = canvasBitmap = canvasReCache = 0;
 		}
 		
 		/**
@@ -253,22 +235,25 @@ package laya.utils {
 				if (!_useCanvas) {
 					renderBatch = Math.round(renderBatch / count) - 1;
 					shaderCall = Math.round(shaderCall / count);
-					spriteCount = Math.round(spriteCount / count) - 4;
 				} else {
 					renderBatch = Math.round(renderBatch / count);
 					shaderCall = Math.round(shaderCall / count);
-					spriteCount = Math.round(spriteCount / count) - 1;
 				}
 				spriteRenderUseCacheCount = Math.round(spriteRenderUseCacheCount / count);
 				canvasNormal = Math.round(canvasNormal / count);
 				canvasBitmap = Math.round(canvasBitmap / count);
 				canvasReCache = Math.ceil(canvasReCache / count);
-				treeNodeCollision = Math.round(treeNodeCollision / count);
-				treeSpriteCollision = Math.round(treeSpriteCollision / count);
+				frustumCulling = Math.round(frustumCulling / count);
+				octreeNodeCulling = Math.round(octreeNodeCulling / count);
 				
 				var delay:String = FPS > 0 ? Math.floor(1000 / FPS).toString() : " ";
 				_fpsStr = FPS + (renderSlow ? " slow" : "") + " " + delay;
-				_spriteStr = spriteCount + (spriteRenderUseCacheCount ? ("/" + spriteRenderUseCacheCount) : '');
+				
+				if (_useCanvas)
+					_spriteStr = (spriteCount - 1) + (spriteRenderUseCacheCount ? ("/" + spriteRenderUseCacheCount) : '');
+				else
+					_spriteStr = (spriteCount - 4) + (spriteRenderUseCacheCount ? ("/" + spriteRenderUseCacheCount) : '');
+				
 				_canvasStr = canvasReCache + "/" + canvasNormal + "/" + canvasBitmap;
 				cpuMemory = Resource.cpuMemory;
 				gpuMemory = Resource.gpuMemory;
@@ -287,19 +272,6 @@ package laya.utils {
 			var i:int = 0;
 			var one:*;
 			var value:*;
-			if (Render.isConchApp) {
-				_sp.graphics.clear();
-				for ( i = 0; i < _view.length; i++) {
-					one = _view[i];
-					//只有第一次才渲染标题文字，减少文字渲染次数
-					if (_first) {
-						_titleSp.graphics.fillText(one.title, one.x, one.y, _fontSize + "px Arial", "#ffffff", "left");
-					}
-					value = Stat[one.value];
-					(one.units == "M") && (value = Math.floor(value / (1024 * 1024) * 100) / 100 + " M");
-					_sp.graphics.fillText(value + "", one.x + _vx, one.y, _fontSize + "px Arial", one.color, "left");
-				}
-			} else {
 				if (_canvas) {
 					var ctx:Context = _ctx;
 					ctx.clearRect(_first ? 0 : _vx, 0, _width, _height);
@@ -317,7 +289,6 @@ package laya.utils {
 					}
 				}
 			}
-		}
 		
 		private static function renderInfo():void {
 			var text:String = "";

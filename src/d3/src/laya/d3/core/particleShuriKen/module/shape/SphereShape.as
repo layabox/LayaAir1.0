@@ -27,20 +27,20 @@ package laya.d3.core.particleShuriKen.module.shape {
 		 * @inheritDoc
 		 */
 		override protected function _getShapeBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] = minE[2] = -radius;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[1] = maxE[2] = radius;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y = min.z = -radius;
+			var max:Vector3 = boundBox.max;
+			max.x = max.y = max.z= radius;
 		}
 		
 		/**
 		 * @inheritDoc
 		 */
 		override protected function _getSpeedBoundBox(boundBox:BoundBox):void {
-			var minE:Float32Array = boundBox.min.elements;
-			minE[0] = minE[1] = minE[2] = -1;
-			var maxE:Float32Array = boundBox.max.elements;
-			maxE[0] = maxE[1] = maxE[2] = 1;
+			var min:Vector3 = boundBox.min;
+			min.x = min.y = min.z = -1;
+			var max:Vector3 = boundBox.max;
+			max.x = max.y = max.z = 1;
 		}
 		
 		/**

@@ -177,4 +177,5 @@ void main()
 	#else
 		main_normal();
 	#endif
+	gl_Position=remapGLPositionZ(gl_Position);
 }

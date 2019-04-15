@@ -10,8 +10,12 @@ package laya.d3.core.scene {
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.light.LightSprite;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.RenderState;
+	import laya.d3.core.pixelLine.PixelLineMaterial;
+	import laya.d3.core.pixelLine.PixelLineSprite3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.RenderQueue;
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.graphics.StaticBatchManager;
@@ -36,6 +40,7 @@ package laya.d3.core.scene {
 	import laya.layagl.CommandEncoder;
 	import laya.layagl.LayaGL;
 	import laya.net.Loader;
+	import laya.net.URL;
 	import laya.renders.Render;
 	import laya.resource.Context;
 	import laya.resource.ICreateResource;
@@ -171,6 +176,8 @@ package laya.d3.core.scene {
 		/**@private */
 		private var _timer:Timer = Laya.timer;
 		
+		/**@private */
+		public var _octree:BoundsOctree;
 		/** @private 只读,不允许修改。*/
 		public var _collsionTestList:Vector.<int> = new Vector.<int>();
 		
@@ -194,28 +201,21 @@ package laya.d3.core.scene {
 		/** @private */
 		public var _castShadowRenders:CastShadowList = new CastShadowList();
 		
-		/**当前创建精灵所属遮罩层。*/
+		/** 当前创建精灵所属遮罩层。*/
 		public var currentCreationLayer:int = Math.pow(2, 0);
 		/** 是否启用灯光。*/
 		public var enableLight:Boolean = true;
 		
-		/** 四/八叉树的根节点。*/
-		public var treeRoot:OctreeNode;
-		/** 四/八叉树的尺寸。*/
-		public var treeSize:Vector3;
-		/** 四/八叉树的层数。*/
-		public var treeLevel:int;
-		
 		//阴影相关变量
 		public var parallelSplitShadowMaps:Vector.<ParallelSplitShadowMap>;
+		/**@private */
+		public var _debugTool:PixelLineSprite3D;
 		
 		/**@private */
 		public var _key:SubmitKey = new SubmitKey();
 		
 		private var _time:Number = 0;
 		
-		/**@private [NATIVE]*/
-		private var _glCommandEncoder:CommandEncoder;
 		/**@private	[NATIVE]*/
 		public var _cullingBufferIndices:Int32Array;
 		/**@private	[NATIVE]*/
@@ -236,11 +236,10 @@ package laya.d3.core.scene {
 			id -= pickColorG * 255;
 			var pickColorB:int = id;
 			
-			var pickColore:Float32Array = pickColor.elements;
-			pickColore[0] = pickColorR / 255;
-			pickColore[1] = pickColorG / 255;
-			pickColore[2] = pickColorB / 255;
-			pickColore[3] = 1.0;
+			pickColor.x = pickColorR / 255;
+			pickColor.y = pickColorG / 255;
+			pickColor.z = pickColorB / 255;
+			pickColor.w = 1.0;
 		}
 		
 		/**
@@ -248,8 +247,7 @@ package laya.d3.core.scene {
 		 * [Editer]
 		 */
 		public function _searchIDByPickColor(pickColor:Vector4):int {
-			var pickColore:Float32Array = pickColor.elements;
-			var id:int = pickColore[0] * 255 * 255 + pickColore[1] * 255 + pickColore[2];
+			var id:int = pickColor.x * 255 * 255 + pickColor.y * 255 + pickColor.z;
 			return id;
 		}
 		
@@ -296,7 +294,7 @@ package laya.d3.core.scene {
 		 * @param value 雾化颜色。
 		 */
 		public function set fogColor(value:Vector3):void {
-			_shaderValues.setVector(Scene3D.FOGCOLOR, value);
+			_shaderValues.setVector3(Scene3D.FOGCOLOR, value);
 		}
 		
 		/**
@@ -344,7 +342,7 @@ package laya.d3.core.scene {
 		 * @param value 环境光颜色。
 		 */
 		public function set ambientColor(value:Vector3):void {
-			_shaderValues.setVector(Scene3D.AMBIENTCOLOR, value);
+			_shaderValues.setVector3(Scene3D.AMBIENTCOLOR, value);
 		}
 		
 		/**
@@ -443,19 +441,6 @@ package laya.d3.core.scene {
 		 */
 		public function Scene3D() {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			if (Render.isConchApp) {//[NATIVE]
-				_glCommandEncoder = LayaGL.instance.createCommandEncoder(102400, 2560, false);
-				_conchData._int32Data[SpriteConst.POSLAYAGL3D] = _glCommandEncoder.getPtrID();
-				_renderType |= SpriteConst.LAYAGL3D;
-				_setRenderType(_renderType);
-				var callback:* = __JS__("this._callbackFuncObj");
-				if (!callback) {
-					callback = __JS__("this._callbackFuncObj = new CallbackFuncObj()");
-				}
-				_conchData._int32Data[SpriteConst.POSCALLBACK_OBJ_ID] = callback.id;
-				callback.addCallbackFunc(3, (renderCallbackFromNative as Object).bind(this));
-				_conchData._int32Data[SpriteConst.POSLAYA3D_FUN_ID] = 3;
-			}
 			if (Laya3D._enbalePhysics)
 				_physicsSimulation = new PhysicsSimulation(Laya3D.physicsSettings);
 			
@@ -472,7 +457,7 @@ package laya.d3.core.scene {
 			reflectionIntensity = 1.0;
 			(WebGL.shaderHighPrecision) && (_defineDatas.add(Shader3D.SHADERDEFINE_HIGHPRECISION));
 			
-			if (Render.isConchApp) {//[NATIVE]
+			if (Render.supportWebGLPlusCulling) {//[NATIVE]
 				_cullingBufferIndices = new Int32Array(1024);
 				_cullingBufferResult = new Int32Array(1024);
 			}
@@ -484,6 +469,26 @@ package laya.d3.core.scene {
 			_scene = this;
 			if (Laya3D._enbalePhysics && !PhysicsSimulation.disableSimulation)//不引物理库初始化Input3D会内存泄漏 
 				_input.__init__(Render.canvas, this);
+			
+			var config:Config3D = Laya3D._config;
+			if (config.octreeCulling) {
+				_octree = new BoundsOctree(config.octreeInitialSize, config.octreeInitialCenter, config.octreeMinNodeSize, config.octreeLooseness);
+			}
+			
+			if (Laya3D._config.debugFrustumCulling) {
+				_debugTool = new PixelLineSprite3D();
+				var lineMaterial:PixelLineMaterial = new PixelLineMaterial();
+				lineMaterial.renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
+				lineMaterial.alphaTest = false;
+				var renderState:RenderState = lineMaterial.getRenderState();
+				renderState.depthWrite = false;
+				renderState.cull = RenderState.CULL_BACK;
+				renderState.blend = RenderState.BLEND_ENABLE_ALL;
+				renderState.srcBlend = RenderState.BLENDPARAM_SRC_ALPHA;
+				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				_debugTool.pixelLineRenderer.sharedMaterial = lineMaterial;
+			}
 		}
 		
 		/**
@@ -554,7 +559,7 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function _setCreateURL(url:String):void {
-			_url = url;
+			_url = URL.formatURL(url);
 		}
 		
 		/**
@@ -620,21 +625,6 @@ package laya.d3.core.scene {
 		}
 		
 		/**
-		 * 初始化八叉树。
-		 * @param	width 八叉树宽度。
-		 * @param	height 八叉树高度。
-		 * @param	depth 八叉树深度。
-		 * @param	center 八叉树中心点
-		 * @param	level 八叉树层级。
-		 */
-		public function initOctree(width:int, height:int, depth:int, center:Vector3, level:int = 6):void {
-			treeSize = new Vector3(width, height, depth);
-			treeLevel = level;
-			treeRoot = new OctreeNode(this, 0);
-			treeRoot.initRoot(center, treeSize);
-		}
-		
-		/**
 		 * @private
 		 */
 		protected function _prepareSceneToRender():void {
@@ -674,14 +664,10 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function _preCulling(context:RenderContext3D, camera:Camera):void {
-			if (camera.useOcclusionCulling) {
-				//if (treeRoot)
-				//FrustumCulling.renderObjectCullingOctree(camera, this, context);
-				//else
+			if (camera.useOcclusionCulling)
 				FrustumCulling.renderObjectCulling(camera, this, context, _renders);
-			} else {
+			else
 				FrustumCulling.renderObjectCulling(null, this, context, _renders);
-			}
 		}
 		
 		/**
@@ -689,12 +675,12 @@ package laya.d3.core.scene {
 		 */
 		public function _clear(gl:WebGLContext, state:RenderContext3D):void {
 			var viewport:Viewport = state.viewport;
-			var camera:BaseCamera = state.camera;
+			var camera:Camera = state.camera as Camera;
 			var renderTarget:RenderTexture = camera.renderTarget;
 			var vpW:Number = viewport.width;
 			var vpH:Number = viewport.height;
 			var vpX:Number = viewport.x;
-			var vpY:Number = camera._canvasHeight - viewport.y - vpH;
+			var vpY:Number = camera._getCanvasHeight() - viewport.y - vpH;
 			gl.viewport(vpX, vpY, vpW, vpH);
 			var flag:int = WebGLContext.DEPTH_BUFFER_BIT;
 			
@@ -708,8 +694,7 @@ package laya.d3.core.scene {
 				if (clearColor) {
 					gl.enable(WebGLContext.SCISSOR_TEST);
 					gl.scissor(vpX, vpY, vpW, vpH);
-					var clearColorE:Float32Array = clearColor.elements;
-					gl.clearColor(clearColorE[0], clearColorE[1], clearColorE[2], clearColorE[3]);
+					gl.clearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 					flag |= WebGLContext.COLOR_BUFFER_BIT;
 				}
 				
@@ -773,6 +758,13 @@ package laya.d3.core.scene {
 					_skyRenderer._render(state);
 			}
 			camera.renderTarget ? _transparentQueue._render(state, true, customShader, replacementTag) : _transparentQueue._render(state, false, customShader, replacementTag);//透明队列
+			
+			if (Laya3D._config.debugFrustumCulling) {
+				var renderElements:Vector.<RenderElement> = _debugTool._render._renderElements;
+				for (var i:int = 0, n:int = renderElements.length; i < n; i++) {
+					renderElements[i]._render(state, false, customShader, replacementTag);
+				}
+			}
 		}
 		
 		/**
@@ -829,6 +821,7 @@ package laya.d3.core.scene {
 		 * @inheritDoc
 		 */
 		override protected function _onActive():void {
+			super._onActive();
 			Laya.stage._scene3Ds.push(this);
 		}
 		
@@ -836,6 +829,7 @@ package laya.d3.core.scene {
 		 * @inheritDoc
 		 */
 		override protected function _onInActive():void {
+			super._onInActive();
 			var scenes:Array = Laya.stage._scene3Ds;
 			scenes.splice(scenes.indexOf(this), 1);
 		}
@@ -856,40 +850,14 @@ package laya.d3.core.scene {
 		}
 		
 		/**
-		 *通过蒙版值获取蒙版是否显示。
-		 * @param mask 蒙版值。
-		 * @return 是否显示。
-		 */
-		public function isLayerVisible(layer:int, camera:Camera):Boolean {
-			return (Math.pow(2,layer) & camera.cullingMask) != 0;
-		}
-		
-		/**
-		 * @private
-		 */
-		public function addTreeNode(renderObj:BaseRender):void {
-			treeRoot.addTreeNode(renderObj);
-		}
-		
-		/**
-		 * @private
-		 */
-		public function removeTreeNode(renderObj:BaseRender):void {
-			if (!treeSize) return;
-			if (renderObj._treeNode) {
-				renderObj._treeNode.removeObject(renderObj);
-			}
-		}
-		
-		/**
 		 * @private
 		 */
 		public function _addRenderObject(render:BaseRender):void {
-			if (treeRoot) {
-				addTreeNode(render);
+			if (_octree) {
+				_octree.add(render);
 			} else {
 				_renders.add(render);
-				if (Render.isConchApp) {//[NATIVE]
+				if (Render.supportWebGLPlusCulling) {//[NATIVE]
 					var indexInList:int = render._getIndexInList();
 					var length:int = _cullingBufferIndices.length;
 					if (indexInList >= length) {
@@ -909,15 +877,15 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function _removeRenderObject(render:BaseRender):void {
-			if (treeRoot) {
-				removeTreeNode(render);
+			if (_octree) {
+				_octree.remove(render);
 			} else {
 				var endRender:BaseRender;
-				if (Render.isConchApp) {//[NATIVE]
+				if (Render.supportWebGLPlusCulling) {//[NATIVE]
 					endRender = _renders.elements[_renders.length - 1] as BaseRender;
 				}
 				_renders.remove(render);
-				if (Render.isConchApp) {//[NATIVE]
+				if (Render.supportWebGLPlusCulling) {//[NATIVE]
 					_cullingBufferIndices[endRender._getIndexInList()] = endRender._cullingBufferIndex;
 				}
 			}
@@ -927,8 +895,9 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function _addShadowCastRenderObject(render:BaseRender):void {
-			if (treeRoot) {
-				addTreeNode(render);
+			if (_octree) {
+				//TODO:
+				//addTreeNode(render);
 			} else {
 				_castShadowRenders.add(render);
 			}
@@ -938,8 +907,9 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function _removeShadowCastRenderObject(render:BaseRender):void {
-			if (treeRoot) {
-				removeTreeNode(render);
+			if (_octree) {
+				//TODO:
+				//removeTreeNode(render);
 			} else {
 				_castShadowRenders.remove(render);
 			}
@@ -989,8 +959,7 @@ package laya.d3.core.scene {
 			_renders = null;
 			_castShadowRenders = null;
 			_cameraPool = null;
-			treeRoot = null;
-			treeSize = null;
+			_octree = null;
 			parallelSplitShadowMaps = null;
 			_physicsSimulation && _physicsSimulation._destroy();
 			Loader.clearRes(url);
@@ -1010,26 +979,14 @@ package laya.d3.core.scene {
 		 */
 		public function renderSubmit():int {
 			var gl:* = LayaGL.instance;
-			if (Render.isConchApp) {//[NATIVE]
-				if (_glCommandEncoder)
-					_glCommandEncoder.clearEncoding();
-				gl.beginCommandEncoding(_glCommandEncoder);
-			}
-			
 			_prepareSceneToRender();
 			
 			var i:int, n:int, n1:int;
 			for (i = 0, n = _cameraPool.length, n1 = n - 1; i < n; i++) {
-				if (Render.isConchApp)
+				if (Render.supportWebGLPlusRendering)
 					ShaderData.setRuntimeValueMode((i == n1) ? true : false);
 				var camera:Camera = _cameraPool[i] as Camera;
 				camera.enableRender && camera.render();
-			}
-			if (Render.isConchApp) {//[NATIVE]
-				gl.endCommandEncoding();
-				
-				Buffer._bindedVertexBuffer = null;
-				Buffer._bindedIndexBuffer = null;
 			}
 			WebGLContext2D.set2DRenderConfig();//还原2D配置
 			return 1;
@@ -1053,25 +1010,6 @@ package laya.d3.core.scene {
 		 */
 		public function reUse(context:WebGLContext2D, pos:int):int {
 			return 0;
-		}
-		
-		public function renderCallbackFromNative():void {
-			//执行逻辑
-			_update();
-			//正常渲染
-			renderSubmit();
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		public function renderToNative(context:*, x:Number, y:Number):void {
-			/*
-			   if (!LayaGLTemplate.GLS[_renderType]) {
-			   LayaGLTemplate.createByRenderType(_renderType);
-			   }
-			 */
-			context.gl.block(_conchData);
 		}
 	}
 }

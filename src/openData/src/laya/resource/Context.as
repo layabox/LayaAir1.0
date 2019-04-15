@@ -164,11 +164,11 @@ package laya.resource {
 		}
 		
 		/**@private */
-		public function moveTo(x:Number, y:Number,b:Boolean=true):void {
+		public function moveTo(x:Number, y:Number):void {
 		}
 		
 		/**@private */
-		public function lineTo(x:Number, y:Number,b:Boolean=true):void {
+		public function lineTo(x:Number, y:Number):void {
 		}
 		
 		public function closePath():void {
@@ -180,14 +180,14 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			this.drawImage(canvas._source, x, y, width, height);
 		}
 		
 		/**@private */
 		//TODO:coverage
 		public function _drawRect(x:Number, y:Number, width:Number, height:Number, style:*):void {
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			style && (this.fillStyle = style);
 			__JS__("this.fillRect(x, y,width,height)");
 		}
@@ -195,7 +195,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function drawText(text:*, x:Number, y:Number, font:String, color:String, textAlign:String):void {
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			if (arguments.length > 3 && font != null) {
 				this.font = font;
 				this.fillStyle = color;
@@ -208,7 +208,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function fillBorderText(text:*, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			
 			this.font = font;
 			this.fillStyle = fillColor;
@@ -255,7 +255,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function strokeWord(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			if (arguments.length > 3 && font != null) {
 				this.font = font;
 				__JS__("this.strokeStyle = color");
@@ -280,7 +280,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			this.beginPath();
 			//this.strokeStyle = "red";
 			this.rect(x, y, width, height);
@@ -290,12 +290,12 @@ package laya.resource {
 		
 		/**@private */
 		//TODO:coverage
-		public function drawTextureWithTransform(tex:Texture, tx:Number, ty:Number, width:Number, height:Number, m:Matrix, gx:Number, gy:Number, alpha:Number, blendMode:String):void {
+		public function drawTextureWithTransform(tex:Texture, tx:Number, ty:Number, width:Number, height:Number, m:Matrix, gx:Number, gy:Number, alpha:Number, blendMode:String,colorfilter:ColorFilter=null):void {
 
 			//TODO:优化
 			if (!tex._getSource())
 				return;
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			
 			var alphaChanged:Boolean = alpha !== 1;
 			if (alphaChanged) {
@@ -327,7 +327,7 @@ package laya.resource {
 
 			var tex:Texture = args2[0];
 			//TODO:优化
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			
 			var uv:Array = tex.uv, w:Number = tex.bitmap._width, h:Number = tex.bitmap._height;
 			if (m) {
@@ -496,13 +496,13 @@ package laya.resource {
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):void {
 			var source:*= tex._getSource();
 			if (!source) return;
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 			this.drawImage(source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height);
 		}
 		
 		public function drawTextures(tex:Texture, pos:Array, tx:Number, ty:Number):void {
-			Stat.drawCall += pos.length / 2;
+			Stat.renderBatch += pos.length / 2;
 			var w:Number = tex.width;
 			var h:Number = tex.height;
 			for (var i:int = 0, sz:int = pos.length; i < sz; i += 2) {
@@ -615,7 +615,7 @@ package laya.resource {
 		public static var PI2:Number =/*[STATIC SAFE]*/ 2 * Math.PI;
 		public function _drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:*, lineWidth:Number, vid:int):void {
 			//Render.isWebGL && this.setPathId(vid);
-			Stat.drawCall++;
+			Stat.renderBatch++;
 			Render.isWebGL? __JS__('this.beginPath(true)'): this.beginPath();
 			this.arc(x, y, radius, 0, PI2);
 			this.closePath();

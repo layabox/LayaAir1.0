@@ -27,6 +27,15 @@ package laya.d3.component {
 	 */
 	public class Animator extends Component {
 		/** @private */
+		private static var _tempVector30:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempVector31:Vector3 = new Vector3();
+		/** @private */
+		private static var _tempQuaternion0:Quaternion = new Quaternion();
+		/** @private */
+		private static var _tempQuaternion1:Quaternion = new Quaternion();
+		
+		/** @private */
 		private static var _tempVector3Array0:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
 		/** @private */
 		private static var _tempVector3Array1:Float32Array = /*[STATIC SAFE]*/ new Float32Array(3);
@@ -128,7 +137,7 @@ package laya.d3.component {
 		 * @param 动画的播放速度。
 		 */
 		public function set speed(value:Number):void {
-			_speed =value;
+			_speed = value;
 		}
 		
 		/**
@@ -197,10 +206,13 @@ package laya.d3.component {
 				keyframeNodeOwner.type = node.type;
 				
 				if (property) {//查询成功后赋默认值
-					if (node.type === 0)
+					if (node.type === 0) {
 						keyframeNodeOwner.defaultValue = property;
-					else
-						keyframeNodeOwner.defaultValue = property.elements.slice();
+					} else {
+						var defaultValue:* = new property.constructor();
+						property.cloneTo(defaultValue);
+						keyframeNodeOwner.defaultValue = defaultValue;
+					}
 				}
 				
 				_keyframeNodeOwners.push(keyframeNodeOwner);
@@ -285,28 +297,6 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _eventScript(scripts:Vector.<Script3D>, clipState:AnimatorState, playState:AnimatorPlayState, from:Number, to:Number):void {
-			var events:Vector.<AnimationEvent> = clipState._clip._events;
-			var eventIndex:int = playState._playEventIndex;
-			for (var n:int = events.length; eventIndex < n; eventIndex++) {//TODO:_playEventIndex问题
-				var eve:AnimationEvent = events[eventIndex];
-				var eventTime:Number = eve.time;
-				if (from <= eventTime && eventTime < to) {
-					for (var j:int = 0, m:int = scripts.length; j < m; j++) {
-						var script:Script3D = scripts[j];
-						var fun:Function = script[eve.eventName];
-						(fun) && (fun.apply(script, eve.params));
-					}
-				} else {
-					break;
-				}
-			}
-			playState._playEventIndex = eventIndex;
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _updatePlayer(animatorState:AnimatorState, playState:AnimatorPlayState, elapsedTime:Number, islooping:Boolean):void {
 			var clipDuration:Number = animatorState._clip._duration * (animatorState.clipEnd - animatorState.clipStart);
 			var lastElapsedTime:Number = playState._elapsedTime;
@@ -316,7 +306,7 @@ package laya.d3.component {
 			var normalizedTime:Number = elapsedPlaybackTime / clipDuration;//TODO:时候可以都统一为归一化时间
 			playState._normalizedTime = normalizedTime;
 			var playTime:Number = normalizedTime % 1.0;
-			playState._normalizedPlayTime =playTime < 0?playTime+1.0:playTime;
+			playState._normalizedPlayTime = playTime < 0 ? playTime + 1.0 : playTime;
 			playState._duration = clipDuration;
 			var scripts:Vector.<AnimatorStateScript> = animatorState._scripts;
 			
@@ -332,17 +322,6 @@ package laya.d3.component {
 				return;
 			}
 			
-			if (clipDuration > 0) {
-				if (elapsedPlaybackTime >= clipDuration) {
-					do {
-						elapsedPlaybackTime -= clipDuration;//TODO:大于1次循环后会一直掉
-						playState._playEventIndex = 0;
-					} while (elapsedPlaybackTime >= clipDuration)
-				}
-			} else {
-				playState._resetPlayState(0.0);
-			}
-			
 			if (scripts) {
 				for (i = 0, n = scripts.length; i < n; i++)
 					scripts[i].onStateUpdate();
@@ -352,31 +331,68 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _updateEventScript(stateInfo:AnimatorState, playStateInfo:AnimatorPlayState, islooping:Boolean):void {
+		private function _eventScript(scripts:Vector.<Script3D>, events:Vector.<AnimationEvent>, eventIndex:int, endTime:Number, front:Boolean):int {
+			if (front){
+				for (var n:int = events.length; eventIndex < n; eventIndex++) {
+					var event:AnimationEvent = events[eventIndex];
+					if (event.time <= endTime) {
+						for (var j:int = 0, m:int = scripts.length; j < m; j++) {
+							var script:Script3D = scripts[j];
+							var fun:Function = script[event.eventName];
+							(fun) && (fun.apply(script, event.params));
+						}
+					} else {
+						break;
+					}
+				}
+			}
+			else{
+				for (; eventIndex>=0; eventIndex--) {
+					event = events[eventIndex];
+					if (event.time >= endTime) {
+						for ( j = 0, m = scripts.length; j < m; j++) {
+							script = scripts[j];
+							fun = script[event.eventName];
+							(fun) && (fun.apply(script, event.params));
+						}
+					} else {
+						break;
+					}
+				}
+			}
+			return eventIndex;
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _updateEventScript(stateInfo:AnimatorState, playStateInfo:AnimatorPlayState):void {
 			var scripts:Vector.<Script3D> = (owner as Sprite3D)._scripts;
 			if (scripts) {//TODO:play是否也换成此种计算
-				var clipDuration:Number = stateInfo._clip._duration;
-				var lastElapsedTime:Number = playStateInfo._lastElapsedTime;
+				var clip:AnimationClip = stateInfo._clip;
+				var events:Vector.<AnimationEvent> = clip._events;
+				var clipDuration:Number = clip._duration;
 				var elapsedTime:Number = playStateInfo._elapsedTime;
-				var lastLoop:Number = Math.floor(lastElapsedTime / clipDuration);
-				var loop:Number = Math.floor(elapsedTime / clipDuration);
-				var lastTime:Number = lastElapsedTime % clipDuration;
 				var time:Number = elapsedTime % clipDuration;
-				var loopCount:int = loop - lastLoop;
-				if (islooping) {
-					if (loopCount > 0) {
-						_eventScript(scripts, stateInfo, playStateInfo, lastTime, clipDuration);
-						for (var i:int = 0, n:int = loopCount - 1; i < n; i++)
-							_eventScript(scripts, stateInfo, playStateInfo, 0, clipDuration);
-						_eventScript(scripts, stateInfo, playStateInfo, 0, time);
-					} else {
-						_eventScript(scripts, stateInfo, playStateInfo, lastTime, time);
-					}
+				var loopCount:int =Math.abs(Math.floor(elapsedTime / clipDuration) - Math.floor(playStateInfo._lastElapsedTime / clipDuration));//backPlay可能为负数
+				var frontPlay:Boolean = playStateInfo._elapsedTime > playStateInfo._lastElapsedTime;
+				
+				if (loopCount == 0) {
+					playStateInfo._playEventIndex = _eventScript(scripts, events, playStateInfo._playEventIndex, time,frontPlay);
 				} else {
-					if (loopCount > 0)
-						_eventScript(scripts, stateInfo, playStateInfo, lastTime, clipDuration);
-					else
-						_eventScript(scripts, stateInfo, playStateInfo, lastTime, time);
+					if (frontPlay){
+						_eventScript(scripts, events, playStateInfo._playEventIndex,clipDuration, true);
+						for (var i:int = 0, n:int = loopCount - 1; i < n; i++)
+							_eventScript(scripts, events, 0, clipDuration, true);
+						playStateInfo._playEventIndex = _eventScript(scripts, events, 0, time,true);
+					}
+					else{
+						_eventScript(scripts, events, playStateInfo._playEventIndex, 0,false);
+						var eventIndex:int = events.length - 1;
+						for (i = 0, n = loopCount - 1; i < n; i++)
+							_eventScript(scripts, events, eventIndex, 0, false);
+						playStateInfo._playEventIndex = _eventScript(scripts, events, eventIndex, time,false);
+					}
 				}
 			}
 		}
@@ -391,7 +407,7 @@ package laya.d3.component {
 			var curPlayTime:Number = animatorState.clipStart * clipDuration + playStateInfo._normalizedPlayTime * playStateInfo._duration;
 			var currentFrameIndices:Int16Array = animatorState._currentFrameIndices;
 			var frontPlay:Boolean = playStateInfo._elapsedTime > playStateInfo._lastElapsedTime;
-			clip._evaluateClipDatasRealTime(clip._nodes, curPlayTime, currentFrameIndices, addtive,frontPlay);
+			clip._evaluateClipDatasRealTime(clip._nodes, curPlayTime, currentFrameIndices, addtive, frontPlay);
 		}
 		
 		/**
@@ -425,45 +441,45 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _applyPositionAndRotationEuler(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, data:Float32Array, out:Float32Array):void {
+		private function _applyPositionAndRotationEuler(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, data:Vector3, out:Vector3):void {
 			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
 				if (additive) {
-					out[0] += weight * data[0];
-					out[1] += weight * data[1];
-					out[2] += weight * data[2];
+					out.x += weight * data.x;
+					out.y += weight * data.y;
+					out.z += weight * data.z;
 				} else {
-					var oriX:Number = out[0];
-					var oriY:Number = out[1];
-					var oriZ:Number = out[2];
-					out[0] = oriX + weight * (data[0] - oriX);
-					out[1] = oriY + weight * (data[1] - oriY);
-					out[2] = oriZ + weight * (data[2] - oriZ);
+					var oriX:Number = out.x;
+					var oriY:Number = out.y;
+					var oriZ:Number = out.z;
+					out.x = oriX + weight * (data.x - oriX);
+					out.y = oriY + weight * (data.y - oriY);
+					out.z = oriZ + weight * (data.z - oriZ);
 				}
 			} else {
 				if (isFirstLayer) {
 					if (additive) {
-						var defValue:Float32Array = nodeOwner.defaultValue;
-						out[0] = defValue[0] + data[0];
-						out[1] = defValue[1] + data[1];
-						out[2] = defValue[2] + data[2];
+						var defValue:Vector3 = nodeOwner.defaultValue;
+						out.x = defValue.x + data.x;
+						out.y = defValue.y + data.y;
+						out.z = defValue.z + data.z;
 					} else {
-						out[0] = data[0];
-						out[1] = data[1];
-						out[2] = data[2];
+						out.x = data.x;
+						out.y = data.y;
+						out.z = data.z;
 					}
 				} else {
 					defValue = nodeOwner.defaultValue;
 					if (additive) {
-						out[0] = defValue[0] + weight * data[0];
-						out[1] = defValue[1] + weight * data[1];
-						out[2] = defValue[2] + weight * data[2];
+						out.x = defValue.x + weight * data.x;
+						out.y = defValue.y + weight * data.y;
+						out.z = defValue.z + weight * data.z;
 					} else {
-						var defX:Number = defValue[0];
-						var defY:Number = defValue[1];
-						var defZ:Number = defValue[2];
-						out[0] = defX + weight * (data[0] - defX);
-						out[1] = defY + weight * (data[1] - defY);
-						out[2] = defZ + weight * (data[2] - defZ);
+						var defX:Number = defValue.x;
+						var defY:Number = defValue.y;
+						var defZ:Number = defValue.z;
+						out.x = defX + weight * (data.x - defX);
+						out.y = defY + weight * (data.y - defY);
+						out.z = defZ + weight * (data.z - defZ);
 					}
 				}
 			}
@@ -472,36 +488,36 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _applyRotation(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, clipRot:Float32Array, localRotationE:Float32Array):void {
+		private function _applyRotation(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, clipRot:Quaternion, localRotation:Quaternion):void {
 			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
 				if (additive) {
-					var tempQuat:Float32Array = _tempQuaternionArray1;
+					var tempQuat:Quaternion = _tempQuaternion1;//使用临时四元数_tempQuaternion1，避免引用错乱
 					Utils3D.quaternionWeight(clipRot, weight, tempQuat);
-					Utils3D.quaterionNormalize(tempQuat, tempQuat);
-					Utils3D.quaternionMultiply(localRotationE, tempQuat, localRotationE);
+					tempQuat.normalize(tempQuat);
+					Quaternion.multiply(localRotation, tempQuat, localRotation);
 				} else {
-					Quaternion._lerpArray(localRotationE, clipRot, weight, localRotationE);
+					Quaternion.lerp(localRotation, clipRot, weight, localRotation);
 				}
 			} else {
 				if (isFirstLayer) {
 					if (additive) {
-						var defaultRot:Float32Array = nodeOwner.defaultValue;
-						Utils3D.quaternionMultiply(defaultRot, clipRot, localRotationE);
+						var defaultRot:Quaternion = nodeOwner.defaultValue;
+						Quaternion.multiply(defaultRot, clipRot, localRotation);
 					} else {
-						localRotationE[0] = clipRot[0];
-						localRotationE[1] = clipRot[1];
-						localRotationE[2] = clipRot[2];
-						localRotationE[3] = clipRot[3];
+						localRotation.x = clipRot.x;
+						localRotation.y = clipRot.y;
+						localRotation.z = clipRot.z;
+						localRotation.w = clipRot.w;
 					}
 				} else {
 					defaultRot = nodeOwner.defaultValue;
 					if (additive) {
-						tempQuat = _tempQuaternionArray1;
+						tempQuat = _tempQuaternion1;
 						Utils3D.quaternionWeight(clipRot, weight, tempQuat);
-						Utils3D.quaterionNormalize(tempQuat, tempQuat);
-						Utils3D.quaternionMultiply(defaultRot, tempQuat, localRotationE);
+						tempQuat.normalize(tempQuat);
+						Quaternion.multiply(defaultRot, tempQuat, localRotation);
 					} else {
-						Quaternion._lerpArray(defaultRot, clipRot, weight, localRotationE);
+						Quaternion.lerp(defaultRot, clipRot, weight, localRotation);
 					}
 				}
 			}
@@ -510,39 +526,39 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _applyScale(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, clipSca:Float32Array, localScaleE:Float32Array):void {
+		private function _applyScale(nodeOwner:KeyframeNodeOwner, additive:Boolean, weight:Number, isFirstLayer:Boolean, clipSca:Vector3, localScale:Vector3):void {
 			if (nodeOwner.updateMark === _updateMark) {//一定非第一层
 				if (additive) {
-					var scale:Float32Array = _tempVector3Array1;
+					var scale:Vector3 = _tempVector31;
 					Utils3D.scaleWeight(clipSca, weight, scale);
-					localScaleE[0] = localScaleE[0] * scale[0];
-					localScaleE[1] = localScaleE[1] * scale[1];
-					localScaleE[2] = localScaleE[2] * scale[2];
+					localScale.x = localScale.x * scale.x;
+					localScale.y = localScale.y * scale.y;
+					localScale.z = localScale.z * scale.z;
 				} else {
-					Utils3D.scaleBlend(localScaleE, clipSca, weight, localScaleE);
+					Utils3D.scaleBlend(localScale, clipSca, weight, localScale);
 				}
 			} else {
 				if (isFirstLayer) {
 					if (additive) {
-						var defaultSca:Float32Array = nodeOwner.defaultValue;
-						localScaleE[0] = defaultSca[0] * clipSca[0];
-						localScaleE[1] = defaultSca[1] * clipSca[1];
-						localScaleE[2] = defaultSca[2] * clipSca[2];
+						var defaultSca:Vector3 = nodeOwner.defaultValue;
+						localScale.x = defaultSca.x * clipSca.x;
+						localScale.y = defaultSca.y * clipSca.y;
+						localScale.z = defaultSca.z * clipSca.z;
 					} else {
-						localScaleE[0] = clipSca[0];
-						localScaleE[1] = clipSca[1];
-						localScaleE[2] = clipSca[2];
+						localScale.x = clipSca.x;
+						localScale.y = clipSca.y;
+						localScale.z = clipSca.z;
 					}
 				} else {
 					defaultSca = nodeOwner.defaultValue;
 					if (additive) {
-						scale = _tempVector3Array1;
+						scale = _tempVector31;
 						Utils3D.scaleWeight(clipSca, weight, scale);
-						localScaleE[0] = defaultSca[0] * scale[0];
-						localScaleE[1] = defaultSca[1] * scale[1];
-						localScaleE[2] = defaultSca[2] * scale[2];
+						localScale.x = defaultSca.x * scale.x;
+						localScale.y = defaultSca.y * scale.y;
+						localScale.z = defaultSca.z * scale.z;
 					} else {
-						Utils3D.scaleBlend(defaultSca, clipSca, weight, localScaleE);
+						Utils3D.scaleBlend(defaultSca, clipSca, weight, localScale);
 					}
 				}
 			}
@@ -569,36 +585,36 @@ package laya.d3.component {
 					break;
 				case 1: //Position
 					var localPos:Vector3 = pro.localPosition;
-					var position:Float32Array = _tempVector3Array0;
-					var srcX:Number = srcValue[0], srcY:Number = srcValue[1], srcZ:Number = srcValue[2];
-					position[0] = srcX + crossWeight * (desValue[0] - srcX);
-					position[1] = srcY + crossWeight * (desValue[1] - srcY);
-					position[2] = srcZ + crossWeight * (desValue[2] - srcZ);
-					_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, position, localPos.elements);
+					var position:Vector3 = _tempVector30;
+					var srcX:Number = srcValue.x, srcY:Number = srcValue.y, srcZ:Number = srcValue.z;
+					position.x = srcX + crossWeight * (desValue.x - srcX);
+					position.y = srcY + crossWeight * (desValue.y - srcY);
+					position.z = srcZ + crossWeight * (desValue.z - srcZ);
+					_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, position, localPos);
 					pro.localPosition = localPos;
 					break;
 				case 2: //Rotation
 					var localRot:Quaternion = pro.localRotation;
-					var rotation:Float32Array = _tempQuaternionArray0;
-					Quaternion._lerpArray(srcValue, desValue, crossWeight, rotation);
-					_applyRotation(nodeOwner, additive, weight, isFirstLayer, rotation, localRot.elements);
+					var rotation:Quaternion = _tempQuaternion0;
+					Quaternion.lerp(srcValue, desValue, crossWeight, rotation);
+					_applyRotation(nodeOwner, additive, weight, isFirstLayer, rotation, localRot);
 					pro.localRotation = localRot;
 					break;
 				case 3: //Scale
 					var localSca:Vector3 = pro.localScale;
-					var scale:Float32Array = _tempVector3Array0;
+					var scale:Vector3 = _tempVector30;
 					Utils3D.scaleBlend(srcValue, desValue, crossWeight, scale);
-					_applyScale(nodeOwner, additive, weight, isFirstLayer, scale, localSca.elements);
+					_applyScale(nodeOwner, additive, weight, isFirstLayer, scale, localSca);
 					pro.localScale = localSca;
 					break;
 				case 4: //RotationEuler
 					var localEuler:Vector3 = pro.localRotationEuler;
-					var rotationEuler:Float32Array = _tempVector3Array0;
-					srcX = srcValue[0], srcY = srcValue[1], srcZ = srcValue[2];
-					rotationEuler[0] = srcX + crossWeight * (desValue[0] - srcX);
-					rotationEuler[1] = srcY + crossWeight * (desValue[1] - srcY);
-					rotationEuler[2] = srcZ + crossWeight * (desValue[2] - srcZ);
-					_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, rotationEuler, localEuler.elements);
+					var rotationEuler:Vector3 = _tempVector30;
+					srcX = srcValue.x, srcY = srcValue.y, srcZ = srcValue.z;
+					rotationEuler.x = srcX + crossWeight * (desValue.x - srcX);
+					rotationEuler.y = srcY + crossWeight * (desValue.y - srcY);
+					rotationEuler.z = srcZ + crossWeight * (desValue.z - srcZ);
+					_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, rotationEuler, localEuler);
 					pro.localRotationEuler = localEuler;
 					break;
 				}
@@ -630,22 +646,22 @@ package laya.d3.component {
 							break;
 						case 1: //Position
 							var localPos:Vector3 = pro.localPosition;
-							_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localPos.elements);
+							_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localPos);
 							pro.localPosition = localPos;
 							break;
 						case 2: //Rotation
 							var localRot:Quaternion = pro.localRotation;
-							_applyRotation(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localRot.elements);
+							_applyRotation(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localRot);
 							pro.localRotation = localRot;
 							break;
 						case 3: //Scale
 							var localSca:Vector3 = pro.localScale;
-							_applyScale(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localSca.elements);
+							_applyScale(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localSca);
 							pro.localScale = localSca;
 							break;
 						case 4: //RotationEuler
 							var localEuler:Vector3 = pro.localRotationEuler;
-							_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localEuler.elements);
+							_applyPositionAndRotationEuler(nodeOwner, additive, weight, isFirstLayer, nodes.getNodeByIndex(i).data, localEuler);
 							pro.localRotationEuler = localEuler;
 							break;
 						}
@@ -729,39 +745,35 @@ package laya.d3.component {
 							break;
 						case 1: 
 							var locPos:Vector3 = pro.localPosition;
-							var locPosE:Float32Array = locPos.elements;
-							var def:Float32Array = nodeOwner.defaultValue;
-							locPosE[0] = def[0];
-							locPosE[1] = def[1];
-							locPosE[2] = def[2];
+							var def:Vector3 = nodeOwner.defaultValue;
+							locPos.x = def.x;
+							locPos.y = def.y;
+							locPos.z = def.z;
 							pro.localPosition = locPos;
 							break;
 						case 2: 
 							var locRot:Quaternion = pro.localRotation;
-							var locRotE:Float32Array = locRot.elements;
-							def = nodeOwner.defaultValue;
-							locRotE[0] = def[0];
-							locRotE[1] = def[1];
-							locRotE[2] = def[2];
-							locRotE[3] = def[3];
+							var defQua:Quaternion = nodeOwner.defaultValue;
+							locRot.x = defQua.x;
+							locRot.y = defQua.y;
+							locRot.z = defQua.z;
+							locRot.w = defQua.w;
 							pro.localRotation = locRot;
 							break;
 						case 3: 
 							var locSca:Vector3 = pro.localScale;
-							var locScaE:Float32Array = locSca.elements;
 							def = nodeOwner.defaultValue;
-							locScaE[0] = def[0];
-							locScaE[1] = def[1];
-							locScaE[2] = def[2];
+							locSca.x = def.x;
+							locSca.y = def.y;
+							locSca.z = def.z;
 							pro.localScale = locSca;
 							break;
 						case 4: 
 							var locEul:Vector3 = pro.localRotationEuler;
-							var locEulE:Float32Array = locEul.elements;
 							def = nodeOwner.defaultValue;
-							locEulE[0] = def[0];
-							locEulE[1] = def[1];
-							locEulE[2] = def[2];
+							locEul.x = def.x;
+							locEul.y = def.y;
+							locEul.z = def.z;
 							pro.localRotationEuler = locEul;
 							break;
 						default: 
@@ -852,9 +864,13 @@ package laya.d3.component {
 		 * @inheritDoc
 		 */
 		override protected function _onDestroy():void {
+			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
+				var clipStateInfos:Vector.<AnimatorState> = _controllerLayers[i]._states;
+				for (var j:int = 0, m:int = clipStateInfos.length; j < m; j++)
+					clipStateInfos[j]._clip._removeReference();
+			}
 			var parent:Node = owner._parent;
 			(owner as Sprite3D)._clearHierarchyAnimator(this, parent ? (parent as Sprite3D)._hierarchyAnimator : null);//只有动画组件在加载或卸载时才重新组织数据
-			(owner as Sprite3D)._changeAnimatorToLinkSprite3DNoAvatar(this, false, new <String>[]);
 		}
 		
 		/**
@@ -862,7 +878,6 @@ package laya.d3.component {
 		 */
 		override protected function _onEnableInScene():void {
 			(owner._scene as Scene3D)._animatorPool.add(this);
-		
 		}
 		
 		/**
@@ -918,15 +933,8 @@ package laya.d3.component {
 				var spriteTransform:Transform3D = sprite.transform;
 				if (!spriteTransform.owner.isStatic && nodeTransform) {
 					var spriteWorldMatrix:Matrix4x4 = spriteTransform.worldMatrix;
-					var ownParTra:Transform3D = (owner as Sprite3D)._transform._parent;
-					if (ownParTra) {
-						Utils3D.matrix4x4MultiplyMFM(ownParTra.worldMatrix, nodeTransform.getWorldMatrix(), spriteWorldMatrix);
-					} else {
-						var sprWorE:Float32Array = spriteWorldMatrix.elements;
-						var nodWorE:Float32Array = nodeTransform.getWorldMatrix();
-						for (var j:int = 0; j < 16; j++)
-							sprWorE[j] = nodWorE[j];
-					}
+					var ownTra:Transform3D = (owner as Sprite3D)._transform;
+					Utils3D.matrix4x4MultiplyMFM(ownTra.worldMatrix, nodeTransform.getWorldMatrix(), spriteWorldMatrix);
 					spriteTransform.worldMatrix = spriteWorldMatrix;
 				}
 			}
@@ -970,7 +978,6 @@ package laya.d3.component {
 							var animatorState:AnimatorState = new AnimatorState();
 							animatorState.name = name;
 							animatorState.clip = motion;
-							motion._addReference();
 							addState(animatorState, i);
 							(j === 0) && (setDefaultClip(name, i));
 						}
@@ -1021,7 +1028,7 @@ package laya.d3.component {
 						var addtive:Boolean = controllerLayer.blendingMode !== AnimatorControllerLayer.BLENDINGMODE_OVERRIDE;
 						_updateClipDatas(animatorState, addtive, playStateInfo, timerScale * speed);//clipDatas为逐动画文件,防止两个使用同一动画文件的Animator数据错乱,即使动画停止也要updateClipDatas
 						_setClipDatasToNode(animatorState, addtive, controllerLayer.defaultWeight, i === 0);//多层动画混合时即使动画停止也要设置数据
-						finish || _updateEventScript(animatorState, playStateInfo, clip.islooping);
+						finish || _updateEventScript(animatorState, playStateInfo);
 					}
 					break;
 				case 1: 
@@ -1059,8 +1066,8 @@ package laya.d3.component {
 						}
 					}
 					if (needRender) {
-						_updateEventScript(animatorState, playStateInfo, false);
-						_updateEventScript(crossClipState, crossPlayStateInfo, crossClip.islooping);
+						_updateEventScript(animatorState, playStateInfo);
+						_updateEventScript(crossClipState, crossPlayStateInfo);
 					}
 					break;
 				case 2: 
@@ -1084,7 +1091,7 @@ package laya.d3.component {
 							_updateClipDatas(crossClipState, addtive, crossPlayStateInfo, timerScale * crossScale * crossSpeed);
 							_setFixedCrossClipDatasToNode(controllerLayer, crossClipState, crossWeight, i === 0);
 						}
-						_updateEventScript(crossClipState, crossPlayStateInfo, crossClip.islooping);
+						_updateEventScript(crossClipState, crossPlayStateInfo);
 					}
 					break;
 				}
@@ -1092,7 +1099,7 @@ package laya.d3.component {
 			
 			if (needRender) {
 				if (_avatar) {
-					Render.isConchApp && _updateAnimationNodeWorldMatix(_animationNodeLocalPositions, _animationNodeLocalRotations, _animationNodeLocalScales, _animationNodeWorldMatrixs, _animationNodeParentIndices);//[NATIVE]
+					Render.supportWebGLPlusAnimation && _updateAnimationNodeWorldMatix(_animationNodeLocalPositions, _animationNodeLocalRotations, _animationNodeLocalScales, _animationNodeWorldMatrixs, _animationNodeParentIndices);//[NATIVE]
 					_updateAvatarNodesToSprite();
 				}
 			}
@@ -1378,14 +1385,9 @@ package laya.d3.component {
 		 * @return 是否关联成功。
 		 */
 		public function linkSprite3DToAvatarNode(nodeName:String, sprite3D:Sprite3D):Boolean {//TODO:克隆挂点信息丢失问题
-			if (sprite3D._hierarchyAnimator === this) {
-				_isLinkSpriteToAnimationNodeData(sprite3D, nodeName, true);
-				_isLinkSpriteToAnimationNode(sprite3D, nodeName, true);
-				return true;
-			} else {
-				throw("Animator:sprite3D must belong to this Animator");
-				return false;
-			}
+			_isLinkSpriteToAnimationNodeData(sprite3D, nodeName, true);
+			_isLinkSpriteToAnimationNode(sprite3D, nodeName, true);
+			return true;
 		}
 		
 		/**
@@ -1407,18 +1409,6 @@ package laya.d3.component {
 			} else {
 				throw("Animator:sprite3D must belong to this Animator");
 				return false;
-			}
-		}
-		
-		/**
-		 * @inheritDoc
-		 */
-		override public function destroy():void {
-			super.destroy();
-			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
-				var clipStateInfos:Vector.<AnimatorState> = _controllerLayers[i]._states;
-				for (var j:int = 0, m:int = clipStateInfos.length; j < m; j++)
-					clipStateInfos[j]._clip._removeReference();
 			}
 		}
 		

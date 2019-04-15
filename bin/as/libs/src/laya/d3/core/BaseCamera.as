@@ -73,10 +73,6 @@ package laya.d3.core {
 		
 		/** @private */
 		public var _shaderValues:ShaderData;
-		/** @private [只读] 需先调用viewport保证值正确。*/
-		public var _canvasWidth:Number;
-		/** @private [只读] 需先调用viewport保证值正确。*/
-		public var _canvasHeight:Number;
 		
 		/**清楚标记。*/
 		public var clearFlag:int;
@@ -293,9 +289,9 @@ package laya.d3.core {
 		 */
 		public function _prepareCameraToRender():void {
 			var cameraSV:ShaderData = _shaderValues;
-			cameraSV.setVector(BaseCamera.CAMERAPOS, transform.position);
-			cameraSV.setVector(BaseCamera.CAMERADIRECTION, transform.forward);
-			cameraSV.setVector(BaseCamera.CAMERAUP, transform.up);
+			cameraSV.setVector3(BaseCamera.CAMERAPOS, transform.position);
+			cameraSV.setVector3(BaseCamera.CAMERADIRECTION, transform.forward);
+			cameraSV.setVector3(BaseCamera.CAMERAUP, transform.up);
 		}
 		
 		/**
@@ -396,6 +392,7 @@ package laya.d3.core {
 		 */
 		override protected function _onActive():void {
 			(_scene as Scene3D)._addCamera(this);
+			super._onActive();
 		}
 		
 		/**
@@ -403,6 +400,7 @@ package laya.d3.core {
 		 */
 		override protected function _onInActive():void {
 			(_scene as Scene3D)._removeCamera(this);
+			super._onInActive();
 		}
 		
 		/**

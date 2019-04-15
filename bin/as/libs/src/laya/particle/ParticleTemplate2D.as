@@ -43,15 +43,7 @@ package laya.particle
 			sv.u_EndVelocity = settings.endVelocity;
 			
 			_blendFn = BlendMode.fns[parSetting.blendState]; //context._targets?BlendMode.targetFns[blendType]:BlendMode.fns[blendType];
-			if (Render.isConchApp)
-			{
-				var nSize:int = MeshParticle2D.const_stride * settings.maxPartices * 4 * 4;
-				_conchMesh = __JS__("new ParamData(nSize, true)");
-			}
-			else
-			{
-				_mesh = MeshParticle2D.getAMesh(settings.maxPartices);
-			}
+			_mesh = MeshParticle2D.getAMesh(settings.maxPartices);
 			
 			initialize();
 			
@@ -221,10 +213,7 @@ package laya.particle
 		{
 			//_vertexBuffer2D.dispose();
 			//_indexBuffer2D.dispose();
-			if (!Render.isConchApp)
-			{
-				_mesh.releaseMesh();//TODO 什么时候调用。
-			}
+			_mesh.releaseMesh();//TODO 什么时候调用。
 		}
 	}
 }

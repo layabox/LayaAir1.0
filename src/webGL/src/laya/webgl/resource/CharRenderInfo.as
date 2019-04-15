@@ -6,7 +6,7 @@ package laya.webgl.resource {
 	 */
 	public class CharRenderInfo {
 		public var char:String='';				// 调试用
-		public var tex:CharPageTexture;			//
+		public var tex:*;						//
 		public var deleted:Boolean = false; 	// 已经被删除了
 		public var uv:Array = new Array(8);// [0, 0, 1, 1];		//uv
 		public var pos:int = 0;					//数组下标

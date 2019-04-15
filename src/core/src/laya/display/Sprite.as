@@ -330,7 +330,6 @@ package laya.display {
 		
 		public function set cacheAs(value:String):void {
 			if (value === _cacheStyle.userSetCache) return;
-			if ( Render.isConchApp && value != "bitmap") return;
 			if ( mask && value === 'normal') return;
 			_setCacheAs(value);
 			_getCacheStyle().userSetCache = value;
@@ -800,9 +799,9 @@ package laya.display {
 			_setTransform(m);
 			//设置transform时重置x,y
 			if (value) {
-				_x = value.tx;
-				_y = value.ty;
-				value.tx = value.ty = 0;
+				_x = m.tx;
+				_y = m.ty;
+				m.tx = m.ty = 0;
 			}
 			if (value) _renderType |= SpriteConst.TRANSFORM;
 			else {
@@ -1080,8 +1079,6 @@ package laya.display {
 		 * @param	y Y轴坐标。
 		 */
 		public function render(ctx:Context, x:Number, y:Number):void {
-			Stat.spriteCount++;
-			
 			RenderSprite.renders[_renderType]._fun(this, ctx, x + _x, y + _y);
 			/*
 			var rt:int = _renderType;
@@ -1188,7 +1185,7 @@ package laya.display {
 			value && value.length === 0 && (value = null);
 			if (_cacheStyle.filters == value) return;
 			_getCacheStyle().filters = value ? value.slice() : null;
-			if (Render.isWebGL || Render.isConchApp ) {
+			if (Render.isWebGL) {
 				if (value && value.length) {
 					//temp TODO 
 					_setColorFilter(value[0]);
@@ -1202,7 +1199,7 @@ package laya.display {
 			
 			if (value && value.length > 0) {
 				if (!_getBit(Const.DISPLAY)) _setBitUp(Const.DISPLAY);
-				if (!((Render.isWebGL || Render.isConchApp) && value.length == 1 && (value[0] is ColorFilter))) {
+				if (!(Render.isWebGL && value.length == 1 && (value[0] is ColorFilter))) {
 					_getCacheStyle().cacheForFilters = true;
 					_checkCanvasEnable();
 				}

@@ -255,7 +255,7 @@ package laya.ani.bone {
 									//tResultMatrix = new Matrix();
 									tResultMatrix = _tempResultMatrix;
 								}
-								if ((!Render.isWebGL && !Render.isConchApp && currDisplayData.uvs) || ((Render.isWebGL || Render.isConchApp ) && _diyTexture && currDisplayData.uvs))
+								if ((!Render.isWebGL && currDisplayData.uvs) || (Render.isWebGL && _diyTexture && currDisplayData.uvs))
 								{
 									var tTestMatrix:Matrix = _tempMatrix;
 									tTestMatrix.identity();

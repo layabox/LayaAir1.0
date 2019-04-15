@@ -306,7 +306,6 @@ package laya.d3.graphics {
 					var indexCount:int = batchElementList[end].staticBatchIndexEnd - start;
 					LayaGL.instance.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, start * 2);
 					from = ++end;
-					Stat.renderBatch++;
 					Stat.trianglesFaces += indexCount / 3;
 				}
 			}

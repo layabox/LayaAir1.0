@@ -61,25 +61,25 @@ package laya.d3.core.material {
 		public function setDiffuseScale1(x:Number, y:Number):void {
 			_diffuseScale1.x = x;
 			_diffuseScale1.y = y;
-			_shaderValues.setVector(DIFFUSESCALE1, _diffuseScale1);
+			_shaderValues.setVector2(DIFFUSESCALE1, _diffuseScale1);
 		}
 		
 		public function setDiffuseScale2(x:Number, y:Number):void {
 			_diffuseScale2.x = x;
 			_diffuseScale2.y = y;
-			_shaderValues.setVector(DIFFUSESCALE2, _diffuseScale2);
+			_shaderValues.setVector2(DIFFUSESCALE2, _diffuseScale2);
 		}
 		
 		public function setDiffuseScale3(x:Number, y:Number):void {
 			_diffuseScale3.x = x;
 			_diffuseScale3.y = y;
-			_shaderValues.setVector(DIFFUSESCALE3, _diffuseScale3);
+			_shaderValues.setVector2(DIFFUSESCALE3, _diffuseScale3);
 		}
 		
 		public function setDiffuseScale4(x:Number, y:Number):void {
 			_diffuseScale4.x = x;
 			_diffuseScale4.y = y;
-			_shaderValues.setVector(DIFFUSESCALE4, _diffuseScale4);
+			_shaderValues.setVector2(DIFFUSESCALE4, _diffuseScale4);
 		}
 		
 		public function setDetailNum(value:int):void {
@@ -116,7 +116,7 @@ package laya.d3.core.material {
 		}
 		
 		public function set ambientColor(value:Vector3):void {
-			_shaderValues.setVector(MATERIALAMBIENT, value);
+			_shaderValues.setVector3(MATERIALAMBIENT, value);
 		}
 		
 		public function get diffuseColor():Vector3 {
@@ -124,7 +124,7 @@ package laya.d3.core.material {
 		}
 		
 		public function set diffuseColor(value:Vector3):void {
-			_shaderValues.setVector(MATERIALDIFFUSE, value);
+			_shaderValues.setVector3(MATERIALDIFFUSE, value);
 		}
 		
 		public function get specularColor():Vector4 {

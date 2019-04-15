@@ -1,5 +1,4 @@
 package laya.utils {
-	import laya.display.Node;
 	
 	/**
 	 * <code>Tween</code>  是一个缓动类。使用此类能够实现对目标对象属性的渐变。
@@ -33,7 +32,7 @@ package laya.utils {
 		public var gid:int = 0;
 		/**更新回调，缓动数值发生变化时，回调变化的值*/
 		public var update:Handler;
-		/**重播次数*/
+		/**重播次数，如果repeat=0，则表示无限循环播放*/
 		public var repeat:int = 1;
 		/**当前播放次数*/
 		private var _count:int = 0;
@@ -126,11 +125,10 @@ package laya.utils {
 			
 			if (runNow) {
 				if (delay <= 0) firstStart(target, props, isTo);
-				else
-				{
+				else {
 					_delayParam = [target, props, isTo];
 					Laya.timer.once(delay, this, firstStart, _delayParam);
-				} 
+				}
 			} else {
 				_initProps(target, props, isTo);
 			}
@@ -216,12 +214,12 @@ package laya.utils {
 			if (update) update.run();
 			
 			_count++;
-			if (_count >= repeat) {
+			if (repeat != 0 && _count >= repeat) {
 				//清理
 				this.clear();
 				//回调
 				handler && handler.run();
-			}else {
+			} else {
 				restart();
 			}
 		}
@@ -236,8 +234,7 @@ package laya.utils {
 			var time:Number = Browser.now();
 			var dTime:Number;
 			dTime = time - this._startTimer - this._delay;
-			if (dTime < 0)
-			{
+			if (dTime < 0) {
 				this._usedTimer = dTime;
 			}
 		}
@@ -331,9 +328,8 @@ package laya.utils {
 			pause();
 			this._usedTimer = 0;
 			this._startTimer = Browser.now();
-			if (this._delayParam)
-			{
-				Laya.timer.once( this._delay, this, firstStart, this._delayParam);
+			if (this._delayParam) {
+				Laya.timer.once(this._delay, this, firstStart, this._delayParam);
 				return;
 			}
 			var props:Array = this._props;
@@ -350,19 +346,15 @@ package laya.utils {
 		public function resume():void {
 			if (this._usedTimer >= this._duration) return;
 			this._startTimer = Browser.now() - this._usedTimer - this._delay;
-			if (this._delayParam)
-			{
-				if (this._usedTimer < 0)
-				{
+			if (this._delayParam) {
+				if (this._usedTimer < 0) {
 					Laya.timer.once(-this._usedTimer, this, firstStart, this._delayParam);
-				}else
-				{
+				} else {
 					firstStart.apply(this, this._delayParam);
 				}
-			}else
-			{
+			} else {
 				_beginLoop();
-			}	
+			}
 		}
 		
 		private static function easeNone(t:Number, b:Number, c:Number, d:Number):Number {

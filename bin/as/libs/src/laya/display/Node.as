@@ -4,6 +4,7 @@ package laya.display {
 	import laya.events.Event;
 	import laya.events.EventDispatcher;
 	import laya.utils.Pool;
+	import laya.utils.Stat;
 	import laya.utils.Timer;
 	
 	/**
@@ -658,14 +659,14 @@ package laya.display {
 		 * @private
 		 */
 		protected function _onActive():void {
-			//override it.
+			Stat.spriteCount++;
 		}
 		
 		/**
 		 * @private
 		 */
 		protected function _onInActive():void {
-			//override it.
+			Stat.spriteCount--;
 		}
 		
 		/**

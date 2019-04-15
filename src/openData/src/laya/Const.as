@@ -11,6 +11,7 @@ package laya {
 		public static const DISPLAY:int = 0x10;
 		public static const HAS_ZORDER:int = 0x20;
 		public static const HAS_MOUSE:int = 0x40;	
-		public static const DISPLAYED_INSTAGE:int = 0x80;	
+		public static const DISPLAYED_INSTAGE:int = 0x80;
+		public static const DRAWCALL_OPTIMIZE:int = 0x100;
 	}
 }

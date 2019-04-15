@@ -24,6 +24,14 @@ package {
 	import laya.d3.core.trail.TrailSprite3D;
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.math.HalfFloatUtils;
+	import laya.d3.math.Native.ConchQuaternion;
+	import laya.d3.math.Native.ConchVector2;
+	import laya.d3.math.Native.ConchVector3;
+	import laya.d3.math.Native.ConchVector4;
+	import laya.d3.math.Quaternion;
+	import laya.d3.math.Vector2;
+	import laya.d3.math.Vector3;
+	import laya.d3.math.Vector4;
 	import laya.d3.physics.PhysicsSettings;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.Mesh;
@@ -90,6 +98,8 @@ package {
 		public static var _enbalePhysics:Boolean = false;
 		/**@private */
 		public static var _editerEnvironment:Boolean = false;
+		/**@private */
+		public static var _config:Config3D = new Config3D();
 		
 		/**@private */
 		public static var debugMode:Boolean = false;
@@ -141,13 +151,14 @@ package {
 			RunDriver.changeWebGLSize = _changeWebGLSize;
 			Render.is3DMode = true;
 			Laya.init(width, height);
-			if (!Render.isConchApp) {
+			if (!Render.supportWebGLPlusRendering) {
 				LayaGL.instance = WebGL.mainContext;
 				LayaGL.instance.createCommandEncoder = function(reserveSize:int = 128, adjustSize:int = 64, isSyncToRenderThread:Boolean = false):CommandEncoder {
 					return new CommandEncoder(this, reserveSize, adjustSize, isSyncToRenderThread);
 				}
 			}
-			if (Render.isConchApp) enableNative3D();
+			//函数里面会有判断isConchApp
+			enableNative3D();
 			Sprite3D.__init__();
 			RenderableSprite3D.__init__();
 			MeshSprite3D.__init__();
@@ -217,40 +228,120 @@ package {
 				var skinnedMeshRender:* = SkinnedMeshRenderer;
 				var avatar:* = Avatar;
 				var frustumCulling:* = FrustumCulling;
-				//替换ShaderData的函数
-				shaderData.prototype._initData = shaderData.prototype._initDataForNative;
-				shaderData.prototype.setBool = shaderData.prototype.setBoolForNative;
-				shaderData.prototype.getBool = shaderData.prototype.getBoolForNative;
-				shaderData.prototype.setInt = shaderData.prototype.setIntForNative;
-				shaderData.prototype.getInt = shaderData.prototype.getIntForNative;
-				shaderData.prototype.setNumber = shaderData.prototype.setNumberForNative;
-				shaderData.prototype.getNumber = shaderData.prototype.getNumberForNative;
-				shaderData.prototype.setVector = shaderData.prototype.setVectorForNative;
-				shaderData.prototype.getVector = shaderData.prototype.getVectorForNative;
-				shaderData.prototype.setQuaternion = shaderData.prototype.setQuaternionForNative;
-				shaderData.prototype.getQuaternion = shaderData.prototype.getQuaternionForNative;
-				shaderData.prototype.setMatrix4x4 = shaderData.prototype.setMatrix4x4ForNative;
-				shaderData.prototype.getMatrix4x4 = shaderData.prototype.getMatrix4x4ForNative;
-				shaderData.prototype.setBuffer = shaderData.prototype.setBufferForNative;
-				shaderData.prototype.getBuffer = shaderData.prototype.getBufferForNative;
-				shaderData.prototype.setTexture = shaderData.prototype.setTextureForNative;
-				shaderData.prototype.getTexture = shaderData.prototype.getTextureForNative;
-				shaderData.prototype.setAttribute = shaderData.prototype.setAttributeForNative;
-				shaderData.prototype.getAttribute = shaderData.prototype.getAttributeForNative;
-				shaderData.prototype.cloneTo = shaderData.prototype.cloneToForNative;
-				shader3D.prototype._uniformMatrix2fv = shader3D.prototype._uniformMatrix2fvForNative;
-				shader3D.prototype._uniformMatrix3fv = shader3D.prototype._uniformMatrix3fvForNative;
-				shader3D.prototype._uniformMatrix4fv = shader3D.prototype._uniformMatrix4fvForNative;
-				avatar.prototype._cloneDatasToAnimator = avatar.prototype._cloneDatasToAnimatorNative;
+				if (Render.supportWebGLPlusRendering) {
+					//替换ShaderData的函数
+					shaderData.prototype._initData = shaderData.prototype._initDataForNative;
+					shaderData.prototype.setBool = shaderData.prototype.setBoolForNative;
+					shaderData.prototype.getBool = shaderData.prototype.getBoolForNative;
+					shaderData.prototype.setInt = shaderData.prototype.setIntForNative;
+					shaderData.prototype.getInt = shaderData.prototype.getIntForNative;
+					shaderData.prototype.setNumber = shaderData.prototype.setNumberForNative;
+					shaderData.prototype.getNumber = shaderData.prototype.getNumberForNative;
+					shaderData.prototype.setVector = shaderData.prototype.setVectorForNative;
+					shaderData.prototype.getVector = shaderData.prototype.getVectorForNative;
+					shaderData.prototype.setVector2 = shaderData.prototype.setVector2ForNative;
+					shaderData.prototype.getVector2 = shaderData.prototype.getVector2ForNative;
+					shaderData.prototype.setVector3 = shaderData.prototype.setVector3ForNative;
+					shaderData.prototype.getVector3 = shaderData.prototype.getVector3ForNative;
+					shaderData.prototype.setQuaternion = shaderData.prototype.setQuaternionForNative;
+					shaderData.prototype.getQuaternion = shaderData.prototype.getQuaternionForNative;
+					shaderData.prototype.setMatrix4x4 = shaderData.prototype.setMatrix4x4ForNative;
+					shaderData.prototype.getMatrix4x4 = shaderData.prototype.getMatrix4x4ForNative;
+					shaderData.prototype.setBuffer = shaderData.prototype.setBufferForNative;
+					shaderData.prototype.getBuffer = shaderData.prototype.getBufferForNative;
+					shaderData.prototype.setTexture = shaderData.prototype.setTextureForNative;
+					shaderData.prototype.getTexture = shaderData.prototype.getTextureForNative;
+					shaderData.prototype.setAttribute = shaderData.prototype.setAttributeForNative;
+					shaderData.prototype.getAttribute = shaderData.prototype.getAttributeForNative;
+					shaderData.prototype.cloneTo = shaderData.prototype.cloneToForNative;
+					shader3D.prototype._uniformMatrix2fv = shader3D.prototype._uniformMatrix2fvForNative;
+					shader3D.prototype._uniformMatrix3fv = shader3D.prototype._uniformMatrix3fvForNative;
+					shader3D.prototype._uniformMatrix4fv = shader3D.prototype._uniformMatrix4fvForNative;
+					
+				}
 				//Matrix4x4.multiply = Matrix4x4.multiplyForNative;
-				frustumCulling.renderObjectCulling = FrustumCulling.renderObjectCullingNative;
+				if (Render.supportWebGLPlusCulling) {
+					frustumCulling.renderObjectCulling = FrustumCulling.renderObjectCullingNative;
+				}
 				
-				__JS__("FloatKeyframe = window.conchFloatKeyframe");
-				__JS__("FloatArrayKeyframe = window.conchFloatArrayKeyframe");
-				__JS__("KeyframeNode = window.conchKeyframeNode");
-				__JS__("KeyframeNodeList = window.conchKeyframeNodeList");
-				var animationClip:* = AnimationClip;
-				animationClip.prototype._evaluateClipDatasRealTime = animationClip.prototype._evaluateClipDatasRealTimeForNative;
+				if (Render.supportWebGLPlusAnimation)
+				{
+					avatar.prototype._cloneDatasToAnimator = avatar.prototype._cloneDatasToAnimatorNative;
+					__JS__("FloatKeyframe = window.conchFloatKeyframe");
+					__JS__("Vector3Keyframe = window.conchFloatArrayKeyframe");
+					__JS__("QuaternionKeyframe = window.conchFloatArrayKeyframe");
+					__JS__("KeyframeNode = window.conchKeyframeNode");
+					__JS__("KeyframeNodeList = window.conchKeyframeNodeList");
+					var animationClip:* = AnimationClip;
+					animationClip.prototype._evaluateClipDatasRealTime = animationClip.prototype._evaluateClipDatasRealTimeForNative;
+				}
+				if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering)
+				{
+					var quaternion:*= Quaternion;
+					var conchQuaternion:*= ConchQuaternion;
+					quaternion.createFromYawPitchRoll = conchQuaternion.createFromYawPitchRoll;
+					quaternion.multiply = conchQuaternion.multiply;
+					quaternion.arcTanAngle = conchQuaternion.arcTanAngle;
+					quaternion.angleTo = conchQuaternion.angleTo;
+					quaternion.createFromAxisAngle = conchQuaternion.createFromAxisAngle;
+					quaternion.createFromMatrix4x4 = conchQuaternion.createFromMatrix4x4;
+					quaternion.slerp = conchQuaternion.slerp;
+					quaternion.lerp = conchQuaternion.lerp;
+					quaternion.add = conchQuaternion.add;
+					quaternion.dot = conchQuaternion.dot;
+					quaternion.rotationLookAt = conchQuaternion.rotationLookAt;
+					quaternion.lookAt = conchQuaternion.lookAt;
+					quaternion.invert = conchQuaternion.invert;
+					quaternion.rotationMatrix = conchQuaternion.rotationMatrix;
+				
+					var vector2:*= Vector2;
+					var conchVector2:*= ConchVector2;
+					vector2.scale = conchVector2.scale;
+					vector2.dot = conchVector2.dot;
+					vector2.normalize = conchVector2.normalize;
+					vector2.scalarLength = conchVector2.scalarLength;
+	
+					var vector3:*= Vector3;
+					var conchVector3:*= ConchVector3;
+					vector3.equals = conchVector3.equals;
+					vector3.dot = conchVector3.dot;
+					vector3.cross = conchVector3.cross;
+					vector3.subtract = conchVector3.subtract;
+					vector3.add = conchVector3.add;
+					vector3.Clamp = conchVector3.Clamp;
+					vector3.transformCoordinate = conchVector3.transformCoordinate;
+					vector3.TransformNormal = conchVector3.TransformNormal;
+					vector3.transformV3ToV3 = conchVector3.transformV3ToV3;
+					vector3.transformV3ToV4 = conchVector3.transformV3ToV4;
+					vector3.lerp = conchVector3.lerp;
+					vector3.scale = conchVector3.scale;
+					vector3.multiply = conchVector3.multiply;
+					vector3.normalize = conchVector3.normalize;
+					vector3.scalarLengthSquared = conchVector3.scalarLengthSquared;
+					vector3.scalarLength = conchVector3.scalarLength;
+					vector3.transformQuat = conchVector3.transformQuat;
+					vector3.max = conchVector3.max;
+					vector3.min = conchVector3.min;
+					vector3.distance = conchVector3.distance;
+					vector3.distanceSquared = conchVector3.distanceSquared;
+				
+					var vector4:*= Vector4;
+					var conchVector4:*= ConchVector4;
+					vector4.lerp = conchVector4.lerp;
+					vector4.transformByM4x4 = conchVector4.transformByM4x4;
+					vector4.equals = conchVector4.equals;
+					vector4.normalize = conchVector4.normalize;
+					vector4.add = conchVector4.add;
+					vector4.subtract = conchVector4.subtract;
+					vector4.multiply = conchVector4.multiply;
+					vector4.scale = conchVector4.scale;
+					vector4.Clamp = conchVector4.Clamp;
+					vector4.distanceSquared = conchVector4.distanceSquared;
+					vector4.distance = conchVector4.distance;
+					vector4.dot = conchVector4.dot;
+					vector4.min = conchVector4.min;
+					vector4.max = conchVector4.max;
+				}
 			}
 			WebGL.shaderHighPrecision = false;
 			var precisionFormat:* = LayaGL.instance.getShaderPrecisionFormat(WebGLContext.FRAGMENT_SHADER, WebGLContext.HIGH_FLOAT);
@@ -575,24 +666,24 @@ package {
 		 *@private
 		 */
 		private static function _loadAvatar(loader:Loader):void {
-			loader.load(loader.url, Loader.JSON, false, null, true);
 			loader.on(Event.LOADED, null, function(data:*):void {
 				loader._cache = loader._createCache;
 				var avatar:Avatar = Avatar._parse(data, loader._propertyParams, loader._constructParams);
 				_endLoad(loader, avatar);
 			});
+			loader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
 		/**
 		 *@private
 		 */
 		private static function _loadAnimationClip(loader:Loader):void {
-			loader.load(loader.url, Loader.BUFFER, false, null, true);
 			loader.on(Event.LOADED, null, function(data:*):void {
 				loader._cache = loader._createCache;
 				var clip:AnimationClip = AnimationClip._parse(data, loader._propertyParams, loader._constructParams);
 				_endLoad(loader, clip);
 			});
+			loader.load(loader.url, Loader.BUFFER, false, null, true);
 		}
 		
 		/**
@@ -619,20 +710,22 @@ package {
 				type = Loader.BUFFER;
 				break;
 			}
-			loader.load(loader.url, type, false, null, true);
+			
+			//需要先注册,否则可能同步加载完成没来得及注册就完成
 			loader.on(Event.LOADED, null, function(image:*):void {
 				loader._cache = loader._createCache;
 				var tex:Texture2D = Texture2D._parse(image, loader._propertyParams, loader._constructParams);
 				_endLoad(loader, tex);
 			});
+			loader.load(loader.url, type, false, null, true);
 		}
 		
 		/**
 		 *@private
 		 */
 		private static function _loadTextureCube(loader:Loader):void {
-			loader.load(loader.url, Loader.JSON, false, null, true);
 			loader.on(Event.LOADED, null, _onTextureCubeLtcLoaded, [loader]);
+			loader.load(loader.url, Loader.JSON, false, null, true);
 		}
 		
 		/**
@@ -679,20 +772,21 @@ package {
 		 * @param	height 3D画布高度。
 		 */
 		public static function init(width:Number, height:Number, config:Config3D = null, compolete:Handler = null):void {
-			if (_isInit) 
+			if (_isInit)
 				return;
 			_isInit = true;
-			config = config || Config3D._defaultConfig;
-			_editerEnvironment = config._editerEnvironment;
+			config = config || Config3D._default;
+			config.cloneTo(_config);
+			_editerEnvironment = _config._editerEnvironment;
 			var physics3D:Function = window.Physics3D;
 			if (physics3D == null) {
 				_enbalePhysics = false;
-				__init__(width, height, config);
+				__init__(width, height, _config);
 				compolete && compolete.run();
 			} else {
 				_enbalePhysics = true;
-				physics3D(config.defaultPhysicsMemory * 1024 * 1024).then(function():void {
-					__init__(width, height, config);
+				physics3D(_config.defaultPhysicsMemory * 1024 * 1024).then(function():void {
+					__init__(width, height, _config);
 					compolete && compolete.run();
 				});
 			}

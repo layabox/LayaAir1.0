@@ -715,7 +715,7 @@ var MiniImage=(function(){
 			isTransformUrl=true;
 			url=URL.formatURL(url);
 			}else{
-			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+			if (url.indexOf("http://usr/")==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
 				if(MiniFileMgr.loadPath !=""){
 					url=url.split(MiniFileMgr.loadPath)[1];
 					}else{
@@ -746,7 +746,7 @@ var MiniImage=(function(){
 			}
 		}
 		if (!MiniFileMgr.getFileInfo(url)){
-			if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1){
+			if (url.indexOf('http://usr/')==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
 				if(MiniAdpter.isZiYu){
 					MiniImage.onCreateImage(url,thisLoader,true);
 					}else{
@@ -815,7 +815,6 @@ var MiniImage=(function(){
 		if (thisLoader._type=="nativeimage"){
 			var onload=function (){
 				clear();
-				thisLoader._url=URL.formatURL(thisLoader._url);
 				thisLoader.onLoaded(image);
 			};
 			image=new Browser.window.Image();
@@ -827,7 +826,6 @@ var MiniImage=(function(){
 			}else {
 			var imageSource=new Browser.window.Image();
 			onload=function (){
-				thisLoader._url=URL.formatURL(thisLoader._url);
 				image=HTMLImage.create(imageSource.width,imageSource.height);
 				image.loadImageSource(imageSource,true);
 				image._setCreateURL(fileNativeUrl);
@@ -1053,6 +1051,10 @@ var MiniLoader=(function(_super){
 		(ignoreCache===void 0)&& (ignoreCache=false);
 		var thisLoader=this;
 		thisLoader._url=url;
+		if (!url){
+			thisLoader.onLoaded(null);
+			return;
+		}
 		url=URL.customFormat(url);
 		if (url.indexOf("data:image")===0)thisLoader._type=type=/*laya.net.Loader.IMAGE*/"image";
 		else {
@@ -1112,9 +1114,9 @@ var MiniLoader=(function(_super){
 					}
 					MiniFileMgr.read(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]));
 					return;
-				}
-				url=URL.formatURL(url);
-				if (url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1 && !MiniAdpter.AutoCacheDownFile){
+				};
+				var tempurl=URL.formatURL(url);
+				if (tempurl.indexOf("http://usr/")==-1&& (tempurl.indexOf("http://")!=-1 || tempurl.indexOf("https://")!=-1)&& !MiniAdpter.AutoCacheDownFile){
 					MiniAdpter.EnvConfig.load.call(thisLoader,url,type,cache,group,ignoreCache);
 					}else {
 					MiniFileMgr.readFile(url,encoding,new Handler(MiniLoader,MiniLoader.onReadNativeCallBack,[encoding,url,type,cache,group,ignoreCache,thisLoader]),url);
@@ -1237,7 +1239,11 @@ var MiniSound=(function(_super){
 					}
 					this.onDownLoadCallBack(url,0);
 					}else{
-					MiniFileMgr.downOtherFiles(url,Handler.create(this,this.onDownLoadCallBack,[url]),url);
+					if (!MiniFileMgr.isLocalNativeFile(url)&& (url.indexOf("http://")==-1 && url.indexOf("https://")==-1)|| (url.indexOf("http://usr/")!=-1)){
+						this.onDownLoadCallBack(url,0);
+						}else{
+						MiniFileMgr.downOtherFiles(url,Handler.create(this,this.onDownLoadCallBack,[url]),url);
+					}
 				}
 			}
 		}

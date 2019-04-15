@@ -154,8 +154,11 @@ package laya.webgl.utils {
 			return out;
 		}
 		
+		private var _clearCR:RegExp = new RegExp("\r", "g");
+		
 		public function ShaderCompile(vs:String, ps:String, nameMap:*, defs:Object = null) {
 			function _compile(script:String):ShaderNode {
+				script=script.replace(_clearCR, "");//CRLF风格需要先去掉“\r",否则切分字符会出错导致宏定义编译错误等
 				var includefiles:Array = [];
 				var top:ShaderNode = new ShaderNode(includefiles);
 				_compileToTree(top, script.split('\n'), 0, includefiles, defs);

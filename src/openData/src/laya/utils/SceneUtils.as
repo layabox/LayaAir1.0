@@ -52,30 +52,30 @@ package laya.utils {
 			}
 			
 			//处理动画信息
-			// if (uiView.animations) {
-			// 	var anilist:Array = [];
-			// 	var animations:Array = uiView.animations;
-			// 	var i:int, len:int = animations.length;
-			// 	var tAni:FrameAnimation;
-			// 	var tAniO:Object;
-			// 	for (i = 0; i < len; i++) {
-			// 		tAni = new FrameAnimation();
-			// 		tAniO = animations[i];
-			// 		tAni._setUp(tInitTool._idMap, tAniO);
-			// 		root[tAniO.name] = tAni;
-			// 		tAni._setControlNode(root);
-			// 		switch (tAniO.action) {
-			// 		case 1: 
-			// 			tAni.play(0, false);
-			// 			break;
-			// 		case 2: 
-			// 			tAni.play(0, true);
-			// 			break;
-			// 		}
-			// 		anilist.push(tAni);
-			// 	}
-			// 	root._aniList = anilist;
-			// }
+			if (uiView.animations) {
+				var anilist:Array = [];
+				var animations:Array = uiView.animations;
+				var i:int, len:int = animations.length;
+				// var tAni:FrameAnimation;
+				// var tAniO:Object;
+				// for (i = 0; i < len; i++) {
+				// 	tAni = new FrameAnimation();
+				// 	tAniO = animations[i];
+				// 	tAni._setUp(tInitTool._idMap, tAniO);
+				// 	root[tAniO.name] = tAni;
+				// 	tAni._setControlNode(root);
+				// 	switch (tAniO.action) {
+				// 	case 1: 
+				// 		tAni.play(0, false);
+				// 		break;
+				// 	case 2: 
+				// 		tAni.play(0, true);
+				// 		break;
+				// 	}
+				// 	anilist.push(tAni);
+				// }
+				// root._aniList = anilist;
+			}
 			
 			//设置页面穿透
 			if (root._$componentType === "Scene" && root._width > 0 && uiView.props.hitTestPrior == null && !root.mouseThrough)
@@ -266,7 +266,11 @@ package laya.utils {
 				return comp;
 			}
 			if (json.props && json.props.hasOwnProperty("renderType") && json.props["renderType"] == "instance")
+			{
+				if (!compClass["instance"]) compClass["instance"] = new compClass();
 				return compClass["instance"];
+			}
+				
 			return new compClass();
 		}
 	}
@@ -420,7 +424,7 @@ class InitTool {
 		this.setNodeRef();
 		this.doInits();
 		_scene._setBit(Const.NOT_READY, false);
-		if (_scene.parent && _scene.parent.activeInHierarchy && _scene.active) _scene._activeHierarchy();
+		if (_scene.parent && _scene.parent.activeInHierarchy && _scene.active) _scene._processActive();
 		_scene.event("onViewCreated");
 		this.recover();
 	}
