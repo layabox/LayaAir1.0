@@ -153,18 +153,18 @@ package laya.d3.core.pixelLine {
 			startPosition.x = vertices[offset + 0];
 			startPosition.y = vertices[offset + 1];
 			startPosition.z = vertices[offset + 2];
-			startColor.r = vertices[offset + 0];
-			startColor.g = vertices[offset + 1];
-			startColor.b = vertices[offset + 2];
-			startColor.a = vertices[offset + 3];
+			startColor.r = vertices[offset + 3];
+			startColor.g = vertices[offset + 4];
+			startColor.b = vertices[offset + 5];
+			startColor.a = vertices[offset + 6];
 			
-			endPosition.x = vertices[offset + 0];
-			endPosition.y = vertices[offset + 1];
-			endPosition.z = vertices[offset + 2];
-			endColor.r = vertices[offset + 0];
-			endColor.g = vertices[offset + 1];
-			endColor.b = vertices[offset + 2];
-			endColor.a = vertices[offset + 3];
+			endPosition.x = vertices[offset + 7];
+			endPosition.y = vertices[offset + 8];
+			endPosition.z = vertices[offset + 9];
+			endColor.r = vertices[offset + 10];
+			endColor.g = vertices[offset + 11];
+			endColor.b = vertices[offset + 12];
+			endColor.a = vertices[offset + 13];
 		}
 		
 		/**
@@ -187,7 +187,7 @@ package laya.d3.core.pixelLine {
 			if (_lineCount > 0) {
 				_bufferState.bind();
 				LayaGL.instance.drawArrays(WebGLContext.LINES, 0, _lineCount * 2);
-				Stat.renderBatch++;
+				Stat.renderBatches++;
 			}
 		}
 		

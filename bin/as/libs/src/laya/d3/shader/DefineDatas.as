@@ -5,7 +5,7 @@ package laya.d3.shader {
 	 * <code>DefineDatas</code> 类用于创建宏定义数据。
 	 */
 	public class DefineDatas implements IClone {
-		/** @private [只读]*/
+		/** @private */
 		public var value:int;
 		
 		/**

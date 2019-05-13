@@ -8,6 +8,591 @@ window.layalib(function(window,document,Laya){
 	var LocalStorage=laya.net.LocalStorage,Matrix=laya.maths.Matrix,Render=laya.renders.Render,RunDriver=laya.utils.RunDriver;
 	var SoundChannel=laya.media.SoundChannel,SoundManager=laya.media.SoundManager,URL=laya.net.URL,Utils=laya.utils.Utils;
 /**@private **/
+//class laya.bd.mini.MiniLocalStorage
+var MiniLocalStorage$1=(function(){
+	function MiniLocalStorage(){}
+	__class(MiniLocalStorage,'laya.bd.mini.MiniLocalStorage',null,'MiniLocalStorage$1');
+	MiniLocalStorage.__init__=function(){
+		MiniLocalStorage.items=MiniLocalStorage;
+	}
+
+	MiniLocalStorage.setItem=function(key,value){
+		BMiniAdapter.window.swan.setStorageSync(key,value);
+	}
+
+	MiniLocalStorage.getItem=function(key){
+		return BMiniAdapter.window.swan.getStorageSync(key);
+	}
+
+	MiniLocalStorage.setJSON=function(key,value){
+		MiniLocalStorage.setItem(key,value);
+	}
+
+	MiniLocalStorage.getJSON=function(key){
+		return MiniLocalStorage.getItem(key);
+	}
+
+	MiniLocalStorage.removeItem=function(key){
+		BMiniAdapter.window.swan.removeStorageSync(key);
+	}
+
+	MiniLocalStorage.clear=function(){
+		BMiniAdapter.window.swan.clearStorageSync();
+	}
+
+	MiniLocalStorage.getStorageInfoSync=function(){
+		try {
+			var res=BMiniAdapter.window.swan.getStorageInfoSync();
+			console.log(res.keys)
+			console.log(res.currentSize)
+			console.log(res.limitSize)
+			return res;
+		}catch (e){}
+		return null;
+	}
+
+	MiniLocalStorage.support=true;
+	MiniLocalStorage.items=null;
+	return MiniLocalStorage;
+})()
+
+
+//class laya.bd.mini.BMiniAdapter
+var BMiniAdapter=(function(){
+	function BMiniAdapter(){}
+	__class(BMiniAdapter,'laya.bd.mini.BMiniAdapter');
+	BMiniAdapter.getJson=function(data){
+		return JSON.parse(data);
+	}
+
+	BMiniAdapter.enable=function(){
+		BMiniAdapter.init();
+	}
+
+	BMiniAdapter.init=function(isPosMsg,isSon){
+		(isPosMsg===void 0)&& (isPosMsg=false);
+		(isSon===void 0)&& (isSon=false);
+		if (BMiniAdapter._inited)return;
+		BMiniAdapter._inited=true;
+		BMiniAdapter.window=/*__JS__ */window;
+		if(BMiniAdapter.window.navigator.userAgent.indexOf('SwanGame')<0)return;
+		BMiniAdapter.isZiYu=isSon;
+		BMiniAdapter.isPosMsgYu=isPosMsg;
+		BMiniAdapter.EnvConfig={};
+		if(!BMiniAdapter.isZiYu){
+			MiniFileMgr$1.setNativeFileDir("/layaairGame");
+			MiniFileMgr$1.existDir(MiniFileMgr$1.fileNativeDir,Handler.create(BMiniAdapter,BMiniAdapter.onMkdirCallBack));
+		}
+		BMiniAdapter.systemInfo=laya.bd.mini.BMiniAdapter.window.swan.getSystemInfoSync();
+		BMiniAdapter.window.focus=function (){
+		};
+		Laya['_getUrlPath']=function (){
+			return "";
+		};
+		BMiniAdapter.window.logtime=function (str){
+		};
+		BMiniAdapter.window.alertTimeLog=function (str){
+		};
+		BMiniAdapter.window.resetShareInfo=function (){
+		};
+		BMiniAdapter.window.CanvasRenderingContext2D=function (){
+		};
+		BMiniAdapter.window.CanvasRenderingContext2D.prototype=laya.bd.mini.BMiniAdapter.window.swan.createCanvas().getContext('2d').__proto__;
+		BMiniAdapter.window.document.body.appendChild=function (){
+		};
+		BMiniAdapter.EnvConfig.pixelRatioInt=0;
+		Browser["_pixelRatio"]=BMiniAdapter.pixelRatio();
+		BMiniAdapter._preCreateElement=Browser.createElement;
+		Browser["createElement"]=BMiniAdapter.createElement;
+		RunDriver.createShaderCondition=BMiniAdapter.createShaderCondition;
+		Utils['parseXMLFromString']=BMiniAdapter.parseXMLFromString;
+		Input['_createInputElement']=MiniInput$1['_createInputElement'];
+		BMiniAdapter.EnvConfig.load=Loader.prototype.load;
+		Loader.prototype.load=MiniLoader$1.prototype.load;
+		Loader.prototype._loadImage=MiniImage$1.prototype._loadImage;
+		MiniLocalStorage$1.__init__();
+		LocalStorage._baseClass=MiniLocalStorage$1;
+	}
+
+	BMiniAdapter.getUrlEncode=function(url,type){
+		if(type=="arraybuffer")
+			return "";
+		return "utf8";
+	}
+
+	BMiniAdapter.downLoadFile=function(fileUrl,fileType,callBack,encoding){
+		(fileType===void 0)&& (fileType="");
+		(encoding===void 0)&& (encoding="utf8");
+		var fileObj=MiniFileMgr$1.getFileInfo(fileUrl);
+		if(!fileObj)
+			MiniFileMgr$1.downLoadFile(fileUrl,fileType,callBack,encoding);
+		else{
+			callBack !=null && callBack.runWith([0]);
+		}
+	}
+
+	BMiniAdapter.remove=function(fileUrl,callBack){
+		MiniFileMgr$1.deleteFile("",fileUrl,callBack,"",0);
+	}
+
+	BMiniAdapter.removeAll=function(){
+		MiniFileMgr$1.deleteAll();
+	}
+
+	BMiniAdapter.hasNativeFile=function(fileUrl){
+		return MiniFileMgr$1.isLocalNativeFile(fileUrl);
+	}
+
+	BMiniAdapter.getFileInfo=function(fileUrl){
+		return MiniFileMgr$1.getFileInfo(fileUrl);
+	}
+
+	BMiniAdapter.getFileList=function(){
+		return MiniFileMgr$1.filesListObj;
+	}
+
+	BMiniAdapter.exitMiniProgram=function(){
+		laya.bd.mini.BMiniAdapter.window.swan.exitMiniProgram();
+	}
+
+	BMiniAdapter.onMkdirCallBack=function(errorCode,data){
+		if (!errorCode)
+			MiniFileMgr$1.filesListObj=JSON.parse(data.data);
+	}
+
+	BMiniAdapter.pixelRatio=function(){
+		if (!BMiniAdapter.EnvConfig.pixelRatioInt){
+			try {
+				BMiniAdapter.EnvConfig.pixelRatioInt=BMiniAdapter.systemInfo.pixelRatio;
+				return BMiniAdapter.systemInfo.pixelRatio;
+			}catch (error){}
+		}
+		return BMiniAdapter.EnvConfig.pixelRatioInt;
+	}
+
+	BMiniAdapter.createElement=function(type){
+		if (type=="canvas"){
+			var _source;
+			if (BMiniAdapter.idx==1){
+				if(BMiniAdapter.isZiYu){
+					_source=/*__JS__ */sharedCanvas;
+					_source.style={};
+					}else{
+					_source=/*__JS__ */window.canvas;
+				}
+				}else {
+				_source=laya.bd.mini.BMiniAdapter.window.swan.createCanvas();
+			}
+			BMiniAdapter.idx++;
+			return _source;
+			}else if (type=="textarea" || type=="input"){
+			return BMiniAdapter.onCreateInput(type);
+			}else if (type=="div"){
+			var node=BMiniAdapter._preCreateElement(type);
+			node.contains=function (value){
+				return null
+			};
+			node.removeChild=function (value){
+			};
+			return node;
+			}else {
+			return BMiniAdapter._preCreateElement(type);
+		}
+	}
+
+	BMiniAdapter.onCreateInput=function(type){
+		var node=BMiniAdapter._preCreateElement(type);
+		node.focus=MiniInput$1.wxinputFocus;
+		node.blur=MiniInput$1.wxinputblur;
+		node.style={};
+		node.value=0;
+		node.parentElement={};
+		node.placeholder={};
+		node.type={};
+		node.setColor=function (value){
+		};
+		node.setType=function (value){
+		};
+		node.setFontFace=function (value){
+		};
+		node.addEventListener=function (value){
+		};
+		node.contains=function (value){
+			return null
+		};
+		node.removeChild=function (value){
+		};
+		return node;
+	}
+
+	BMiniAdapter.createShaderCondition=function(conditionScript){
+		var _$this=this;
+		var func=function (){
+			var abc=conditionScript;
+			return _$this[conditionScript.replace("this.","")];
+		}
+		return func;
+	}
+
+	BMiniAdapter.EnvConfig=null;
+	BMiniAdapter.window=null;
+	BMiniAdapter._preCreateElement=null;
+	BMiniAdapter._inited=false;
+	BMiniAdapter.systemInfo=null;
+	BMiniAdapter.isZiYu=false;
+	BMiniAdapter.isPosMsgYu=false;
+	BMiniAdapter.autoCacheFile=true;
+	BMiniAdapter.minClearSize=(5 *1024 *1024);
+	BMiniAdapter.subNativeFiles=null;
+	BMiniAdapter.subNativeheads=[];
+	BMiniAdapter.subMaps=[];
+	BMiniAdapter.AutoCacheDownFile=false;
+	BMiniAdapter.parseXMLFromString=function(value){
+		var rst;
+		var Parser;
+		value=value.replace(/>\s+</g,'><');
+		try {
+			/*__JS__ */rst=(new window.Parser.DOMParser()).parseFromString(value,'text/xml');
+			}catch (error){
+			throw "需要引入xml解析库文件";
+		}
+		return rst;
+	}
+
+	BMiniAdapter.idx=1;
+	__static(BMiniAdapter,
+	['nativefiles',function(){return this.nativefiles=["layaNativeDir","wxlocal"];}
+	]);
+	return BMiniAdapter;
+})()
+
+
+/**@private **/
+//class laya.bd.mini.MiniLocation
+var MiniLocation$1=(function(){
+	function MiniLocation(){}
+	__class(MiniLocation,'laya.bd.mini.MiniLocation',null,'MiniLocation$1');
+	MiniLocation.__init__=function(){
+		BMiniAdapter.window.navigator.geolocation.getCurrentPosition=MiniLocation.getCurrentPosition;
+		BMiniAdapter.window.navigator.geolocation.watchPosition=MiniLocation.watchPosition;
+		BMiniAdapter.window.navigator.geolocation.clearWatch=MiniLocation.clearWatch;
+	}
+
+	MiniLocation.getCurrentPosition=function(success,error,options){
+		var paramO;
+		paramO={};
+		paramO.success=getSuccess;
+		paramO.fail=error;
+		BMiniAdapter.window.swan.getLocation(paramO);
+		function getSuccess (res){
+			if (success !=null){
+				success(res);
+			}
+		}
+	}
+
+	MiniLocation.watchPosition=function(success,error,options){
+		MiniLocation._curID++;
+		var curWatchO;
+		curWatchO={};
+		curWatchO.success=success;
+		curWatchO.error=error;
+		MiniLocation._watchDic[MiniLocation._curID]=curWatchO;
+		Laya.systemTimer.loop(1000,null,MiniLocation._myLoop);
+		return MiniLocation._curID;
+	}
+
+	MiniLocation.clearWatch=function(id){
+		delete MiniLocation._watchDic[id];
+		if (!MiniLocation._hasWatch()){
+			Laya.systemTimer.clear(null,MiniLocation._myLoop);
+		}
+	}
+
+	MiniLocation._hasWatch=function(){
+		var key;
+		for (key in MiniLocation._watchDic){
+			if (MiniLocation._watchDic[key])return true;
+		}
+		return false;
+	}
+
+	MiniLocation._myLoop=function(){
+		MiniLocation.getCurrentPosition(MiniLocation._mySuccess,MiniLocation._myError);
+	}
+
+	MiniLocation._mySuccess=function(res){
+		var rst={};
+		rst.coords=res;
+		rst.timestamp=Browser.now();
+		var key;
+		for (key in MiniLocation._watchDic){
+			if (MiniLocation._watchDic[key].success){
+				MiniLocation._watchDic[key].success(rst);
+			}
+		}
+	}
+
+	MiniLocation._myError=function(res){
+		var key;
+		for (key in MiniLocation._watchDic){
+			if (MiniLocation._watchDic[key].error){
+				MiniLocation._watchDic[key].error(res);
+			}
+		}
+	}
+
+	MiniLocation._watchDic={};
+	MiniLocation._curID=0;
+	return MiniLocation;
+})()
+
+
+/**@private **/
+//class laya.bd.mini.MiniImage
+var MiniImage$1=(function(){
+	function MiniImage(){}
+	__class(MiniImage,'laya.bd.mini.MiniImage',null,'MiniImage$1');
+	var __proto=MiniImage.prototype;
+	/**@private **/
+	__proto._loadImage=function(url){
+		var thisLoader=this;
+		if (BMiniAdapter.isZiYu){
+			MiniImage.onCreateImage(url,thisLoader,true);
+			return;
+		};
+		var isTransformUrl=false;
+		if (!MiniFileMgr$1.isLocalNativeFile(url)){
+			isTransformUrl=true;
+			url=URL.formatURL(url);
+			}else{
+			if (url.indexOf("http://usr/")==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
+				if(MiniFileMgr$1.loadPath !=""){
+					url=url.split(MiniFileMgr$1.loadPath)[1];
+					}else{
+					var tempStr=URL.rootPath !="" ? URL.rootPath :URL.basePath;
+					var tempUrl=url;
+					if(tempStr !="")
+						url=url.split(tempStr)[1];
+					if(!url){
+						url=tempUrl;
+					}
+				}
+			}
+			if (BMiniAdapter.subNativeFiles && BMiniAdapter.subNativeheads.length==0){
+				for (var key in BMiniAdapter.subNativeFiles){
+					var tempArr=BMiniAdapter.subNativeFiles[key];
+					BMiniAdapter.subNativeheads=BMiniAdapter.subNativeheads.concat(tempArr);
+					for (var aa=0;aa < tempArr.length;aa++){
+						BMiniAdapter.subMaps[tempArr[aa]]=key+"/"+tempArr[aa];
+					}
+				}
+			}
+			if(BMiniAdapter.subNativeFiles && url.indexOf("/")!=-1){
+				debugger;
+				var curfileHead=url.split("/")[0]+"/";
+				if(curfileHead && BMiniAdapter.subNativeheads.indexOf(curfileHead)!=-1){
+					var newfileHead=BMiniAdapter.subMaps[curfileHead];
+					url=url.replace(curfileHead,newfileHead);
+				}
+			}
+		}
+		if (!MiniFileMgr$1.getFileInfo(url)){
+			if (url.indexOf('http://usr/')==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
+				if(BMiniAdapter.isZiYu){
+					MiniImage.onCreateImage(url,thisLoader,true);
+					}else{
+					MiniFileMgr$1.downOtherFiles(url,new Handler(MiniImage,MiniImage.onDownImgCallBack,[url,thisLoader]),url);
+				}
+			}
+			else
+			MiniImage.onCreateImage(url,thisLoader,true);
+			}else {
+			MiniImage.onCreateImage(url,thisLoader,!isTransformUrl);
+		}
+	}
+
+	MiniImage.onDownImgCallBack=function(sourceUrl,thisLoader,errorCode,tempFilePath){
+		(tempFilePath===void 0)&& (tempFilePath="");
+		if (!errorCode)
+			MiniImage.onCreateImage(sourceUrl,thisLoader,false,tempFilePath);
+		else {
+			thisLoader.onError(null);
+		}
+	}
+
+	MiniImage.onCreateImage=function(sourceUrl,thisLoader,isLocal,tempFilePath){
+		(isLocal===void 0)&& (isLocal=false);
+		(tempFilePath===void 0)&& (tempFilePath="");
+		var fileNativeUrl;
+		if(BMiniAdapter.autoCacheFile){
+			if (!isLocal){
+				if(tempFilePath !=""){
+					fileNativeUrl=tempFilePath;
+					}else{
+					var fileObj=MiniFileMgr$1.getFileInfo(sourceUrl);
+					var fileMd5Name=fileObj.md5;
+					fileNativeUrl=MiniFileMgr$1.getFileNativePath(fileMd5Name);
+				}
+			}else
+			fileNativeUrl=sourceUrl;
+			}else{
+			if(!isLocal)
+				fileNativeUrl=tempFilePath;
+			else
+			fileNativeUrl=sourceUrl;
+		}
+		if (thisLoader._imgCache==null)
+			thisLoader._imgCache={};
+		var image;
+		function clear (){
+			var img=thisLoader._imgCache[fileNativeUrl];
+			if (img){
+				img.onload=null;
+				img.onerror=null;
+				delete thisLoader._imgCache[fileNativeUrl];
+			}
+		};
+		var onerror=function (){
+			clear();
+			thisLoader.event(/*laya.events.Event.ERROR*/"error","Load image failed");
+		}
+		if (thisLoader._type=="nativeimage"){
+			var onload=function (){
+				clear();
+				thisLoader.onLoaded(image);
+			};
+			image=new Browser.window.Image();
+			image.crossOrigin="";
+			image.onload=onload;
+			image.onerror=onerror;
+			image.src=fileNativeUrl;
+			thisLoader._imgCache[fileNativeUrl]=image;
+			}else {
+			var imageSource=new Browser.window.Image();
+			onload=function (){
+				image=HTMLImage.create(imageSource.width,imageSource.height);
+				image.loadImageSource(imageSource,true);
+				image._setCreateURL(fileNativeUrl);
+				clear();
+				thisLoader.onLoaded(image);
+			};
+			imageSource.crossOrigin="";
+			imageSource.onload=onload;
+			imageSource.onerror=onerror;
+			imageSource.src=fileNativeUrl;
+			thisLoader._imgCache[fileNativeUrl]=imageSource;
+		}
+	}
+
+	return MiniImage;
+})()
+
+
+/**@private **/
+//class laya.bd.mini.MiniInput
+var MiniInput$1=(function(){
+	function MiniInput(){}
+	__class(MiniInput,'laya.bd.mini.MiniInput',null,'MiniInput$1');
+	MiniInput._createInputElement=function(){
+		Input['_initInput'](Input['area']=Browser.createElement("textarea"));
+		Input['_initInput'](Input['input']=Browser.createElement("input"));
+		Input['inputContainer']=Browser.createElement("div");
+		Input['inputContainer'].style.position="absolute";
+		Input['inputContainer'].style.zIndex=1E5;
+		Browser.container.appendChild(Input['inputContainer']);
+		Input['inputContainer'].setPos=function (x,y){Input['inputContainer'].style.left=x+'px';Input['inputContainer'].style.top=y+'px';};
+		Laya.stage.on("resize",null,MiniInput._onStageResize);
+		BMiniAdapter.window.swan.onWindowResize && BMiniAdapter.window.swan.onWindowResize(function(res){
+			/*__JS__ */window.dispatchEvent && /*__JS__ */window.dispatchEvent("resize");
+		});
+		SoundManager._soundClass=MiniSound$1;
+		SoundManager._musicClass=MiniSound$1;
+		var model=BMiniAdapter.systemInfo.model;
+		var system=BMiniAdapter.systemInfo.system;
+		if(model.indexOf("iPhone")!=-1){
+			Browser.onIPhone=true;
+			Browser.onIOS=true;
+			Browser.onIPad=true;
+			Browser.onAndroid=false;
+		}
+		if(system.indexOf("Android")!=-1 || system.indexOf("Adr")!=-1){
+			Browser.onAndroid=true;
+			Browser.onIPhone=false;
+			Browser.onIOS=false;
+			Browser.onIPad=false;
+		}
+	}
+
+	MiniInput._onStageResize=function(){
+		var ts=Laya.stage._canvasTransform.identity();
+		ts.scale((Browser.width / Render.canvas.width / Browser.pixelRatio),Browser.height / Render.canvas.height / Browser.pixelRatio);
+	}
+
+	MiniInput.wxinputFocus=function(e){
+		var _inputTarget=Input['inputElement'].target;
+		if (_inputTarget && !_inputTarget.editable){
+			return;
+		}
+		BMiniAdapter.window.swan.offKeyboardConfirm();
+		BMiniAdapter.window.swan.offKeyboardInput();
+		BMiniAdapter.window.swan.showKeyboard({defaultValue:_inputTarget.text,maxLength:_inputTarget.maxChars,multiple:_inputTarget.multiline,confirmHold:true,confirmType:'done',success:function (res){
+				},fail:function (res){
+		}});
+		BMiniAdapter.window.swan.onKeyboardConfirm(function(res){
+			var str=res ? res.value :"";
+			if (_inputTarget._restrictPattern){
+				str=str.replace(/\u2006|\x27/g,"");
+				if (_inputTarget._restrictPattern.test(str)){
+					str=str.replace(_inputTarget._restrictPattern,"");
+				}
+			}
+			_inputTarget.text=str;
+			_inputTarget.event(/*laya.events.Event.INPUT*/"input");
+			laya.bd.mini.MiniInput.inputEnter();
+		})
+		BMiniAdapter.window.swan.onKeyboardInput(function(res){
+			var str=res ? res.value :"";
+			if (!_inputTarget.multiline){
+				if (str.indexOf("\n")!=-1){
+					laya.bd.mini.MiniInput.inputEnter();
+					return;
+				}
+			}
+			if (_inputTarget._restrictPattern){
+				str=str.replace(/\u2006|\x27/g,"");
+				if (_inputTarget._restrictPattern.test(str)){
+					str=str.replace(_inputTarget._restrictPattern,"");
+				}
+			}
+			_inputTarget.text=str;
+			_inputTarget.event(/*laya.events.Event.INPUT*/"input");
+		});
+	}
+
+	MiniInput.inputEnter=function(){
+		Input['inputElement'].target.focus=false;
+	}
+
+	MiniInput.wxinputblur=function(){
+		MiniInput.hideKeyboard();
+	}
+
+	MiniInput.hideKeyboard=function(){
+		BMiniAdapter.window.swan.offKeyboardConfirm();
+		BMiniAdapter.window.swan.offKeyboardInput();
+		BMiniAdapter.window.swan.hideKeyboard({success:function (res){
+				console.log('隐藏键盘')
+				},fail:function (res){
+				console.log("隐藏键盘出错:"+(res ? res.errMsg :""));
+		}});
+	}
+
+	return MiniInput;
+})()
+
+
+/**@private **/
 //class laya.bd.mini.MiniFileMgr
 var MiniFileMgr$1=(function(){
 	function MiniFileMgr(){}
@@ -330,664 +915,6 @@ var MiniFileMgr$1=(function(){
 
 
 /**@private **/
-//class laya.bd.mini.MiniImage
-var MiniImage$1=(function(){
-	function MiniImage(){}
-	__class(MiniImage,'laya.bd.mini.MiniImage',null,'MiniImage$1');
-	var __proto=MiniImage.prototype;
-	/**@private **/
-	__proto._loadImage=function(url){
-		var thisLoader=this;
-		if (BMiniAdapter.isZiYu){
-			MiniImage.onCreateImage(url,thisLoader,true);
-			return;
-		};
-		var isTransformUrl=false;
-		if (!MiniFileMgr$1.isLocalNativeFile(url)){
-			isTransformUrl=true;
-			url=URL.formatURL(url);
-			}else{
-			if (url.indexOf("http://usr/")==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
-				if(MiniFileMgr$1.loadPath !=""){
-					url=url.split(MiniFileMgr$1.loadPath)[1];
-					}else{
-					var tempStr=URL.rootPath !="" ? URL.rootPath :URL.basePath;
-					var tempUrl=url;
-					if(tempStr !="")
-						url=url.split(tempStr)[1];
-					if(!url){
-						url=tempUrl;
-					}
-				}
-			}
-			if (BMiniAdapter.subNativeFiles && BMiniAdapter.subNativeheads.length==0){
-				for (var key in BMiniAdapter.subNativeFiles){
-					var tempArr=BMiniAdapter.subNativeFiles[key];
-					BMiniAdapter.subNativeheads=BMiniAdapter.subNativeheads.concat(tempArr);
-					for (var aa=0;aa < tempArr.length;aa++){
-						BMiniAdapter.subMaps[tempArr[aa]]=key+"/"+tempArr[aa];
-					}
-				}
-			}
-			if(BMiniAdapter.subNativeFiles && url.indexOf("/")!=-1){
-				debugger;
-				var curfileHead=url.split("/")[0]+"/";
-				if(curfileHead && BMiniAdapter.subNativeheads.indexOf(curfileHead)!=-1){
-					var newfileHead=BMiniAdapter.subMaps[curfileHead];
-					url=url.replace(curfileHead,newfileHead);
-				}
-			}
-		}
-		if (!MiniFileMgr$1.getFileInfo(url)){
-			if (url.indexOf('http://usr/')==-1&&(url.indexOf("http://")!=-1 || url.indexOf("https://")!=-1)){
-				if(BMiniAdapter.isZiYu){
-					MiniImage.onCreateImage(url,thisLoader,true);
-					}else{
-					MiniFileMgr$1.downOtherFiles(url,new Handler(MiniImage,MiniImage.onDownImgCallBack,[url,thisLoader]),url);
-				}
-			}
-			else
-			MiniImage.onCreateImage(url,thisLoader,true);
-			}else {
-			MiniImage.onCreateImage(url,thisLoader,!isTransformUrl);
-		}
-	}
-
-	MiniImage.onDownImgCallBack=function(sourceUrl,thisLoader,errorCode,tempFilePath){
-		(tempFilePath===void 0)&& (tempFilePath="");
-		if (!errorCode)
-			MiniImage.onCreateImage(sourceUrl,thisLoader,false,tempFilePath);
-		else {
-			thisLoader.onError(null);
-		}
-	}
-
-	MiniImage.onCreateImage=function(sourceUrl,thisLoader,isLocal,tempFilePath){
-		(isLocal===void 0)&& (isLocal=false);
-		(tempFilePath===void 0)&& (tempFilePath="");
-		var fileNativeUrl;
-		if(BMiniAdapter.autoCacheFile){
-			if (!isLocal){
-				if(tempFilePath !=""){
-					fileNativeUrl=tempFilePath;
-					}else{
-					var fileObj=MiniFileMgr$1.getFileInfo(sourceUrl);
-					var fileMd5Name=fileObj.md5;
-					fileNativeUrl=MiniFileMgr$1.getFileNativePath(fileMd5Name);
-				}
-			}else
-			fileNativeUrl=sourceUrl;
-			}else{
-			if(!isLocal)
-				fileNativeUrl=tempFilePath;
-			else
-			fileNativeUrl=sourceUrl;
-		}
-		if (thisLoader._imgCache==null)
-			thisLoader._imgCache={};
-		var image;
-		function clear (){
-			var img=thisLoader._imgCache[fileNativeUrl];
-			if (img){
-				img.onload=null;
-				img.onerror=null;
-				delete thisLoader._imgCache[fileNativeUrl];
-			}
-		};
-		var onerror=function (){
-			clear();
-			thisLoader.event(/*laya.events.Event.ERROR*/"error","Load image failed");
-		}
-		if (thisLoader._type=="nativeimage"){
-			var onload=function (){
-				clear();
-				thisLoader.onLoaded(image);
-			};
-			image=new Browser.window.Image();
-			image.crossOrigin="";
-			image.onload=onload;
-			image.onerror=onerror;
-			image.src=fileNativeUrl;
-			thisLoader._imgCache[fileNativeUrl]=image;
-			}else {
-			var imageSource=new Browser.window.Image();
-			onload=function (){
-				image=HTMLImage.create(imageSource.width,imageSource.height);
-				image.loadImageSource(imageSource,true);
-				image._setCreateURL(fileNativeUrl);
-				clear();
-				thisLoader.onLoaded(image);
-			};
-			imageSource.crossOrigin="";
-			imageSource.onload=onload;
-			imageSource.onerror=onerror;
-			imageSource.src=fileNativeUrl;
-			thisLoader._imgCache[fileNativeUrl]=imageSource;
-		}
-	}
-
-	return MiniImage;
-})()
-
-
-/**@private **/
-//class laya.bd.mini.MiniInput
-var MiniInput$1=(function(){
-	function MiniInput(){}
-	__class(MiniInput,'laya.bd.mini.MiniInput',null,'MiniInput$1');
-	MiniInput._createInputElement=function(){
-		Input['_initInput'](Input['area']=Browser.createElement("textarea"));
-		Input['_initInput'](Input['input']=Browser.createElement("input"));
-		Input['inputContainer']=Browser.createElement("div");
-		Input['inputContainer'].style.position="absolute";
-		Input['inputContainer'].style.zIndex=1E5;
-		Browser.container.appendChild(Input['inputContainer']);
-		Input['inputContainer'].setPos=function (x,y){Input['inputContainer'].style.left=x+'px';Input['inputContainer'].style.top=y+'px';};
-		Laya.stage.on("resize",null,MiniInput._onStageResize);
-		BMiniAdapter.window.swan.onWindowResize && BMiniAdapter.window.swan.onWindowResize(function(res){
-			/*__JS__ */window.dispatchEvent && /*__JS__ */window.dispatchEvent("resize");
-		});
-		SoundManager._soundClass=MiniSound$1;
-		SoundManager._musicClass=MiniSound$1;
-		var model=BMiniAdapter.systemInfo.model;
-		var system=BMiniAdapter.systemInfo.system;
-		if(model.indexOf("iPhone")!=-1){
-			Browser.onIPhone=true;
-			Browser.onIOS=true;
-			Browser.onIPad=true;
-			Browser.onAndroid=false;
-		}
-		if(system.indexOf("Android")!=-1 || system.indexOf("Adr")!=-1){
-			Browser.onAndroid=true;
-			Browser.onIPhone=false;
-			Browser.onIOS=false;
-			Browser.onIPad=false;
-		}
-	}
-
-	MiniInput._onStageResize=function(){
-		var ts=Laya.stage._canvasTransform.identity();
-		ts.scale((Browser.width / Render.canvas.width / Browser.pixelRatio),Browser.height / Render.canvas.height / Browser.pixelRatio);
-	}
-
-	MiniInput.wxinputFocus=function(e){
-		var _inputTarget=Input['inputElement'].target;
-		if (_inputTarget && !_inputTarget.editable){
-			return;
-		}
-		BMiniAdapter.window.swan.offKeyboardConfirm();
-		BMiniAdapter.window.swan.offKeyboardInput();
-		BMiniAdapter.window.swan.showKeyboard({defaultValue:_inputTarget.text,maxLength:_inputTarget.maxChars,multiple:_inputTarget.multiline,confirmHold:true,confirmType:'done',success:function (res){
-				},fail:function (res){
-		}});
-		BMiniAdapter.window.swan.onKeyboardConfirm(function(res){
-			var str=res ? res.value :"";
-			if (_inputTarget._restrictPattern){
-				str=str.replace(/\u2006|\x27/g,"");
-				if (_inputTarget._restrictPattern.test(str)){
-					str=str.replace(_inputTarget._restrictPattern,"");
-				}
-			}
-			_inputTarget.text=str;
-			_inputTarget.event(/*laya.events.Event.INPUT*/"input");
-			laya.bd.mini.MiniInput.inputEnter();
-		})
-		BMiniAdapter.window.swan.onKeyboardInput(function(res){
-			var str=res ? res.value :"";
-			if (!_inputTarget.multiline){
-				if (str.indexOf("\n")!=-1){
-					laya.bd.mini.MiniInput.inputEnter();
-					return;
-				}
-			}
-			if (_inputTarget._restrictPattern){
-				str=str.replace(/\u2006|\x27/g,"");
-				if (_inputTarget._restrictPattern.test(str)){
-					str=str.replace(_inputTarget._restrictPattern,"");
-				}
-			}
-			_inputTarget.text=str;
-			_inputTarget.event(/*laya.events.Event.INPUT*/"input");
-		});
-	}
-
-	MiniInput.inputEnter=function(){
-		Input['inputElement'].target.focus=false;
-	}
-
-	MiniInput.wxinputblur=function(){
-		MiniInput.hideKeyboard();
-	}
-
-	MiniInput.hideKeyboard=function(){
-		BMiniAdapter.window.swan.offKeyboardConfirm();
-		BMiniAdapter.window.swan.offKeyboardInput();
-		BMiniAdapter.window.swan.hideKeyboard({success:function (res){
-				console.log('隐藏键盘')
-				},fail:function (res){
-				console.log("隐藏键盘出错:"+(res ? res.errMsg :""));
-		}});
-	}
-
-	return MiniInput;
-})()
-
-
-/**@private **/
-//class laya.bd.mini.MiniLocalStorage
-var MiniLocalStorage$1=(function(){
-	function MiniLocalStorage(){}
-	__class(MiniLocalStorage,'laya.bd.mini.MiniLocalStorage',null,'MiniLocalStorage$1');
-	MiniLocalStorage.__init__=function(){
-		MiniLocalStorage.items=MiniLocalStorage;
-	}
-
-	MiniLocalStorage.setItem=function(key,value){
-		BMiniAdapter.window.swan.setStorageSync(key,value);
-	}
-
-	MiniLocalStorage.getItem=function(key){
-		return BMiniAdapter.window.swan.getStorageSync(key);
-	}
-
-	MiniLocalStorage.setJSON=function(key,value){
-		MiniLocalStorage.setItem(key,value);
-	}
-
-	MiniLocalStorage.getJSON=function(key){
-		return MiniLocalStorage.getItem(key);
-	}
-
-	MiniLocalStorage.removeItem=function(key){
-		BMiniAdapter.window.swan.removeStorageSync(key);
-	}
-
-	MiniLocalStorage.clear=function(){
-		BMiniAdapter.window.swan.clearStorageSync();
-	}
-
-	MiniLocalStorage.getStorageInfoSync=function(){
-		try {
-			var res=BMiniAdapter.window.swan.getStorageInfoSync();
-			console.log(res.keys)
-			console.log(res.currentSize)
-			console.log(res.limitSize)
-			return res;
-		}catch (e){}
-		return null;
-	}
-
-	MiniLocalStorage.support=true;
-	MiniLocalStorage.items=null;
-	return MiniLocalStorage;
-})()
-
-
-//class laya.bd.mini.BMiniAdapter
-var BMiniAdapter=(function(){
-	function BMiniAdapter(){}
-	__class(BMiniAdapter,'laya.bd.mini.BMiniAdapter');
-	BMiniAdapter.getJson=function(data){
-		return JSON.parse(data);
-	}
-
-	BMiniAdapter.enable=function(){
-		BMiniAdapter.init();
-	}
-
-	BMiniAdapter.init=function(isPosMsg,isSon){
-		(isPosMsg===void 0)&& (isPosMsg=false);
-		(isSon===void 0)&& (isSon=false);
-		if (BMiniAdapter._inited)return;
-		BMiniAdapter._inited=true;
-		BMiniAdapter.window=/*__JS__ */window;
-		if(BMiniAdapter.window.navigator.userAgent.indexOf('SwanGame')<0)return;
-		BMiniAdapter.isZiYu=isSon;
-		BMiniAdapter.isPosMsgYu=isPosMsg;
-		BMiniAdapter.EnvConfig={};
-		if(!BMiniAdapter.isZiYu){
-			MiniFileMgr$1.setNativeFileDir("/layaairGame");
-			MiniFileMgr$1.existDir(MiniFileMgr$1.fileNativeDir,Handler.create(BMiniAdapter,BMiniAdapter.onMkdirCallBack));
-		}
-		BMiniAdapter.systemInfo=laya.bd.mini.BMiniAdapter.window.swan.getSystemInfoSync();
-		BMiniAdapter.window.focus=function (){
-		};
-		Laya['_getUrlPath']=function (){
-		};
-		BMiniAdapter.window.logtime=function (str){
-		};
-		BMiniAdapter.window.alertTimeLog=function (str){
-		};
-		BMiniAdapter.window.resetShareInfo=function (){
-		};
-		BMiniAdapter.window.CanvasRenderingContext2D=function (){
-		};
-		BMiniAdapter.window.CanvasRenderingContext2D.prototype=laya.bd.mini.BMiniAdapter.window.swan.createCanvas().getContext('2d').__proto__;
-		BMiniAdapter.window.document.body.appendChild=function (){
-		};
-		BMiniAdapter.EnvConfig.pixelRatioInt=0;
-		Browser["_pixelRatio"]=BMiniAdapter.pixelRatio();
-		BMiniAdapter._preCreateElement=Browser.createElement;
-		Browser["createElement"]=BMiniAdapter.createElement;
-		RunDriver.createShaderCondition=BMiniAdapter.createShaderCondition;
-		Utils['parseXMLFromString']=BMiniAdapter.parseXMLFromString;
-		Input['_createInputElement']=MiniInput$1['_createInputElement'];
-		BMiniAdapter.EnvConfig.load=Loader.prototype.load;
-		Loader.prototype.load=MiniLoader$1.prototype.load;
-		Loader.prototype._loadImage=MiniImage$1.prototype._loadImage;
-		MiniLocalStorage$1.__init__();
-		LocalStorage._baseClass=MiniLocalStorage$1;
-	}
-
-	BMiniAdapter.getUrlEncode=function(url,type){
-		if(type=="arraybuffer")
-			return "";
-		return "utf8";
-	}
-
-	BMiniAdapter.downLoadFile=function(fileUrl,fileType,callBack,encoding){
-		(fileType===void 0)&& (fileType="");
-		(encoding===void 0)&& (encoding="utf8");
-		var fileObj=MiniFileMgr$1.getFileInfo(fileUrl);
-		if(!fileObj)
-			MiniFileMgr$1.downLoadFile(fileUrl,fileType,callBack,encoding);
-		else{
-			callBack !=null && callBack.runWith([0]);
-		}
-	}
-
-	BMiniAdapter.remove=function(fileUrl,callBack){
-		MiniFileMgr$1.deleteFile("",fileUrl,callBack,"",0);
-	}
-
-	BMiniAdapter.removeAll=function(){
-		MiniFileMgr$1.deleteAll();
-	}
-
-	BMiniAdapter.hasNativeFile=function(fileUrl){
-		return MiniFileMgr$1.isLocalNativeFile(fileUrl);
-	}
-
-	BMiniAdapter.getFileInfo=function(fileUrl){
-		return MiniFileMgr$1.getFileInfo(fileUrl);
-	}
-
-	BMiniAdapter.getFileList=function(){
-		return MiniFileMgr$1.filesListObj;
-	}
-
-	BMiniAdapter.exitMiniProgram=function(){
-		laya.bd.mini.BMiniAdapter.window.swan.exitMiniProgram();
-	}
-
-	BMiniAdapter.onMkdirCallBack=function(errorCode,data){
-		if (!errorCode)
-			MiniFileMgr$1.filesListObj=JSON.parse(data.data);
-	}
-
-	BMiniAdapter.pixelRatio=function(){
-		if (!BMiniAdapter.EnvConfig.pixelRatioInt){
-			try {
-				BMiniAdapter.EnvConfig.pixelRatioInt=BMiniAdapter.systemInfo.pixelRatio;
-				return BMiniAdapter.systemInfo.pixelRatio;
-			}catch (error){}
-		}
-		return BMiniAdapter.EnvConfig.pixelRatioInt;
-	}
-
-	BMiniAdapter.createElement=function(type){
-		if (type=="canvas"){
-			var _source;
-			if (BMiniAdapter.idx==1){
-				if(BMiniAdapter.isZiYu){
-					_source=/*__JS__ */sharedCanvas;
-					_source.style={};
-					}else{
-					_source=/*__JS__ */window.canvas;
-				}
-				}else {
-				_source=laya.bd.mini.BMiniAdapter.window.swan.createCanvas();
-			}
-			BMiniAdapter.idx++;
-			return _source;
-			}else if (type=="textarea" || type=="input"){
-			return BMiniAdapter.onCreateInput(type);
-			}else if (type=="div"){
-			var node=BMiniAdapter._preCreateElement(type);
-			node.contains=function (value){
-				return null
-			};
-			node.removeChild=function (value){
-			};
-			return node;
-			}else {
-			return BMiniAdapter._preCreateElement(type);
-		}
-	}
-
-	BMiniAdapter.onCreateInput=function(type){
-		var node=BMiniAdapter._preCreateElement(type);
-		node.focus=MiniInput$1.wxinputFocus;
-		node.blur=MiniInput$1.wxinputblur;
-		node.style={};
-		node.value=0;
-		node.parentElement={};
-		node.placeholder={};
-		node.type={};
-		node.setColor=function (value){
-		};
-		node.setType=function (value){
-		};
-		node.setFontFace=function (value){
-		};
-		node.addEventListener=function (value){
-		};
-		node.contains=function (value){
-			return null
-		};
-		node.removeChild=function (value){
-		};
-		return node;
-	}
-
-	BMiniAdapter.createShaderCondition=function(conditionScript){
-		var _$this=this;
-		var func=function (){
-			var abc=conditionScript;
-			return _$this[conditionScript.replace("this.","")];
-		}
-		return func;
-	}
-
-	BMiniAdapter.EnvConfig=null;
-	BMiniAdapter.window=null;
-	BMiniAdapter._preCreateElement=null;
-	BMiniAdapter._inited=false;
-	BMiniAdapter.systemInfo=null;
-	BMiniAdapter.isZiYu=false;
-	BMiniAdapter.isPosMsgYu=false;
-	BMiniAdapter.autoCacheFile=true;
-	BMiniAdapter.minClearSize=(5 *1024 *1024);
-	BMiniAdapter.subNativeFiles=null;
-	BMiniAdapter.subNativeheads=[];
-	BMiniAdapter.subMaps=[];
-	BMiniAdapter.AutoCacheDownFile=false;
-	BMiniAdapter.parseXMLFromString=function(value){
-		var rst;
-		var Parser;
-		value=value.replace(/>\s+</g,'><');
-		try {
-			/*__JS__ */rst=(new window.Parser.DOMParser()).parseFromString(value,'text/xml');
-			}catch (error){
-			throw "需要引入xml解析库文件";
-		}
-		return rst;
-	}
-
-	BMiniAdapter.idx=1;
-	__static(BMiniAdapter,
-	['nativefiles',function(){return this.nativefiles=["layaNativeDir","wxlocal"];}
-	]);
-	return BMiniAdapter;
-})()
-
-
-/**@private **/
-//class laya.bd.mini.MiniLocation
-var MiniLocation$1=(function(){
-	function MiniLocation(){}
-	__class(MiniLocation,'laya.bd.mini.MiniLocation',null,'MiniLocation$1');
-	MiniLocation.__init__=function(){
-		BMiniAdapter.window.navigator.geolocation.getCurrentPosition=MiniLocation.getCurrentPosition;
-		BMiniAdapter.window.navigator.geolocation.watchPosition=MiniLocation.watchPosition;
-		BMiniAdapter.window.navigator.geolocation.clearWatch=MiniLocation.clearWatch;
-	}
-
-	MiniLocation.getCurrentPosition=function(success,error,options){
-		var paramO;
-		paramO={};
-		paramO.success=getSuccess;
-		paramO.fail=error;
-		BMiniAdapter.window.swan.getLocation(paramO);
-		function getSuccess (res){
-			if (success !=null){
-				success(res);
-			}
-		}
-	}
-
-	MiniLocation.watchPosition=function(success,error,options){
-		MiniLocation._curID++;
-		var curWatchO;
-		curWatchO={};
-		curWatchO.success=success;
-		curWatchO.error=error;
-		MiniLocation._watchDic[MiniLocation._curID]=curWatchO;
-		Laya.systemTimer.loop(1000,null,MiniLocation._myLoop);
-		return MiniLocation._curID;
-	}
-
-	MiniLocation.clearWatch=function(id){
-		delete MiniLocation._watchDic[id];
-		if (!MiniLocation._hasWatch()){
-			Laya.systemTimer.clear(null,MiniLocation._myLoop);
-		}
-	}
-
-	MiniLocation._hasWatch=function(){
-		var key;
-		for (key in MiniLocation._watchDic){
-			if (MiniLocation._watchDic[key])return true;
-		}
-		return false;
-	}
-
-	MiniLocation._myLoop=function(){
-		MiniLocation.getCurrentPosition(MiniLocation._mySuccess,MiniLocation._myError);
-	}
-
-	MiniLocation._mySuccess=function(res){
-		var rst={};
-		rst.coords=res;
-		rst.timestamp=Browser.now();
-		var key;
-		for (key in MiniLocation._watchDic){
-			if (MiniLocation._watchDic[key].success){
-				MiniLocation._watchDic[key].success(rst);
-			}
-		}
-	}
-
-	MiniLocation._myError=function(res){
-		var key;
-		for (key in MiniLocation._watchDic){
-			if (MiniLocation._watchDic[key].error){
-				MiniLocation._watchDic[key].error(res);
-			}
-		}
-	}
-
-	MiniLocation._watchDic={};
-	MiniLocation._curID=0;
-	return MiniLocation;
-})()
-
-
-/**@private **/
-//class laya.bd.mini.MiniAccelerator extends laya.events.EventDispatcher
-var MiniAccelerator$1=(function(_super){
-	function MiniAccelerator(){
-		MiniAccelerator.__super.call(this);
-	}
-
-	__class(MiniAccelerator,'laya.bd.mini.MiniAccelerator',_super,'MiniAccelerator$1');
-	var __proto=MiniAccelerator.prototype;
-	/**
-	*侦听加速器运动。
-	*@param observer 回调函数接受4个参数，见类说明。
-	*/
-	__proto.on=function(type,caller,listener,args){
-		_super.prototype.on.call(this,type,caller,listener,args);
-		MiniAccelerator.startListen(this["onDeviceOrientationChange"]);
-		return this;
-	}
-
-	/**
-	*取消侦听加速器。
-	*@param handle 侦听加速器所用处理器。
-	*/
-	__proto.off=function(type,caller,listener,onceOnly){
-		(onceOnly===void 0)&& (onceOnly=false);
-		if (!this.hasListener(type))
-			MiniAccelerator.stopListen();
-		return _super.prototype.off.call(this,type,caller,listener,onceOnly);
-	}
-
-	MiniAccelerator.__init__=function(){
-		try{
-			var Acc;
-			Acc=/*__JS__ */laya.device.motion.Accelerator;
-			if (!Acc)return;
-			Acc["prototype"]["on"]=MiniAccelerator["prototype"]["on"];
-			Acc["prototype"]["off"]=MiniAccelerator["prototype"]["off"];
-			}catch (e){
-		}
-	}
-
-	MiniAccelerator.startListen=function(callBack){
-		MiniAccelerator._callBack=callBack;
-		if (MiniAccelerator._isListening)return;
-		MiniAccelerator._isListening=true;
-		try{
-			BMiniAdapter.window.swan.onAccelerometerChange(laya.bd.mini.MiniAccelerator.onAccelerometerChange);
-		}catch(e){}
-	}
-
-	MiniAccelerator.stopListen=function(){
-		MiniAccelerator._isListening=false;
-		try{
-			BMiniAdapter.window.swan.stopAccelerometer({});
-		}catch(e){}
-	}
-
-	MiniAccelerator.onAccelerometerChange=function(res){
-		var e;
-		e={};
-		e.acceleration=res;
-		e.accelerationIncludingGravity=res;
-		e.rotationRate={};
-		if (MiniAccelerator._callBack !=null){
-			MiniAccelerator._callBack(e);
-		}
-	}
-
-	MiniAccelerator._isListening=false;
-	MiniAccelerator._callBack=null;
-	return MiniAccelerator;
-})(EventDispatcher)
-
-
-/**@private **/
 //class laya.bd.mini.MiniLoader extends laya.events.EventDispatcher
 var MiniLoader$1=(function(_super){
 	function MiniLoader(){
@@ -1032,7 +959,27 @@ var MiniLoader$1=(function(_super){
 			else Loader.parserMap[type].call(null,this);
 			return;
 		};
-		var encoding=BMiniAdapter.getUrlEncode(url,type);
+		var contentType;
+		switch (type){
+			case /*laya.net.Loader.ATLAS*/"atlas":
+			case /*laya.net.Loader.PREFAB*/"prefab":
+			case /*laya.net.Loader.PLF*/"plf":
+				contentType=/*laya.net.Loader.JSON*/"json";
+				break ;
+			case /*laya.net.Loader.FONT*/"font":
+				contentType=/*laya.net.Loader.XML*/"xml";
+				break ;
+			case /*laya.net.Loader.PLFB*/"plfb":
+				contentType=/*laya.net.Loader.BUFFER*/"arraybuffer";
+				break ;
+			default :
+				contentType=type;
+			}
+		if (Loader.preLoadedMap[URL.formatURL(url)]){
+			thisLoader.onLoaded(Loader.preLoadedMap[URL.formatURL(url)]);
+			return;
+		};
+		var encoding=BMiniAdapter.getUrlEncode(url,contentType);
 		var urlType=Utils.getFileExtension(url);
 		if ((MiniLoader._fileTypeArr.indexOf(urlType)!=-1)){
 			BMiniAdapter.EnvConfig.load.call(this,url,type,cache,group,ignoreCache);
@@ -1091,7 +1038,7 @@ var MiniLoader$1=(function(_super){
 		(errorCode===void 0)&& (errorCode=0);
 		if (!errorCode){
 			var tempData;
-			if (type==/*laya.net.Loader.JSON*/"json" || type==/*laya.net.Loader.ATLAS*/"atlas" || type==/*laya.net.Loader.PREFAB*/"prefab"){
+			if (type==/*laya.net.Loader.JSON*/"json" || type==/*laya.net.Loader.ATLAS*/"atlas" || type==/*laya.net.Loader.PREFAB*/"prefab" || type==/*laya.net.Loader.PLF*/"plf"){
 				tempData=BMiniAdapter.getJson(data.data);
 				}else if (type==/*laya.net.Loader.XML*/"xml"){
 				tempData=Utils.parseXMLFromString(data.data);
@@ -1316,6 +1263,80 @@ var MiniSound$1=(function(_super){
 	MiniSound._id=0;
 	MiniSound._audioCache={};
 	return MiniSound;
+})(EventDispatcher)
+
+
+/**@private **/
+//class laya.bd.mini.MiniAccelerator extends laya.events.EventDispatcher
+var MiniAccelerator$1=(function(_super){
+	function MiniAccelerator(){
+		MiniAccelerator.__super.call(this);
+	}
+
+	__class(MiniAccelerator,'laya.bd.mini.MiniAccelerator',_super,'MiniAccelerator$1');
+	var __proto=MiniAccelerator.prototype;
+	/**
+	*侦听加速器运动。
+	*@param observer 回调函数接受4个参数，见类说明。
+	*/
+	__proto.on=function(type,caller,listener,args){
+		_super.prototype.on.call(this,type,caller,listener,args);
+		MiniAccelerator.startListen(this["onDeviceOrientationChange"]);
+		return this;
+	}
+
+	/**
+	*取消侦听加速器。
+	*@param handle 侦听加速器所用处理器。
+	*/
+	__proto.off=function(type,caller,listener,onceOnly){
+		(onceOnly===void 0)&& (onceOnly=false);
+		if (!this.hasListener(type))
+			MiniAccelerator.stopListen();
+		return _super.prototype.off.call(this,type,caller,listener,onceOnly);
+	}
+
+	MiniAccelerator.__init__=function(){
+		try{
+			var Acc;
+			Acc=/*__JS__ */laya.device.motion.Accelerator;
+			if (!Acc)return;
+			Acc["prototype"]["on"]=MiniAccelerator["prototype"]["on"];
+			Acc["prototype"]["off"]=MiniAccelerator["prototype"]["off"];
+			}catch (e){
+		}
+	}
+
+	MiniAccelerator.startListen=function(callBack){
+		MiniAccelerator._callBack=callBack;
+		if (MiniAccelerator._isListening)return;
+		MiniAccelerator._isListening=true;
+		try{
+			BMiniAdapter.window.swan.onAccelerometerChange(laya.bd.mini.MiniAccelerator.onAccelerometerChange);
+		}catch(e){}
+	}
+
+	MiniAccelerator.stopListen=function(){
+		MiniAccelerator._isListening=false;
+		try{
+			BMiniAdapter.window.swan.stopAccelerometer({});
+		}catch(e){}
+	}
+
+	MiniAccelerator.onAccelerometerChange=function(res){
+		var e;
+		e={};
+		e.acceleration=res;
+		e.accelerationIncludingGravity=res;
+		e.rotationRate={};
+		if (MiniAccelerator._callBack !=null){
+			MiniAccelerator._callBack(e);
+		}
+	}
+
+	MiniAccelerator._isListening=false;
+	MiniAccelerator._callBack=null;
+	return MiniAccelerator;
 })(EventDispatcher)
 
 

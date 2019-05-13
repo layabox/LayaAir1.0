@@ -1,11 +1,12 @@
 package laya.d3.resource {
 	import laya.layagl.LayaGL;
+	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.resource.BaseTexture;
 	import laya.webgl.resource.Texture2D;
 	
 	/**
-	 //* <code>RenderTexture</code> 类用于创建渲染目标。
+	   //* <code>RenderTexture</code> 类用于创建渲染目标。
 	 */
 	public class RenderTexture extends BaseTexture {
 		/** @private */
@@ -103,33 +104,18 @@ package laya.d3.resource {
 		}
 		
 		/**
-		 * 生成mipMap。
+		 * @private
 		 */
-		public function generateMipmap():void {
-			if (_isPot(width) && _isPot(height)) {
-				_mipmap = true;
-				LayaGL.instance.generateMipmap(_glTextureType);
-				_setFilterMode(_filterMode);
-				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
-			} else {
-				_mipmap = false;
-				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
-			}
-		}
-		
-		/**
-		 * 开始绑定。
-		 */
-		public function start():void {
+		public function _start():void {
 			LayaGL.instance.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
 			_currentActive = this;
 			_readyed = false;
 		}
 		
 		/**
-		 * 结束绑定。
+		 * @private
 		 */
-		public function end():void {
+		public function _end():void {
 			LayaGL.instance.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
 			_currentActive = null;
 			_readyed = true;
@@ -143,7 +129,10 @@ package laya.d3.resource {
 		 * @param height 高度。
 		 * @return 像素数据。
 		 */
-		public function getData(x:Number, y:Number, width:Number, height:Number,out:Uint8Array):Uint8Array {//TODO:检查长度
+		public function getData(x:Number, y:Number, width:Number, height:Number, out:Uint8Array):Uint8Array {//TODO:检查长度
+			if (Render.isConchApp && __JS__("conchConfig.threadMode == 2")) {
+				throw "native 2 thread mode use getDataAsync";
+			}
 			var gl:WebGLContext = LayaGL.instance;
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
 			var canRead:Boolean = (gl.checkFramebufferStatus(WebGLContext.FRAMEBUFFER) === WebGLContext.FRAMEBUFFER_COMPLETE);
@@ -156,7 +145,17 @@ package laya.d3.resource {
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
 			return out;
 		}
-		
+		/**
+		 * native多线程
+		 */
+		public function getDataAsync(x:Number, y:Number, width:Number, height:Number, callBack:Function):void {
+			var gl:* = LayaGL.instance;
+			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, this._frameBuffer);
+			gl.readPixelsAsync(x, y, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, function(data:ArrayBuffer):void {
+				__JS__("callBack(new Uint8Array(data))");
+			});
+			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
+		}
 		/**
 		 * @inheritDoc
 		 */

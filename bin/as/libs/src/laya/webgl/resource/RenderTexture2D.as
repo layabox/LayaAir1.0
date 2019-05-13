@@ -1,5 +1,6 @@
 package laya.webgl.resource {
 	import laya.layagl.LayaGL;
+	import laya.renders.Render;
 	import laya.webgl.WebGLContext;
 	import laya.webgl.shader.BaseShader;
 	import laya.webgl.utils.RenderState2D;
@@ -98,6 +99,7 @@ package laya.webgl.resource {
 			_height = height;
 			_depthStencilFormat = depthStencilFormat;
 			_create(width, height);
+			lock = true;
 		}
 		
 		/**
@@ -148,7 +150,7 @@ package laya.webgl.resource {
 		/**
 		 * 生成mipMap。
 		 */
-		public function generateMipmap():void {
+		override public function generateMipmap():void {
 			if (_isPot(width) && _isPot(height)) {
 				_mipmap = true;
 				LayaGL.instance.generateMipmap(_glTextureType);
@@ -272,6 +274,9 @@ package laya.webgl.resource {
 		 * @return 像素数据。
 		 */
 		public function getData(x:Number, y:Number, width:Number, height:Number):Uint8Array {
+			if (Render.isConchApp && __JS__("conchConfig.threadMode == 2")) {
+				throw "native 2 thread mode use getDataAsync";
+			}
 			var gl:WebGLContext = LayaGL.instance;
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, _frameBuffer);
 			var canRead:Boolean = (gl.checkFramebufferStatus(WebGLContext.FRAMEBUFFER) === WebGLContext.FRAMEBUFFER_COMPLETE);
@@ -287,7 +292,17 @@ package laya.webgl.resource {
 			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
 			return pixels;
 		}
-		
+		/**
+		 * native多线程
+		 */
+		public function getDataAsync(x:Number, y:Number, width:Number, height:Number, callBack:Function):void {
+			var gl:* = LayaGL.instance;
+			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, this._frameBuffer);
+			gl.readPixelsAsync(x, y, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, function(data:ArrayBuffer):void {
+				__JS__("callBack(new Uint8Array(data))");
+			});
+			gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
+		}
 		public function recycle():void {
 			
 		}

@@ -1,5 +1,4 @@
 package laya.d3.resource.models {
-	import laya.d3.core.BufferState;
 	import laya.d3.core.GeometryElement;
 	import laya.d3.core.SkinnedMeshRenderer;
 	import laya.d3.core.SkinnedMeshSprite3D;
@@ -7,9 +6,7 @@ package laya.d3.resource.models {
 	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.graphics.IndexBuffer3D;
 	import laya.d3.graphics.VertexBuffer3D;
-	import laya.d3.shader.ShaderInstance;
 	import laya.layagl.LayaGL;
-	import laya.resource.IDispose;
 	import laya.utils.Stat;
 	import laya.webgl.WebGLContext;
 	
@@ -17,6 +14,8 @@ package laya.d3.resource.models {
 	 * <code>SubMesh</code> 类用于创建子网格数据模板。
 	 */
 	public class SubMesh extends GeometryElement {
+		/** @private */
+		private static var _uniqueIDCounter:int = 0;
 		/**@private */
 		private static var _type:int = _typeCounter++;
 		
@@ -48,11 +47,15 @@ package laya.d3.resource.models {
 		/**@private [只读]*/
 		public var _indexBuffer:IndexBuffer3D;
 		
+		/** @private */
+		public var _id:int;
+		
 		/**
 		 * 创建一个 <code>SubMesh</code> 实例。
 		 * @param	mesh  网格数据模板。
 		 */
 		public function SubMesh(mesh:Mesh) {
+			_id = ++_uniqueIDCounter;
 			_mesh = mesh;
 			_boneIndicesList = new Vector.<Uint16Array>();
 			_subIndexBufferStart = new Vector.<int>();
@@ -82,9 +85,8 @@ package laya.d3.resource.models {
 			} else {
 				LayaGL.instance.drawElements(WebGLContext.TRIANGLES, _indexCount, WebGLContext.UNSIGNED_SHORT, _indexStart * 2);
 			}
-			
-			Stat.renderBatch++;
 			Stat.trianglesFaces += _indexCount / 3;
+			Stat.renderBatches++;
 		}
 		
 		/**

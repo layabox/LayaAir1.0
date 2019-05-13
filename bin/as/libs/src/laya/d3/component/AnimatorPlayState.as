@@ -20,6 +20,8 @@ package laya.d3.component {
 		public var _duration:Number;
 		/**@private */
 		public var _playEventIndex:int;
+		/**@private */
+		public var _lastIsFront:Boolean;
 		
 		/**
 		 * 获取播放状态的归一化时间,整数为循环次数，小数为单次播放时间。
@@ -49,7 +51,8 @@ package laya.d3.component {
 			_finish = false;
 			_startPlayTime = startTime;
 			_elapsedTime = startTime;
-			_playEventIndex = 0.0;
+			_playEventIndex = 0;
+			_lastIsFront = true;
 		}
 		
 		/**
@@ -60,6 +63,7 @@ package laya.d3.component {
 			dest._startPlayTime = _startPlayTime;
 			dest._elapsedTime = _elapsedTime;
 			dest._playEventIndex = _playEventIndex;
+			dest._lastIsFront = _lastIsFront;
 		}
 	
 	}

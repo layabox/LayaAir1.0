@@ -45,7 +45,7 @@ package laya.display.cmd {
 		 */
 		public var color:String;
 		
-		public var colorFlt:ColorFilter;
+		public var colorFlt:ColorFilter=null;
 		/**
 		 * （可选）混合模式。
 		 */

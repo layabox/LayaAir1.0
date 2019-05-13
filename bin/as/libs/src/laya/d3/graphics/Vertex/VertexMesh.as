@@ -13,10 +13,31 @@ package laya.d3.graphics.Vertex {
 		public static const MESH_COLOR0:int = 1;
 		public static const MESH_TEXTURECOORDINATE0:int = 2;
 		public static const MESH_NORMAL0:int = 3;
-		public static const MESH_TANGENT0:int = 5;
-		public static const MESH_BLENDINDICES0:int = 6;
-		public static const MESH_BLENDWEIGHT0:int = 7;
-		public static const MESH_TEXTURECOORDINATE1:int = 8;
+		public static const MESH_TANGENT0:int = 4;
+		public static const MESH_BLENDINDICES0:int = 5;
+		public static const MESH_BLENDWEIGHT0:int = 6;
+		public static const MESH_TEXTURECOORDINATE1:int = 7;
+		
+		public static const MESH_WORLDMATRIX_ROW0:int = 8;
+		public static const MESH_WORLDMATRIX_ROW1:int = 9;
+		public static const MESH_WORLDMATRIX_ROW2:int = 10;
+		public static const MESH_WORLDMATRIX_ROW3:int = 11;
+		public static const MESH_MVPMATRIX_ROW0:int = 12;
+		public static const MESH_MVPMATRIX_ROW1:int = 13;
+		public static const MESH_MVPMATRIX_ROW2:int = 14;
+		public static const MESH_MVPMATRIX_ROW3:int = 15;
+		
+		public static const instanceWorldMatrixDeclaration:VertexDeclaration = new VertexDeclaration(64, 
+		[new VertexElement(0, VertexElementFormat.Vector4, VertexMesh.MESH_WORLDMATRIX_ROW0), 
+		new VertexElement(16, VertexElementFormat.Vector4, VertexMesh.MESH_WORLDMATRIX_ROW1), 
+		new VertexElement(32, VertexElementFormat.Vector4, VertexMesh.MESH_WORLDMATRIX_ROW2), 
+		new VertexElement(48, VertexElementFormat.Vector4, VertexMesh.MESH_WORLDMATRIX_ROW3)]);
+		
+		public static const instanceMVPMatrixDeclaration:VertexDeclaration = new VertexDeclaration(64, 
+		[new VertexElement(0, VertexElementFormat.Vector4, VertexMesh.MESH_MVPMATRIX_ROW0), 
+		new VertexElement(16, VertexElementFormat.Vector4, VertexMesh.MESH_MVPMATRIX_ROW1), 
+		new VertexElement(32, VertexElementFormat.Vector4, VertexMesh.MESH_MVPMATRIX_ROW2), 
+		new VertexElement(48, VertexElementFormat.Vector4, VertexMesh.MESH_MVPMATRIX_ROW3)]);
 		
 		/**@private */
 		private static var _vertexDeclarationMap:Object = {};
@@ -27,7 +48,7 @@ package laya.d3.graphics.Vertex {
 		 * @return 顶点声明。
 		 */
 		public static function getVertexDeclaration(vertexFlag:String, compatible:Boolean = true):VertexDeclaration {
-			var verDec:VertexDeclaration = _vertexDeclarationMap[vertexFlag];
+			var verDec:VertexDeclaration = _vertexDeclarationMap[vertexFlag+(compatible?"_0":"_1")];//TODO:兼容模式
 			if (!verDec) {
 				var subFlags:Array = vertexFlag.split(",");
 				var offset:int = 0;
@@ -78,7 +99,7 @@ package laya.d3.graphics.Vertex {
 					elements.push(element);
 				}
 				verDec = new VertexDeclaration(offset, elements);
-				_vertexDeclarationMap[vertexFlag] = verDec;
+				_vertexDeclarationMap[vertexFlag+(compatible?"_0":"_1")] = verDec;//TODO:兼容模式
 			}
 			return verDec;
 		}

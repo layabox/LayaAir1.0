@@ -6,7 +6,7 @@ package laya.webgl.utils {
 	 * drawImage，fillRect等会用到的简单的mesh。每次添加必然是一个四边形。
 	 */
 	public class MeshParticle2D extends Mesh2D {
-		public static var const_stride:int = 29*4;
+		public static const const_stride:int = 116;
 		private static var _fixattriInfo:Array = [
 				WebGLContext.FLOAT, 4, 0,	//CornerTextureCoordinate
 				WebGLContext.FLOAT, 3, 16,//pos
@@ -53,7 +53,7 @@ package laya.webgl.utils {
 		 */
 		//TODO:coverage
 		public override function releaseMesh():void {
-			debugger;
+			;
 			_vb.setByteLength(0);
 			vertNum = 0;
 			indexNum = 0;

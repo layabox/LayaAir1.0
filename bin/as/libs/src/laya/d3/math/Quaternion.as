@@ -1,6 +1,5 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
-	import laya.d3.math.Native.ConchQuaternion;
 	import laya.renders.Render;
 	/**
 	 * <code>Quaternion</code> 类用于创建四元数。
@@ -280,10 +279,6 @@ package laya.d3.math {
 		 * @param	w 四元数的w值
 		 */
 		public function Quaternion(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 1, nativeElements:Float32Array = null/*[NATIVE]*/) {
-			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
-			if (__JS__("(window.conch != null)")) {
-				__JS__("return new ConchQuaternion(x, y, z, w, nativeElements)");
-			}
 			this.x = x;
 			this.y = y;
 			this.z = z;
@@ -384,12 +379,12 @@ package laya.d3.math {
 		 */
 		public function getYawPitchRoll(out:Vector3):void {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-			Vector3.transformQuat(Vector3.ForwardRH, this, TEMPVector31/*forwarldRH*/);
+			Vector3.transformQuat(Vector3._ForwardRH, this, TEMPVector31/*forwarldRH*/);
 			
-			Vector3.transformQuat(Vector3.Up, this, TEMPVector32/*up*/);
+			Vector3.transformQuat(Vector3._Up, this, TEMPVector32/*up*/);
 			var upe:Vector3 = TEMPVector32;
 			
-			angleTo(Vector3.ZERO, TEMPVector31, TEMPVector33/*angle*/);
+			angleTo(Vector3._ZERO, TEMPVector31, TEMPVector33/*angle*/);
 			var angle:Vector3 = TEMPVector33;
 			
 			if (angle.x == Math.PI / 2) {
@@ -501,7 +496,7 @@ package laya.d3.math {
 		 * @param	out    输出四元数
 		 */
 		public static function rotationLookAt(forward:Vector3, up:Vector3, out:Quaternion):void {
-			lookAt(Vector3.ZERO, forward, up, out);
+			lookAt(Vector3._ZERO, forward, up, out);
 		}
 		
 		/**
@@ -599,6 +594,26 @@ package laya.d3.math {
 				out.z = 0.5 * sqrt;
 				out.w = (m12 - m21) * half;
 			}
+		}
+		
+		public function forNativeElement(nativeElements:Float32Array = null):void
+		{
+			if (nativeElements)
+			{
+				__JS__("this.elements = nativeElements");
+				__JS__("this.elements[0] = this.x");
+				__JS__("this.elements[1] = this.y");
+				__JS__("this.elements[2] = this.z");
+				__JS__("this.elements[3] = this.w");
+			}
+			else
+			{
+				__JS__("this.elements = new Float32Array([this.x,this.y,this.z,this.w])");
+			}
+			Vector2.rewriteNumProperty(this, "x", 0);
+			Vector2.rewriteNumProperty(this, "y", 1);
+			Vector2.rewriteNumProperty(this, "z", 2);
+			Vector2.rewriteNumProperty(this, "w", 3);
 		}
 	}
 }

@@ -29,6 +29,9 @@ package laya.d3.core {
 		private static var _tempVector20:Vector2 = new Vector2();
 		
 		/** @private */
+		public static var _updateMark:int = 0;
+		
+		/** @private */
 		private var _aspectRatio:Number;
 		/** @private */
 		private var _viewport:Viewport;
@@ -303,11 +306,12 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function render(shader:Shader3D = null, replacementTag:String = null):void {
+			if (!_scene) //自定义相机渲染需要加保护判断是否在场景中,否则报错
+				return;
+			
 			var gl:WebGLContext = LayaGL.instance;
 			var context:RenderContext3D = RenderContext3D._instance;
 			var scene:Scene3D = context.scene = _scene as Scene3D;
-			if (!scene) //自定义相机渲染需要加保护判断是否在场景中,否则报错,TODO:
-				return;
 			if (scene.parallelSplitShadowMaps[0]) {//TODO:SM
 				ShaderData.setRuntimeValueMode(false);
 				var parallelSplitShadowMap:ParallelSplitShadowMap = scene.parallelSplitShadowMaps[0];
@@ -320,7 +324,7 @@ package laya.d3.core {
 					FrustumCulling.renderObjectCulling(smCamera, scene, context, scene._castShadowRenders);
 					
 					var shadowMap:RenderTexture = parallelSplitShadowMap.cameras[i + 1].renderTarget;
-					shadowMap.start();
+					shadowMap._start();
 					context.camera = smCamera;
 					context.viewport = smCamera.viewport;
 					smCamera._prepareCameraToRender();
@@ -328,7 +332,7 @@ package laya.d3.core {
 					scene._clear(gl, context);
 					var queue:RenderQueue = scene._opaqueQueue;//阴影均为非透明队列
 					queue._render(context, false);//TODO:临时改为False
-					shadowMap.end();
+					shadowMap._end();
 				}
 				scene._defineDatas.remove(Scene3D.SHADERDEFINE_CAST_SHADOW);//去掉宏定义
 				ShaderData.setRuntimeValueMode(true);
@@ -342,7 +346,7 @@ package laya.d3.core {
 			viewMat = context.viewMatrix = viewMatrix;
 			var renderTar:RenderTexture = _renderTarget;
 			if (renderTar) {
-				renderTar.start();
+				renderTar._start();
 				Matrix4x4.multiply(_invertYScaleMatrix, _projectionMatrix, _invertYProjectionMatrix);
 				Matrix4x4.multiply(_invertYScaleMatrix, projectionViewMatrix, _invertYProjectionViewMatrix);
 				projectMat = context.projectionMatrix = _invertYProjectionMatrix;//TODO:
@@ -358,7 +362,7 @@ package laya.d3.core {
 			scene._clear(gl, context);
 			scene._renderScene(gl, context, shader, replacementTag);
 			scene._postRenderScript();//TODO:duo相机是否重复
-			(renderTar) && (renderTar.end());
+			(renderTar) && (renderTar._end());
 		}
 		
 		/**

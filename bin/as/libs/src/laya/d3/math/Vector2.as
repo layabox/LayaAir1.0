@@ -1,7 +1,6 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
 	import laya.renders.Render;
-	import laya.d3.math.Native.ConchVector2;
 	
 	/**
 	 * <code>Vector2</code> 类用于创建二维向量。
@@ -23,10 +22,15 @@ package laya.d3.math {
 		 * @param	y  Y轴坐标。
 		 */
 		public function Vector2(x:Number = 0, y:Number = 0) {
-			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
-			if (__JS__("(window.conch != null)")) {
-				__JS__("return new ConchVector2(x, y)");
-			}
+			this.x = x;
+			this.y = y;
+		}
+		/**
+		 * 设置xy值。
+		 * @param	x X值。
+		 * @param	y Y值。
+		 */
+		public function setValue(x:Number, y:Number):void {
 			this.x = x;
 			this.y = y;
 		}
@@ -105,6 +109,34 @@ package laya.d3.math {
 			var destVector2:Vector2 = __JS__("new this.constructor()");
 			cloneTo(destVector2);
 			return destVector2;
+		}
+		
+		public function forNativeElement(nativeElements:Float32Array = null):void
+		{		
+			if (nativeElements)
+			{
+				__JS__("this.elements = nativeElements");
+				__JS__("this.elements[0] = this.x");
+				__JS__("this.elements[1] = this.y");
+			}
+			else
+			{
+				__JS__("this.elements = new Float32Array([this.x,this.y])");
+			}
+			rewriteNumProperty(this, "x", 0);
+			rewriteNumProperty(this, "y", 1);
+		}
+		
+		public static function rewriteNumProperty(proto:*, name:String,index:int):void
+		{		
+			Object["defineProperty"](proto, name, {
+				"get":function():* {
+					return __JS__("this.elements[index]");
+				},
+				"set":function(v:*):void {
+					__JS__("this.elements[index] = v");
+				}
+			});
 		}
 	
 	}

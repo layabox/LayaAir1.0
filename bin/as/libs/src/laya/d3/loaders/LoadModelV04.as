@@ -1,6 +1,8 @@
 package laya.d3.loaders {
 	import laya.d3.core.BufferState;
 	import laya.d3.graphics.IndexBuffer3D;
+	import laya.d3.graphics.SubMeshInstanceBatch;
+	import laya.d3.graphics.MeshRenderDynamicBatchManager;
 	import laya.d3.graphics.Vertex.VertexMesh;
 	import laya.d3.graphics.Vertex.VertexPositionTexture0;
 	import laya.d3.graphics.VertexBuffer3D;
@@ -157,11 +159,7 @@ package laya.d3.loaders {
 			_mesh._indexBuffer = indexBuffer;
 			memorySize += indexBuffer.indexCount * 2;
 			
-			var bufferState:BufferState = _mesh._bufferState;
-			bufferState.bind();
-			bufferState.applyVertexBuffers(_mesh._vertexBuffers);
-			bufferState.applyIndexBuffer(indexBuffer);
-			bufferState.unBind();
+			_mesh._setBuffer(_mesh._vertexBuffers, indexBuffer);
 			
 			_mesh._setCPUMemory(memorySize);
 			_mesh._setGPUMemory(memorySize);

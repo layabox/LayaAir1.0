@@ -143,7 +143,7 @@ package laya.particle
 							WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, _firstFreeElement * 6, WebGLContext.UNSIGNED_SHORT, 0);
 					}
 					
-					Stat.renderBatch++;
+					Stat.renderBatches++;
 				}
 				_drawCounter++;
 			}

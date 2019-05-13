@@ -8,7 +8,7 @@
 	 * 与MeshQuadTexture基本相同。不过index不是固定的
 	 */
 	public class MeshTexture extends Mesh2D {
-		public static var const_stride:int = 24;
+		public static const const_stride:int = 24;
 		private static var _fixattriInfo:Array = [
 			WebGLContext.FLOAT, 4, 0,	//pos,uv
 			WebGLContext.UNSIGNED_BYTE, 4, 16,	//color alpha
@@ -20,55 +20,71 @@
 			canReuse = true;
 			setAttributes(MeshTexture._fixattriInfo);
 		}
-		private static var tmpIdx:Uint16Array = new Uint16Array(4);		//用来临时修改index
 		
 		/**
 		 * 
 		 */
 		public static function getAMesh():MeshTexture {
 			//console.log('getmesh');
+			var ret:MeshTexture;
 			if (MeshTexture._POOL.length) {
-				return MeshTexture._POOL.pop();
+				ret = MeshTexture._POOL.pop();
 			}
-			return new MeshTexture();
+			else ret = new MeshTexture();
+			ret._vb._resizeBuffer(64 * 1024 * const_stride, false);
+			return ret;
 		}
 		
-		public function addData(vertices:Float32Array, uvs:Float32Array, idx:Uint16Array, matrix:Matrix, rgba:uint,ctx:WebGLContext2D):void {
+		public function addData(vertices:Float32Array, uvs:Float32Array, idx:Uint16Array, matrix:Matrix, rgba:uint):void {
 			//vb
-			var vertsz:int = vertices.length / 2;
-			var startpos:int = _vb.needSize(vertsz * const_stride);//vb的起点。			
+			var vb:VertexBuffer2D = _vb;
+			var ib:IndexBuffer2D = _ib;
+			var vertsz:int = vertices.length >>1;
+			var startpos:int = vb.needSize(vertsz * const_stride);//vb的起点。			
 			var f32pos:int = startpos >> 2;
-			var vbdata:Float32Array = _vb._floatArray32 || _vb.getFloat32Array();
-			var vbu32Arr:Uint32Array = _vb._uint32Array;
+			var vbdata:Float32Array = vb._floatArray32 || vb.getFloat32Array();
+			var vbu32Arr:Uint32Array = vb._uint32Array;
 			var ci:int = 0;
+			var m00:Number = matrix.a;
+			var m01:Number = matrix.b;
+			var m10:Number = matrix.c;
+			var m11:Number = matrix.d;
+			var tx:Number = matrix.tx;
+			var ty:Number = matrix.ty;			
+			var i:int = 0;
 			//var clipinfo:Array = ctx.getTransedClipInfo();
-			for (var i:int = 0; i < vertsz; i++) {
+			for ( i= 0; i < vertsz; i++) {
 				var x:Number = vertices[ci], y:Number = vertices[ci + 1];
-				var x1:Number = x * matrix.a + y * matrix.c + matrix.tx;
-				var y1:Number = x * matrix.b + y * matrix.d + matrix.ty;
-				vbdata[f32pos++] = x1; vbdata[f32pos++] = y1;
-				vbdata[f32pos++] = uvs[ci]; vbdata[f32pos++] = uvs[ci + 1];
-				ci += 2;
-				vbu32Arr[f32pos++] = rgba;
-				vbu32Arr[f32pos++] = 0xff;
+				vbdata[f32pos] = x * m00 + y * m10 + tx; 
+				vbdata[f32pos+1] = x * m01 + y * m11 + ty;
+				vbdata[f32pos+2] = uvs[ci]; 
+				vbdata[f32pos+3] = uvs[ci + 1];
+				vbu32Arr[f32pos+4] = rgba;
+				vbu32Arr[f32pos + 5] = 0xff;
+				f32pos += 6;
 				//裁剪信息。
 				//vbdata[f32pos++] = clipinfo[2] ; vbdata[f32pos++] = clipinfo[3]; vbdata[f32pos++] = clipinfo[4]; vbdata[f32pos++] = clipinfo[5];//cliprect的方向
 				//vbdata[f32pos++] = clipinfo[0]; vbdata[f32pos++] = clipinfo[1];	//cliprect的位置
+				ci += 2;
 			}
-			_vb.setNeedUpload();
+			vb.setNeedUpload();
 			
 			var vertN:int = vertNum;
+			var sz:int = idx.length;
+			var stib:int = ib.needSize(idx.byteLength);
+			var cidx:Uint16Array = ib.getUint16Array();
+			//var cidx:Uint16Array = new Uint16Array(__JS__('ib._buffer'), stib);
+			var stibid:int = stib >> 1;	// indexbuffer的起始位置
 			if (vertN > 0) {
-				var sz:int = idx.length;
-				if (sz > tmpIdx.length) tmpIdx = new Uint16Array(sz);
-				for (var ii:int = 0; ii < sz; ii++) {
-					tmpIdx[ii] = idx[ii] + vertN;
+				var end:int = stibid + sz;
+				var si:int = 0;
+				for (i = stibid; i < end; i++,si++) {
+					cidx[i] = idx[si] + vertN;	
 				}
-				_ib.appendU16Array(tmpIdx, idx.length);
 			}else {
-				_ib.append(idx);	
+				cidx.set(idx,stibid);
 			}
-			_ib.setNeedUpload();
+			ib.setNeedUpload();
 			
 			vertNum += vertsz;
 			indexNum += idx.length;

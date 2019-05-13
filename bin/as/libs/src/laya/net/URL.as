@@ -36,9 +36,19 @@ package laya.net {
 		}
 		
 		/**基础路径。如果不设置，默认为当前网页的路径。最终地址将被格式化为 basePath+相对URL地址，*/
-		public static var basePath:String = "";
+		public static var _basePath:String = "";
 		/**root路径。只针对'~'类型的url路径有效*/
 		public static var rootPath:String = "";
+		
+		public static function set basePath(value:String):void {
+			_basePath=Laya._getUrlPath();//还原BaseURL为Index目录
+			_basePath = formatURL(value);
+		}
+		
+		/**基础路径。如果不设置，默认为当前网页的路径。最终地址将被格式化为 basePath+相对URL地址，*/
+		public static function get basePath():String {
+			return _basePath;
+		}
 		
 		/** 自定义URL格式化的方式。例如： customFormat = function(url:String):String{} */
 		public static var customFormat:Function = function(url:String):String {
@@ -55,7 +65,6 @@ package laya.net {
 		 */
 		public static function formatURL(url:String):String {
 			if (!url) return "null path";
-			
 			//如果是全路径，直接返回，提高性能
 			if (url.indexOf(":") > 0) return url;
 			//自定义路径格式化
@@ -65,7 +74,7 @@ package laya.net {
 			
 			var char1:String = url.charAt(0);
 			if (char1 === ".") {
-				return _formatRelativePath(basePath + url);
+				return _formatRelativePath(_basePath + url);
 			} else if (char1 === '~') {
 				return rootPath + url.substring(1);
 			} else if (char1 === "d") {
@@ -73,7 +82,7 @@ package laya.net {
 			} else if (char1 === "/") {
 				return url;
 			}
-			return basePath + url;
+			return _basePath + url;
 		}
 		
 		/**
@@ -115,7 +124,7 @@ package laya.net {
 		/**
 		 * @private
 		 */
-		private static var _adpteTypeList:Array = [[".scene3d", ".json"],[".scene",".json"],[".taa",".json"],[".prefab",".json"]];
+		private static var _adpteTypeList:Array = [[".scene3d", ".json"], [".scene", ".json"], [".taa", ".json"], [".prefab", ".json"]];
 		
 		/**
 		 * @private 兼容微信
@@ -125,8 +134,7 @@ package laya.net {
 			var i:int, len:int;
 			len = _adpteTypeList.length;
 			var tArr:Array;
-			for (i = 0; i < len; i++)
-			{
+			for (i = 0; i < len; i++) {
 				tArr = _adpteTypeList[i];
 				url = url.replace(tArr[0], tArr[1]);
 			}

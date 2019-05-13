@@ -118,7 +118,6 @@ package laya.display {
 		public var renderingEnabled:Boolean = true;
 		/**是否启用屏幕适配，可以适配后，在某个时候关闭屏幕适配，防止某些操作导致的屏幕意外改变*/
 		public var screenAdaptationEnabled:Boolean = true;
-		
 		/**@private */
 		public var _canvasTransform:Matrix = new Matrix();
 		/**@private */
@@ -161,7 +160,8 @@ package laya.display {
 		public var _3dUI:Vector.<Sprite> = new Vector.<Sprite>();
 		/**@private */
 		public var _curUIBase:Sprite = null; 		// 给鼠标事件capture用的。用来找到自己的根。因为3d界面的根不是stage（界面链会被3d对象打断）
-		
+		/**使用物理分辨率作为canvas大小，会改进渲染效果，但是会降低性能*/
+		public var useRetinalCanvas:Boolean = false;
 		/**场景类，引擎中只有一个stage实例，此实例可以通过Laya.stage访问。*/
 		public function Stage() {
 			transform = Matrix.create();
@@ -175,6 +175,7 @@ package laya.display {
 			this._isVisibility = true;
 			
 			//this.drawCallOptimize=true;
+			useRetinalCanvas = Config.useRetinalCanvas;
 			
 			var window:* = Browser.window;
 			var _me:Stage = this;	//for TS 。 TS的_this是有特殊用途的
@@ -331,8 +332,8 @@ package laya.display {
 			var scaleMode:String = this._scaleMode;
 			var scaleX:Number = screenWidth / designWidth
 			var scaleY:Number = screenHeight / designHeight;
-			var canvasWidth:Number = designWidth;
-			var canvasHeight:Number = designHeight;
+			var canvasWidth:Number = useRetinalCanvas?screenWidth:designWidth;
+			var canvasHeight:Number = useRetinalCanvas?screenHeight:designHeight;
 			var realWidth:Number = screenWidth;
 			var realHeight:Number = screenHeight;
 			var pixelRatio:Number = Browser.pixelRatio;
@@ -378,6 +379,11 @@ package laya.display {
 					_width = canvasWidth = Math.round(screenWidth / scaleY);
 				}
 				break;
+			}
+			
+			if (useRetinalCanvas){
+				canvasWidth = screenWidth;
+				canvasHeight = screenHeight;
 			}
 			
 			//根据不同尺寸缩放stage画面

@@ -1,5 +1,6 @@
 package laya.renders {
 	import laya.Const;
+	import laya.display.Graphics;
 	import laya.display.Sprite;
 	import laya.display.SpriteConst;
 	import laya.display.Stage;
@@ -232,13 +233,17 @@ package laya.renders {
 			if(tex._getSource())
 			context.drawTexture(tex, x-sprite.pivotX+tex.offsetX, y-sprite.pivotY+tex.offsetY, sprite._width || tex.width, sprite._height || tex.height);
 			var next:RenderSprite = this._next;
-			next._fun.call(next, sprite, context, x, y);
+			if(next!=NORENDER)
+				next._fun.call(next, sprite, context, x, y);
 		}
 		
 		public function _graphics(sprite:Sprite, context:Context, x:Number, y:Number):void {
-			sprite._graphics && sprite._graphics._render(sprite, context, x-sprite.pivotX, y-sprite.pivotY);
+			var style:* = sprite._style;
+			var g:Graphics = sprite._graphics;
+			g && g._render(sprite, context, x-style.pivotX, y-style.pivotY);
 			var next:RenderSprite = this._next;
-			next._fun.call(next, sprite, context, x, y);
+			if(next!=NORENDER)
+				next._fun.call(next, sprite, context, x, y);
 		}
 		
 		//TODO:coverage
@@ -275,8 +280,10 @@ package laya.renders {
 				context.transform(transform.a, transform.b, transform.c, transform.d, transform.tx + x, transform.ty + y);
 				_next._fun.call(_next, sprite, context, 0, 0);
 				context.restore();
-			} else
-				_next._fun.call(_next, sprite, context, x, y);
+			} else {
+				if(_next!=NORENDER)
+					_next._fun.call(_next, sprite, context, x, y);
+			}
 		}
 		
 		public function _children(sprite:Sprite, context:Context, x:Number, y:Number):void {

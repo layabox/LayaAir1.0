@@ -32,7 +32,7 @@ package laya.wx.mini {
 						url = url.split(MiniFileMgr.loadPath)[1];//去掉http头
 					}else
 					{
-						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL._basePath;
 						var tempUrl:String = url;
 						if(tempStr != "")
 							url = url.split(tempStr)[1];//去掉http头

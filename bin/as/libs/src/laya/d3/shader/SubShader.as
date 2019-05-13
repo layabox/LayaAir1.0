@@ -99,8 +99,10 @@ package laya.d3.shader {
 		/**
 		 * @private
 		 */
-		public function addShaderPass(vs:String, ps:String):void {
-			_passes.push(new ShaderPass(this, vs, ps));
+		public function addShaderPass(vs:String, ps:String, stateMap:Object = null):ShaderPass {
+			var shaderPass:ShaderPass = new ShaderPass(this, vs, ps, stateMap);
+			_passes.push(shaderPass);
+			return shaderPass;
 		}
 	
 	}

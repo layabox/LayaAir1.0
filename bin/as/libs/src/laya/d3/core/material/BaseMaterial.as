@@ -5,7 +5,6 @@ package laya.d3.core.material {
 	import laya.d3.math.Vector4;
 	import laya.d3.shader.DefineDatas;
 	import laya.d3.shader.Shader3D;
-	import laya.d3.shader.SubShader;
 	import laya.d3.shader.ShaderData;
 	import laya.d3.shader.ShaderDefines;
 	import laya.net.Loader;
@@ -70,72 +69,7 @@ package laya.d3.core.material {
 				throw('_getSprite3DHierarchyInnerUrls 错误: ' + data.type + ' 不是类');
 			
 			switch (jsonData.version) {
-			case "LAYAMATERIAL:01": //兼容
-				props = jsonData.props;
-				for (key in props) {
-					switch (key) {
-					case "vectors": 
-						vectors = props[key];
-						for (i = 0, n = vectors.length; i < n; i++) {
-							vector = vectors[i];
-							vectorValue = vector.value;
-							switch (vectorValue.length) {
-							case 2: 
-								material[vector.name] = new Vector2(vectorValue[0], vectorValue[1]);
-								break;
-							case 3: 
-								material[vector.name] = new Vector3(vectorValue[0], vectorValue[1], vectorValue[2]);
-								break;
-							case 4: 
-								material[vector.name] = new Vector4(vectorValue[0], vectorValue[1], vectorValue[2], vectorValue[3]);
-								break;
-							default: 
-								throw new Error("BaseMaterial:unkonwn color length.");
-							}
-						}
-						break;
-					case "textures": 
-						textures = props[key];
-						for (i = 0, n = textures.length; i < n; i++) {
-							texture = textures[i];
-							path = texture.path;
-							(path) && (material[texture.name] = Loader.getRes(path));
-						}
-						break;
-					case "defines": 
-						defineNames = props[key];
-						for (i = 0, n = defineNames.length; i < n; i++) {
-							define = material._shader.getSubShaderAt(0).getMaterialDefineByName(defineNames[i]);//TODO:是否取消defines
-							material._defineDatas.add(define);
-						}
-						break;
-					case "cull": 
-					case "blend": 
-					case "srcBlend": 
-					case "dstBlend": 
-					case "depthWrite": 
-						var value:* = props[key];
-						for (i = 0, n = material._renderStates.length; i < n; i++)
-							material._renderStates[i][key] = value;
-						break;
-					case "renderQueue": 
-						var queue:int = props[key];
-						switch (queue) {
-						case 1: 
-							material.renderQueue = RENDERQUEUE_OPAQUE;
-							break;
-						case 2: 
-							material.renderQueue = RENDERQUEUE_TRANSPARENT;
-							break;
-						default: 
-							material[key] = props[key];
-						}
-						break;
-					default: 
-						material[key] = props[key];
-					}
-				}
-				break;
+			case "LAYAMATERIAL:01": 
 			case "LAYAMATERIAL:02": 
 				var i:int, n:int;
 				
@@ -176,14 +110,31 @@ package laya.d3.core.material {
 							material._defineDatas.add(define);
 						}
 						break;
-					case "renderStates": 
+					case "renderStates"://"LAYAMATERIAL:02" 
 						var renderStatesData:Array = props[key];
-						for (i = 0, n = renderStatesData.length; i < n; i++) {
-							var renderStateData:Object = renderStatesData[i];
-							var renderState:Object = material._renderStates[i];
-							for (var stateKey:String in renderStateData)
-								renderState[stateKey] = renderStateData[stateKey];
-						}
+						var renderStateData:Object = renderStatesData[0];
+						var mat:Object = material as Object;//TODO:临时兼容
+						mat.blend = renderStateData.blend;
+						mat.cull = renderStateData.cull;
+						mat.depthTest = renderStateData.depthTest;
+						mat.depthWrite = renderStateData.depthWrite;
+						mat.blendSrc = renderStateData.srcBlend;
+						mat.blendDst = renderStateData.dstBlend;
+						break;
+					case "cull"://"LAYAMATERIAL:01"
+						(material as Object).cull = props[key];
+						break;
+					case "blend"://"LAYAMATERIAL:01"
+						(material as Object).blend = props[key];
+						break;
+					case "depthWrite"://"LAYAMATERIAL:01" 
+						(material as Object).depthWrite = props[key];
+						break;
+					case "srcBlend"://"LAYAMATERIAL:01" 
+						(material as Object).blendSrc = props[key];
+						break;
+					case "dstBlend"://"LAYAMATERIAL:01" 
+						(material as Object).blendDst = props[key];
 						break;
 					default: 
 						material[key] = props[key];
@@ -198,8 +149,6 @@ package laya.d3.core.material {
 		
 		/** @private */
 		private var _alphaTest:Boolean;
-		/** @private */
-		public var _renderStates:Vector.<RenderState>;
 		
 		/** @private */
 		public var _defineDatas:DefineDatas;
@@ -259,14 +208,13 @@ package laya.d3.core.material {
 			_shaderValues = new ShaderData(this);
 			renderQueue = BaseMaterial.RENDERQUEUE_OPAQUE;
 			_alphaTest = false;
-			_renderStates = new Vector.<RenderState>();
 		}
 		
 		/**
 		 * @private
 		 */
 		private function _removeTetxureReference():void {
-			var data:Object = _shaderValues._data;
+			var data:Object = _shaderValues.getData();
 			for (var k:String in data) {
 				var value:* = data[k];
 				if (value && value is BaseTexture)//TODO:需要优化,杜绝is判断，慢
@@ -279,7 +227,7 @@ package laya.d3.core.material {
 		 */
 		override public function _addReference(count:int = 1):void {
 			super._addReference(count);
-			var data:Object = _shaderValues._data;
+			var data:Object = _shaderValues.getData();
 			for (var k:String in data) {
 				var value:* = data[k];
 				if (value && value is BaseTexture)//TODO:需要优化,杜绝is判断，慢
@@ -312,18 +260,6 @@ package laya.d3.core.material {
 			_shader = Shader3D._preCompileShader[name];
 			if (!_shader)
 				throw new Error("BaseMaterial: unknown shader name.");
-			var passCount:int = _shader.getSubShaderAt(0)._passes.length;//TODO:需要调整,现在默认取子ShaderAt0
-			_renderStates.length = passCount;
-			for (var i:int = 0; i < passCount; i++)
-				(_renderStates[i]) || (_renderStates[i] = new RenderState());
-		}
-		
-		/**
-		 * 获取渲染状态。
-		 * @param passIndex 所关联Shader的pass索引。
-		 */
-		public function getRenderState(passIndex:int = 0):RenderState {
-			return _renderStates[passIndex];
 		}
 		
 		/**
@@ -337,10 +273,6 @@ package laya.d3.core.material {
 			_disablePublicDefineDatas.cloneTo(destBaseMaterial._disablePublicDefineDatas);
 			_defineDatas.cloneTo(destBaseMaterial._defineDatas);
 			_shaderValues.cloneTo(destBaseMaterial._shaderValues);
-			
-			var destRenderStates:Vector.<RenderState> = destObject._renderStates;
-			for (var i:int = 0, n:int = _renderStates.length; i < n; i++)
-				_renderStates[i].cloneTo(destRenderStates[i]);
 		}
 		
 		/**

@@ -7,7 +7,7 @@ package laya.webgl.utils {
 	 * 用来画矢量的mesh。顶点格式固定为 x,y,rgba
 	 */
 	public class MeshVG extends Mesh2D {
-		public static var const_stride:int = 12;// 36;
+		public static const const_stride:int = 12;// 36;
 		private static var _fixattriInfo:Array = [		
 			WebGLContext.FLOAT, 2, 0,	//x,y
 			WebGLContext.UNSIGNED_BYTE, 4, 8//rgba
@@ -24,10 +24,13 @@ package laya.webgl.utils {
 		
 		public static function getAMesh():MeshVG {
 			//console.log('getmeshvg');
+			var ret:MeshVG;
 			if (MeshVG._POOL.length) {
-				return MeshVG._POOL.pop();
-			}
-			return new MeshVG();
+				ret = MeshVG._POOL.pop();
+			}else
+				ret = new MeshVG();
+			ret._vb._resizeBuffer(64 * 1024 * const_stride, false);
+			return ret;
 		}
 		
 		/**

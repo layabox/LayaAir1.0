@@ -1,7 +1,6 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
 	import laya.renders.Render;
-	import laya.d3.math.Native.ConchColor;
 	/**
 	 * <code>Color</code> 类用于创建颜色实例。
 	 */
@@ -60,10 +59,6 @@ package laya.d3.math {
 		 * @param	a  颜色的alpha分量。
 		 */
 		public function Color(r:Number = 1, g:Number = 1, b:Number = 1, a:Number = 1) {
-			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
-			if (__JS__("(window.conch != null)")) {
-				__JS__("return new ConchColor(r, g, b, a)");
-			}
 			this.r = r;
 			this.g = g;
 			this.b = b;
@@ -91,7 +86,26 @@ package laya.d3.math {
 			cloneTo(dest);
 			return dest;
 		}
-	
+		
+		public function forNativeElement(nativeElements:Float32Array = null):void
+		{
+			if (nativeElements)
+			{
+				__JS__("this.elements = nativeElements");
+				__JS__("this.elements[0] = this.r");
+				__JS__("this.elements[1] = this.g");
+				__JS__("this.elements[2] = this.b");
+				__JS__("this.elements[3] = this.a");
+			}
+			else
+			{
+				__JS__("this.elements = new Float32Array([this.r,this.g,this.b,this.a])");
+			}
+			Vector2.rewriteNumProperty(this, "r", 0);
+			Vector2.rewriteNumProperty(this, "g", 1);
+			Vector2.rewriteNumProperty(this, "b", 2);
+			Vector2.rewriteNumProperty(this, "a", 3);
+		}	
 	}
 
 }

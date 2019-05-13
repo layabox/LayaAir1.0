@@ -1,6 +1,7 @@
 package laya.display {
 	import laya.display.cmd.AlphaCmd;
 	import laya.display.cmd.ClipRectCmd;
+	import laya.display.cmd.Draw9GridTexture;
 	import laya.display.cmd.DrawCircleCmd;
 	import laya.display.cmd.DrawCurvesCmd;
 	import laya.display.cmd.DrawImageCmd;
@@ -50,7 +51,7 @@ package laya.display {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		
 		/**@private */
-		public var _sp:Sprite;
+		public var _sp:Sprite=null;
 		/**@private */
 		public var _one:* = null;
 		/**@private */
@@ -58,9 +59,9 @@ package laya.display {
 		/**@private */
 		private var _cmds:Array = null;
 		/**@private */
-		protected var _vectorgraphArray:Array;
+		protected var _vectorgraphArray:Array=null;
 		/**@private */
-		private var _graphicBounds:GraphicsBounds;
+		private var _graphicBounds:GraphicsBounds=null;
 		/**@private */
 		public var autoDestroy:Boolean = false;
 		
@@ -608,9 +609,9 @@ package laya.display {
 		 * @private
 		 */
 		public function _renderAll(sprite:Sprite, context:Context, x:Number, y:Number):void {
-			var cmds:Array = this._cmds, cmd:*;
+			var cmds:Array = this._cmds;
 			for (var i:int = 0, n:int = cmds.length; i < n; i++) {
-				(cmd = cmds[i]).run(context, x, y);
+				cmds[i].run(context, x, y);
 			}
 		}
 		
@@ -779,6 +780,21 @@ package laya.display {
 		 */
 		public function drawPath(x:Number, y:Number, paths:Array, brush:Object = null, pen:Object = null):DrawPathCmd {
 			return _saveToCmd(Render._context._drawPath, DrawPathCmd.create.call(this, x, y, paths, brush, pen));
+		}
+		
+		/**
+		 * @private
+		 * 绘制带九宫格的图片
+		 * @param	texture
+		 * @param	x
+		 * @param	y
+		 * @param	width
+		 * @param	height
+		 * @param	sizeGrid
+		 */
+		public function draw9Grid(texture:Texture, x:Number = 0, y:Number =0, width:int=0, height:int=0, sizeGrid:Array=null):void
+		{
+			_saveToCmd(null, Draw9GridTexture.create(texture, x, y, width, height, sizeGrid));
 		}
 	}
 }

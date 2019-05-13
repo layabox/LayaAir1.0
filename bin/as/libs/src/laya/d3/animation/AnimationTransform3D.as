@@ -1,6 +1,8 @@
 package laya.d3.animation {
 	import laya.d3.core.Transform3D;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Native.ConchQuaternion;
+	import laya.d3.math.Native.ConchVector3;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.utils.Utils3D;
@@ -56,10 +58,20 @@ package laya.d3.animation {
 			
 			_localMatrix = new Float32Array(16);
 			if (Render.supportWebGLPlusAnimation) {//[NATIVE]
-				_localPosition = new Vector3(0,0,0,localPosition);
-				_localRotation = new Quaternion(0,0,0,1,localRotation);
-				_localScale = new Vector3(0,0,0,localScale);
+				/*
+				_localPosition = new Vector3(0,0,0);
+				_localPosition.forNativeElement(localPosition);
+				_localRotation = new Quaternion(0,0,0,1);
+				_localRotation.forNativeElement(localRotation);
+				_localScale = new Vector3(0,0,0);
+				_localScale.forNativeElement(localScale);
 				_worldMatrix = worldMatrix;
+				*/
+				__JS__("this._localPosition = new ConchVector3(0,0,0,localPosition)");
+				__JS__("this._localRotation = new ConchQuaternion(0,0,0,1,localRotation)");
+				__JS__("this._localScale = new ConchVector3(0,0,0,localScale)");
+				_worldMatrix = worldMatrix;
+
 			} else {
 				_localPosition = new Vector3();
 				_localRotation = new Quaternion();

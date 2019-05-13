@@ -186,12 +186,12 @@ package laya.d3.core.particleShuriKen {
 			_boundingSphere.radius = oriBoundSphere.radius * maxScale;
 			
 			if (Render.supportWebGLPlusCulling) {//[NATIVE]
-				var center:Vector3=_boundingSphere.center;
+				var center:Vector3 = _boundingSphere.center;
 				var buffer:Float32Array = FrustumCulling._cullingBuffer;
 				buffer[_cullingBufferIndex + 1] = center.x;
 				buffer[_cullingBufferIndex + 2] = center.y;
 				buffer[_cullingBufferIndex + 3] = center.z;
-				buffer[_cullingBufferIndex + 4] =_boundingSphere.radius;
+				buffer[_cullingBufferIndex + 4] = _boundingSphere.radius;
 			}
 		}
 		
@@ -244,7 +244,7 @@ package laya.d3.core.particleShuriKen {
 				break;
 			case 2: 
 				sv.setVector3(ShuriKenParticle3D.POSITIONSCALE, transform.scale);
-				sv.setVector3(ShuriKenParticle3D.SIZESCALE, Vector3.ONE);
+				sv.setVector3(ShuriKenParticle3D.SIZESCALE, Vector3._ONE);
 				break;
 			}
 			
@@ -256,9 +256,6 @@ package laya.d3.core.particleShuriKen {
 			sv.setNumber(ShuriKenParticle3D.STRETCHEDBILLBOARDLENGTHSCALE, stretchedBillboardLengthScale);
 			sv.setNumber(ShuriKenParticle3D.STRETCHEDBILLBOARDSPEEDSCALE, stretchedBillboardSpeedScale);
 			sv.setNumber(ShuriKenParticle3D.CURRENTTIME, particleSystem._currentTime);
-			
-			if (Laya3D.debugMode)
-				_renderRenderableBoundBox();//TODO:
 		}
 		
 		/**

@@ -41,8 +41,8 @@ package laya.ani.bone {
 		
 		/** 用户自定义的皮肤 */
 		private var _diyTexture:Texture;
-		private var _parentMatrix:Matrix;
-		private var _resultMatrix:Matrix;//只有不使用缓冲时才使用
+		private var _parentMatrix:Matrix;	// 指向了骨骼的resultMatrix
+		private var _resultMatrix:Matrix;	// 只有不使用缓冲时才使用
 		/** 索引替换表 */
 		private var _replaceDic:Object = { };
 		/** 当前diyTexture的动画纹理 */
@@ -227,7 +227,7 @@ package laya.ani.bone {
 		/**
 		 * 把纹理画到Graphics上
 		 * @param	graphics
-		 * @param	noUseSave
+		 * @param	noUseSave   不使用共享的矩阵对象 _tempResultMatrix，只有实时计算的时候才设置为true
 		 */
 		public function draw(graphics:GraphicsAni, boneMatrixArray:Array, noUseSave:Boolean = false, alpha:Number = 1):void {
 			if ((_diyTexture == null && currTexture == null) || currDisplayData == null) {
@@ -244,7 +244,7 @@ package laya.ani.bone {
 					if (graphics) {
 						var tCurrentMatrix:Matrix = getDisplayMatrix();
 						if (_parentMatrix) {
-							var tRotateKey:Boolean = false;
+							var tRotateKey:Boolean = false;		// 是否有旋转
 							if (tCurrentMatrix) {
 								Matrix.mul(tCurrentMatrix, _parentMatrix, Matrix.TEMP);
 								var tResultMatrix:Matrix;
@@ -259,14 +259,14 @@ package laya.ani.bone {
 								{
 									var tTestMatrix:Matrix = _tempMatrix;
 									tTestMatrix.identity();
-									//判断是否反转
+									//判断是否上下反转。
 									if (currDisplayData.uvs[1] > currDisplayData.uvs[5])
 									{
 										tTestMatrix.d = -1;
 									}
 									//判断是否旋转
 									if (currDisplayData.uvs[0] > currDisplayData.uvs[4]
-										&& currDisplayData.uvs[1] > currDisplayData.uvs[5])
+										&& currDisplayData.uvs[1] > currDisplayData.uvs[5])	
 									{
 										tRotateKey = true;
 										tTestMatrix.rotate(-Math.PI/2);
@@ -283,9 +283,9 @@ package laya.ani.bone {
 								tResultMatrix._checkTransform();
 								if (tRotateKey)
 								{
-									graphics.drawTexture(tTexture, -currDisplayData.height / 2, -currDisplayData.width / 2, currDisplayData.height, currDisplayData.width, tResultMatrix);
+									graphics.drawTexture(tTexture, -currDisplayData.height / 2, -currDisplayData.width / 2, currDisplayData.height, currDisplayData.width, tResultMatrix,alpha);
 								}else {
-									graphics.drawTexture(tTexture, -currDisplayData.width / 2, -currDisplayData.height / 2, currDisplayData.width, currDisplayData.height, tResultMatrix);
+									graphics.drawTexture(tTexture, -currDisplayData.width / 2, -currDisplayData.height / 2, currDisplayData.width, currDisplayData.height, tResultMatrix,alpha);
 								}
 							}
 						}
@@ -339,7 +339,6 @@ package laya.ani.bone {
 	
 						tIBArray = currDisplayData.triangles;
 						
-
 						
 						if (deformData)
 						{
@@ -371,10 +370,10 @@ package laya.ani.bone {
 							}
 						}
 					}else {
-						skinMesh(boneMatrixArray,tSkinSprite,alpha);
+						skinMesh(boneMatrixArray,tSkinSprite);
 					}
 					
-					graphics.drawSkin(tSkinSprite);
+					graphics.drawSkin(tSkinSprite,alpha);
 					break;
 				case 2:
 					if (noUseSave) {	
@@ -389,8 +388,8 @@ package laya.ani.bone {
 					{
 						return;
 					}
-					skinMesh(boneMatrixArray, tSkinSprite, alpha);
-					graphics.drawSkin(tSkinSprite);
+					skinMesh(boneMatrixArray, tSkinSprite);
+					graphics.drawSkin(tSkinSprite,alpha);
 					break;
 				case 3:
 					break;
@@ -402,7 +401,7 @@ package laya.ani.bone {
 		 * 显示蒙皮动画
 		 * @param	boneMatrixArray 当前帧的骨骼矩阵
 		 */
-		private function skinMesh(boneMatrixArray:Array,skinSprite:*,alpha:Number):void
+		private function skinMesh(boneMatrixArray:Array,skinSprite:*):void
 		{
 			var tTexture:Texture = currTexture;
 			var tBones:Array = currDisplayData.bones;
@@ -441,7 +440,6 @@ package laya.ani.bone {
 			var tRed:Number = 1;
 			var tGreed:Number = 1;
 			var tBlue:Number = 1;
-			var tAlpha:Number = alpha;
 			_tempVerticleArr.length = 0;
 			tVertices = _tempVerticleArr;
 			if (deformData && deformData.length > 0) {

@@ -7,6 +7,7 @@ package laya.d3.core {
 	import laya.d3.core.render.SubMeshRenderElement;
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.graphics.MeshRenderStaticBatchManager;
+	import laya.d3.graphics.SubMeshInstanceBatch;
 	import laya.d3.math.BoundBox;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.BoundSphere;
@@ -14,6 +15,8 @@ package laya.d3.core {
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
 	import laya.d3.resource.models.Mesh;
+	import laya.d3.shader.ShaderData;
+	import laya.d3.utils.Utils3D;
 	import laya.renders.Render;
 	
 	/**
@@ -25,6 +28,8 @@ package laya.d3.core {
 		/**@private */
 		private static var _tempVector31:Vector3 = new Vector3();
 		
+		/** @private */
+		protected var _oriDefineValue:int;
 		/** @private */
 		protected var _projectionViewWorldMatrix:Matrix4x4;
 		
@@ -131,7 +136,6 @@ package laya.d3.core {
 		 */
 		override public function _needRender(boundFrustum:BoundFrustum):Boolean {
 			if (boundFrustum)
-				//return boundFrustum.containsBoundSphere(boundingSphere) !== ContainmentType.Disjoint;
 				return boundFrustum.containsBoundBox(boundingBox) !== ContainmentType.Disjoint;
 			else
 				return true;
@@ -141,10 +145,33 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override public function _renderUpdate(context:RenderContext3D, transform:Transform3D):void {
-			if (transform)
+			var element:SubMeshRenderElement = context.renderElement as SubMeshRenderElement;
+			switch (element.renderType) {
+			case RenderElement.RENDERTYPE_NORMAL: 
 				_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
-			else
+				break;
+			case RenderElement.RENDERTYPE_STATICBATCH: 
+				_oriDefineValue = _defineDatas.value;
+				if (transform)
+					_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, transform.worldMatrix);
+				else
+					_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, Matrix4x4.DEFAULT);
+				_defineDatas.add(MeshSprite3D.SHADERDEFINE_UV1);
+				_defineDatas.remove(RenderableSprite3D.SHADERDEFINE_SCALEOFFSETLIGHTINGMAPUV);
+				break;
+			case RenderElement.RENDERTYPE_VERTEXBATCH: 
 				_shaderValues.setMatrix4x4(Sprite3D.WORLDMATRIX, Matrix4x4.DEFAULT);
+				break;
+			case RenderElement.RENDERTYPE_INSTANCEBATCH: 
+				var worldMatrixData:Float32Array = SubMeshInstanceBatch.instance.instanceWorldMatrixData;
+				var insBatches:Vector.<SubMeshRenderElement> = element.instanceBatchElementList;
+				var count:int = insBatches.length;
+				for (var i:int = 0; i < count; i++)
+					worldMatrixData.set(insBatches[i]._transform.worldMatrix.elements, i * 16);
+				SubMeshInstanceBatch.instance.instanceWorldMatrixBuffer.setData(worldMatrixData, 0, 0, count * 16);
+				_defineDatas.add(MeshSprite3D.SHADERDEFINE_GPU_INSTANCE);
+				break;
+			}
 		}
 		
 		/**
@@ -152,14 +179,87 @@ package laya.d3.core {
 		 */
 		override public function _renderUpdateWithCamera(context:RenderContext3D, transform:Transform3D):void {
 			var projectionView:Matrix4x4 = context.projectionViewMatrix;
-			if (transform) {
-				Matrix4x4.multiply(projectionView, transform.worldMatrix, _projectionViewWorldMatrix);
-				_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, _projectionViewWorldMatrix);
-			} else {
-				_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
+			var element:SubMeshRenderElement = context.renderElement as SubMeshRenderElement;
+			switch (element.renderType) {
+			case RenderElement.RENDERTYPE_NORMAL: 
+			case RenderElement.RENDERTYPE_STATICBATCH: 
+			case RenderElement.RENDERTYPE_VERTEXBATCH: 
+				if (transform) {
+					Matrix4x4.multiply(projectionView, transform.worldMatrix, _projectionViewWorldMatrix);
+					_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, _projectionViewWorldMatrix);
+				} else {
+					_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
+				}
+				break;
+			case RenderElement.RENDERTYPE_INSTANCEBATCH: 
+				var mvpMatrixData:Float32Array = SubMeshInstanceBatch.instance.instanceMVPMatrixData;
+				var insBatches:Vector.<SubMeshRenderElement> = element.instanceBatchElementList;
+				var count:int = insBatches.length;
+				for (var i:int = 0; i < count; i++) {
+					var worldMat:Matrix4x4 = insBatches[i]._transform.worldMatrix;
+					Utils3D.mulMatrixByArray(projectionView.elements, 0, worldMat.elements, 0, mvpMatrixData, i * 16);
+				}
+				SubMeshInstanceBatch.instance.instanceMVPMatrixBuffer.setData(mvpMatrixData, 0, 0, count * 16);
+				break;
 			}
-			if (Laya3D.debugMode)
-				_renderRenderableBoundBox();
+		}
+		
+		/**
+		 * @inheritDoc
+		 */
+		public function _renderUpdateWithCameraForNative(context:RenderContext3D, transform:Transform3D):void {
+			var projectionView:Matrix4x4 = context.projectionViewMatrix;
+			var element:SubMeshRenderElement = context.renderElement as SubMeshRenderElement;
+			switch (element.renderType) {
+			case RenderElement.RENDERTYPE_NORMAL: 
+				if (transform) {
+					Matrix4x4.multiply(projectionView, transform.worldMatrix, _projectionViewWorldMatrix);
+					_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, _projectionViewWorldMatrix);
+				} else {
+					_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
+				}
+				break;
+			case RenderElement.RENDERTYPE_STATICBATCH: 
+			case RenderElement.RENDERTYPE_VERTEXBATCH: 
+				var noteValue:Boolean = ShaderData._SET_RUNTIME_VALUE_MODE_REFERENCE_;
+				//runtime专用函数
+				ShaderData.setRuntimeValueMode(false);
+				if (transform) {
+					Matrix4x4.multiply(projectionView, transform.worldMatrix, _projectionViewWorldMatrix);
+					_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, _projectionViewWorldMatrix);
+				} else {
+					_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
+				}
+				//runtime专用函数
+				ShaderData.setRuntimeValueMode(noteValue);
+				break;
+			case RenderElement.RENDERTYPE_INSTANCEBATCH: 
+				var mvpMatrixData:Float32Array = SubMeshInstanceBatch.instance.instanceMVPMatrixData;
+				var insBatches:Vector.<SubMeshRenderElement> = element.instanceBatchElementList;
+				var count:int = insBatches.length;
+				for (var i:int = 0; i < count; i++) {
+					var worldMat:Matrix4x4 = insBatches[i]._transform.worldMatrix;
+					Utils3D.mulMatrixByArray(projectionView.elements, 0, worldMat.elements, 0, mvpMatrixData, i * 16);
+				}
+				SubMeshInstanceBatch.instance.instanceMVPMatrixBuffer.setData(mvpMatrixData, 0, 0, count * 16);
+				break;
+			}
+		}
+		
+		
+		/**
+		 * @private
+		 */
+		override public function _revertBatchRenderUpdate(context:RenderContext3D):void {
+			var element:SubMeshRenderElement = context.renderElement as SubMeshRenderElement;
+			switch (element.renderType) {
+			case RenderElement.RENDERTYPE_STATICBATCH: 
+				_defineDatas.value = _oriDefineValue;
+				break;
+			case RenderElement.RENDERTYPE_INSTANCEBATCH: 
+				_defineDatas.remove(MeshSprite3D.SHADERDEFINE_GPU_INSTANCE);
+				break;
+			}
 		}
 		
 		/**

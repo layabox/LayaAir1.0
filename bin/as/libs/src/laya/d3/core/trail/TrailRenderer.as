@@ -3,9 +3,11 @@ package laya.d3.core.trail {
 	import laya.d3.core.Transform3D;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.math.BoundFrustum;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Vector3;
+	import laya.renders.Render;
 	
 	/**
 	 * <code>TrailRenderer</code> 类用于创建拖尾渲染器。
@@ -35,6 +37,14 @@ package laya.d3.core.trail {
 		override protected function _calculateBoundingSphere():void {
 			_owner.transform.position.cloneTo(_boundingSphere.center);
 			_boundingSphere.radius = Number.MAX_VALUE;
+			if (Render.isConchApp) {//[NATIVE]
+				var center:Vector3=_boundingSphere.center;
+				var buffer:Float32Array = FrustumCulling._cullingBuffer;
+				buffer[_cullingBufferIndex + 1] = center.x;
+				buffer[_cullingBufferIndex + 2] = center.y;
+				buffer[_cullingBufferIndex + 3] = center.z;
+				buffer[_cullingBufferIndex + 4] =_boundingSphere.radius;
+			}
 		}
 		
 		/**
@@ -48,7 +58,7 @@ package laya.d3.core.trail {
 		 * @inheritDoc
 		 */
 		override public function _renderUpdate(state:RenderContext3D, transform:Transform3D):void {
-			super._renderUpdate(state,transform);
+			super._renderUpdate(state, transform);
 			(_owner as TrailSprite3D).trailFilter._update(state);
 		}
 		protected var _projectionViewWorldMatrix:Matrix4x4 = new Matrix4x4();
@@ -64,8 +74,6 @@ package laya.d3.core.trail {
 			} else {
 				_shaderValues.setMatrix4x4(Sprite3D.MVPMATRIX, projectionView);
 			}
-			if (Laya3D.debugMode)
-				_renderRenderableBoundBox();
 		}
 	}
 }

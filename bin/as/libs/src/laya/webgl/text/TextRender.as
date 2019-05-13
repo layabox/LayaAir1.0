@@ -1,6 +1,7 @@
 package laya.webgl.text {
 	import laya.display.Sprite;
 	import laya.events.Event;
+	import laya.maths.Matrix;
 	import laya.maths.Point;
 	import laya.renders.Render;
 	import laya.resource.Context;
@@ -250,7 +251,7 @@ package laya.webgl.text {
 			}			
 			var ri:CharRenderInfo = null;
 			var oneTex:Boolean = isWT || forceWholeRender;	// 如果能缓存的话，就用一张贴图
-			var splitTex:Boolean = renderPerChar = (!isWT) || forceSplitRender || isHtmlChar; 	// 拆分字符串渲染，这个优先级高
+			var splitTex:Boolean = renderPerChar = (!isWT) || forceSplitRender || isHtmlChar || (isWT && wt.splitRender) ; 	// 拆分字符串渲染，这个优先级高
 			if (!sameTexData || sameTexData.length < 1) {
 				// 重新构建缓存的贴图信息
 				// TODO 还是要ctx.scale么
@@ -292,7 +293,7 @@ package laya.webgl.text {
 							if (Render.isConchApp){
 								add.push( { ri: ri, x: stx, y: sty, w: ri.bmpWidth / fontScaleX, h: ri.bmpHeight / fontScaleY } );
 							}else{
-								add.push( { ri: ri, x: stx+1/fontScaleX, y: sty/fontScaleY, w: (ri.bmpWidth-2) / fontScaleX, h: (ri.bmpHeight-1) / fontScaleY } );	// 为了避免边缘像素采样错误，内缩一个像素
+								add.push( { ri: ri, x: stx+1/fontScaleX, y: sty, w: (ri.bmpWidth-2) / fontScaleX, h: (ri.bmpHeight-1) / fontScaleY } );	// 为了避免边缘像素采样错误，内缩一个像素
 							}
 							stx += ri.width;	// TODO 缩放
 						}
@@ -325,6 +326,7 @@ package laya.webgl.text {
 		 */
 		protected function _drawResortedWords(ctx:WebGLContext2D, startx:int, starty:int, samePagesData:Array ):void {
 			var isLastRender:Boolean = ctx._charSubmitCache && ctx._charSubmitCache._enbale;
+			var mat:Matrix = ctx._curMat;
 			for ( var id:String in samePagesData) {
 				var pri:Array = samePagesData[id];
 				var pisz:int = pri.length;  		if (pisz <= 0) continue;
@@ -340,7 +342,7 @@ package laya.webgl.text {
 					}else
 						ctx._inner_drawTexture(ri.tex.texture as Texture, (ri.tex.texture as Texture).bitmap.id,
 						startx +riSaved.x -ri.orix , starty + riSaved.y -ri.oriy, riSaved.w, riSaved.h, 
-						null, ri.uv, 1.0, isLastRender);
+						mat, ri.uv, 1.0, isLastRender);
 						
 					if ((ctx as Object).touches) {
 						(ctx as Object).touches.push(ri);

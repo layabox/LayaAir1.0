@@ -59,7 +59,7 @@ package laya.physics {
 					if (fixture.GetBody() == rigidBody.body) {
 						rigidBody.body.DestroyFixture(fixture);
 					}
-					fixture.Destroy();
+					//fixture.Destroy();
 					fixture = null;
 				}
 				rigidBody = null;
