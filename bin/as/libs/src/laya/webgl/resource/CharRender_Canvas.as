@@ -1,7 +1,7 @@
 package laya.webgl.resource { 
 	public class CharRender_Canvas extends ICharRender {
 		private static var canvas:*= null;// HTMLCanvasElement;
-		private static var ctx:*= null;
+		private var ctx:*= null;
 		private var lastScaleX:Number = 1.0;
 		private var lastScaleY:Number = 1.0;
 		private var needResetScale:Boolean = false;
@@ -82,6 +82,8 @@ package laya.webgl.resource {
 				margin_left:int, margin_top:int, margin_right:int, margin_bottom:int, rect:Array=null):ImageData {
 			if (!supportImageData)
 				return getCharCanvas(char, font, lineWidth, colStr, strokeColStr, cri, margin_left, margin_top, margin_right, margin_bottom);
+			var ctx:* = this.ctx;
+				
 			//ctx.save();
 			//由于大家公用一个canvas，所以需要在选中的时候做一些配置。
 			//跟_lastFont比较容易出错，所以比较ctx.font
@@ -138,7 +140,9 @@ package laya.webgl.resource {
 			return imgdt;
 		}
 		
-		public function getCharCanvas( char:String, font:String, lineWidth:int, colStr:String, strokeColStr:String, cri:CharRenderInfo,margin_left:int, margin_top:int, margin_right:int, margin_bottom:int):ImageData {
+		public function getCharCanvas( char:String, font:String, lineWidth:int, colStr:String, strokeColStr:String, cri:CharRenderInfo, margin_left:int, margin_top:int, margin_right:int, margin_bottom:int):ImageData {
+			var ctx:* = this.ctx;
+			
 			//ctx.save();
 			//由于大家公用一个canvas，所以需要在选中的时候做一些配置。
 			//跟_lastFont比较容易出错，所以比较ctx.font

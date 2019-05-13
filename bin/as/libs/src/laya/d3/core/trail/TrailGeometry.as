@@ -21,6 +21,8 @@ package laya.d3.core.trail {
 		private static var _tempVector30:Vector3 = new Vector3();
 		/**@private */
 		private static var _tempVector31:Vector3 = new Vector3();
+		/**@private */
+		private static var _tempVector32:Vector3 = new Vector3();
 		
 		/**@private */
 		private static var _type:int = _typeCounter++;
@@ -62,7 +64,8 @@ package laya.d3.core.trail {
 		private var _bufferState:BufferState = new BufferState();
 		
 		public function TrailGeometry(owner:TrailFilter) {
-			_owner = owner;;
+			_owner = owner;
+			;
 			_resizeData(_increaseSegementCount, _bufferState);
 		}
 		
@@ -96,7 +99,7 @@ package laya.d3.core.trail {
 			bufferState.applyVertexBuffers(vertexBuffers);
 			bufferState.unBind();
 			
-			Resource._addMemory(memorySize,memorySize);
+			Resource._addMemory(memorySize, memorySize);
 		}
 		
 		/**
@@ -156,12 +159,15 @@ package laya.d3.core.trail {
 			var delVector3:Vector3 = _tempVector30;
 			var pointAtoBVector3:Vector3 = _tempVector31;
 			Vector3.subtract(position, _lastFixedVertexPosition, delVector3);
+			var forward:Vector3 = _tempVector32;
 			switch (_owner.alignment) {
 			case TrailFilter.ALIGNMENT_VIEW: 
-				Vector3.cross(delVector3, camera.transform.forward, pointAtoBVector3);
+				camera.transform.getForward(forward);
+				Vector3.cross(delVector3, forward, pointAtoBVector3);
 				break;
 			case TrailFilter.ALIGNMENT_TRANSFORM_Z: 
-				Vector3.cross(delVector3, _owner._owner.transform.forward, pointAtoBVector3);//实时更新模式需要和view一样根据当前forward重新计算
+				_owner._owner.transform.getForward(forward);
+				Vector3.cross(delVector3, forward, pointAtoBVector3);//实时更新模式需要和view一样根据当前forward重新计算
 				break;
 			}
 			
@@ -317,16 +323,17 @@ package laya.d3.core.trail {
 			var start:int = _activeIndex * 2;
 			var count:int = _endIndex * 2 - start;
 			LayaGL.instance.drawArrays(WebGLContext.TRIANGLE_STRIP, start, count);
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			Stat.trianglesFaces += count - 2;
 		}
 		
 		/**
-		 * @private
+		 * @inheritDoc
 		 */
-		public function _destroy():void {
+		override public function destroy():void {
+			super.destroy();
 			var memorySize:int = _vertexBuffer1._byteLength + _vertexBuffer2._byteLength;
-			Resource._addMemory(-memorySize,-memorySize);
+			Resource._addMemory(-memorySize, -memorySize);
 			
 			_bufferState.destroy();
 			_vertexBuffer1.destroy();
@@ -340,7 +347,6 @@ package laya.d3.core.trail {
 			_subBirthTime = null;
 			_subDistance = null;
 			_lastFixedVertexPosition = null;
-		
 		}
 	
 	}

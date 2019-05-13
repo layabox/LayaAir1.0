@@ -2,6 +2,7 @@ package laya.d3.core.material {
 	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Vector4;
 	import laya.d3.shader.Shader3D;
+	import laya.d3.shader.ShaderData;
 	import laya.d3.shader.ShaderDefines;
 	import laya.webgl.resource.BaseTexture;
 	
@@ -52,9 +53,16 @@ package laya.d3.core.material {
 		public static const OCCLUSIONSTRENGTH:int = Shader3D.propertyNameToID("u_occlusionStrength");
 		public static const NORMALSCALE:int = Shader3D.propertyNameToID("u_normalScale");
 		public static const PARALLAXSCALE:int = Shader3D.propertyNameToID("u_parallaxScale");
-		public static const ENABLEEMISSION:int=-1;//TODO:
-		public static const ENABLEREFLECT:int=-1;//TODO:
+		public static const ENABLEEMISSION:int = -1;//TODO:
+		public static const ENABLEREFLECT:int = -1;//TODO:
 		public static const TILINGOFFSET:int = Shader3D.propertyNameToID("u_TilingOffset");
+		
+		public static const CULL:int = Shader3D.propertyNameToID("s_Cull");
+		public static const BLEND:int = Shader3D.propertyNameToID("s_Blend");
+		public static const BLEND_SRC:int = Shader3D.propertyNameToID("s_BlendSrc");
+		public static const BLEND_DST:int = Shader3D.propertyNameToID("s_BlendDst");
+		public static const DEPTH_TEST:int = Shader3D.propertyNameToID("s_DepthTest");
+		public static const DEPTH_WRITE:int = Shader3D.propertyNameToID("s_DepthWrite");
 		
 		/** 默认材质，禁止修改*/
 		public static const defaultMaterial:PBRSpecularMaterial = new PBRSpecularMaterial();
@@ -131,7 +139,7 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * @private 
+		 * @private
 		 */
 		public function get _ColorA():Number {
 			return _albedoColor.w;
@@ -191,7 +199,7 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * @private 
+		 * @private
 		 */
 		public function get _SpecColorA():Number {
 			return _specularColor.w;
@@ -206,7 +214,7 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * @private 
+		 * @private
 		 */
 		public function get _Glossiness():Number {
 			return _shaderValues.getNumber(SMOOTHNESS);
@@ -220,7 +228,7 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * @private 
+		 * @private
 		 */
 		public function get _GlossMapScale():Number {
 			return _shaderValues.getNumber(SMOOTHNESSSCALE);
@@ -233,9 +241,8 @@ package laya.d3.core.material {
 			_shaderValues.setNumber(SMOOTHNESSSCALE, value);
 		}
 		
-		
 		/**
-		 * @private 
+		 * @private
 		 */
 		public function get _BumpScale():Number {
 			return _shaderValues.getNumber(NORMALSCALE);
@@ -318,7 +325,7 @@ package laya.d3.core.material {
 		}
 		
 		/**
-		 * @private 
+		 * @private
 		 */
 		public function get _EmissionColorA():Number {
 			return _emissionColor.w;
@@ -504,10 +511,9 @@ package laya.d3.core.material {
 		 * @param value 漫反射贴图。
 		 */
 		public function set albedoTexture(value:BaseTexture):void {
-			if (value){
+			if (value) {
 				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_ALBEDOTEXTURE);
-			}
-			else{
+			} else {
 				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_ALBEDOTEXTURE);
 			}
 			_shaderValues.setTexture(ALBEDOTEXTURE, value);
@@ -526,10 +532,9 @@ package laya.d3.core.material {
 		 * @param value 法线贴图。
 		 */
 		public function set normalTexture(value:BaseTexture):void {
-			if (value){
+			if (value) {
 				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE);
-			}
-			else{
+			} else {
 				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_NORMALTEXTURE);
 			}
 			_shaderValues.setTexture(NORMALTEXTURE, value);
@@ -564,10 +569,9 @@ package laya.d3.core.material {
 		 * @param value 视察贴图。
 		 */
 		public function set parallaxTexture(value:BaseTexture):void {
-			if (value){
+			if (value) {
 				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE);
-			}
-			else{
+			} else {
 				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_PARALLAXTEXTURE);
 			}
 			_shaderValues.setTexture(PARALLAXTEXTURE, value);
@@ -602,10 +606,9 @@ package laya.d3.core.material {
 		 * @param value 遮挡贴图。
 		 */
 		public function set occlusionTexture(value:BaseTexture):void {
-			if (value){
+			if (value) {
 				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE);
-			}
-			else{
+			} else {
 				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_OCCLUSIONTEXTURE);
 			}
 			_shaderValues.setTexture(OCCLUSIONTEXTURE, value);
@@ -640,10 +643,9 @@ package laya.d3.core.material {
 		 * @param value 高光贴图。
 		 */
 		public function set specularTexture(value:BaseTexture):void {
-			if (value){
+			if (value) {
 				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE);
-			}
-			else{
+			} else {
 				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_SPECULARTEXTURE);
 			}
 			_shaderValues.setTexture(SPECULARTEXTURE, value);
@@ -774,11 +776,10 @@ package laya.d3.core.material {
 		 * @param value 光滑滑度数据源,0或1。
 		 */
 		public function set smoothnessSource(value:int):void {
-			if (value){
+			if (value) {
 				_defineDatas.add(PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA);
 				_shaderValues.setInt(SMOOTHNESSSOURCE, 1);
-			}
-			else {
+			} else {
 				_defineDatas.remove(PBRSpecularMaterial.SHADERDEFINE_SMOOTHNESSSOURCE_ALBEDOTEXTURE_ALPHA);
 				_shaderValues.setInt(SMOOTHNESSSOURCE, 0);
 			}
@@ -954,52 +955,147 @@ package laya.d3.core.material {
 		 * @return 渲染模式。
 		 */
 		public function set renderMode(value:int):void {
-			var renderState:RenderState = getRenderState();
 			switch (value) {
 			case RENDERMODE_OPAQUE: 
 				alphaTest = false;
 				renderQueue = BaseMaterial.RENDERQUEUE_OPAQUE;
-				renderState.depthWrite = true;
-				renderState.cull = RenderState.CULL_BACK;
-				renderState.blend = RenderState.BLEND_DISABLE;
-				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				depthWrite = true;
+				cull = RenderState.CULL_BACK;
+				blend = RenderState.BLEND_DISABLE;
+				depthTest = RenderState.DEPTHTEST_LESS;
 				_defineDatas.remove(SHADERDEFINE_ALPHAPREMULTIPLY);
 				break;
 			case RENDERMODE_CUTOUT: 
 				renderQueue = BaseMaterial.RENDERQUEUE_ALPHATEST;
 				alphaTest = true;
-				renderState.depthWrite = true;
-				renderState.cull = RenderState.CULL_BACK;
-				renderState.blend = RenderState.BLEND_DISABLE;
-				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				depthWrite = true;
+				cull = RenderState.CULL_BACK;
+				blend = RenderState.BLEND_DISABLE;
+				depthTest = RenderState.DEPTHTEST_LESS;
 				_defineDatas.remove(SHADERDEFINE_ALPHAPREMULTIPLY);
 				break;
 			case RENDERMODE_FADE: 
 				renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
 				alphaTest = false;
-				renderState.depthWrite = false;
-				renderState.cull = RenderState.CULL_BACK;
-				renderState.blend = RenderState.BLEND_ENABLE_ALL;
-				renderState.srcBlend = RenderState.BLENDPARAM_SRC_ALPHA;
-				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				depthWrite = false;
+				cull = RenderState.CULL_BACK;
+				blend = RenderState.BLEND_ENABLE_ALL;
+				blendSrc = RenderState.BLENDPARAM_SRC_ALPHA;
+				blendDst	= RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				depthTest = RenderState.DEPTHTEST_LESS;
 				_defineDatas.remove(SHADERDEFINE_ALPHAPREMULTIPLY);
 				break;
 				break;
 			case RENDERMODE_TRANSPARENT: 
 				renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
 				alphaTest = false;
-				renderState.depthWrite = false;
-				renderState.cull = RenderState.CULL_BACK;
-				renderState.blend = RenderState.BLEND_ENABLE_ALL;
-				renderState.srcBlend = RenderState.BLENDPARAM_ONE;
-				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				depthWrite = false;
+				cull = RenderState.CULL_BACK;
+				blend = RenderState.BLEND_ENABLE_ALL;
+				blendSrc = RenderState.BLENDPARAM_ONE;
+				blendDst = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				depthTest = RenderState.DEPTHTEST_LESS;
 				_defineDatas.add(SHADERDEFINE_ALPHAPREMULTIPLY);
 				break;
 			default: 
 				throw new Error("PBRSpecularMaterial : renderMode value error.");
 			}
+		}
+		
+		/**
+		 * 设置是否写入深度。
+		 * @param value 是否写入深度。
+		 */
+		public function set depthWrite(value:Boolean):void {
+			_shaderValues.setBool(DEPTH_WRITE, value);
+		}
+		
+		/**
+		 * 获取是否写入深度。
+		 * @return 是否写入深度。
+		 */
+		public function get depthWrite():Boolean {
+			return _shaderValues.getBool(DEPTH_WRITE);
+		}
+		
+		/**
+		 * 设置剔除方式。
+		 * @param value 剔除方式。
+		 */
+		public function set cull(value:int):void {
+			_shaderValues.setInt(CULL, value);
+		}
+		
+		/**
+		 * 获取剔除方式。
+		 * @return 剔除方式。
+		 */
+		public function get cull():int {
+			return _shaderValues.getInt(CULL);
+		}
+		
+		/**
+		 * 设置混合方式。
+		 * @param value 混合方式。
+		 */
+		public function set blend(value:int):void {
+			_shaderValues.setInt(BLEND, value);
+		}
+		
+		/**
+		 * 获取混合方式。
+		 * @return 混合方式。
+		 */
+		public function get blend():int {
+			return _shaderValues.getInt(BLEND);
+		}
+		
+		/**
+		 * 设置混合源。
+		 * @param value 混合源
+		 */
+		public function set blendSrc(value:int):void {
+			_shaderValues.setInt(BLEND_SRC, value);
+		}
+		
+		/**
+		 * 获取混合源。
+		 * @return 混合源。
+		 */
+		public function get blendSrc():int {
+			return _shaderValues.getInt(BLEND_SRC);
+		}
+		
+		/**
+		 * 设置混合目标。
+		 * @param value 混合目标
+		 */
+		public function set blendDst(value:int):void {
+			_shaderValues.setInt(BLEND_DST, value);
+		}
+		
+		/**
+		 * 获取混合目标。
+		 * @return 混合目标。
+		 */
+		public function get blendDst():int {
+			return _shaderValues.getInt(BLEND_DST);
+		}
+		
+		/**
+		 * 设置深度测试方式。
+		 * @param value 深度测试方式
+		 */
+		public function set depthTest(value:int):void {
+			_shaderValues.setInt(DEPTH_TEST, value);
+		}
+		
+		/**
+		 * 获取深度测试方式。
+		 * @return 深度测试方式。
+		 */
+		public function get depthTest():int {
+			return _shaderValues.getInt(DEPTH_TEST);
 		}
 		
 		/**
@@ -1022,6 +1118,7 @@ package laya.d3.core.material {
 			_shaderValues.setNumber(PARALLAXSCALE, 0.001);
 			_shaderValues.setBool(ENABLEEMISSION, false);
 			_shaderValues.setNumber(ALPHATESTVALUE, 0.5);
+			renderMode = RENDERMODE_OPAQUE;
 		}
 		
 		/**

@@ -315,6 +315,8 @@ package laya.webgl
 		public static var _compressedTexturePvrtc:*;
 		/**@private */
 		public static var _compressedTextureEtc1:*;
+		/**@private */
+		public static var _angleInstancedArrays:*;
 		
 		/**@private */
 		public static var _activeTextures:Array = new Array(8);
@@ -334,7 +336,11 @@ package laya.webgl
 		/**@private */
 		public static var _sFactor:int = WebGLContext.ONE;//待确认
 		/**@private */
-		public static var _dFactor:int =WebGLContext.ZERO;//待确认
+		public static var _dFactor:int = WebGLContext.ZERO;//待确认
+		/**@private */
+		public static var _srcAlpha:int = WebGLContext.ONE;//待确认
+		/**@private */
+		public static var _dstAlpha:int =WebGLContext.ZERO;//待确认
 		
 		/**@private */
 		public static var _cullFace:Boolean = false;
@@ -353,7 +359,7 @@ package laya.webgl
 			if (!WebGL._isWebGL2 && !Render.isConchApp) {
 				VertexArrayObject;//强制引用
 				if (window._setupVertexArrayObject){//兼容VAO
-					if (Browser.onBDMiniGame||Browser.onLimixiu)
+					if ((Browser.onMiniGame&&Browser.onIOS)||Browser.onBDMiniGame||Browser.onLimixiu)
 						window._forceSetupVertexArrayObject(gl);
 					else
 						window._setupVertexArrayObject(gl);	
@@ -389,12 +395,12 @@ package laya.webgl
 		/**
 		 * @private
 		 */
-		private static function _checkExtensions(gl:WebGLContext):Object {
+		private static function _checkExtensions(gl:WebGLContext):void {
 			_extTextureFilterAnisotropic = _getExtension(gl, "EXT_texture_filter_anisotropic");
 			_compressedTextureS3tc =_getExtension(gl, "WEBGL_compressed_texture_s3tc");
 			_compressedTexturePvrtc = _getExtension(gl, "WEBGL_compressed_texture_pvrtc");
 			_compressedTextureEtc1 = _getExtension(gl, "WEBGL_compressed_texture_etc1");
-			return null;
+			_angleInstancedArrays = _getExtension(gl, "ANGLE_instanced_arrays");
 		}
 		
 		/**
@@ -463,7 +469,20 @@ package laya.webgl
 		 * @private
 		 */
 		public static function setBlendFunc(gl:WebGLContext, sFactor:int, dFactor:int):void{
-			(sFactor!==_sFactor||dFactor!==_dFactor) && (_sFactor=sFactor,_dFactor=dFactor,gl.blendFunc(sFactor, dFactor));
+			(sFactor !== _sFactor || dFactor !== _dFactor) && (_sFactor =_srcAlpha= sFactor, _dFactor =_dstAlpha= dFactor, gl.blendFunc(sFactor, dFactor));
+		}
+		
+		/**
+		 * @private
+		 */
+		public static function setBlendFuncSeperate(gl:WebGLContext, srcRGB:int, dstRGB:int, srcAlpha:int, dstAlpha:int):void{
+			if (srcRGB !== _sFactor || dstRGB !== _dFactor || srcAlpha !== _srcAlpha || dstAlpha !== _dstAlpha){
+				_sFactor = srcRGB;
+				_dFactor = dstRGB;
+				_srcAlpha = srcAlpha;
+				_dstAlpha = dstAlpha;
+				gl.blendFuncSeparate(srcRGB, dstRGB,srcAlpha,dstAlpha);
+			}
 		}
 		
 		/**

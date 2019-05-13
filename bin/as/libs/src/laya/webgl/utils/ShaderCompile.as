@@ -154,7 +154,7 @@ package laya.webgl.utils {
 			return out;
 		}
 		
-		private var _clearCR:RegExp = new RegExp("\r", "g");
+		private var _clearCR:RegExp= new RegExp("\r", "g");
 		
 		public function ShaderCompile(vs:String, ps:String, nameMap:*, defs:Object = null) {
 			function _compile(script:String):ShaderNode {

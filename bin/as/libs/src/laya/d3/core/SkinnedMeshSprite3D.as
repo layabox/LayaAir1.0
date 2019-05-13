@@ -75,8 +75,8 @@ package laya.d3.core {
 			var meshPath:String;
 			meshPath = data.meshPath;
 			if (meshPath) {
-				var mesh:Mesh=Loader.getRes(meshPath);//加载失败mesh为空
-				(mesh)&&(meshFilter.sharedMesh = mesh);
+				var mesh:Mesh = Loader.getRes(meshPath);//加载失败mesh为空
+				(mesh) && (meshFilter.sharedMesh = mesh);
 			}
 			
 			var materials:Array = data.materials;
@@ -110,11 +110,7 @@ package laya.d3.core {
 		 * @inheritDoc
 		 */
 		override protected function _changeHierarchyAnimator(animator:Animator):void {
-			var lastAnimator:Animator = _hierarchyAnimator;
-			lastAnimator && (lastAnimator.unLinkSprite3DToAvatarNode(this));
 			super._changeHierarchyAnimator(animator);
-			if (animator && skinnedMeshRenderer._rootBone)
-				animator.linkSprite3DToAvatarNode(skinnedMeshRenderer._rootBone, this);
 			skinnedMeshRenderer._setCacheAnimator(animator);
 		}
 		

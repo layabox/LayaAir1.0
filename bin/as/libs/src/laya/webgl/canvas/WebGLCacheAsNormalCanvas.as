@@ -9,8 +9,8 @@ package laya.webgl.canvas {
 	import laya.webgl.utils.MeshVG;
 	/**
 	 * 对象 cacheas normal的时候，本质上只是想把submit缓存起来，以后直接执行
-	 * 为了避免各种各样的麻烦，这里采用复制响应部分的submit的方法。执行环境还是在原来的context中
-	 * 否则包括clipt等都非常难以处理
+	 * 为了避免各种各样的麻烦，这里采用复制相应部分的submit的方法。执行环境还是在原来的context中
+	 * 否则包括clip等都非常难以处理
 	 */
 	public class WebGLCacheAsNormalCanvas {
 		public var submitStartPos:int = 0;	// 对应的context的submit的开始的地方
@@ -33,7 +33,7 @@ package laya.webgl.canvas {
 		private var _oldMeshList:Array;
 		
 		// cache的时候对应的clip
-		private var cachedClipInfo:Matrix = new Matrix();
+		private var cachedClipInfo:Matrix = new Matrix();	// 用来判断是否需要把cache无效
 		//private var oldMatrix:Matrix = null;				//本地画的时候完全不应用矩阵，所以需要先保存老的，以便恢复		这样会丢失缩放信息，导致文字模糊，所以不用这种方式了
 		private var oldTx:Number = 0;
 		private var oldTy:Number = 0;
@@ -54,7 +54,7 @@ package laya.webgl.canvas {
 				context._charSubmitCache.enable(false, context);
 				context._charSubmitCache.enable(true, context);
 			}
-			
+			context._incache = true;
 			touches.length=0;
 			//记录需要touch的文字资源
 			(context as Object).touches = touches;
@@ -132,6 +132,7 @@ package laya.webgl.canvas {
 			context._curMat.tx = oldTx;
 			context._curMat.ty = oldTy;
 			(context as Object).touches = null;
+			context._incache = false;
 		}
 		
 		/**

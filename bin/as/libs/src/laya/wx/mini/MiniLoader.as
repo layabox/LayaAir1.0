@@ -52,7 +52,27 @@ package laya.wx.mini {
 				else Loader.parserMap[type].call(null, this);
 				return;
 			}
-			var encoding:String = MiniAdpter.getUrlEncode(url,type);
+			var contentType:String;
+			switch (type) {
+				case Loader.ATLAS: 
+				case Loader.PREFAB: 
+				case Loader.PLF: 
+					contentType = Loader.JSON;
+					break;
+				case Loader.FONT: 
+					contentType = Loader.XML;
+					break;
+				case Loader.PLFB:
+					contentType = Loader.BUFFER;
+					break;
+				default: 
+					contentType = type;
+			}
+			if (Loader.preLoadedMap[URL.formatURL(url)]) {
+				thisLoader.onLoaded(Loader.preLoadedMap[URL.formatURL(url)]);
+				return;
+			} 
+			var encoding:String = MiniAdpter.getUrlEncode(url,contentType);
 			var urlType:String = Utils.getFileExtension(url);
 			if ((_fileTypeArr.indexOf(urlType) != -1)) {
 				//图片通过miniImage去加载
@@ -95,7 +115,7 @@ package laya.wx.mini {
 							}
 						}
 						//xiaosong add 20190105
-						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL._basePath;
 						var tempUrl:String = url;
 						if (tempStr != "")
 							url = url.split(tempStr)[1];
@@ -137,7 +157,7 @@ package laya.wx.mini {
 			if (!errorCode) {
 				//文本文件读取本地存在
 				var tempData:Object;
-				if (type == Loader.JSON || type == Loader.ATLAS || type == Loader.PREFAB) {
+				if (type == Loader.JSON || type == Loader.ATLAS || type == Loader.PREFAB  || type == Loader.PLF) {
 					tempData = MiniAdpter.getJson(data.data);
 				} else if (type == Loader.XML) {
 					tempData = Utils.parseXMLFromString(data.data);

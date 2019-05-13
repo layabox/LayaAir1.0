@@ -1,9 +1,6 @@
 package laya.d3.shader {
 	import laya.d3.core.IClone;
 	import laya.d3.math.Matrix4x4;
-	import laya.d3.math.Native.ConchVector2;
-	import laya.d3.math.Native.ConchVector3;
-	import laya.d3.math.Native.ConchVector4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector2;
 	import laya.d3.math.Vector3;
@@ -20,7 +17,7 @@ package laya.d3.shader {
 		private var _ownerResource:Resource;
 		
 		/**@private */
-		public var _data:*;
+		private var _data:*;
 		
 		/**@private [NATIVE]*/
 		private var _int32Data:Int32Array;
@@ -42,6 +39,11 @@ package laya.d3.shader {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_ownerResource = ownerResource;
 			_initData();
+		}
+		
+		public function getData():Array
+		{
+			return _data;
 		}
 		
 		/**
@@ -279,7 +281,7 @@ package laya.d3.shader {
 			var destData:Array = dest._data;
 			for (var k:String in _data) {//TODO:需要优化,杜绝is判断，慢
 				var value:* = _data[k];
-				if (value) {
+				if (value!=null) {
 					if (value is Number) {
 						destData[k] = value;
 					} else if (value is int) {
@@ -338,17 +340,17 @@ package laya.d3.shader {
 					} else if (value is Boolean) {
 						destData[i] = value;
 						dest.setBool(i, value);
-					} else if (value is ConchVector2) {
+					} else if (value is Vector2) {
 						var v2:Vector2 = (destData[i]) || (destData[i] = new Vector2());
 						(value as Vector2).cloneTo(v2);
 						destData[i] = v2;
 						dest.setVector2(i, v2);
-					} else if (value is ConchVector3) {
+					} else if (value is Vector3) {
 						var v3:Vector3 = (destData[i]) || (destData[i] = new Vector3());
 						(value as Vector3).cloneTo(v3);
 						destData[i] = v3;
 						dest.setVector3(i, v3);
-					} else if (value is ConchVector4) {
+					} else if (value is Vector4) {
 						var v4:Vector4 = (destData[i]) || (destData[i] = new Vector4());
 						(value as Vector4).cloneTo(v4);
 						destData[i] = v4;
@@ -409,6 +411,11 @@ package laya.d3.shader {
 			}
 		}
 		
+		public function getDataForNative():Array
+		{
+			return _nativeArray;
+		}
+		
 		/**
 		 *@private [NATIVE]
 		 */
@@ -422,6 +429,7 @@ package laya.d3.shader {
 		public function setIntForNative(index:int, value:int):void {
 			needRenewArrayBufferForNative(index);
 			_int32Data[index] = value;
+			_nativeArray[index] = value;
 		}
 		
 		/**
@@ -437,6 +445,7 @@ package laya.d3.shader {
 		public function setBoolForNative(index:int, value:Boolean):void {
 			needRenewArrayBufferForNative(index);
 			_int32Data[index] = value;
+			_nativeArray[index] = value;
 		}
 		
 		/**
@@ -452,14 +461,14 @@ package laya.d3.shader {
 		public function setNumberForNative(index:int, value:Number):void {
 			needRenewArrayBufferForNative(index);
 			_float32Data[index] = value;
+			_nativeArray[index] = value;
 		}
 		
 		/**
 		 *@private [NATIVE]
 		 */
 		public function getMatrix4x4ForNative(index:int):Matrix4x4 {
-			alert("ShaderData getMatrix4x4 can't support");
-			return null;
+			return _nativeArray[index];
 		}
 		
 		/**
@@ -485,6 +494,10 @@ package laya.d3.shader {
 		public function setVectorForNative(index:int, value:*):void {
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
+			if (!value.elements)
+			{
+				value.forNativeElement();
+			}
 			var nPtrID:int = setReferenceForNative(value.elements);
 			_int32Data[index] = nPtrID;
 		}
@@ -502,6 +515,10 @@ package laya.d3.shader {
 		public function setVector2ForNative(index:int, value:*):void {
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
+			if (!value.elements)
+			{
+				value.forNativeElement();
+			}
 			var nPtrID:int = setReferenceForNative(value.elements);
 			_int32Data[index] = nPtrID;
 		}
@@ -519,6 +536,10 @@ package laya.d3.shader {
 		public function setVector3ForNative(index:int, value:*):void {
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
+			if (!value.elements)
+			{
+				value.forNativeElement();
+			}
 			var nPtrID:int = setReferenceForNative(value.elements);
 			_int32Data[index] = nPtrID;
 		}
@@ -526,8 +547,7 @@ package laya.d3.shader {
 		 *@private [NATIVE]
 		 */
 		public function getQuaternionForNative(index:int):Quaternion {
-			alert("ShaderData getQuaternion can't support");
-			return null;
+			return _nativeArray[index];
 		}
 		
 		/**
@@ -536,6 +556,10 @@ package laya.d3.shader {
 		public function setQuaternionForNative(index:int, value:*):void {
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
+			if (!value.elements)
+			{
+				value.forNativeElement();
+			}
 			var nPtrID:int = setReferenceForNative(value.elements);
 			_int32Data[index] = nPtrID;
 		}
@@ -544,8 +568,7 @@ package laya.d3.shader {
 		 *@private [NATIVE]
 		 */
 		public function getBufferForNative(shaderIndex:int):Float32Array {
-			alert("ShaderData getBuffer can't support");
-			return null;
+			return _nativeArray[shaderIndex];
 		}
 		
 		/**
@@ -562,8 +585,7 @@ package laya.d3.shader {
 		 *@private [NATIVE]
 		 */
 		public function getAttributeForNative(index:int):Array {
-			alert("ShaderData  getAttribute can't support");
-			return null;
+			return _nativeArray[index];
 		}
 		
 		/**
@@ -582,8 +604,7 @@ package laya.d3.shader {
 		 *@private [NATIVE]
 		 */
 		public function getTextureForNative(index:int):BaseTexture {
-			alert("ShaderData getTexture can't support");
-			return null;
+			return _nativeArray[index];
 		}
 		
 		/**
@@ -591,6 +612,11 @@ package laya.d3.shader {
 		 */
 		public function setTextureForNative(index:int, value:BaseTexture):void {
 			if (!value) return;
+			if (!value._getSource())
+			{
+				Laya.systemTimer.callLater(this, setTextureForNative, [index, value]);
+				return;
+			}
 			needRenewArrayBufferForNative(index);
 			_nativeArray[index] = value;//保存引用
 			var lastValue:BaseTexture = _nativeArray[index];

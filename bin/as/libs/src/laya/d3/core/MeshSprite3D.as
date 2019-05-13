@@ -16,6 +16,7 @@ package laya.d3.core {
 		public static var SHADERDEFINE_UV0:int;
 		public static var SHADERDEFINE_COLOR:int;
 		public static var SHADERDEFINE_UV1:int;
+		public static var SHADERDEFINE_GPU_INSTANCE:int;
 		/**@private */
 		public static var shaderDefines:ShaderDefines = new ShaderDefines(RenderableSprite3D.shaderDefines);
 		
@@ -26,6 +27,7 @@ package laya.d3.core {
 			SHADERDEFINE_UV0 = shaderDefines.registerDefine("UV");
 			SHADERDEFINE_COLOR = shaderDefines.registerDefine("COLOR");
 			SHADERDEFINE_UV1 = shaderDefines.registerDefine("UV1");
+			SHADERDEFINE_GPU_INSTANCE = shaderDefines.registerDefine("GPU_INSTANCE");
 			StaticBatchManager._registerManager(MeshRenderStaticBatchManager.instance);
 			DynamicBatchManager._registerManager(MeshRenderDynamicBatchManager.instance);
 		}

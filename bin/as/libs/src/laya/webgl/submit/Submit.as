@@ -36,32 +36,32 @@ package laya.webgl.submit {
 		
 		public static var RENDERBASE:Submit;
 		public static var ID:int = 1;
-		public static var preRender:ISubmit;	//上一个submit，主要用来比较key,以减少uniform的重复提交。
+		public static var preRender:ISubmit=null;	//上一个submit，主要用来比较key,以减少uniform的重复提交。
 
 		protected static var _poolSize:int = 0;
 		protected static var POOL:Array =[];
 		
 		public var clipInfoID:int = -1;	//用来比较clipinfo
 		
-		public var _mesh:Mesh2D;			//代替 _vb,_ib
-		public var _blendFn:Function;
-		protected var _id:int;
+		public var _mesh:Mesh2D=null;			//代替 _vb,_ib
+		public var _blendFn:Function=null;
+		protected var _id:int=0;
 		//protected var _isSelfVb:Boolean = false;
 		
-		public var _renderType:int;
+		public var _renderType:int=0;
 		
-		public var _parent:Submit;
+		public var _parent:Submit=null;
 		
 		//渲染key，通过key判断是否是同一个
 		public var _key:SubmitKey=new SubmitKey();
 		
 		// 从VB中什么地方开始画，画到哪
-		public var _startIdx:int;		//indexbuffer 的偏移，单位是byte
+		public var _startIdx:int=0;		//indexbuffer 的偏移，单位是byte
 		public var _numEle:int=0;
 
 		public var _ref:int=1;
 		
-		public var shaderValue:Value2D;
+		public var shaderValue:Value2D=null;
 		
 		public static function __init__():void {
 			var s:Submit = RENDERBASE = new Submit(-1);
@@ -129,7 +129,7 @@ package laya.webgl.submit {
 			}
 			gl.drawElements(WebGLContext.TRIANGLES, this._numEle, WebGLContext.UNSIGNED_SHORT, this._startIdx);
 			
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			Stat.trianglesFaces += _numEle / 3;
 			
 			return 1;

@@ -269,19 +269,11 @@ package laya.d3.component {
 		/**
 		 * @private
 		 */
-		private function _getOwnersByClipAsync(clipStateInfo:AnimatorState):void {
-			var clip:AnimationClip = clipStateInfo._clip;
-			_getOwnersByClip(clipStateInfo);
-		}
-		
-		/**
-		 * @private
-		 */
 		private function _getAvatarOwnersAndInitDatasAsync():void {
 			for (var i:int = 0, n:int = _controllerLayers.length; i < n; i++) {
 				var clipStateInfos:Vector.<AnimatorState> = _controllerLayers[i]._states;
 				for (var j:int = 0, m:int = clipStateInfos.length; j < m; j++)
-					_getOwnersByClipAsync(clipStateInfos[j]);
+					_getOwnersByClip(clipStateInfos[j]);
 			}
 			
 			_avatar._cloneDatasToAnimator(this);
@@ -332,7 +324,7 @@ package laya.d3.component {
 		 * @private
 		 */
 		private function _eventScript(scripts:Vector.<Script3D>, events:Vector.<AnimationEvent>, eventIndex:int, endTime:Number, front:Boolean):int {
-			if (front){
+			if (front) {
 				for (var n:int = events.length; eventIndex < n; eventIndex++) {
 					var event:AnimationEvent = events[eventIndex];
 					if (event.time <= endTime) {
@@ -345,12 +337,11 @@ package laya.d3.component {
 						break;
 					}
 				}
-			}
-			else{
-				for (; eventIndex>=0; eventIndex--) {
+			} else {
+				for (; eventIndex >= 0; eventIndex--) {
 					event = events[eventIndex];
 					if (event.time >= endTime) {
-						for ( j = 0, m = scripts.length; j < m; j++) {
+						for (j = 0, m = scripts.length; j < m; j++) {
 							script = scripts[j];
 							fun = script[event.eventName];
 							(fun) && (fun.apply(script, event.params));
@@ -374,24 +365,30 @@ package laya.d3.component {
 				var clipDuration:Number = clip._duration;
 				var elapsedTime:Number = playStateInfo._elapsedTime;
 				var time:Number = elapsedTime % clipDuration;
-				var loopCount:int =Math.abs(Math.floor(elapsedTime / clipDuration) - Math.floor(playStateInfo._lastElapsedTime / clipDuration));//backPlay可能为负数
-				var frontPlay:Boolean = playStateInfo._elapsedTime > playStateInfo._lastElapsedTime;
+				var loopCount:int = Math.abs(Math.floor(elapsedTime / clipDuration) - Math.floor(playStateInfo._lastElapsedTime / clipDuration));//backPlay可能为负数
+				var frontPlay:Boolean = playStateInfo._elapsedTime >= playStateInfo._lastElapsedTime;
+				if (playStateInfo._lastIsFront !== frontPlay) {
+					if (frontPlay)
+						playStateInfo._playEventIndex++;
+					else
+						playStateInfo._playEventIndex--;
+					playStateInfo._lastIsFront = frontPlay;
+				}
 				
 				if (loopCount == 0) {
-					playStateInfo._playEventIndex = _eventScript(scripts, events, playStateInfo._playEventIndex, time,frontPlay);
+					playStateInfo._playEventIndex = _eventScript(scripts, events, playStateInfo._playEventIndex, time, frontPlay);
 				} else {
-					if (frontPlay){
-						_eventScript(scripts, events, playStateInfo._playEventIndex,clipDuration, true);
+					if (frontPlay) {
+						_eventScript(scripts, events, playStateInfo._playEventIndex, clipDuration, true);
 						for (var i:int = 0, n:int = loopCount - 1; i < n; i++)
 							_eventScript(scripts, events, 0, clipDuration, true);
-						playStateInfo._playEventIndex = _eventScript(scripts, events, 0, time,true);
-					}
-					else{
-						_eventScript(scripts, events, playStateInfo._playEventIndex, 0,false);
+						playStateInfo._playEventIndex = _eventScript(scripts, events, 0, time, true);
+					} else {
+						_eventScript(scripts, events, playStateInfo._playEventIndex, 0, false);
 						var eventIndex:int = events.length - 1;
 						for (i = 0, n = loopCount - 1; i < n; i++)
 							_eventScript(scripts, events, eventIndex, 0, false);
-						playStateInfo._playEventIndex = _eventScript(scripts, events, eventIndex, time,false);
+						playStateInfo._playEventIndex = _eventScript(scripts, events, eventIndex, time, false);
 					}
 				}
 			}
@@ -979,7 +976,7 @@ package laya.d3.component {
 							animatorState.name = name;
 							animatorState.clip = motion;
 							addState(animatorState, i);
-							(j === 0) && (setDefaultClip(name, i));
+							(j === 0) && (getControllerLayer(i).defaultState = animatorState);
 						}
 					}
 				}
@@ -1117,9 +1114,9 @@ package laya.d3.component {
 				animator.addControllerLayer(controllLayer.clone());
 				var animatorStates:Vector.<AnimatorState> = controllLayer._states;
 				for (var j:int = 0, m:int = animatorStates.length; j < m; j++) {
-					var state:AnimatorState = animatorStates[j];
-					animator.addState(state.clone(), i);
-					(j == 0) && (animator.setDefaultClip(state.name, i));//TODO:
+					var state:AnimatorState = animatorStates[j].clone();
+					animator.addState(state, i);
+					(j == 0) && (animator.getControllerLayer(i).defaultState = state);
 				}
 			}
 			animator._linkSprites = _linkSprites;//TODO:需要统一概念
@@ -1133,16 +1130,7 @@ package laya.d3.component {
 		 */
 		public function getDefaultState(layerIndex:int = 0):AnimatorState {
 			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
-			return controllerLayer._defaultState;
-		}
-		
-		/**
-		 * 设置默认动画片段。
-		 * @param playName 默认动画片段名称。
-		 */
-		public function setDefaultClip(playName:String, layerIndex:int = 0):void {
-			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
-			controllerLayer._defaultState = controllerLayer._statesMap[playName];
+			return controllerLayer.defaultState;
 		}
 		
 		/**
@@ -1163,9 +1151,9 @@ package laya.d3.component {
 				state._clip._addReference();
 				
 				if (_avatar) {
-					_getOwnersByClipAsync(state);
+					_getOwnersByClip(state);
 				} else {
-					_getOwnersByClipAsync(state);
+					_getOwnersByClip(state);
 				}
 			}
 		}
@@ -1222,7 +1210,7 @@ package laya.d3.component {
 		 */
 		public function play(name:String = null, layerIndex:int = 0, normalizedTime:Number = Number.NEGATIVE_INFINITY):void {
 			var controllerLayer:AnimatorControllerLayer = _controllerLayers[layerIndex];
-			var defaultState:AnimatorState = controllerLayer._defaultState;
+			var defaultState:AnimatorState = controllerLayer.defaultState;
 			if (!name && !defaultState)
 				throw new Error("Animator:must have  default clip value,please set clip property.");
 			var curPlayState:AnimatorState = controllerLayer._currentPlayState;

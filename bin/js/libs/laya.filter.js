@@ -8,38 +8,6 @@
 /**
 *@private
 */
-//class laya.filters.GlowFilterGLRender
-var GlowFilterGLRender=(function(){
-	function GlowFilterGLRender(){}
-	__class(GlowFilterGLRender,'laya.filters.GlowFilterGLRender');
-	var __proto=GlowFilterGLRender.prototype;
-	__proto.setShaderInfo=function(shader,w,h,data){
-		shader.defines.add(data.type);
-		var sv=shader;
-		sv.u_blurInfo1=data._sv_blurInfo1;
-		var info2=data._sv_blurInfo2;
-		info2[0]=w;info2[1]=h;
-		sv.u_blurInfo2=info2;
-		sv.u_color=data.getColor();
-	}
-
-	__proto.render=function(rt,ctx,width,height,filter){
-		var w=width,h=height;
-		var svBlur=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
-		this.setShaderInfo(svBlur,w,h,filter);
-		var svCP=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
-		var matI=Matrix.TEMP.identity();
-		ctx.drawTarget(rt,0,0,w,h,matI,svBlur);
-		ctx.drawTarget(rt,0,0,w,h,matI,svCP);
-	}
-
-	return GlowFilterGLRender;
-})()
-
-
-/**
-*@private
-*/
 //class laya.filters.BlurFilterGLRender
 var BlurFilterGLRender=(function(){
 	function BlurFilterGLRender(){}
@@ -73,50 +41,35 @@ var BlurFilterGLRender=(function(){
 
 
 /**
-*模糊滤镜
+*@private
 */
-//class laya.filters.BlurFilter extends laya.filters.Filter
-var BlurFilter=(function(_super){
-	function BlurFilter(strength){
-		/**模糊滤镜的强度(值越大，越不清晰 */
-		this.strength=NaN;
-		this.strength_sig2_2sig2_gauss1=[];
-		//给shader用的。避免创建对象
-		this.strength_sig2_native=null;
-		//给native用的
-		this.renderFunc=null;
-		BlurFilter.__super.call(this);
-		(strength===void 0)&& (strength=4);
-		this.strength=strength;
-		this._action=null;
-		this._glRender=new BlurFilterGLRender();
+//class laya.filters.GlowFilterGLRender
+var GlowFilterGLRender=(function(){
+	function GlowFilterGLRender(){}
+	__class(GlowFilterGLRender,'laya.filters.GlowFilterGLRender');
+	var __proto=GlowFilterGLRender.prototype;
+	__proto.setShaderInfo=function(shader,w,h,data){
+		shader.defines.add(data.type);
+		var sv=shader;
+		sv.u_blurInfo1=data._sv_blurInfo1;
+		var info2=data._sv_blurInfo2;
+		info2[0]=w;info2[1]=h;
+		sv.u_blurInfo2=info2;
+		sv.u_color=data.getColor();
 	}
 
-	__class(BlurFilter,'laya.filters.BlurFilter',_super);
-	var __proto=BlurFilter.prototype;
-	__proto.getStrenth_sig2_2sig2_native=function(){
-		if (!this.strength_sig2_native){
-			this.strength_sig2_native=new Float32Array(4);
-		};
-		var sigma=this.strength/3.0;
-		var sigma2=sigma *sigma;
-		this.strength_sig2_native[0]=this.strength;
-		this.strength_sig2_native[1]=sigma2;
-		this.strength_sig2_native[2]=2.0*sigma2;
-		this.strength_sig2_native[3]=1.0 / (2.0 *Math.PI *sigma2);
-		return this.strength_sig2_native;
+	__proto.render=function(rt,ctx,width,height,filter){
+		var w=width,h=height;
+		var svBlur=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
+		this.setShaderInfo(svBlur,w,h,filter);
+		var svCP=Value2D.create(/*laya.webgl.shader.d2.ShaderDefines2D.TEXTURE2D*/0x01,0);
+		var matI=Matrix.TEMP.identity();
+		ctx.drawTarget(rt,0,0,w,h,matI,svBlur);
+		ctx.drawTarget(rt,0,0,w,h,matI,svCP);
 	}
 
-	/**
-	*@private
-	*当前滤镜的类型
-	*/
-	__getset(0,__proto,'type',function(){
-		return 0x10;
-	});
-
-	return BlurFilter;
-})(Filter)
+	return GlowFilterGLRender;
+})()
 
 
 /**
@@ -219,6 +172,53 @@ var GlowFilter=(function(_super){
 	});
 
 	return GlowFilter;
+})(Filter)
+
+
+/**
+*模糊滤镜
+*/
+//class laya.filters.BlurFilter extends laya.filters.Filter
+var BlurFilter=(function(_super){
+	function BlurFilter(strength){
+		/**模糊滤镜的强度(值越大，越不清晰 */
+		this.strength=NaN;
+		this.strength_sig2_2sig2_gauss1=[];
+		//给shader用的。避免创建对象
+		this.strength_sig2_native=null;
+		//给native用的
+		this.renderFunc=null;
+		BlurFilter.__super.call(this);
+		(strength===void 0)&& (strength=4);
+		this.strength=strength;
+		this._action=null;
+		this._glRender=new BlurFilterGLRender();
+	}
+
+	__class(BlurFilter,'laya.filters.BlurFilter',_super);
+	var __proto=BlurFilter.prototype;
+	__proto.getStrenth_sig2_2sig2_native=function(){
+		if (!this.strength_sig2_native){
+			this.strength_sig2_native=new Float32Array(4);
+		};
+		var sigma=this.strength/3.0;
+		var sigma2=sigma *sigma;
+		this.strength_sig2_native[0]=this.strength;
+		this.strength_sig2_native[1]=sigma2;
+		this.strength_sig2_native[2]=2.0*sigma2;
+		this.strength_sig2_native[3]=1.0 / (2.0 *Math.PI *sigma2);
+		return this.strength_sig2_native;
+	}
+
+	/**
+	*@private
+	*当前滤镜的类型
+	*/
+	__getset(0,__proto,'type',function(){
+		return 0x10;
+	});
+
+	return BlurFilter;
 })(Filter)
 
 

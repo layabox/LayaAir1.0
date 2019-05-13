@@ -2,10 +2,10 @@ package laya.d3.graphics {
 	import laya.d3.core.BufferState;
 	import laya.d3.core.MeshRenderer;
 	import laya.d3.core.MeshSprite3D;
-	import laya.d3.core.render.BaseRender;
-	import laya.d3.core.render.RenderContext3D;
+	import laya.d3.core.render.BatchMark;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.core.scene.Scene3D;
 	
 	/**
 	 * @private
@@ -16,11 +16,12 @@ package laya.d3.graphics {
 		public static var instance:MeshRenderDynamicBatchManager = new MeshRenderDynamicBatchManager();
 		
 		/**@private */
-		private var _cacheBatchRender:Vector.<Vector.<MeshRenderer>> = new Vector.<Vector.<MeshRenderer>>();
+		private var _instanceBatchOpaqueMarks:Vector.<Vector.<Vector.<Vector.<BatchMark>>>> = new Vector.<Vector.<Vector.<Vector.<BatchMark>>>>();
+		/**@private */
+		private var _vertexBatchOpaqueMarks:Vector.<Vector.<Vector.<Vector.<BatchMark>>>> = new Vector.<Vector.<Vector.<Vector.<BatchMark>>>>();
+		
 		/**@private */
 		private var _cacheBufferStates:Vector.<BufferState> = new Vector.<BufferState>();
-		/**@private */
-		public var _opaqueBatchMarks:Vector.<Vector.<Vector.<Vector.<Array>>>> = new Vector.<Vector.<Vector.<Vector.<Array>>>>();
 		/**@private [只读]*/
 		public var _updateCountMark:int;
 		
@@ -32,6 +33,26 @@ package laya.d3.graphics {
 			super();
 			SubMeshDynamicBatch.instance = new SubMeshDynamicBatch();
 			_updateCountMark = 0;
+		}
+		
+		/**
+		 * @private
+		 */
+		public function getInstanceBatchOpaquaMark(lightMapIndex:int, receiveShadow:Boolean, materialID:int, subMeshID:int):BatchMark {
+			var instanceLightMapMarks:Vector.<Vector.<Vector.<BatchMark>>> = (_instanceBatchOpaqueMarks[lightMapIndex]) || (_instanceBatchOpaqueMarks[lightMapIndex] = new Vector.<Vector.<Vector.<BatchMark>>>());
+			var instanceReceiveShadowMarks:Vector.<Vector.<BatchMark>> = (instanceLightMapMarks[receiveShadow ? 0 : 1]) || (instanceLightMapMarks[receiveShadow ? 0 : 1] = new Vector.<Vector.<BatchMark>>());
+			var instanceMaterialMarks:Vector.<BatchMark> = (instanceReceiveShadowMarks[materialID]) || (instanceReceiveShadowMarks[materialID] = new Vector.<BatchMark>());
+			return instanceMaterialMarks[subMeshID] || (instanceMaterialMarks[subMeshID] = new BatchMark());
+		}
+		
+		/**
+		 * @private
+		 */
+		public function getVertexBatchOpaquaMark(lightMapIndex:int, receiveShadow:Boolean, materialID:int, verDecID:int):BatchMark {
+			var dynLightMapMarks:Vector.<Vector.<Vector.<BatchMark>>> = (_vertexBatchOpaqueMarks[lightMapIndex]) || (_vertexBatchOpaqueMarks[lightMapIndex] = new Vector.<Vector.<Vector.<BatchMark>>>());
+			var dynReceiveShadowMarks:Vector.<Vector.<BatchMark>> = (dynLightMapMarks[receiveShadow ? 0 : 1]) || (dynLightMapMarks[receiveShadow ? 0 : 1] = new Vector.<Vector.<BatchMark>>());
+			var dynMaterialMarks:Vector.<BatchMark> = (dynReceiveShadowMarks[materialID]) || (dynReceiveShadowMarks[materialID] = new Vector.<BatchMark>());
+			return dynMaterialMarks[verDecID] || (dynMaterialMarks[verDecID] = new BatchMark());
 		}
 		
 		/**
@@ -54,22 +75,6 @@ package laya.d3.graphics {
 		}
 		
 		/**
-		 * @private
-		 */
-		public function _getBatchRender(lightMapIndex:int, receiveShadow:Boolean):MeshRenderer {
-			var lightRenders:Vector.<MeshRenderer> = _cacheBatchRender[lightMapIndex];
-			(lightRenders) || (lightRenders = _cacheBatchRender[lightMapIndex] = new Vector.<MeshRenderer>(2));
-			var render:MeshRenderer = lightRenders[receiveShadow ? 1 : 0];
-			if (!render) {
-				render = new MeshRenderer(null);
-				render.lightmapIndex = lightMapIndex;
-				render.receiveShadow = receiveShadow;
-				lightRenders[receiveShadow ? 1 : 0] = render;
-			}
-			return render;
-		}
-		
-		/**
 		 * @inheritDoc
 		 */
 		override public function _getBatchRenderElementFromPool():RenderElement {
@@ -77,7 +82,8 @@ package laya.d3.graphics {
 			if (!renderElement) {
 				renderElement = new SubMeshRenderElement();
 				_batchRenderElementPool[_batchRenderElementPoolIndex - 1] = renderElement;
-				renderElement.dynamicBatchElementList = new Vector.<SubMeshRenderElement>();
+				renderElement.vertexBatchElementList = new Vector.<SubMeshRenderElement>();
+				renderElement.instanceBatchElementList = new Vector.<SubMeshRenderElement>();
 			}
 			return renderElement;
 		}

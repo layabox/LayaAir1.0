@@ -14,8 +14,8 @@ package laya.ani {
 		 * @param	skin
 		 */
 		//TODO:coverage
-		public function drawSkin(skinA:SkinMeshForGraphic):void {		
-			drawTriangles(skinA.texture, 0, 0, skinA.vertices as Float32Array, skinA.uvs as Float32Array, skinA.indexes as Uint16Array, skinA.transform||Matrix.EMPTY);
+		public function drawSkin(skinA:SkinMeshForGraphic, alpha:Number):void {		
+			drawTriangles(skinA.texture, 0, 0, skinA.vertices as Float32Array, skinA.uvs as Float32Array, skinA.indexes as Uint16Array, skinA.transform||Matrix.EMPTY, alpha);
 		}
 	
 		private static var _caches:Array = [];

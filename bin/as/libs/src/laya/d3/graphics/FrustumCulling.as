@@ -71,7 +71,7 @@ package laya.d3.graphics {
 				var render:BaseRender = renders[i] as BaseRender;
 				if (camera._isLayerVisible(render._owner._layer) && render._enable) {
 					Stat.frustumCulling++;
-					if (render._needRender(boundFrustum)) {
+					if (!camera.useOcclusionCulling||render._needRender(boundFrustum)) {
 						render._visible = true;
 						render._distanceForSort = Vector3.distance(render.boundingSphere.center, camPos);//TODO:合并计算浪费,或者合并后取平均值
 						var elements:Vector.<RenderElement> = render._renderElements;

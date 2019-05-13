@@ -12,6 +12,9 @@ package laya.d3.component {
 		/**@private */
 		public static var BLENDINGMODE_ADDTIVE:int = 1;
 		
+		/**@private */
+		private var _defaultState:AnimatorState = null;
+		
 		/**@private 0:常规播放、1:动态融合播放、2:固定融合播放*/
 		public var _playType:int;
 		/**@private */
@@ -31,8 +34,6 @@ package laya.d3.component {
 		/**@private */
 		public var _destCrossClipNodeIndices:Vector.<int>;
 		
-		/**@private */
-		public var _defaultState:AnimatorState;
 		/**@private */
 		public var _currentPlayState:AnimatorState;
 		/**@private */
@@ -54,6 +55,23 @@ package laya.d3.component {
 		public var playOnWake:Boolean = true;
 		
 		/**
+		 * 获取默认动画状态。
+		 * @return 默认动画状态。
+		 */
+		public function get defaultState():AnimatorState {
+			return _defaultState;
+		}
+		
+		/**
+		 * 设置默认动画状态。
+		 * @param value 默认动画状态。
+		 */
+		public function set defaultState(value:AnimatorState):void {
+			_defaultState = value;
+			_statesMap[value.name] = value;
+		}
+		
+		/**
 		 * 创建一个 <code>AnimatorControllerLayer</code> 实例。
 		 */
 		public function AnimatorControllerLayer(name:String) {
@@ -64,7 +82,6 @@ package laya.d3.component {
 			_crossNodesOwnersIndicesMap = {};
 			_crossNodesOwnersCount = 0;
 			_crossNodesOwners = new Vector.<KeyframeNodeOwner>();
-			_defaultState = null;
 			_currentPlayState = null;
 			_states = new Vector.<AnimatorState>();
 			_playStateInfo = new AnimatorPlayState();
@@ -93,6 +110,7 @@ package laya.d3.component {
 			_states = null;
 			_playStateInfo = null;
 			_crossPlayStateInfo = null;
+			_defaultState = null;
 		}
 		
 		/**
@@ -116,6 +134,7 @@ package laya.d3.component {
 			cloneTo(dest);
 			return dest;
 		}
+	
 	}
 
 }

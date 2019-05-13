@@ -169,6 +169,7 @@ package laya.media.webaudio {
 		 * 停止播放
 		 */
 		override public function stop():void {
+			super.stop();
             _clearBufferSource();
 			this.audioBuffer = null;
 			if (gain)
@@ -205,11 +206,10 @@ package laya.media.webaudio {
 		 * 设置音量
 		 */
 		override public function set volume(v:Number):void {
+			this._volume = v;
 			if (this.isStopped) {
 				return;
-			}
-			
-			this._volume = v;
+			}	
 			if (this.gain.gain.setTargetAtTime)
 			{
 				this.gain.gain.setTargetAtTime(v,this.context.currentTime,SetTargetDelay);

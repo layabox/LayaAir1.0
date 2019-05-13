@@ -1,11 +1,15 @@
 package laya.d3.graphics {
 	import laya.d3.core.GeometryElement;
+	import laya.d3.core.MeshRenderer;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.render.BaseRender;
+	import laya.d3.core.render.BatchMark;
+	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.render.SubMeshRenderElement;
+	import laya.d3.core.scene.Scene3D;
 	import laya.d3.graphics.Vertex.VertexMesh;
 	import laya.d3.resource.models.Mesh;
 	
@@ -20,7 +24,7 @@ package laya.d3.graphics {
 		public static var instance:MeshRenderStaticBatchManager = new MeshRenderStaticBatchManager();
 		
 		/**@private */
-		public var _opaqueBatchMarks:Vector.<Vector.<Vector.<Vector.<Array>>>> = new Vector.<Vector.<Vector.<Vector.<Array>>>>();
+		public var _opaqueBatchMarks:Vector.<Vector.<Vector.<Vector.<BatchMark>>>> = new Vector.<Vector.<Vector.<Vector.<BatchMark>>>>();
 		/**@private [只读]*/
 		public var _updateCountMark:int;
 		
@@ -39,7 +43,7 @@ package laya.d3.graphics {
 		override protected function _compare(left:RenderableSprite3D, right:RenderableSprite3D):int {
 			//按照合并条件排序，增加初始状态合并几率
 			var lRender:BaseRender = left._render, rRender:BaseRender = right._render;
-			var leftGeo:Mesh = (left as MeshSprite3D).meshFilter.sharedMesh as Mesh, rightGeo:Mesh = (right as MeshSprite3D).meshFilter.sharedMesh  as Mesh;
+			var leftGeo:Mesh = (left as MeshSprite3D).meshFilter.sharedMesh as Mesh, rightGeo:Mesh = (right as MeshSprite3D).meshFilter.sharedMesh as Mesh;
 			var lightOffset:int = lRender.lightmapIndex - rRender.lightmapIndex;
 			if (lightOffset === 0) {
 				var receiveShadowOffset:int = (lRender.receiveShadow ? 1 : 0) - (rRender.receiveShadow ? 1 : 0);
@@ -81,10 +85,9 @@ package laya.d3.graphics {
 		 */
 		private function _getStaticBatch(rootOwner:Sprite3D, number:int):SubMeshStaticBatch {
 			var key:int = rootOwner ? rootOwner.id : 0;
-			var batchOwner:MeshRenderStaticBatchOwner = _staticBatches[key];
-			(batchOwner) || (batchOwner = _staticBatches[key] = new MeshRenderStaticBatchOwner(rootOwner));
-			var batches:Vector.<SubMeshStaticBatch> = batchOwner._batches;
-			return (batches[number]) || (batches[number] = new SubMeshStaticBatch(batchOwner, number, _verDec));
+			var batchOwner:Object = _staticBatches[key];
+			(batchOwner) || (batchOwner = _staticBatches[key] = []);
+			return (batchOwner[number]) || (batchOwner[number] = new SubMeshStaticBatch(rootOwner, number, _verDec));
 		}
 		
 		/**
@@ -115,7 +118,7 @@ package laya.d3.graphics {
 			}
 			
 			for (var key:String in _staticBatches) {
-				var batches:Array = _staticBatches[key]._batches;
+				var batches:Array = _staticBatches[key];
 				for (i = 0, n = batches.length; i < n; i++)
 					batches[i].finishInit();
 			}
@@ -128,15 +131,22 @@ package laya.d3.graphics {
 		public function _destroyRenderSprite(sprite:RenderableSprite3D):void {
 			var staticBatch:SubMeshStaticBatch = sprite._render._staticBatch as SubMeshStaticBatch;
 			staticBatch.remove(sprite);
-
+			
 			if (staticBatch._batchElements.length === 0) {
-				var owner:Sprite3D = staticBatch.batchOwner._owner;
+				var owner:Sprite3D = staticBatch.batchOwner;
 				var ownerID:int = owner ? owner.id : 0;
-				var batches:Array = _staticBatches[ownerID]._batches;
-				batches.splice(staticBatch.number, 1)
-				if (batches.length === 0)
-					delete _staticBatches[ownerID];
+				var batches:Array = _staticBatches[ownerID];
+				batches[staticBatch.number] = null;
 				staticBatch.dispose();
+				var empty:Boolean = true;
+				for (var i:int = 0; i < batches.length; i++ ){
+					if (batches[i])
+						empty = false;
+				}
+				
+				if (empty){
+					delete _staticBatches[ownerID];
+				}
 			}
 		}
 		
@@ -153,7 +163,7 @@ package laya.d3.graphics {
 		 */
 		override public function _garbageCollection():void {
 			for (var key:String in _staticBatches) {
-				var batches:Array = _staticBatches[key]._batches;
+				var batches:Array = _staticBatches[key];
 				for (var i:int = 0, n:int = batches.length; i < n; i++) {
 					var staticBatch:SubMeshStaticBatch = batches[i];
 					if (staticBatch._batchElements.length === 0) {
@@ -165,6 +175,16 @@ package laya.d3.graphics {
 					}
 				}
 			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function getBatchOpaquaMark(lightMapIndex:int, receiveShadow:Boolean, materialID:int, staticBatchID:int):BatchMark {
+			var staLightMapMarks:Vector.<Vector.<Vector.<BatchMark>>> = (_opaqueBatchMarks[lightMapIndex]) || (_opaqueBatchMarks[lightMapIndex] = new Vector.<Vector.<Vector.<BatchMark>>>());
+			var staReceiveShadowMarks:Vector.<Vector.<BatchMark>> = (staLightMapMarks[receiveShadow]) || (staLightMapMarks[receiveShadow] = new Vector.<Vector.<BatchMark>>());
+			var staMaterialMarks:Vector.<BatchMark> = (staReceiveShadowMarks[materialID]) || (staReceiveShadowMarks[materialID] = new Vector.<BatchMark>());
+			return (staMaterialMarks[staticBatchID]) || (staMaterialMarks[staticBatchID] = new BatchMark);
 		}
 	}
 }

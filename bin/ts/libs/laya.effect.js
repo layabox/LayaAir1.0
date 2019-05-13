@@ -195,101 +195,6 @@ var EffectBase=(function(_super){
 *...
 *@author ww
 */
-//class laya.effect.GlowFilterSetter extends laya.effect.FilterSetterBase
-var GlowFilterSetter=(function(_super){
-	function GlowFilterSetter(){
-		/**
-		*滤镜的颜色
-		*/
-		this._color="#ff0000";
-		/**
-		*边缘模糊的大小 0~20
-		*/
-		this._blur=4;
-		/**
-		*X轴方向的偏移
-		*/
-		this._offX=6;
-		/**
-		*Y轴方向的偏移
-		*/
-		this._offY=6;
-		GlowFilterSetter.__super.call(this);
-		this._filter=new GlowFilter(this._color);
-	}
-
-	__class(GlowFilterSetter,'laya.effect.GlowFilterSetter',_super);
-	var __proto=GlowFilterSetter.prototype;
-	__proto.buildFilter=function(){
-		this._filter=new GlowFilter(this.color,this.blur,this.offX,this.offY);
-		_super.prototype.buildFilter.call(this);
-	}
-
-	__getset(0,__proto,'blur',function(){
-		return this._blur;
-		},function(value){
-		this._blur=value;
-		this.paramChanged();
-	});
-
-	__getset(0,__proto,'color',function(){
-		return this._color;
-		},function(value){
-		this._color=value;
-		this.paramChanged();
-	});
-
-	__getset(0,__proto,'offX',function(){
-		return this._offX;
-		},function(value){
-		this._offX=value;
-		this.paramChanged();
-	});
-
-	__getset(0,__proto,'offY',function(){
-		return this._offY;
-		},function(value){
-		this._offY=value;
-		this.paramChanged();
-	});
-
-	return GlowFilterSetter;
-})(FilterSetterBase)
-
-
-/**
-*...
-*@author ww
-*/
-//class laya.effect.BlurFilterSetter extends laya.effect.FilterSetterBase
-var BlurFilterSetter=(function(_super){
-	function BlurFilterSetter(){
-		this._strength=4;
-		BlurFilterSetter.__super.call(this);
-		this._filter=new BlurFilter(this.strength);
-	}
-
-	__class(BlurFilterSetter,'laya.effect.BlurFilterSetter',_super);
-	var __proto=BlurFilterSetter.prototype;
-	__proto.buildFilter=function(){
-		this._filter=new BlurFilter(this.strength);
-		_super.prototype.buildFilter.call(this);
-	}
-
-	__getset(0,__proto,'strength',function(){
-		return this._strength;
-		},function(value){
-		this._strength=value;
-	});
-
-	return BlurFilterSetter;
-})(FilterSetterBase)
-
-
-/**
-*...
-*@author ww
-*/
 //class laya.effect.ColorFilterSetter extends laya.effect.FilterSetterBase
 var ColorFilterSetter=(function(_super){
 	function ColorFilterSetter(){
@@ -415,23 +320,98 @@ var ColorFilterSetter=(function(_super){
 
 
 /**
-*淡入效果
+*...
+*@author ww
 */
-//class laya.effect.FadeIn extends laya.effect.EffectBase
-var FadeIn=(function(_super){
-	function FadeIn(){
-		FadeIn.__super.call(this);;
+//class laya.effect.GlowFilterSetter extends laya.effect.FilterSetterBase
+var GlowFilterSetter=(function(_super){
+	function GlowFilterSetter(){
+		/**
+		*滤镜的颜色
+		*/
+		this._color="#ff0000";
+		/**
+		*边缘模糊的大小 0~20
+		*/
+		this._blur=4;
+		/**
+		*X轴方向的偏移
+		*/
+		this._offX=6;
+		/**
+		*Y轴方向的偏移
+		*/
+		this._offY=6;
+		GlowFilterSetter.__super.call(this);
+		this._filter=new GlowFilter(this._color);
 	}
 
-	__class(FadeIn,'laya.effect.FadeIn',_super);
-	var __proto=FadeIn.prototype;
-	__proto._doTween=function(){
-		this.target.alpha=0;
-		return Tween.to(this.target,{alpha:1},this.duration,Ease[this.ease],this._comlete,this.delay);
+	__class(GlowFilterSetter,'laya.effect.GlowFilterSetter',_super);
+	var __proto=GlowFilterSetter.prototype;
+	__proto.buildFilter=function(){
+		this._filter=new GlowFilter(this.color,this.blur,this.offX,this.offY);
+		_super.prototype.buildFilter.call(this);
 	}
 
-	return FadeIn;
-})(EffectBase)
+	__getset(0,__proto,'blur',function(){
+		return this._blur;
+		},function(value){
+		this._blur=value;
+		this.paramChanged();
+	});
+
+	__getset(0,__proto,'color',function(){
+		return this._color;
+		},function(value){
+		this._color=value;
+		this.paramChanged();
+	});
+
+	__getset(0,__proto,'offX',function(){
+		return this._offX;
+		},function(value){
+		this._offX=value;
+		this.paramChanged();
+	});
+
+	__getset(0,__proto,'offY',function(){
+		return this._offY;
+		},function(value){
+		this._offY=value;
+		this.paramChanged();
+	});
+
+	return GlowFilterSetter;
+})(FilterSetterBase)
+
+
+/**
+*...
+*@author ww
+*/
+//class laya.effect.BlurFilterSetter extends laya.effect.FilterSetterBase
+var BlurFilterSetter=(function(_super){
+	function BlurFilterSetter(){
+		this._strength=4;
+		BlurFilterSetter.__super.call(this);
+		this._filter=new BlurFilter(this.strength);
+	}
+
+	__class(BlurFilterSetter,'laya.effect.BlurFilterSetter',_super);
+	var __proto=BlurFilterSetter.prototype;
+	__proto.buildFilter=function(){
+		this._filter=new BlurFilter(this.strength);
+		_super.prototype.buildFilter.call(this);
+	}
+
+	__getset(0,__proto,'strength',function(){
+		return this._strength;
+		},function(value){
+		this._strength=value;
+	});
+
+	return BlurFilterSetter;
+})(FilterSetterBase)
 
 
 /**
@@ -451,6 +431,26 @@ var FadeOut=(function(_super){
 	}
 
 	return FadeOut;
+})(EffectBase)
+
+
+/**
+*淡入效果
+*/
+//class laya.effect.FadeIn extends laya.effect.EffectBase
+var FadeIn=(function(_super){
+	function FadeIn(){
+		FadeIn.__super.call(this);;
+	}
+
+	__class(FadeIn,'laya.effect.FadeIn',_super);
+	var __proto=FadeIn.prototype;
+	__proto._doTween=function(){
+		this.target.alpha=0;
+		return Tween.to(this.target,{alpha:1},this.duration,Ease[this.ease],this._comlete,this.delay);
+	}
+
+	return FadeIn;
 })(EffectBase)
 
 

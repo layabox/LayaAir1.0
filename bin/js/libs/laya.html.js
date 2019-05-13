@@ -10,6 +10,343 @@ Laya.interface('laya.html.utils.ILayout');
 /**
 *@private
 */
+//class laya.html.dom.HTMLHitRect
+var HTMLHitRect=(function(){
+	function HTMLHitRect(){
+		//this.rec=null;
+		//this.href=null;
+		this.rec=new Rectangle();
+		this.reset();
+	}
+
+	__class(HTMLHitRect,'laya.html.dom.HTMLHitRect');
+	var __proto=HTMLHitRect.prototype;
+	__proto.reset=function(){
+		this.rec.reset();
+		this.href=null;
+		return this;
+	}
+
+	__proto.recover=function(){
+		Pool.recover("HTMLHitRect",this.reset());
+	}
+
+	HTMLHitRect.create=function(){
+		return Pool.getItemByClass("HTMLHitRect",HTMLHitRect);
+	}
+
+	return HTMLHitRect;
+})()
+
+
+/**
+*@private
+*/
+//class laya.html.utils.LayoutLine
+var LayoutLine=(function(){
+	function LayoutLine(){
+		this.x=0;
+		this.y=0;
+		this.w=0;
+		this.h=0;
+		this.wordStartIndex=0;
+		this.minTextHeight=99999;
+		this.mWidth=0;
+		this.elements=new Array;
+	}
+
+	__class(LayoutLine,'laya.html.utils.LayoutLine');
+	var __proto=LayoutLine.prototype;
+	/**
+	*底对齐（默认）
+	*@param left
+	*@param width
+	*@param dy
+	*@param align 水平
+	*@param valign 垂直
+	*@param lineHeight 行高
+	*/
+	__proto.updatePos=function(left,width,lineNum,dy,align,valign,lineHeight){
+		var w=0;
+		var one
+		if (this.elements.length > 0){
+			one=this.elements[this.elements.length-1];
+			w=one.x+one.width-this.elements[0].x;
+		}
+		lineHeight=lineHeight || this.h;
+		var dx=0,ddy=NaN;
+		if (align===/*laya.html.utils.HTMLStyle.ALIGN_CENTER*/"center")dx=(width-w)/ 2;
+		if (align===/*laya.html.utils.HTMLStyle.ALIGN_RIGHT*/"right")dx=(width-w);
+		for (var i=0,n=this.elements.length;i < n;i++){
+			one=this.elements[i];
+			var tCSSStyle=one._getCSSStyle();
+			dx!==0 && (one.x+=dx);
+			switch (tCSSStyle.valign){
+				case "top":
+					one.y=dy;
+					break ;
+				case "middle":;
+					var tMinTextHeight=0;
+					if (this.minTextHeight !=99999)tMinTextHeight=this.minTextHeight;
+					var tBottomLineY=(tMinTextHeight+lineHeight)/ 2;
+					tBottomLineY=Math.max(tBottomLineY,this.h);
+					if ((one instanceof laya.html.dom.HTMLImageElement ))ddy=dy+tBottomLineY-one.height;
+					else ddy=dy+tBottomLineY-one.height;
+					one.y=ddy;
+					break ;
+				case "bottom":
+					one.y=dy+(lineHeight-one.height);
+					break ;
+				}
+		}
+	}
+
+	return LayoutLine;
+})()
+
+
+/**
+*@private
+*/
+//class laya.html.dom.HTMLDocument
+var HTMLDocument=(function(){
+	function HTMLDocument(){
+		this.all=new Array;
+		this.styleSheets=HTMLStyle.styleSheets;
+	}
+
+	__class(HTMLDocument,'laya.html.dom.HTMLDocument');
+	var __proto=HTMLDocument.prototype;
+	//TODO:coverage
+	__proto.getElementById=function(id){
+		return this.all[id];
+	}
+
+	//TODO:coverage
+	__proto.setElementById=function(id,e){
+		this.all[id]=e;
+	}
+
+	__static(HTMLDocument,
+	['document',function(){return this.document=new HTMLDocument();}
+	]);
+	return HTMLDocument;
+})()
+
+
+/**
+*@private
+*HTML的布局类
+*对HTML的显示对象进行排版
+*/
+//class laya.html.utils.Layout
+var Layout=(function(){
+	function Layout(){}
+	__class(Layout,'laya.html.utils.Layout');
+	Layout.later=function(element){
+		if (Layout._will==null){
+			Layout._will=[];
+			Laya.stage.frameLoop(1,null,function(){
+				if (Layout._will.length < 1)
+					return;
+				for (var i=0;i < Layout._will.length;i++){
+					laya.html.utils.Layout.layout(Layout._will[i]);
+				}
+				Layout._will.length=0;
+			});
+		}
+		Layout._will.push(element);
+	}
+
+	Layout.layout=function(element){
+		if (!element || !element._style)return null;
+		var style=element._style;
+		if ((style._type & /*laya.html.utils.HTMLStyle.ADDLAYOUTED*/0x200)===0)
+			return null;
+		element.style._type &=~ /*laya.html.utils.HTMLStyle.ADDLAYOUTED*/0x200;
+		var arr=Layout._multiLineLayout(element);
+		return arr;
+	}
+
+	Layout._multiLineLayout=function(element){
+		var elements=new Array;
+		element._addChildsToLayout(elements);
+		var i=0,n=elements.length,j=0;
+		var style=element._getCSSStyle();
+		var letterSpacing=style.letterSpacing;
+		var leading=style.leading;
+		var lineHeight=style.lineHeight;
+		var widthAuto=style._widthAuto()|| !style.wordWrap;
+		var width=widthAuto ? 999999 :element.width;
+		var height=element.height;
+		var maxWidth=0;
+		var exWidth=style.italic ? style.fontSize / 3 :0;
+		var align=style.align;
+		var valign=style.valign;
+		var endAdjust=valign!==/*laya.html.utils.HTMLStyle.VALIGN_TOP*/"top" || align!==/*laya.html.utils.HTMLStyle.ALIGN_LEFT*/"left" || lineHeight !=0;
+		var oneLayout;
+		var x=0;
+		var y=0;
+		var w=0;
+		var h=0;
+		var tBottom=0;
+		var lines=new Array;
+		var curStyle;
+		var curPadding;
+		var curLine=lines[0]=new LayoutLine();
+		var newLine=false,nextNewline=false;
+		var htmlWord;
+		var sprite;
+		curLine.h=0;
+		if (style.italic)
+			width-=style.fontSize / 3;
+		var tWordWidth=0;
+		var tLineFirstKey=true;
+		function addLine (){
+			curLine.y=y;
+			y+=curLine.h+leading;
+			curLine.mWidth=tWordWidth;
+			tWordWidth=0;
+			curLine=new LayoutLine();
+			lines.push(curLine);
+			curLine.h=0;
+			x=0;
+			tLineFirstKey=true;
+			newLine=false;
+		}
+		for (i=0;i < n;i++){
+			oneLayout=elements[i];
+			if (oneLayout==null){
+				if (!tLineFirstKey){
+					x+=Layout.DIV_ELEMENT_PADDING;
+				}
+				curLine.wordStartIndex=curLine.elements.length;
+				continue ;
+			}
+			tLineFirstKey=false;
+			if ((oneLayout instanceof laya.html.dom.HTMLBrElement )){
+				addLine();
+				curLine.y=y;
+				curLine.h=lineHeight;
+				continue ;
+				}else if (oneLayout._isChar()){
+				htmlWord=oneLayout;
+				if (!htmlWord.isWord){
+					if (lines.length > 0 && (x+w)> width && curLine.wordStartIndex > 0){
+						var tLineWord=0;
+						tLineWord=curLine.elements.length-curLine.wordStartIndex+1;
+						curLine.elements.length=curLine.wordStartIndex;
+						i-=tLineWord;
+						addLine();
+						continue ;
+					}
+					newLine=false;
+					tWordWidth+=htmlWord.width;
+					}else {
+					newLine=nextNewline || (htmlWord.char==='\n');
+					curLine.wordStartIndex=curLine.elements.length;
+				}
+				w=htmlWord.width+htmlWord.style.letterSpacing;
+				h=htmlWord.height;
+				nextNewline=false;
+				newLine=newLine || ((x+w)> width);
+				newLine && addLine();
+				curLine.minTextHeight=Math.min(curLine.minTextHeight,oneLayout.height);
+				}else {
+				curStyle=oneLayout._getCSSStyle();
+				sprite=oneLayout;
+				curPadding=curStyle.padding;
+				newLine=nextNewline || curStyle.getLineElement();
+				w=sprite.width+curPadding[1]+curPadding[3]+curStyle.letterSpacing;
+				h=sprite.height+curPadding[0]+curPadding[2];
+				nextNewline=curStyle.getLineElement();
+				newLine=newLine || ((x+w)> width && curStyle.wordWrap);
+				newLine && addLine();
+			}
+			curLine.elements.push(oneLayout);
+			curLine.h=Math.max(curLine.h,h);
+			oneLayout.x=x;
+			oneLayout.y=y;
+			x+=w;
+			curLine.w=x-letterSpacing;
+			curLine.y=y;
+			maxWidth=Math.max(x+exWidth,maxWidth);
+		}
+		y=curLine.y+curLine.h;
+		if (endAdjust){
+			var tY=0;
+			var tWidth=width;
+			if (widthAuto && element.width > 0){
+				tWidth=element.width;
+			}
+			for (i=0,n=lines.length;i < n;i++){
+				lines[i].updatePos(0,tWidth,i,tY,align,valign,lineHeight);
+				tY+=Math.max(lineHeight,lines[i].h+leading);
+			}
+			y=tY;
+		}
+		widthAuto && (element.width=maxWidth);
+		(y > element.height)&& (element.height=y);
+		return [maxWidth,y];
+	}
+
+	Layout.DIV_ELEMENT_PADDING=0;
+	Layout._will=null;
+	return Layout;
+})()
+
+
+/**
+*@private
+*/
+//class laya.html.dom.HTMLBrElement
+var HTMLBrElement=(function(){
+	function HTMLBrElement(){}
+	__class(HTMLBrElement,'laya.html.dom.HTMLBrElement');
+	var __proto=HTMLBrElement.prototype;
+	/**@private */
+	__proto._addToLayout=function(out){
+		out.push(this);
+	}
+
+	//TODO:coverage
+	__proto.reset=function(){
+		return this;
+	}
+
+	__proto.destroy=function(){
+		Pool.recover(HTMLElement.getClassName(this),this.reset());
+	}
+
+	__proto._setParent=function(value){}
+	//TODO:coverage
+	__proto._getCSSStyle=function(){
+		if (!HTMLBrElement.brStyle){
+			HTMLBrElement.brStyle=new HTMLStyle();
+			HTMLBrElement.brStyle.setLineElement(true);
+			HTMLBrElement.brStyle.block=true;
+		}
+		return HTMLBrElement.brStyle;
+	}
+
+	__proto.renderSelfToGraphic=function(graphic,gX,gY,recList){}
+	__getset(0,__proto,'URI',null,function(value){
+	});
+
+	__getset(0,__proto,'parent',null,function(value){
+	});
+
+	__getset(0,__proto,'href',null,function(value){
+	});
+
+	HTMLBrElement.brStyle=null;
+	return HTMLBrElement;
+})()
+
+
+/**
+*@private
+*/
 //class laya.html.utils.HTMLStyle
 var HTMLStyle=(function(){
 	function HTMLStyle(){
@@ -469,163 +806,55 @@ var HTMLStyle=(function(){
 
 /**
 *@private
-*HTML的布局类
-*对HTML的显示对象进行排版
 */
-//class laya.html.utils.Layout
-var Layout=(function(){
-	function Layout(){}
-	__class(Layout,'laya.html.utils.Layout');
-	Layout.later=function(element){
-		if (Layout._will==null){
-			Layout._will=[];
-			Laya.stage.frameLoop(1,null,function(){
-				if (Layout._will.length < 1)
-					return;
-				for (var i=0;i < Layout._will.length;i++){
-					laya.html.utils.Layout.layout(Layout._will[i]);
-				}
-				Layout._will.length=0;
-			});
-		}
-		Layout._will.push(element);
+//class laya.html.utils.HTMLExtendStyle
+var HTMLExtendStyle=(function(){
+	function HTMLExtendStyle(){
+		/**
+		*<p>描边宽度（以像素为单位）。</p>
+		*默认值0，表示不描边。
+		*@default 0
+		*/
+		//this.stroke=NaN;
+		/**
+		*<p>描边颜色，以字符串表示。</p>
+		*@default "#000000";
+		*/
+		//this.strokeColor=null;
+		/**
+		*<p>垂直行间距（以像素为单位）</p>
+		*/
+		//this.leading=NaN;
+		/**行高。 */
+		//this.lineHeight=NaN;
+		//this.letterSpacing=0;
+		//this.href=null;
+		this.reset();
 	}
 
-	Layout.layout=function(element){
-		if (!element || !element._style)return null;
-		var style=element._style;
-		if ((style._type & /*laya.html.utils.HTMLStyle.ADDLAYOUTED*/0x200)===0)
-			return null;
-		element.style._type &=~ /*laya.html.utils.HTMLStyle.ADDLAYOUTED*/0x200;
-		var arr=Layout._multiLineLayout(element);
-		return arr;
+	__class(HTMLExtendStyle,'laya.html.utils.HTMLExtendStyle');
+	var __proto=HTMLExtendStyle.prototype;
+	__proto.reset=function(){
+		this.stroke=0;
+		this.strokeColor="#000000";
+		this.leading=0;
+		this.lineHeight=0;
+		this.letterSpacing=0;
+		this.href=null;
+		return this;
 	}
 
-	Layout._multiLineLayout=function(element){
-		var elements=new Array;
-		element._addChildsToLayout(elements);
-		var i=0,n=elements.length,j=0;
-		var style=element._getCSSStyle();
-		var letterSpacing=style.letterSpacing;
-		var leading=style.leading;
-		var lineHeight=style.lineHeight;
-		var widthAuto=style._widthAuto()|| !style.wordWrap;
-		var width=widthAuto ? 999999 :element.width;
-		var height=element.height;
-		var maxWidth=0;
-		var exWidth=style.italic ? style.fontSize / 3 :0;
-		var align=style.align;
-		var valign=style.valign;
-		var endAdjust=valign!==/*laya.html.utils.HTMLStyle.VALIGN_TOP*/"top" || align!==/*laya.html.utils.HTMLStyle.ALIGN_LEFT*/"left" || lineHeight !=0;
-		var oneLayout;
-		var x=0;
-		var y=0;
-		var w=0;
-		var h=0;
-		var tBottom=0;
-		var lines=new Array;
-		var curStyle;
-		var curPadding;
-		var curLine=lines[0]=new LayoutLine();
-		var newLine=false,nextNewline=false;
-		var htmlWord;
-		var sprite;
-		curLine.h=0;
-		if (style.italic)
-			width-=style.fontSize / 3;
-		var tWordWidth=0;
-		var tLineFirstKey=true;
-		function addLine (){
-			curLine.y=y;
-			y+=curLine.h+leading;
-			curLine.mWidth=tWordWidth;
-			tWordWidth=0;
-			curLine=new LayoutLine();
-			lines.push(curLine);
-			curLine.h=0;
-			x=0;
-			tLineFirstKey=true;
-			newLine=false;
-		}
-		for (i=0;i < n;i++){
-			oneLayout=elements[i];
-			if (oneLayout==null){
-				if (!tLineFirstKey){
-					x+=Layout.DIV_ELEMENT_PADDING;
-				}
-				curLine.wordStartIndex=curLine.elements.length;
-				continue ;
-			}
-			tLineFirstKey=false;
-			if ((oneLayout instanceof laya.html.dom.HTMLBrElement )){
-				addLine();
-				curLine.y=y;
-				curLine.h=lineHeight;
-				continue ;
-				}else if (oneLayout._isChar()){
-				htmlWord=oneLayout;
-				if (!htmlWord.isWord){
-					if (lines.length > 0 && (x+w)> width && curLine.wordStartIndex > 0){
-						var tLineWord=0;
-						tLineWord=curLine.elements.length-curLine.wordStartIndex+1;
-						curLine.elements.length=curLine.wordStartIndex;
-						i-=tLineWord;
-						addLine();
-						continue ;
-					}
-					newLine=false;
-					tWordWidth+=htmlWord.width;
-					}else {
-					newLine=nextNewline || (htmlWord.char==='\n');
-					curLine.wordStartIndex=curLine.elements.length;
-				}
-				w=htmlWord.width+htmlWord.style.letterSpacing;
-				h=htmlWord.height;
-				nextNewline=false;
-				newLine=newLine || ((x+w)> width);
-				newLine && addLine();
-				curLine.minTextHeight=Math.min(curLine.minTextHeight,oneLayout.height);
-				}else {
-				curStyle=oneLayout._getCSSStyle();
-				sprite=oneLayout;
-				curPadding=curStyle.padding;
-				newLine=nextNewline || curStyle.getLineElement();
-				w=sprite.width+curPadding[1]+curPadding[3]+curStyle.letterSpacing;
-				h=sprite.height+curPadding[0]+curPadding[2];
-				nextNewline=curStyle.getLineElement();
-				newLine=newLine || ((x+w)> width && curStyle.wordWrap);
-				newLine && addLine();
-			}
-			curLine.elements.push(oneLayout);
-			curLine.h=Math.max(curLine.h,h);
-			oneLayout.x=x;
-			oneLayout.y=y;
-			x+=w;
-			curLine.w=x-letterSpacing;
-			curLine.y=y;
-			maxWidth=Math.max(x+exWidth,maxWidth);
-		}
-		y=curLine.y+curLine.h;
-		if (endAdjust){
-			var tY=0;
-			var tWidth=width;
-			if (widthAuto && element.width > 0){
-				tWidth=element.width;
-			}
-			for (i=0,n=lines.length;i < n;i++){
-				lines[i].updatePos(0,tWidth,i,tY,align,valign,lineHeight);
-				tY+=Math.max(lineHeight,lines[i].h+leading);
-			}
-			y=tY;
-		}
-		widthAuto && (element.width=maxWidth);
-		(y > element.height)&& (element.height=y);
-		return [maxWidth,y];
+	__proto.recover=function(){
+		if (this==HTMLExtendStyle.EMPTY)return;
+		Pool.recover("HTMLExtendStyle",this.reset());
 	}
 
-	Layout.DIV_ELEMENT_PADDING=0;
-	Layout._will=null;
-	return Layout;
+	HTMLExtendStyle.create=function(){
+		return Pool.getItemByClass("HTMLExtendStyle",HTMLExtendStyle);
+	}
+
+	HTMLExtendStyle.EMPTY=new HTMLExtendStyle();
+	return HTMLExtendStyle;
 })()
 
 
@@ -896,15 +1125,54 @@ var HTMLElement=(function(){
 					var lastIndex=words.length-1;
 					var lastWords=words[lastIndex];
 					var lineY=lastWords.y+lastWords.height;
-					if(cssStyle.textDecoration!="none")
-						graphic.drawLine(words[0].x,lineY,lastWords.x+lastWords.width,lineY,color,1);
-					var hitRec=HTMLHitRect.create();
-					hitRec.rec.setTo(words[0].x,lastWords.y,lastWords.x+lastWords.width-words[0].x,lastWords.height);
-					hitRec.href=this.href;
-					recList.push(hitRec);
+					if (lastWords.y==words[0].y){
+						if(cssStyle.textDecoration!="none")
+							graphic.drawLine(words[0].x,lineY,lastWords.x+lastWords.width,lineY,color,1);
+						var hitRec=HTMLHitRect.create();
+						hitRec.rec.setTo(words[0].x,lastWords.y,lastWords.x+lastWords.width-words[0].x,lastWords.height);
+						hitRec.href=this.href;
+						recList.push(hitRec);
+						}else{
+						this.workLines(words,graphic,recList);
+					}
 				}
 			}
 		}
+	}
+
+	__proto.workLines=function(wordList,g,recList){
+		var cssStyle=this.style;
+		var hasLine=false;
+		hasLine=cssStyle.textDecoration !="none";
+		var i=0,len=0;
+		len=wordList.length;
+		var tStartWord;
+		tStartWord=wordList[i];
+		var tEndWord;
+		tEndWord=tStartWord;
+		if (!tStartWord)return;
+		var tword;
+		for (i=1;i < len;i++){
+			tword=wordList[i];
+			if (tword.y !=tStartWord.y){
+				this.createOneLine(tStartWord,tEndWord,hasLine,g,recList);
+				tStartWord=tword;
+				tEndWord=tword;
+				}else{
+				tEndWord=tword;
+			}
+		}
+		this.createOneLine(tStartWord,tEndWord,hasLine,g,recList);
+	}
+
+	__proto.createOneLine=function(startWord,lastWords,hasLine,graphic,recList){
+		var lineY=lastWords.y+lastWords.height;
+		if(hasLine)
+			graphic.drawLine(startWord.x,lineY,lastWords.x+lastWords.width,lineY,this.color,1);
+		var hitRec=HTMLHitRect.create();
+		hitRec.rec.setTo(startWord.x,lastWords.y,lastWords.x+lastWords.width-startWord.x,lastWords.height);
+		hitRec.href=this.href;
+		recList.push(hitRec);
 	}
 
 	__getset(0,__proto,'href',function(){
@@ -1014,60 +1282,6 @@ var HTMLElement=(function(){
 /**
 *@private
 */
-//class laya.html.utils.HTMLExtendStyle
-var HTMLExtendStyle=(function(){
-	function HTMLExtendStyle(){
-		/**
-		*<p>描边宽度（以像素为单位）。</p>
-		*默认值0，表示不描边。
-		*@default 0
-		*/
-		//this.stroke=NaN;
-		/**
-		*<p>描边颜色，以字符串表示。</p>
-		*@default "#000000";
-		*/
-		//this.strokeColor=null;
-		/**
-		*<p>垂直行间距（以像素为单位）</p>
-		*/
-		//this.leading=NaN;
-		/**行高。 */
-		//this.lineHeight=NaN;
-		//this.letterSpacing=0;
-		//this.href=null;
-		this.reset();
-	}
-
-	__class(HTMLExtendStyle,'laya.html.utils.HTMLExtendStyle');
-	var __proto=HTMLExtendStyle.prototype;
-	__proto.reset=function(){
-		this.stroke=0;
-		this.strokeColor="#000000";
-		this.leading=0;
-		this.lineHeight=0;
-		this.letterSpacing=0;
-		this.href=null;
-		return this;
-	}
-
-	__proto.recover=function(){
-		if (this==HTMLExtendStyle.EMPTY)return;
-		Pool.recover("HTMLExtendStyle",this.reset());
-	}
-
-	HTMLExtendStyle.create=function(){
-		return Pool.getItemByClass("HTMLExtendStyle",HTMLExtendStyle);
-	}
-
-	HTMLExtendStyle.EMPTY=new HTMLExtendStyle();
-	return HTMLExtendStyle;
-})()
-
-
-/**
-*@private
-*/
 //class laya.html.utils.HTMLParse
 var HTMLParse=(function(){
 	function HTMLParse(){}
@@ -1156,233 +1370,6 @@ var HTMLParse=(function(){
 	HTMLParse._htmlClassMapShort={'div':'HTMLDivParser','p':'HTMLElement','img':'HTMLImageElement','span':'HTMLElement','br':'HTMLBrElement','style':'HTMLStyleElement','font':'HTMLElement','a':'HTMLElement','#text':'HTMLElement','link':'HTMLLinkElement'};
 	return HTMLParse;
 })()
-
-
-/**
-*@private
-*/
-//class laya.html.utils.LayoutLine
-var LayoutLine=(function(){
-	function LayoutLine(){
-		this.x=0;
-		this.y=0;
-		this.w=0;
-		this.h=0;
-		this.wordStartIndex=0;
-		this.minTextHeight=99999;
-		this.mWidth=0;
-		this.elements=new Array;
-	}
-
-	__class(LayoutLine,'laya.html.utils.LayoutLine');
-	var __proto=LayoutLine.prototype;
-	/**
-	*底对齐（默认）
-	*@param left
-	*@param width
-	*@param dy
-	*@param align 水平
-	*@param valign 垂直
-	*@param lineHeight 行高
-	*/
-	__proto.updatePos=function(left,width,lineNum,dy,align,valign,lineHeight){
-		var w=0;
-		var one
-		if (this.elements.length > 0){
-			one=this.elements[this.elements.length-1];
-			w=one.x+one.width-this.elements[0].x;
-		}
-		lineHeight=lineHeight || this.h;
-		var dx=0,ddy=NaN;
-		if (align===/*laya.html.utils.HTMLStyle.ALIGN_CENTER*/"center")dx=(width-w)/ 2;
-		if (align===/*laya.html.utils.HTMLStyle.ALIGN_RIGHT*/"right")dx=(width-w);
-		for (var i=0,n=this.elements.length;i < n;i++){
-			one=this.elements[i];
-			var tCSSStyle=one._getCSSStyle();
-			dx!==0 && (one.x+=dx);
-			switch (tCSSStyle.valign){
-				case "top":
-					one.y=dy;
-					break ;
-				case "middle":;
-					var tMinTextHeight=0;
-					if (this.minTextHeight !=99999)tMinTextHeight=this.minTextHeight;
-					var tBottomLineY=(tMinTextHeight+lineHeight)/ 2;
-					tBottomLineY=Math.max(tBottomLineY,this.h);
-					if ((one instanceof laya.html.dom.HTMLImageElement ))ddy=dy+tBottomLineY-one.height;
-					else ddy=dy+tBottomLineY-one.height;
-					one.y=ddy;
-					break ;
-				case "bottom":
-					one.y=dy+(lineHeight-one.height);
-					break ;
-				}
-		}
-	}
-
-	return LayoutLine;
-})()
-
-
-/**
-*@private
-*/
-//class laya.html.dom.HTMLDocument
-var HTMLDocument=(function(){
-	function HTMLDocument(){
-		this.all=new Array;
-		this.styleSheets=HTMLStyle.styleSheets;
-	}
-
-	__class(HTMLDocument,'laya.html.dom.HTMLDocument');
-	var __proto=HTMLDocument.prototype;
-	//TODO:coverage
-	__proto.getElementById=function(id){
-		return this.all[id];
-	}
-
-	//TODO:coverage
-	__proto.setElementById=function(id,e){
-		this.all[id]=e;
-	}
-
-	__static(HTMLDocument,
-	['document',function(){return this.document=new HTMLDocument();}
-	]);
-	return HTMLDocument;
-})()
-
-
-/**
-*@private
-*/
-//class laya.html.dom.HTMLHitRect
-var HTMLHitRect=(function(){
-	function HTMLHitRect(){
-		//this.rec=null;
-		//this.href=null;
-		this.rec=new Rectangle();
-		this.reset();
-	}
-
-	__class(HTMLHitRect,'laya.html.dom.HTMLHitRect');
-	var __proto=HTMLHitRect.prototype;
-	__proto.reset=function(){
-		this.rec.reset();
-		this.href=null;
-		return this;
-	}
-
-	__proto.recover=function(){
-		Pool.recover("HTMLHitRect",this.reset());
-	}
-
-	HTMLHitRect.create=function(){
-		return Pool.getItemByClass("HTMLHitRect",HTMLHitRect);
-	}
-
-	return HTMLHitRect;
-})()
-
-
-/**
-*@private
-*/
-//class laya.html.dom.HTMLBrElement
-var HTMLBrElement=(function(){
-	function HTMLBrElement(){}
-	__class(HTMLBrElement,'laya.html.dom.HTMLBrElement');
-	var __proto=HTMLBrElement.prototype;
-	/**@private */
-	__proto._addToLayout=function(out){
-		out.push(this);
-	}
-
-	//TODO:coverage
-	__proto.reset=function(){
-		return this;
-	}
-
-	__proto.destroy=function(){
-		Pool.recover(HTMLElement.getClassName(this),this.reset());
-	}
-
-	__proto._setParent=function(value){}
-	//TODO:coverage
-	__proto._getCSSStyle=function(){
-		if (!HTMLBrElement.brStyle){
-			HTMLBrElement.brStyle=new HTMLStyle();
-			HTMLBrElement.brStyle.setLineElement(true);
-			HTMLBrElement.brStyle.block=true;
-		}
-		return HTMLBrElement.brStyle;
-	}
-
-	__proto.renderSelfToGraphic=function(graphic,gX,gY,recList){}
-	__getset(0,__proto,'URI',null,function(value){
-	});
-
-	__getset(0,__proto,'parent',null,function(value){
-	});
-
-	__getset(0,__proto,'href',null,function(value){
-	});
-
-	HTMLBrElement.brStyle=null;
-	return HTMLBrElement;
-})()
-
-
-/**
-*@private
-*/
-//class laya.html.dom.HTMLLinkElement extends laya.html.dom.HTMLElement
-var HTMLLinkElement=(function(_super){
-	function HTMLLinkElement(){
-		//this.type=null;
-		//this._loader=null;
-		HTMLLinkElement.__super.call(this);
-	}
-
-	__class(HTMLLinkElement,'laya.html.dom.HTMLLinkElement',_super);
-	var __proto=HTMLLinkElement.prototype;
-	__proto._creates=function(){}
-	__proto.drawToGraphic=function(graphic,gX,gY,recList){}
-	__proto.reset=function(){
-		if (this._loader)this._loader.off(/*laya.events.Event.COMPLETE*/"complete",this,this._onload);
-		this._loader=null;
-		return this;
-	}
-
-	__proto._onload=function(data){
-		if (this._loader)this._loader=null;
-		switch (this.type){
-			case 'text/css':
-				HTMLStyle.parseCSS(data,this.URI);
-				break ;
-			}
-		this.repaint(true);
-	}
-
-	__getset(0,__proto,'href',_super.prototype._$get_href,function(url){
-		if (!url)return;
-		url=this.formatURL(url);
-		this.URI=new URL(url);
-		if (this._loader)this._loader.off(/*laya.events.Event.COMPLETE*/"complete",this,this._onload);
-		if (Loader.getRes(url)){
-			if (this.type=="text/css"){
-				HTMLStyle.parseCSS(Loader.getRes(url),this.URI);
-			}
-			return;
-		}
-		this._loader=new Loader();
-		this._loader.once(/*laya.events.Event.COMPLETE*/"complete",this,this._onload);
-		this._loader.load(url,/*laya.net.Loader.TEXT*/"text");
-	});
-
-	HTMLLinkElement._cuttingStyle=new RegExp("((@keyframes[\\s\\t]+|)(.+))[\\t\\n\\r\\\s]*{","g");
-	return HTMLLinkElement;
-})(HTMLElement)
 
 
 /**
@@ -1594,6 +1581,58 @@ var HTMLDivParser=(function(_super){
 	});
 
 	return HTMLDivParser;
+})(HTMLElement)
+
+
+/**
+*@private
+*/
+//class laya.html.dom.HTMLLinkElement extends laya.html.dom.HTMLElement
+var HTMLLinkElement=(function(_super){
+	function HTMLLinkElement(){
+		//this.type=null;
+		//this._loader=null;
+		HTMLLinkElement.__super.call(this);
+	}
+
+	__class(HTMLLinkElement,'laya.html.dom.HTMLLinkElement',_super);
+	var __proto=HTMLLinkElement.prototype;
+	__proto._creates=function(){}
+	__proto.drawToGraphic=function(graphic,gX,gY,recList){}
+	__proto.reset=function(){
+		if (this._loader)this._loader.off(/*laya.events.Event.COMPLETE*/"complete",this,this._onload);
+		this._loader=null;
+		return this;
+	}
+
+	__proto._onload=function(data){
+		if (this._loader)this._loader=null;
+		switch (this.type){
+			case 'text/css':
+				HTMLStyle.parseCSS(data,this.URI);
+				break ;
+			}
+		this.repaint(true);
+	}
+
+	__getset(0,__proto,'href',_super.prototype._$get_href,function(url){
+		if (!url)return;
+		url=this.formatURL(url);
+		this.URI=new URL(url);
+		if (this._loader)this._loader.off(/*laya.events.Event.COMPLETE*/"complete",this,this._onload);
+		if (Loader.getRes(url)){
+			if (this.type=="text/css"){
+				HTMLStyle.parseCSS(Loader.getRes(url),this.URI);
+			}
+			return;
+		}
+		this._loader=new Loader();
+		this._loader.once(/*laya.events.Event.COMPLETE*/"complete",this,this._onload);
+		this._loader.load(url,/*laya.net.Loader.TEXT*/"text");
+	});
+
+	HTMLLinkElement._cuttingStyle=new RegExp("((@keyframes[\\s\\t]+|)(.+))[\\t\\n\\r\\\s]*{","g");
+	return HTMLLinkElement;
 })(HTMLElement)
 
 

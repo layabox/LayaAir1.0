@@ -1,5 +1,6 @@
 package laya.webgl {
 	import laya.layagl.LayaGL;
+	import laya.utils.Stat;
 	import laya.webgl.utils.Buffer;
 	
 	/**

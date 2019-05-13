@@ -103,6 +103,7 @@ package laya.media.h5audio {
 		 */
 		override public function stop():void {
 			//trace("stop and remove event");
+			super.stop();
 			this.isStopped = true;
 			SoundManager.removeChannel(this);
 			completeHandler = null;

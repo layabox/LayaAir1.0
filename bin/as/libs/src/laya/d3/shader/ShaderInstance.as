@@ -1,6 +1,8 @@
 package laya.d3.shader {
 	import laya.d3.core.BaseCamera;
+	import laya.d3.core.Transform3D;
 	import laya.d3.core.material.BaseMaterial;
+	import laya.d3.core.material.RenderState;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Matrix4x4;
@@ -25,6 +27,8 @@ package laya.d3.shader {
 		private var _attributeMap:Object;
 		/**@private */
 		private var _uniformMap:Object;
+		/**@private */
+		private var _shaderPass:ShaderPass;
 		
 		/**@private */
 		private var _vs:String
@@ -50,13 +54,17 @@ package laya.d3.shader {
 		public var _materialUniformParamsMap:CommandEncoder;
 		/**@private */
 		private var _customUniformParamsMap:Array;
+		/**@private */
+		private var _stateParamsMap:Array = [];
 		
 		/**@private */
-		public var _uploadLoopCount:int;
+		public var _uploadMark:int = -1;
 		/**@private */
 		public var _uploadMaterial:BaseMaterial;
 		/**@private */
 		public var _uploadRender:BaseRender;
+		/** @private */
+		public var _uploadRenderType:int = -1;
 		/**@private */
 		public var _uploadCamera:BaseCamera;
 		/**@private */
@@ -65,13 +73,14 @@ package laya.d3.shader {
 		/**
 		 * 创建一个 <code>ShaderInstance</code> 实例。
 		 */
-		public function ShaderInstance(vs:String, ps:String, attributeMap:Object, uniformMap:Object) {
+		public function ShaderInstance(vs:String, ps:String, attributeMap:Object, uniformMap:Object, shaderPass:ShaderPass) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			super();
 			_vs = vs;
 			_ps = ps;
 			_attributeMap = attributeMap;
 			_uniformMap = uniformMap;
+			_shaderPass = shaderPass;
 			_create();
 			lock = true;
 		}
@@ -145,7 +154,6 @@ package laya.d3.shader {
 			}
 			
 			//Native版本分别存入funid、webglFunid,location、type、offset, +4是因为第一个存长度了 所以是*4*5+4
-			
 			_sceneUniformParamsMap = LayaGL.instance.createCommandEncoder(sceneParms.length * 4 * 5 + 4, 64, true);
 			for (i = 0, n = sceneParms.length; i < n; i++)
 				_sceneUniformParamsMap.addShaderUniform(sceneParms[i]);
@@ -167,6 +175,21 @@ package laya.d3.shader {
 				var custom:ShaderVariable = customParms[i];
 				_customUniformParamsMap[custom.dataOffset] = custom;
 			}
+			
+			var stateMap:Object = _shaderPass._stateMap;
+			for (var s:String in stateMap)
+				_stateParamsMap[stateMap[s]] = Shader3D.propertyNameToID(s);
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getRenderState(shaderDatas:Array, stateIndex:int):* {
+			var stateID:* = _stateParamsMap[stateIndex];
+			if (stateID == null)
+				return null;
+			else
+				return shaderDatas[stateID];
 		}
 		
 		/**
@@ -517,6 +540,105 @@ package laya.d3.shader {
 		 */
 		public function uploadUniforms(shaderUniform:CommandEncoder, shaderDatas:ShaderData, uploadUnTexture:Boolean):void {
 			Stat.shaderCall += LayaGLRunner.uploadShaderUniforms(LayaGL.instance, shaderUniform, shaderDatas, uploadUnTexture);
+		}
+		
+		/**
+		 * @private
+		 */
+		public function uploadRenderStateBlendDepth(shaderDatas:ShaderData):void {
+			var gl:WebGLContext = LayaGL.instance;
+			var renderState:RenderState = _shaderPass.renderState;
+			var datas:Array = shaderDatas.getData();
+			
+			var depthWrite:* = _getRenderState(datas, Shader3D.RENDER_STATE_DEPTH_WRITE);
+			var depthTest:* = _getRenderState(datas, Shader3D.RENDER_STATE_DEPTH_TEST);
+			var blend:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND);
+			depthWrite == null && (depthWrite = renderState.depthWrite);
+			depthTest == null && (depthTest = renderState.depthTest);
+			blend == null && (blend = renderState.blend);
+			
+			WebGLContext.setDepthMask(gl, depthWrite);
+			if (depthTest === RenderState.DEPTHTEST_OFF)
+				WebGLContext.setDepthTest(gl, false);
+			else {
+				WebGLContext.setDepthTest(gl, true);
+				WebGLContext.setDepthFunc(gl, depthTest);
+			}
+			
+			switch (blend) {
+			case RenderState.BLEND_DISABLE: 
+				WebGLContext.setBlend(gl, false);
+				break;
+			case RenderState.BLEND_ENABLE_ALL: 
+				WebGLContext.setBlend(gl, true);
+				var srcBlend:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND_SRC);
+				srcBlend == null && (srcBlend = renderState.srcBlend);
+				var dstBlend:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND_DST);
+				dstBlend == null && (dstBlend = renderState.dstBlend);
+				WebGLContext.setBlendFunc(gl, srcBlend, dstBlend);
+				break;
+			case RenderState.BLEND_ENABLE_SEPERATE: 
+				WebGLContext.setBlend(gl, true);
+				var srcRGB:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND_SRC_RGB);
+				srcRGB == null && (srcRGB = renderState.srcBlendRGB);
+				var dstRGB:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND_DST_RGB);
+				dstRGB == null && (dstRGB = renderState.dstBlendRGB);
+				var srcAlpha:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND_SRC_ALPHA);
+				srcAlpha == null && (srcAlpha = renderState.srcBlendAlpha);
+				var dstAlpha:* = _getRenderState(datas, Shader3D.RENDER_STATE_BLEND_DST_ALPHA);
+				dstAlpha == null && (dstAlpha = renderState.dstBlendAlpha);
+				WebGLContext.setBlendFuncSeperate(gl, srcRGB, dstRGB, srcAlpha, dstAlpha);
+				break;
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		public function uploadRenderStateFrontFace(shaderDatas:ShaderData, isTarget:Boolean, transform:Transform3D):void {
+			var gl:WebGLContext = LayaGL.instance;
+			var renderState:RenderState = _shaderPass.renderState;
+			var datas:Array = shaderDatas.getData();
+			
+			var cull:* = _getRenderState(datas, Shader3D.RENDER_STATE_CULL);
+			cull == null && (cull = renderState.cull);
+			
+			var forntFace:int;
+			switch (cull) {
+			case RenderState.CULL_NONE: 
+				WebGLContext.setCullFace(gl, false);
+				break;
+			case RenderState.CULL_FRONT: 
+				WebGLContext.setCullFace(gl, true);
+				if (isTarget) {
+					if (transform && transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CCW;
+					else
+						forntFace = WebGLContext.CW;
+				} else {
+					if (transform && transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CW;
+					else
+						forntFace = WebGLContext.CCW;
+				}
+				WebGLContext.setFrontFace(gl, forntFace);
+				break;
+			case RenderState.CULL_BACK: 
+				WebGLContext.setCullFace(gl, true);
+				if (isTarget) {
+					if (transform && transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CW;
+					else
+						forntFace = WebGLContext.CCW;
+				} else {
+					if (transform && transform._isFrontFaceInvert)
+						forntFace = WebGLContext.CCW;
+					else
+						forntFace = WebGLContext.CW;
+				}
+				WebGLContext.setFrontFace(gl, forntFace);
+				break;
+			}
 		}
 		
 		/**

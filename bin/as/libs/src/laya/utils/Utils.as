@@ -390,6 +390,8 @@ package laya.utils {
 		 */
 		public static function getQueryString(name:String):String {
 			if (Browser.onMiniGame) return null;
+			if(!window.location || !window.location.search)
+				return null;
 			var reg:RegExp = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
 			var r:* = window.location.search.substr(1).match(reg);
 			if (r != null) return unescape(r[2]);

@@ -165,6 +165,9 @@ package laya.display {
 		/**@private */
 		public var _color:String = "#000000";
 		
+		/**@private */
+		private var _singleCharRender:Boolean = false;	// 拆分渲染
+		
 		/**
 		 * <p>overflow 指定文本超出文本域后的行为。其值为"hidden"、"visible"和"scroll"之一。</p>
 		 * <p>性能从高到低依次为：hidden > visible > scroll。</p>
@@ -733,6 +736,7 @@ package laya.display {
 						_words || (_words = new Vector.<WordText>());
 						_word = _words.length > (i - beginLine) ? _words[i - beginLine] : new WordText();
 						_word.setText(word);
+						(_word as WordText).splitRender = _singleCharRender;
 					} else {
 						_word = word;
 					}
@@ -1115,6 +1119,14 @@ package laya.display {
 		
 		public function set underline(value:Boolean):void {
 			_getTextStyle().underline = value;
+		}
+		
+		/** 设置是否单个字符渲染，如果Textd的内容一直改变，例如是一个增加的数字，就设置这个，防止无效占用缓存 */
+		public function set singleCharRender(value:Boolean):void {
+			_singleCharRender = value;
+		}
+		public function get singleCharRender():Boolean {
+			return _singleCharRender;
 		}
 	}
 }

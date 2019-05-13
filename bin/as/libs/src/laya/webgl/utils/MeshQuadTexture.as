@@ -6,9 +6,9 @@ package laya.webgl.utils {
 	 * drawImage，fillRect等会用到的简单的mesh。每次添加必然是一个四边形。
 	 */
 	public class MeshQuadTexture extends Mesh2D {
-		public static var const_stride:int = 24;// 48;  24是不带clip的
+		public static const const_stride:int = 24;// 48;  24是不带clip的
 		private static var _fixib:IndexBuffer2D;
-		private static var _maxIB:int = 16 * 1024;
+		private static const _maxIB:int = 16 * 1024;
 		private static var _fixattriInfo:Array = [
 			WebGLContext.FLOAT, 4, 0,	//pos,uv
 			WebGLContext.UNSIGNED_BYTE, 4, 16,	//color alpha
@@ -36,10 +36,14 @@ package laya.webgl.utils {
 		 */
 		public static function getAMesh():MeshQuadTexture {
 			//console.log('getmesh');
+			var ret:MeshQuadTexture = null;
 			if (MeshQuadTexture._POOL.length) {
-				return MeshQuadTexture._POOL.pop();
-			}
-			return new MeshQuadTexture();
+				ret = MeshQuadTexture._POOL.pop();
+			}else
+				ret = new MeshQuadTexture();
+			// 先分配64k顶点的空间，这样可以避免浪费内存，否则后面增加内存的时候是成倍增加的，当快超过64k的时候，直接变成了128k
+			ret._vb._resizeBuffer(64 * 1024 * const_stride, false);
+			return ret;
 		}
 		
 		/**

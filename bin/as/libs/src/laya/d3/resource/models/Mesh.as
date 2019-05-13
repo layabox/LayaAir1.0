@@ -1,7 +1,9 @@
 package laya.d3.resource.models {
 	import laya.d3.core.BufferState;
 	import laya.d3.core.GeometryElement;
+	import laya.d3.core.IClone;
 	import laya.d3.graphics.IndexBuffer3D;
+	import laya.d3.graphics.SubMeshInstanceBatch;
 	import laya.d3.graphics.Vertex.VertexMesh;
 	import laya.d3.graphics.VertexBuffer3D;
 	import laya.d3.graphics.VertexElement;
@@ -18,7 +20,7 @@ package laya.d3.resource.models {
 	/**
 	 * <code>Mesh</code> 类用于创建文件网格数据模板。
 	 */
-	public class Mesh extends Resource {
+	public class Mesh extends Resource implements IClone {
 		/** @private */
 		private static var _nativeTempVector30:* = new Laya3D._physics3D.btVector3(0, 0, 0);
 		/** @private */
@@ -53,6 +55,10 @@ package laya.d3.resource.models {
 		protected var _boundingSphere:BoundSphere;
 		
 		/** @private */
+		public var _bufferState:BufferState = new BufferState();
+		/** @private */
+		public var _instanceBufferState:BufferState = new BufferState();
+		/** @private */
 		public var _subMeshCount:int;
 		/** @private 只读,不允许修改。*/
 		public var _positions:Vector.<Vector3>;
@@ -74,8 +80,6 @@ package laya.d3.resource.models {
 		public var _skinDataPathMarks:Vector.<Array>;
 		/** @private */
 		public var _vertexCount:int = 0;
-		/** @private */
-		public var _bufferState:BufferState = new BufferState();
 		
 		/**
 		 * 获取网格的全局默认绑定动作逆矩阵。
@@ -187,6 +191,25 @@ package laya.d3.resource.models {
 		}
 		
 		/**
+		 * @private
+		 */
+		public function _setBuffer(vertexBuffers:Vector.<VertexBuffer3D>, indexBuffer:IndexBuffer3D):void {
+			var bufferState:BufferState = _bufferState;
+			bufferState.bind();
+			bufferState.applyVertexBuffers(vertexBuffers);
+			bufferState.applyIndexBuffer(indexBuffer);
+			bufferState.unBind();
+			
+			var instanceBufferState:BufferState = _instanceBufferState;
+			instanceBufferState.bind();
+			instanceBufferState.applyVertexBuffers(vertexBuffers);
+			instanceBufferState.applyInstanceVertexBuffer(SubMeshInstanceBatch.instance.instanceWorldMatrixBuffer);
+			instanceBufferState.applyInstanceVertexBuffer(SubMeshInstanceBatch.instance.instanceMVPMatrixBuffer);
+			instanceBufferState.applyIndexBuffer(indexBuffer);
+			instanceBufferState.unBind();
+		}
+		
+		/**
 		 * @inheritDoc
 		 */
 		override protected function _disposeResource():void {
@@ -199,10 +222,11 @@ package laya.d3.resource.models {
 			_setCPUMemory(0);
 			_setGPUMemory(0);
 			_bufferState.destroy();
+			_instanceBufferState.destroy();
 			_bufferState = null;
+			_instanceBufferState = null;
 			_vertexBuffers = null;
 			_indexBuffer = null;
-			
 			_subMeshes = null;
 			_nativeTriangleMesh = null;
 			_vertexBuffers = null;
@@ -235,6 +259,85 @@ package laya.d3.resource.models {
 				_nativeTriangleMesh = triangleMesh;
 			}
 			return _nativeTriangleMesh;
+		}
+		
+		/**
+		 * 克隆。
+		 * @param	destObject 克隆源。
+		 */
+		public function cloneTo(destObject:*):void {//[实现IClone接口]
+			var destMesh:Mesh = destObject as Mesh;
+			for (var i:int = 0; i < _vertexBuffers.length; i++) {
+				var vb:VertexBuffer3D = _vertexBuffers[i];
+				var destVB:VertexBuffer3D = new VertexBuffer3D(vb._byteLength, vb.bufferUsage, vb.canRead);
+				destVB.vertexDeclaration = vb.vertexDeclaration;
+				destVB.setData(vb.getData().slice());
+				destMesh._vertexBuffers.push(destVB);
+				destMesh._vertexCount += destVB.vertexCount;
+			}
+			var ib:IndexBuffer3D = _indexBuffer;
+			var destIB:IndexBuffer3D = new IndexBuffer3D(IndexBuffer3D.INDEXTYPE_USHORT, ib.indexCount,ib.bufferUsage, ib.canRead);
+			destIB.setData(ib.getData().slice());
+			destMesh._indexBuffer = destIB;
+			
+			destMesh._setBuffer(destMesh._vertexBuffers, destIB);
+			destMesh._setCPUMemory(cpuMemory);
+			destMesh._setGPUMemory(gpuMemory);
+			
+			var boneNames:Vector.<String> = _boneNames;
+			var destBoneNames:Vector.<String> = destMesh._boneNames = new Vector.<String>(boneNames.length);
+			for (i = 0; i < boneNames.length; i++)
+				destBoneNames[i] = boneNames[i];
+			
+			var inverseBindPoses:Vector.<Matrix4x4> = _inverseBindPoses;
+			var destInverseBindPoses:Vector.<Matrix4x4> = destMesh._inverseBindPoses = new Vector.<Matrix4x4>(inverseBindPoses.length);
+			for (i = 0; i < inverseBindPoses.length; i++)
+				destInverseBindPoses[i] = inverseBindPoses[i];
+			
+			destMesh._bindPoseIndices = new Uint16Array(_bindPoseIndices);
+			
+			for (i = 0; i < _skinDataPathMarks.length; i++)
+				destMesh._skinDataPathMarks[i] = _skinDataPathMarks[i].slice();
+			
+			
+			for (i = 0; i < subMeshCount; i++) {
+				var subMesh:SubMesh = _subMeshes[i];
+				var subIndexBufferStart:Vector.<int> = subMesh._subIndexBufferStart;
+				var subIndexBufferCount:Vector.<int> = subMesh._subIndexBufferCount;
+				var boneIndicesList:Vector.<Uint16Array> = subMesh._boneIndicesList;
+				var destSubmesh:SubMesh = new SubMesh(destMesh);
+				
+				destSubmesh._subIndexBufferStart.length = subIndexBufferStart.length;
+				destSubmesh._subIndexBufferCount.length = subIndexBufferCount.length;
+				destSubmesh._boneIndicesList.length = boneIndicesList.length;
+				
+				for (var j:int = 0; j < subIndexBufferStart.length; j++)
+					destSubmesh._subIndexBufferStart[j] = subIndexBufferStart[j];
+				for (j = 0; j < subIndexBufferCount.length; j++)
+					destSubmesh._subIndexBufferCount[j] = subIndexBufferCount[j];
+				for (j = 0; j < boneIndicesList.length; j++)
+					destSubmesh._boneIndicesList[j] = new Uint16Array(boneIndicesList[j]);
+				
+				
+				destSubmesh._indexBuffer = destIB;
+				destSubmesh._indexStart = subMesh._indexStart;
+				destSubmesh._indexCount = subMesh._indexCount;
+				destSubmesh._indices = new Uint16Array(destIB.getData().buffer, subMesh._indexStart * 2, subMesh._indexCount);
+				var vertexBuffer:VertexBuffer3D = destMesh._vertexBuffers[0];
+				destSubmesh._vertexBuffer = vertexBuffer;
+				destMesh._subMeshes.push(destSubmesh);
+			}
+			destMesh._setSubMeshes(destMesh._subMeshes);
+		}
+		
+		/**
+		 * 克隆。
+		 * @return	 克隆副本。
+		 */
+		public function clone():* {//[实现IClone接口]
+			var dest:Mesh = __JS__("new this.constructor()");
+			cloneTo(dest);
+			return dest;
 		}
 	}
 }

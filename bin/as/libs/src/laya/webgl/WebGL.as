@@ -4,7 +4,6 @@ package laya.webgl {
 	import laya.filters.ColorFilter;
 	import laya.filters.Filter;
 	import laya.layagl.CommandEncoder;
-	import laya.layagl.ConchPropertyAdpt;
 	import laya.layagl.LayaGL;
 	import laya.layagl.LayaGLRunner;
 	import laya.maths.Matrix;
@@ -122,16 +121,14 @@ package laya.webgl {
 				}
 				var stage:* = Stage;
 				stage.prototype.render = stage.prototype.renderToNative;
-				if (Render.isConchApp) 
-				{
-					ConchPropertyAdpt.rewriteProperties();
-				}
 			}
 			RunDriver.clear = function(color:String):void {
+				WebGLContext2D.set2DRenderConfig();//渲染2D前要还原2D状态,否则可能受3D影响
 				var c:Array = ColorUtils.create(color).arrColor;
 				var gl:* = LayaGL.instance;
 				if (c) gl.clearColor(c[0], c[1], c[2], c[3]);
 				gl.clear(WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT);
+				RenderState2D.clear();
 			}
 			RunDriver.drawToCanvas = function(sprite:Sprite, _renderType:int, canvasWidth:Number, canvasHeight:Number, offsetX:Number, offsetY:Number):* {
 				offsetX -= sprite.x;
@@ -152,14 +149,6 @@ package laya.webgl {
 				ctx._targets.end();
 				ctx._targets.restore();
 				return canv;
-			}
-			RenderTexture2D.prototype.getData = function(x:Number, y:Number, width:Number, height:Number, callBack:Function):void {
-				var gl:* = LayaGL.instance;
-				gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, this._frameBuffer);
-				gl.readPixelsAsync(x, y, width, height, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, function(data:ArrayBuffer):void {
-					__JS__("callBack(data)");
-				});
-				gl.bindFramebuffer(WebGLContext.FRAMEBUFFER, null);
 			}
 			RenderTexture2D.prototype._uv = RenderTexture2D.flipyuv;
 			Object["defineProperty"](RenderTexture2D.prototype, "uv", {
@@ -252,12 +241,16 @@ package laya.webgl {
 			}
 			
 			RunDriver.clear = function(color:String):void {
+				//修改需要同步到上面的native实现中
 				WebGLContext2D.set2DRenderConfig();//渲染2D前要还原2D状态,否则可能受3D影响
 				RenderState2D.worldScissorTest && WebGL.mainContext.disable(WebGLContext.SCISSOR_TEST);
 				var ctx:* = Render.context;
 				//兼容浏览器
 				var c:Array = (ctx._submits._length == 0 || Config.preserveDrawingBuffer) ? ColorUtils.create(color).arrColor : Laya.stage._wgColor;
-				if (c) ctx.clearBG(c[0], c[1], c[2], c[3]);
+				if (c) 
+					ctx.clearBG(c[0], c[1], c[2], c[3]);
+				else
+					ctx.clearBG(0, 0, 0, 0);
 				RenderState2D.clear();
 			}
 			

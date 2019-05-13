@@ -43,6 +43,10 @@ package laya.utils {
 		/** @private */
 		public static var onBDMiniGame:Boolean;
 		/** @private */
+		public static var onKGMiniGame:Boolean;
+		/** @private */
+		public static var onQGMiniGame:Boolean;
+		/** @private */
 		public static var onLimixiu:Boolean;
 		/** @private */
 		public static var onFirefox:Boolean;//TODO:求补充
@@ -87,7 +91,9 @@ package laya.utils {
 					libs[j].f(win, doc, Laya);
 				}
 			}
-			if (u.indexOf("MiniGame") > -1) {
+			
+			//微信小游戏
+			if (u.indexOf("MiniGame") > -1 && window.hasOwnProperty("wx")) {
 				if (!Laya["MiniAdpter"]) {
 					console.error("请先添加小游戏适配库,详细教程：https://ldc2.layabox.com/doc/?nav=zh-ts-5-0-0");
 						//TODO 教程要改
@@ -96,12 +102,33 @@ package laya.utils {
 				}
 			}
 			
+			//百度小游戏
 			if (u.indexOf("SwanGame") > -1) {
 				if (!Laya["BMiniAdapter"]) {
 					console.error("请先添加百度小游戏适配库,详细教程：https://ldc2.layabox.com/doc/?nav=zh-ts-5-0-0");
 						//TODO 教程要改
 				} else {
 					Laya["BMiniAdapter"].enable();
+				}
+			}
+			
+			//小米小游戏
+			if(__JS__('getApp') is Function){
+				if (!Laya["KGMiniAdapter"]) {
+					console.error("请先添加小米小游戏适配库,详细教程：https://ldc2.layabox.com/doc/?nav=zh-ts-5-0-0");
+					//TODO 教程要改
+				} else {
+					Laya["KGMiniAdapter"].enable();
+				}
+			}
+			
+			//OPPO小游戏
+			if (u.indexOf("QGGame") > -1) {
+				if (!Laya["QGMiniAdapter"]) {
+					console.error("请先添加OPPO小游戏适配库");
+					//TODO 教程要改
+				} else {
+					Laya["QGMiniAdapter"].enable();
 				}
 			}
 			
@@ -139,7 +166,7 @@ package laya.utils {
 			}
 			
 			//处理兼容性			
-			onMobile = u.indexOf("Mobile") > -1;
+			onMobile = __JS__("window.isConchApp") ? true : u.indexOf("Mobile") > -1;
 			onIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
 			onIPhone = u.indexOf("iPhone") > -1;
 			onMac = /*[STATIC SAFE]*/ u.indexOf("Mac OS X") > -1;
@@ -154,7 +181,14 @@ package laya.utils {
 			onPC = !onMobile;
 			onMiniGame = /*[STATIC SAFE]*/ u.indexOf('MiniGame') > -1;
 			onBDMiniGame = /*[STATIC SAFE]*/ u.indexOf('SwanGame') > -1;
+			if(u.indexOf('OPPO') > -1 && u.indexOf('MiniGame') > -1)
+			{
+				onQGMiniGame = true;//OPPO环境判断
+				onMiniGame = false;
+			}
 			onLimixiu = /*[STATIC SAFE]*/ u.indexOf('limixiu') > -1;
+			//小米运行环境判断
+			onKGMiniGame = /*[STATIC SAFE]*/ u.indexOf('QuickGame') > -1;//小米环境判断
 			//处理LocalStorage兼容
 			supportLocalStorage = LocalStorage.__init__();
 			//处理声音兼容性
@@ -173,6 +207,8 @@ package laya.utils {
 			
 			//测试是否支持webgl
 			var tmpCanv:* = new HTMLCanvas(true);
+			if(Browser.onQGMiniGame)
+				tmpCanv = Render._mainCanvas;//xiaosong add
 			var names:Array = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 			var gl:* = null;
 			for (i = 0; i < names.length; i++) {

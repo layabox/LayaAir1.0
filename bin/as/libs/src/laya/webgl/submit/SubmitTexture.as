@@ -86,7 +86,7 @@ package laya.webgl.submit
 			
 			gl.drawElements(WebGLContext.TRIANGLES, this._numEle, WebGLContext.UNSIGNED_SHORT, this._startIdx);
 			
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			Stat.trianglesFaces += _numEle / 3;
 			
 			return 1;

@@ -61,7 +61,7 @@ package laya.d3.resource.models {
 		override public function _render(state:RenderContext3D):void {
 			LayaGL.instance.drawElements(WebGLContext.TRIANGLES, 36, WebGLContext.UNSIGNED_BYTE, 0);
 			Stat.trianglesFaces += 12;
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 		}
 	}
 }

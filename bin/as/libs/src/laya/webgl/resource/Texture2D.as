@@ -2,6 +2,7 @@ package laya.webgl.resource {
 	import laya.layagl.LayaGL;
 	import laya.net.Loader;
 	import laya.renders.Render;
+	import laya.resource.HTMLCanvas;
 	import laya.utils.Browser;
 	import laya.utils.Handler;
 	import laya.webgl.WebGLContext;
@@ -70,6 +71,15 @@ package laya.webgl.resource {
 		private var _canRead:Boolean;
 		/** @private */
 		private var _pixels:Uint8Array;
+		/** @private */
+		private var _mipmapCount:int;
+		
+		/**
+		 * 获取mipmap数量。
+		 */
+		public function get mipmapCount():int {
+			return _mipmapCount;
+		}
 		
 		/**
 		 * @inheritDoc
@@ -96,9 +106,51 @@ package laya.webgl.resource {
 			
 			_setWarpMode(WebGLContext.TEXTURE_WRAP_S, _wrapModeU);//TODO:重置宽高需要调整
 			_setWarpMode(WebGLContext.TEXTURE_WRAP_T, _wrapModeV);//TODO:重置宽高需要调整
-			Config.is2DPixelArtGame && (_filterMode = BaseTexture.FILTERMODE_POINT);//TODO:
 			_setFilterMode(_filterMode);//TODO:重置宽高需要调整
 			_setAnisotropy(_anisoLevel);
+			
+			if (_mipmap) {
+				_mipmapCount = __JS__("Math.max(Math.ceil(Math.log2(width)) + 1, Math.ceil(Math.log2(2)) + 1)");
+				for (var i:int = 0; i < _mipmapCount; i++)
+					_setPixels(null, i, Math.max(width >> i, 1), Math.max(height >> i, 1));//初始化各级mipmap
+				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
+			} else {
+				_mipmapCount = 1;
+				_setGPUMemory(width * height * 4);
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _getFormatByteCount():int {
+			switch (_format) {
+			case FORMAT_R8G8B8: 
+				return 3;
+			case FORMAT_R8G8B8A8: 
+				return 4;
+			case FORMAT_ALPHA8: 
+				return 1;
+			default: 
+				throw "Texture2D: unknown format.";
+			}
+		}
+		
+		/**
+		 * @private
+		 */
+		private function _setPixels(pixels:Uint8Array, miplevel:int, width:int, height:int):void {
+			var gl:WebGLContext = LayaGL.instance;
+			var textureType:int = _glTextureType;
+			var glFormat:int = _getGLFormat();
+			WebGLContext.bindTexture(gl, textureType, _glTexture);
+			if (format === BaseTexture.FORMAT_R8G8B8) {
+				gl.pixelStorei(WebGLContext.UNPACK_ALIGNMENT, 1);//字节对齐
+				gl.texImage2D(textureType, miplevel, glFormat, width, height, 0, glFormat, WebGLContext.UNSIGNED_BYTE, pixels);
+				gl.pixelStorei(WebGLContext.UNPACK_ALIGNMENT, 4);
+			} else {
+				gl.texImage2D(textureType, miplevel, glFormat, width, height, 0, glFormat, WebGLContext.UNSIGNED_BYTE, pixels);
+			}
 		}
 		
 		/**
@@ -300,6 +352,8 @@ package laya.webgl.resource {
 			var height:uint = source.height;
 			_width = width;
 			_height = height;
+			if (!(_isPot(width) && _isPot(height)))
+				_mipmap = false;
 			_setWarpMode(WebGLContext.TEXTURE_WRAP_S, _wrapModeU);//宽高变化后需要重新设置
 			_setWarpMode(WebGLContext.TEXTURE_WRAP_T, _wrapModeV);//宽高变化后需要重新设置
 			_setFilterMode(_filterMode);//宽高变化后需要重新设置
@@ -310,14 +364,20 @@ package laya.webgl.resource {
 			var glFormat:int = _getGLFormat();
 			
 			if (Render.isConchApp) {//[NATIVE]临时
-				source.setPremultiplyAlpha(premultiplyAlpha);
-				gl.texImage2D(_glTextureType, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, source);
+				if (source is HTMLCanvas) {
+					//todo premultiply alpha
+					gl.texImage2D(_glTextureType, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, source);
+				}
+				else {
+					source.setPremultiplyAlpha(premultiplyAlpha);
+					gl.texImage2D(_glTextureType, 0, WebGLContext.RGBA, WebGLContext.RGBA, WebGLContext.UNSIGNED_BYTE, source);
+				}
 			} else {
 				(premultiplyAlpha) && (gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true));
 				gl.texImage2D(_glTextureType, 0, glFormat, glFormat, WebGLContext.UNSIGNED_BYTE, source);
 				(premultiplyAlpha) && (gl.pixelStorei(WebGLContext.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false));
 			}
-			if (_mipmap && _isPot(width) && _isPot(height)) {
+			if (_mipmap) {
 				gl.generateMipmap(_glTextureType);
 				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
 			} else {
@@ -346,24 +406,48 @@ package laya.webgl.resource {
 		public function setPixels(pixels:Uint8Array, miplevel:int = 0):void {
 			if (!pixels)
 				throw "Texture2D:pixels can't be null.";
+			var width:int = Math.max(_width >> miplevel, 1);
+			var height:int = Math.max(_height >> miplevel, 1);
+			var pixelsCount:int = width * height * _getFormatByteCount();
+			if (pixels.length < pixelsCount)
+				throw "Texture2D:pixels length should at least " + pixelsCount + ".";
+			_setPixels(pixels, miplevel, width, height);
 			
-			var width:uint = _width;
-			var height:uint = _height;
+			if (_canRead)
+				_pixels = pixels;
+			
+			_readyed = true;
+			_activeResource();
+		}
+		
+		/**
+		 * 通过像素填充部分纹理。
+		 * @param  x X轴像素起点。
+		 * @param  y Y轴像素起点。
+		 * @param  width 像素宽度。
+		 * @param  height 像素高度。
+		 * @param  pixels 像素数组。
+		 * @param  miplevel 层级。
+		 */
+		public function setSubPixels(x:int, y:int, width:int, height:int, pixels:Uint8Array, miplevel:int = 0):void {
+			if (!pixels)
+				throw "Texture2D:pixels can't be null.";
 			
 			var gl:WebGLContext = LayaGL.instance;
 			var textureType:int = _glTextureType;
 			WebGLContext.bindTexture(gl, textureType, _glTexture);
 			var glFormat:int = _getGLFormat();
-			gl.texImage2D(textureType, miplevel, glFormat, width, height, 0, glFormat, WebGLContext.UNSIGNED_BYTE, pixels);
-			if (_mipmap && _isPot(width) && _isPot(height)) {
-				gl.generateMipmap(textureType);
-				_setGPUMemory(width * height * 4 * (1 + 1 / 3));
+			
+			if (_format === BaseTexture.FORMAT_R8G8B8) {
+				gl.pixelStorei(WebGLContext.UNPACK_ALIGNMENT, 1);//字节对齐
+				gl.texSubImage2D(textureType, miplevel, x, y, width, height, glFormat, WebGLContext.UNSIGNED_BYTE, pixels);
+				gl.pixelStorei(WebGLContext.UNPACK_ALIGNMENT, 4);
 			} else {
-				_setGPUMemory(width * height * 4);
+				gl.texSubImage2D(textureType, miplevel, x, y, width, height, glFormat, WebGLContext.UNSIGNED_BYTE, pixels);
 			}
 			
-			if (_canRead)
-				_pixels = pixels;
+			//if (_canRead)
+			//_pixels = pixels;//TODO:
 			
 			_readyed = true;
 			_activeResource();

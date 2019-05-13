@@ -50,6 +50,8 @@ package laya.resource {
 		 * 销毁。
 		 */
 		override public function destroy():void {
+			super.destroy();
+			_setCPUMemory(0);
 			_ctx && _ctx.destroy();
 			_ctx = null;
 		}
@@ -112,7 +114,7 @@ package laya.resource {
 			if (_width != w || _height != h || (_source && (_source.width != w || _source.height != h))) {
 				_width = w;
 				_height = h;
-				_setGPUMemory(w * h * 4);
+				_setCPUMemory(w * h * 4);
 				_ctx && _ctx.size && _ctx.size(w, h);
 				_source && (_source.height = h, _source.width = w);
 				if (_texture)
@@ -139,23 +141,32 @@ package laya.resource {
 		 * 把图片转换为base64信息
 		 * @param	type "image/png"
 		 * @param	encoderOptions	质量参数，取值范围为0-1
-		 * @param	callBack	完成回调，返回base64数据
 		 */
-		public function toBase64(type:String, encoderOptions:Number, callBack:Function):void {
+		public function toBase64(type:String, encoderOptions:Number):String {
 			if (_source) {
 				if (Render.isConchApp) {
+					if (__JS__("conchConfig.threadMode == 2")) {
+						throw "native 2 thread mode use toBase64Async";
+					}
 					var width:Number = _ctx._targets.sourceWidth;
 					var height:Number = _ctx._targets.sourceHeight;
-					_ctx._targets.getData(0, 0, width, height, function(data:ArrayBuffer):void {
-						__JS__("var base64 = conchToBase64(type, encoderOptions, data, width, height)");
-						__JS__("callBack(base64)");
-					});	
+					var data:* = _ctx._targets.getData(0, 0, width, height);
+					__JS__("return conchToBase64(type, encoderOptions, data.buffer, width, height)");
 				}
 				else {
-					var base64Data:String = _source.toDataURL(type, encoderOptions);
-					callBack(base64Data);
+					return _source.toDataURL(type, encoderOptions);
 				}
 			}
+			return null;
+		}
+		//native多线程
+		public function toBase64Async(type:String, encoderOptions:Number, callBack:Function):void {
+			var width:Number = _ctx._targets.sourceWidth;
+			var height:Number = _ctx._targets.sourceHeight;
+			_ctx._targets.getDataAsync(0, 0, width, height, function(data:Uint8Array):void {
+				__JS__("var base64 = conchToBase64(type, encoderOptions, data.buffer, width, height)");
+				__JS__("callBack(base64)");
+			});	
 		}
 	}
 }

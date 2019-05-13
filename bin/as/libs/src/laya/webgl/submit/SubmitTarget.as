@@ -39,7 +39,7 @@ package laya.webgl.submit {
 				shaderValue.texture = target._getSource();
 				shaderValue.upload();
 				blend();
-				Stat.renderBatch++;
+				Stat.renderBatches++;
 				Stat.trianglesFaces += _numEle/3;
 				WebGL.mainContext.drawElements(WebGLContext.TRIANGLES, this._numEle, WebGLContext.UNSIGNED_SHORT, this._startIdx);
 			}

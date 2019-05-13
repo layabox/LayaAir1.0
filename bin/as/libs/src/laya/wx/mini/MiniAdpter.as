@@ -60,6 +60,8 @@ package laya.wx.mini {
 			if (_inited) return;
 			_inited = true;
 			window = __JS__('window');
+			if(!window.hasOwnProperty("wx"))
+				return;
 			if (window.navigator.userAgent.indexOf('MiniGame') < 0) return;
 			isZiYu = isSon;
 			isPosMsgYu = isPosMsg;
@@ -75,7 +77,8 @@ package laya.wx.mini {
 			window.focus = function():void {
 			};
 			//清空路径设定
-			Laya['_getUrlPath'] = function():void {
+			Laya['_getUrlPath'] = function():String {
+				return "";
 			};
 			//add---xiaosong--snowgame
 			window.logtime = function(str:String):void {
