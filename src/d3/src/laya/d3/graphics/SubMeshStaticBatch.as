@@ -102,7 +102,7 @@ package laya.d3.graphics {
 			var uv1Offset:int = uv1Element ? uv1Element.offset / 4 : -1;
 			var tangentElement:VertexElement = vertexDeclaration.getVertexElementByUsage(VertexMesh.MESH_TANGENT0);
 			var sTangentOffset:int = tangentElement ? tangentElement.offset / 4 : -1;
-			var bakeVertexFloatCount:int = 18;
+			var bakeVertexFloatCount:int = _vertexDeclaration.vertexStride / 4;
 			var oriVertexFloatCount:int = vertexDeclaration.vertexStride / 4;
 			var oriVertexes:Float32Array = vertexBuffer.getData() as Float32Array;
 			
