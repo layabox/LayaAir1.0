@@ -52,7 +52,27 @@ package laya.bd.mini {
 				else Loader.parserMap[type].call(null, this);
 				return;
 			}
-			var encoding:String = BMiniAdapter.getUrlEncode(url,type);
+			var contentType:String;
+			switch (type) {
+				case Loader.ATLAS: 
+				case Loader.PREFAB: 
+				case Loader.PLF: 
+					contentType = Loader.JSON;
+					break;
+				case Loader.FONT: 
+					contentType = Loader.XML;
+					break;
+				case Loader.PLFB:
+					contentType = Loader.BUFFER;
+					break;
+				default: 
+					contentType = type;
+			}
+			if (Loader.preLoadedMap[URL.formatURL(url)]) {
+				thisLoader.onLoaded(Loader.preLoadedMap[URL.formatURL(url)]);
+				return;
+			} 
+			var encoding:String = BMiniAdapter.getUrlEncode(url,contentType);
 			var urlType:String = Utils.getFileExtension(url);
 			if ((_fileTypeArr.indexOf(urlType) != -1)) {
 				//图片通过miniImage去加载
@@ -134,7 +154,7 @@ package laya.bd.mini {
 			if (!errorCode) {
 				//文本文件读取本地存在
 				var tempData:Object;
-				if (type == Loader.JSON || type == Loader.ATLAS || type == Loader.PREFAB) {
+				if (type == Loader.JSON || type == Loader.ATLAS || type == Loader.PREFAB  || type == Loader.PLF) {
 					tempData = BMiniAdapter.getJson(data.data);
 				} else if (type == Loader.XML) {
 					tempData = Utils.parseXMLFromString(data.data);

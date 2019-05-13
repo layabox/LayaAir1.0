@@ -116,7 +116,7 @@ package laya.d3.resource.models {
 			var indexCount:int = _indexBuffer.indexCount;
 			LayaGL.instance.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.trianglesFaces += indexCount / 3;
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 		}
 	}
 }

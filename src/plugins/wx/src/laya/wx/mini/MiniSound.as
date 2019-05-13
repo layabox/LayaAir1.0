@@ -56,7 +56,7 @@ package laya.wx.mini {
 						url = url.split(MiniFileMgr.loadPath)[1];//去掉http头
 					}else
 					{
-						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL._basePath;
 						if(tempStr != "")
 							url = url.split(tempStr)[1];//去掉http头
 					}
@@ -80,7 +80,7 @@ package laya.wx.mini {
 				{
                     if (MiniFileMgr.isLocalNativeFile(url))
 					{
-						tempStr = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						tempStr = URL.rootPath != "" ? URL.rootPath : URL._basePath;
                         var tempUrl:String = url;
                         if(tempStr != "")
                             url = url.split(tempStr)[1];//去掉http头
@@ -133,7 +133,7 @@ package laya.wx.mini {
 				if(MiniAdpter.autoCacheFile)
 				{
 					if (MiniFileMgr.isLocalNativeFile(sourceUrl)) {
-						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL.basePath;
+						var tempStr:String = URL.rootPath != "" ? URL.rootPath : URL._basePath;
 						var tempUrl:String = sourceUrl;
 						if(tempStr != "" && (sourceUrl.indexOf("http://") != -1 || sourceUrl.indexOf("https://") != -1))
 							fileNativeUrl = sourceUrl.split(tempStr)[1];//去掉http头

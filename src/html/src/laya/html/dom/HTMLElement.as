@@ -413,16 +413,64 @@ package laya.html.dom {
 						var lastIndex:int = words.length - 1;
 						var lastWords:HTMLChar = words[lastIndex];
 						var lineY:Number = lastWords.y + lastWords.height;
-						if(cssStyle.textDecoration!="none")
-						graphic.drawLine(words[0].x, lineY, lastWords.x + lastWords.width, lineY, color, 1);
-						var hitRec:HTMLHitRect = HTMLHitRect.create();
-						hitRec.rec.setTo(words[0].x, lastWords.y, lastWords.x + lastWords.width - words[0].x, lastWords.height);
-						hitRec.href = href;
-						recList.push(hitRec);
+						
+						if (lastWords.y == words[0].y)
+						{
+							if(cssStyle.textDecoration!="none")
+							graphic.drawLine(words[0].x, lineY, lastWords.x + lastWords.width, lineY, color, 1);
+							var hitRec:HTMLHitRect = HTMLHitRect.create();
+							hitRec.rec.setTo(words[0].x, lastWords.y, lastWords.x + lastWords.width - words[0].x, lastWords.height);
+							hitRec.href = href;
+							recList.push(hitRec);
+						}else
+						{
+							workLines(words as Array,graphic,recList);
+						}
+						
+						
 					}
 				}
 				
 			}
+		}
+		
+		private function workLines(wordList:Array,g:Graphics,recList:Array):void
+		{
+			var cssStyle:HTMLStyle = this.style;
+			var hasLine:Boolean;
+			hasLine = cssStyle.textDecoration != "none";
+			var i:int, len:int;
+			len = wordList.length;
+			var tStartWord:HTMLChar;
+			tStartWord = wordList[i];
+			var tEndWord:HTMLChar;
+			tEndWord = tStartWord;
+			if (!tStartWord) return;
+			var tword:HTMLChar;
+			for (i = 1; i < len; i++)
+			{
+				tword = wordList[i];
+				if (tword.y != tStartWord.y)
+				{
+					createOneLine(tStartWord, tEndWord,hasLine,g,recList);
+					tStartWord = tword;
+					tEndWord = tword;
+				}else
+				{
+					tEndWord = tword;
+				}
+			}
+			createOneLine(tStartWord, tEndWord,hasLine,g,recList);
+		}
+		private function createOneLine(startWord:HTMLChar, lastWords:HTMLChar,hasLine:Boolean,graphic:Graphics,recList:Array):void
+		{
+			var lineY:Number = lastWords.y + lastWords.height;
+			if(hasLine)
+				graphic.drawLine(startWord.x, lineY, lastWords.x + lastWords.width, lineY, color, 1);
+			var hitRec:HTMLHitRect = HTMLHitRect.create();
+			hitRec.rec.setTo(startWord.x, lastWords.y, lastWords.x + lastWords.width - startWord.x, lastWords.height);
+			hitRec.href = href;
+			recList.push(hitRec);
 		}
 	}
 }

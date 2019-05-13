@@ -547,8 +547,10 @@ package laya.d3.physics {
 		 * @inheritDoc
 		 */
 		override protected function _onDisable():void {
-			if (_colliderShape && _enabled)
+			if (_colliderShape && _enabled){
 				_removeFromSimulation();
+				(_inPhysicUpdateListIndex !== -1) && (_simulation._physicsUpdateList.remove(this));//销毁前一定会调用 _onDisable()
+			}
 			_simulation = null;
 		}
 		
@@ -584,7 +586,6 @@ package laya.d3.physics {
 		 * @inheritDoc
 		 */
 		override protected function _onDestroy():void {
-			(_inPhysicUpdateListIndex !== -1) && (_simulation._physicsUpdateList.remove(this));
 			var physics3D:* = Laya3D._physics3D;
 			delete _physicObjectsMap[id];
 			physics3D.destroy(_nativeColliderObject);

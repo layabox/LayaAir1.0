@@ -1,6 +1,7 @@
 package {
 	import laya.d3.animation.AnimationClip;
 	import laya.d3.core.Avatar;
+	import laya.d3.core.MeshRenderer;
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.RenderableSprite3D;
 	import laya.d3.core.SkinnedMeshRenderer;
@@ -12,27 +13,22 @@ package {
 	import laya.d3.core.material.ExtendTerrainMaterial;
 	import laya.d3.core.material.PBRSpecularMaterial;
 	import laya.d3.core.material.PBRStandardMaterial;
+	import laya.d3.core.material.SkyBoxMaterial;
 	import laya.d3.core.material.SkyProceduralMaterial;
 	import laya.d3.core.material.TerrainMaterial;
 	import laya.d3.core.material.UnlitMaterial;
 	import laya.d3.core.material.WaterPrimaryMaterial;
 	import laya.d3.core.particleShuriKen.ShuriKenParticle3D;
 	import laya.d3.core.particleShuriKen.ShurikenParticleMaterial;
+	import laya.d3.core.pixelLine.PixelLineMaterial;
 	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.core.scene.Scene3D;
 	import laya.d3.core.trail.TrailMaterial;
 	import laya.d3.core.trail.TrailSprite3D;
 	import laya.d3.graphics.FrustumCulling;
 	import laya.d3.math.HalfFloatUtils;
-	import laya.d3.math.Native.ConchQuaternion;
-	import laya.d3.math.Native.ConchVector2;
-	import laya.d3.math.Native.ConchVector3;
-	import laya.d3.math.Native.ConchVector4;
-	import laya.d3.math.Quaternion;
-	import laya.d3.math.Vector2;
-	import laya.d3.math.Vector3;
-	import laya.d3.math.Vector4;
 	import laya.d3.physics.PhysicsSettings;
+	import laya.d3.resource.RenderTexture;
 	import laya.d3.resource.TextureCube;
 	import laya.d3.resource.models.Mesh;
 	import laya.d3.resource.models.SkyBox;
@@ -101,8 +97,6 @@ package {
 		/**@private */
 		public static var _config:Config3D = new Config3D();
 		
-		/**@private */
-		public static var debugMode:Boolean = false;
 		/**@private */
 		public static var physicsSettings:PhysicsSettings = new PhysicsSettings();//TODO:
 		
@@ -178,6 +172,17 @@ package {
 			TerrainMaterial.__init__();
 			ExtendTerrainMaterial.__init__();
 			ShaderInit3D.__init__();
+			PixelLineMaterial.defaultMaterial.lock = true;
+			BlinnPhongMaterial.defaultMaterial.lock = true;
+			EffectMaterial.defaultMaterial.lock = true;
+			PBRStandardMaterial.defaultMaterial.lock = true;
+			PBRSpecularMaterial.defaultMaterial.lock = true;
+			UnlitMaterial.defaultMaterial.lock = true;
+			ShurikenParticleMaterial.defaultMaterial.lock = true;
+			TrailMaterial.defaultMaterial.lock = true;
+			SkyProceduralMaterial.defaultMaterial.lock = true;
+			SkyBoxMaterial.defaultMaterial.lock = true;
+			WaterPrimaryMaterial.defaultMaterial.lock = true;
 			Texture2D.__init__();
 			TextureCube.__init__();
 			SkyBox.__init__();
@@ -228,6 +233,7 @@ package {
 				var skinnedMeshRender:* = SkinnedMeshRenderer;
 				var avatar:* = Avatar;
 				var frustumCulling:* = FrustumCulling;
+				var meshRender:* = MeshRenderer;
 				if (Render.supportWebGLPlusRendering) {
 					//替换ShaderData的函数
 					shaderData.prototype._initData = shaderData.prototype._initDataForNative;
@@ -254,18 +260,18 @@ package {
 					shaderData.prototype.setAttribute = shaderData.prototype.setAttributeForNative;
 					shaderData.prototype.getAttribute = shaderData.prototype.getAttributeForNative;
 					shaderData.prototype.cloneTo = shaderData.prototype.cloneToForNative;
+					shaderData.prototype.getData = shaderData.prototype.getDataForNative;
 					shader3D.prototype._uniformMatrix2fv = shader3D.prototype._uniformMatrix2fvForNative;
 					shader3D.prototype._uniformMatrix3fv = shader3D.prototype._uniformMatrix3fvForNative;
 					shader3D.prototype._uniformMatrix4fv = shader3D.prototype._uniformMatrix4fvForNative;
-					
+					meshRender.prototype._renderUpdateWithCamera = meshRender.prototype._renderUpdateWithCameraForNative;
 				}
 				//Matrix4x4.multiply = Matrix4x4.multiplyForNative;
 				if (Render.supportWebGLPlusCulling) {
 					frustumCulling.renderObjectCulling = FrustumCulling.renderObjectCullingNative;
 				}
 				
-				if (Render.supportWebGLPlusAnimation)
-				{
+				if (Render.supportWebGLPlusAnimation) {
 					avatar.prototype._cloneDatasToAnimator = avatar.prototype._cloneDatasToAnimatorNative;
 					__JS__("FloatKeyframe = window.conchFloatKeyframe");
 					__JS__("Vector3Keyframe = window.conchFloatArrayKeyframe");
@@ -274,73 +280,6 @@ package {
 					__JS__("KeyframeNodeList = window.conchKeyframeNodeList");
 					var animationClip:* = AnimationClip;
 					animationClip.prototype._evaluateClipDatasRealTime = animationClip.prototype._evaluateClipDatasRealTimeForNative;
-				}
-				if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering)
-				{
-					var quaternion:*= Quaternion;
-					var conchQuaternion:*= ConchQuaternion;
-					quaternion.createFromYawPitchRoll = conchQuaternion.createFromYawPitchRoll;
-					quaternion.multiply = conchQuaternion.multiply;
-					quaternion.arcTanAngle = conchQuaternion.arcTanAngle;
-					quaternion.angleTo = conchQuaternion.angleTo;
-					quaternion.createFromAxisAngle = conchQuaternion.createFromAxisAngle;
-					quaternion.createFromMatrix4x4 = conchQuaternion.createFromMatrix4x4;
-					quaternion.slerp = conchQuaternion.slerp;
-					quaternion.lerp = conchQuaternion.lerp;
-					quaternion.add = conchQuaternion.add;
-					quaternion.dot = conchQuaternion.dot;
-					quaternion.rotationLookAt = conchQuaternion.rotationLookAt;
-					quaternion.lookAt = conchQuaternion.lookAt;
-					quaternion.invert = conchQuaternion.invert;
-					quaternion.rotationMatrix = conchQuaternion.rotationMatrix;
-				
-					var vector2:*= Vector2;
-					var conchVector2:*= ConchVector2;
-					vector2.scale = conchVector2.scale;
-					vector2.dot = conchVector2.dot;
-					vector2.normalize = conchVector2.normalize;
-					vector2.scalarLength = conchVector2.scalarLength;
-	
-					var vector3:*= Vector3;
-					var conchVector3:*= ConchVector3;
-					vector3.equals = conchVector3.equals;
-					vector3.dot = conchVector3.dot;
-					vector3.cross = conchVector3.cross;
-					vector3.subtract = conchVector3.subtract;
-					vector3.add = conchVector3.add;
-					vector3.Clamp = conchVector3.Clamp;
-					vector3.transformCoordinate = conchVector3.transformCoordinate;
-					vector3.TransformNormal = conchVector3.TransformNormal;
-					vector3.transformV3ToV3 = conchVector3.transformV3ToV3;
-					vector3.transformV3ToV4 = conchVector3.transformV3ToV4;
-					vector3.lerp = conchVector3.lerp;
-					vector3.scale = conchVector3.scale;
-					vector3.multiply = conchVector3.multiply;
-					vector3.normalize = conchVector3.normalize;
-					vector3.scalarLengthSquared = conchVector3.scalarLengthSquared;
-					vector3.scalarLength = conchVector3.scalarLength;
-					vector3.transformQuat = conchVector3.transformQuat;
-					vector3.max = conchVector3.max;
-					vector3.min = conchVector3.min;
-					vector3.distance = conchVector3.distance;
-					vector3.distanceSquared = conchVector3.distanceSquared;
-				
-					var vector4:*= Vector4;
-					var conchVector4:*= ConchVector4;
-					vector4.lerp = conchVector4.lerp;
-					vector4.transformByM4x4 = conchVector4.transformByM4x4;
-					vector4.equals = conchVector4.equals;
-					vector4.normalize = conchVector4.normalize;
-					vector4.add = conchVector4.add;
-					vector4.subtract = conchVector4.subtract;
-					vector4.multiply = conchVector4.multiply;
-					vector4.scale = conchVector4.scale;
-					vector4.Clamp = conchVector4.Clamp;
-					vector4.distanceSquared = conchVector4.distanceSquared;
-					vector4.distance = conchVector4.distance;
-					vector4.dot = conchVector4.dot;
-					vector4.min = conchVector4.min;
-					vector4.max = conchVector4.max;
 				}
 			}
 			WebGL.shaderHighPrecision = false;
@@ -369,8 +308,6 @@ package {
 				}
 				path = parts.join('/');
 			}
-			
-			(URL.customFormat != null) && (path = URL.customFormat(path, null));
 			return path;
 		}
 		

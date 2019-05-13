@@ -79,7 +79,10 @@ package laya.d3.shader {
 				'a_Texcoord1': VertexMesh.MESH_TEXTURECOORDINATE1, 
 				'a_BoneWeights': VertexMesh.MESH_BLENDWEIGHT0, 
 				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0, 
-				'a_Tangent0': VertexMesh.MESH_TANGENT0};
+				'a_Tangent0': VertexMesh.MESH_TANGENT0,
+				'a_MvpMatrix': VertexMesh.MESH_MVPMATRIX_ROW0,
+				'a_WorldMat': VertexMesh.MESH_WORLDMATRIX_ROW0
+			};
 			var uniformMap:Object = {
 				'u_Bones': Shader3D.PERIOD_CUSTOM, 
 				'u_DiffuseTexture': Shader3D.PERIOD_MATERIAL, 
@@ -119,14 +122,25 @@ package laya.d3.shader {
 				'u_shadowMap3': Shader3D.PERIOD_SCENE, 
 				'u_shadowPSSMDistance':  Shader3D.PERIOD_SCENE, 
 				'u_lightShadowVP':  Shader3D.PERIOD_SCENE, 
-				'u_shadowPCFoffset': Shader3D.PERIOD_SCENE};
+				'u_shadowPCFoffset': Shader3D.PERIOD_SCENE
+			};
+			
+			var stateMap:Object = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			}
 			
 			vs = __INCLUDESTR__("files/Mesh-BlinnPhong.vs");
 			ps = __INCLUDESTR__("files/Mesh-BlinnPhong.ps");
-			var shader:Shader3D = Shader3D.add("BLINNPHONG");
+			var shader:Shader3D = Shader3D.add("BLINNPHONG",true);
 			var subShader:SubShader = new SubShader(attributeMap, uniformMap, SkinnedMeshSprite3D.shaderDefines, BlinnPhongMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs,ps);
+			subShader.addShaderPass(vs, ps, stateMap);
+			
 			
 			attributeMap = {
 				'a_Position': VertexMesh.MESH_POSITION0, 
@@ -149,7 +163,9 @@ package laya.d3.shader {
 				'a_Tangent0': VertexMesh.MESH_TANGENT0,
 				'a_Texcoord0': VertexMesh.MESH_TEXTURECOORDINATE0,
 				'a_BoneWeights': VertexMesh.MESH_BLENDWEIGHT0, 
-				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0
+				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0,
+				'a_MvpMatrix': VertexMesh.MESH_MVPMATRIX_ROW0,
+				'a_WorldMat': VertexMesh.MESH_WORLDMATRIX_ROW0
 			};
 			uniformMap = {
 				'u_Bones': Shader3D.PERIOD_CUSTOM, 
@@ -203,12 +219,22 @@ package laya.d3.shader {
 				'u_FogRange':  Shader3D.PERIOD_SCENE, 
 				'u_FogColor': Shader3D.PERIOD_SCENE
 			};
+			
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			}
+			
 			vs = __INCLUDESTR__("files/PBRStandard.vs");
 			ps = __INCLUDESTR__("files/PBRStandard.ps");
-			shader = Shader3D.add("PBRStandard");
+			shader = Shader3D.add("PBRStandard",true);
 			subShader = new SubShader( attributeMap, uniformMap, SkinnedMeshSprite3D.shaderDefines, PBRStandardMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs,ps);
+			subShader.addShaderPass(vs,ps,stateMap);
 			
 			//PBRSpecular
 			attributeMap = {
@@ -217,7 +243,9 @@ package laya.d3.shader {
 				'a_Tangent0': VertexMesh.MESH_TANGENT0,
 				'a_Texcoord0': VertexMesh.MESH_TEXTURECOORDINATE0,
 				'a_BoneWeights': VertexMesh.MESH_BLENDWEIGHT0, 
-				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0
+				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0,
+				'a_MvpMatrix': VertexMesh.MESH_MVPMATRIX_ROW0,
+				'a_WorldMat': VertexMesh.MESH_WORLDMATRIX_ROW0
 			};
 			uniformMap = {
 				'u_Bones': Shader3D.PERIOD_CUSTOM, 
@@ -271,12 +299,23 @@ package laya.d3.shader {
 				'u_FogRange': Shader3D.PERIOD_SCENE, 
 				'u_FogColor': Shader3D.PERIOD_SCENE
 			};
+			
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			}
+			
 			vs = __INCLUDESTR__("files/PBRSpecular.vs");
 			ps = __INCLUDESTR__("files/PBRSpecular.ps");
-			shader = Shader3D.add("PBRSpecular");
+			shader = Shader3D.add("PBRSpecular",true);
 			subShader = new SubShader(attributeMap, uniformMap, SkinnedMeshSprite3D.shaderDefines, PBRSpecularMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs, ps);
+			
+			subShader.addShaderPass(vs, ps,stateMap);
 			
 			//unlit
 			attributeMap = {
@@ -284,7 +323,8 @@ package laya.d3.shader {
 				'a_Color': VertexMesh.MESH_COLOR0, 
 				'a_Texcoord0': VertexMesh.MESH_TEXTURECOORDINATE0, 
 				'a_BoneWeights': VertexMesh.MESH_BLENDWEIGHT0, 
-				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0
+				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0,
+				'a_MvpMatrix': VertexMesh.MESH_MVPMATRIX_ROW0
 			};
 			uniformMap = {
 				'u_Bones':Shader3D.PERIOD_CUSTOM, 
@@ -297,19 +337,29 @@ package laya.d3.shader {
 				'u_FogRange': Shader3D.PERIOD_SCENE, 
 				'u_FogColor': Shader3D.PERIOD_SCENE
 			};
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			}
+			
 			vs = __INCLUDESTR__("files/Unlit.vs");
 			ps = __INCLUDESTR__("files/Unlit.ps");
-			shader = Shader3D.add("Unlit");
+			shader = Shader3D.add("Unlit",true);
 			subShader = new SubShader(attributeMap, uniformMap, SkinnedMeshSprite3D.shaderDefines, UnlitMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs, ps);
+			subShader.addShaderPass(vs, ps,stateMap);
 			
 			//meshEffect
 			attributeMap = {
 				'a_Position': VertexMesh.MESH_POSITION0, 
 				'a_Texcoord0': VertexMesh.MESH_TEXTURECOORDINATE0, 
 				'a_BoneWeights': VertexMesh.MESH_BLENDWEIGHT0, 
-				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0
+				'a_BoneIndices': VertexMesh.MESH_BLENDINDICES0,
+				'a_MvpMatrix': VertexMesh.MESH_MVPMATRIX_ROW0
 			};
 			uniformMap = {
 				'u_Bones': Shader3D.PERIOD_CUSTOM, 
@@ -322,12 +372,20 @@ package laya.d3.shader {
 				'u_FogRange': Shader3D.PERIOD_SCENE, 
 				'u_FogColor': Shader3D.PERIOD_SCENE
 			};
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			}
 			vs = __INCLUDESTR__("files/Effect.vs");
 			ps = __INCLUDESTR__("files/Effect.ps");
-			shader = Shader3D.add("Effect");
+			shader = Shader3D.add("Effect",true);
 			subShader = new SubShader(attributeMap, uniformMap, SkinnedMeshSprite3D.shaderDefines, EffectMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs,ps);
+			subShader.addShaderPass(vs,ps,stateMap);
 			
 			//ShurikenParticle
 			attributeMap = {
@@ -406,13 +464,22 @@ package laya.d3.shader {
 				'u_Projection': Shader3D.PERIOD_CAMERA,
 				'u_FogStart': Shader3D.PERIOD_SCENE, 
 				'u_FogRange': Shader3D.PERIOD_SCENE, 
-				'u_FogColor': Shader3D.PERIOD_SCENE};
+				'u_FogColor': Shader3D.PERIOD_SCENE
+			};
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			};
 			vs = __INCLUDESTR__("files/ParticleShuriKen.vs");
 			ps = __INCLUDESTR__("files/ParticleShuriKen.ps");
 			shader = Shader3D.add("PARTICLESHURIKEN");
 			subShader = new SubShader(attributeMap, uniformMap, ShuriKenParticle3D.shaderDefines, ShurikenParticleMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs,ps);
+			subShader.addShaderPass(vs,ps,stateMap);
 			
 			attributeMap = {
 				'a_Position': VertexMesh.MESH_POSITION0};
@@ -448,60 +515,6 @@ package laya.d3.shader {
 			subShader = new SubShader(attributeMap, uniformMap,null,SkyProceduralMaterial.shaderDefines);
 			shader.addSubShader(subShader);
 			subShader.addShaderPass(vs,ps);
-			
-			////terrain的shader
-			//attributeMap = {
-				//'a_Position': VertexPositionTerrain.TERRAIN_POSITION0, 
-				//'a_Normal': VertexPositionTerrain.TERRAIN_NORMAL0, 
-				//'a_Texcoord0': VertexPositionTerrain.TERRAIN_TEXTURECOORDINATE0, 
-				//'a_Texcoord1': VertexPositionTerrain.TERRAIN_TEXTURECOORDINATE1};
-			//uniformMap = {
-				//'u_MvpMatrix': [Sprite3D.MVPMATRIX, Shader3D.PERIOD_SPRITE], 
-				//'u_WorldMat': [Sprite3D.WORLDMATRIX, Shader3D.PERIOD_SPRITE], 
-				//'u_LightmapScaleOffset': [RenderableSprite3D.LIGHTMAPSCALEOFFSET, Shader3D.PERIOD_SPRITE], 
-				//'u_LightMap': [RenderableSprite3D.LIGHTMAP, Shader3D.PERIOD_SPRITE], 
-				//'u_SplatAlphaTexture': [TerrainMaterial.SPLATALPHATEXTURE, Shader3D.PERIOD_MATERIAL], 
-				//'u_NormalTexture': [TerrainMaterial.NORMALTEXTURE, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseTexture1': [TerrainMaterial.DIFFUSETEXTURE1, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseTexture2': [TerrainMaterial.DIFFUSETEXTURE2, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseTexture3': [TerrainMaterial.DIFFUSETEXTURE3, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseTexture4': [TerrainMaterial.DIFFUSETEXTURE4, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseScale1': [TerrainMaterial.DIFFUSESCALE1, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseScale2': [TerrainMaterial.DIFFUSESCALE2, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseScale3': [TerrainMaterial.DIFFUSESCALE3, Shader3D.PERIOD_MATERIAL], 
-				//'u_DiffuseScale4': [TerrainMaterial.DIFFUSESCALE4, Shader3D.PERIOD_MATERIAL], 
-				//'u_MaterialDiffuse': [TerrainMaterial.MATERIALDIFFUSE, Shader3D.PERIOD_MATERIAL], 
-				//'u_MaterialAmbient': [TerrainMaterial.MATERIALAMBIENT, Shader3D.PERIOD_MATERIAL], 
-				//'u_MaterialSpecular': [TerrainMaterial.MATERIALSPECULAR, Shader3D.PERIOD_MATERIAL], 
-				//'u_CameraPos': [BaseCamera.CAMERAPOS, Shader3D.PERIOD_CAMERA], 
-				//'u_FogStart': [Scene3D.FOGSTART, Shader3D.PERIOD_SCENE], 
-				//'u_FogRange': [Scene3D.FOGRANGE, Shader3D.PERIOD_SCENE], 
-				//'u_FogColor': [Scene3D.FOGCOLOR, Shader3D.PERIOD_SCENE], 
-				//'u_DirectionLight.Direction': [Scene3D.LIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
-				//'u_DirectionLight.Diffuse': [Scene3D.LIGHTDIRCOLOR, Shader3D.PERIOD_SCENE], 
-				//'u_PointLight.Position': [Scene3D.POINTLIGHTPOS, Shader3D.PERIOD_SCENE], 
-				//'u_PointLight.Range': [Scene3D.POINTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
-				//'u_PointLight.Attenuation': [Scene3D.POINTLIGHTATTENUATION, Shader3D.PERIOD_SCENE], 
-				//'u_PointLight.Diffuse': [Scene3D.POINTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
-				//'u_SpotLight.Position': [Scene3D.SPOTLIGHTPOS, Shader3D.PERIOD_SCENE], 
-				//'u_SpotLight.Direction': [Scene3D.SPOTLIGHTDIRECTION, Shader3D.PERIOD_SCENE], 
-				//'u_SpotLight.Range': [Scene3D.SPOTLIGHTRANGE, Shader3D.PERIOD_SCENE], 
-				//'u_SpotLight.Spot': [Scene3D.SPOTLIGHTSPOTANGLE, Shader3D.PERIOD_SCENE], 
-				//'u_SpotLight.Diffuse': [Scene3D.SPOTLIGHTCOLOR, Shader3D.PERIOD_SCENE], 
-				//'u_AmbientColor': [Scene3D.AMBIENTCOLOR, Shader3D.PERIOD_SCENE],
-				//'u_shadowMap1': [Scene3D.SHADOWMAPTEXTURE1, Shader3D.PERIOD_SCENE], 
-				//'u_shadowMap2': [Scene3D.SHADOWMAPTEXTURE2, Shader3D.PERIOD_SCENE], 
-				//'u_shadowMap3': [Scene3D.SHADOWMAPTEXTURE3, Shader3D.PERIOD_SCENE], 
-				//'u_shadowPSSMDistance': [Scene3D.SHADOWDISTANCE, Shader3D.PERIOD_SCENE], 
-				//'u_lightShadowVP': [Scene3D.SHADOWLIGHTVIEWPROJECT, Shader3D.PERIOD_SCENE], 
-				//'u_shadowPCFoffset': [Scene3D.SHADOWMAPPCFOFFSET, Shader3D.PERIOD_SCENE]};
-			//
-			//vs = __INCLUDESTR__("files/Terrain.vs");
-			//ps = __INCLUDESTR__("files/Terrain.ps");
-			//shader = Shader3D.add("Terrain");
-			//subShader = new SubShader(attributeMap, uniformMap, RenderableSprite3D.shaderDefines, TerrainMaterial.shaderDefines);
-			//shader.addSubShader(subShader);
-			//subShader.addShaderPass(vs,ps);
 			
 			//extendTerrain的shader
 			 attributeMap = {
@@ -539,6 +552,7 @@ package laya.d3.shader {
 				'u_SpotLight.Direction': Shader3D.PERIOD_SCENE, 
 				'u_SpotLight.Range': Shader3D.PERIOD_SCENE, 
 				'u_SpotLight.Spot': Shader3D.PERIOD_SCENE, 
+				
 				'u_SpotLight.Color': Shader3D.PERIOD_SCENE, 
 				'u_AmbientColor':Shader3D.PERIOD_SCENE,
 				'u_shadowMap1': Shader3D.PERIOD_SCENE, 
@@ -548,12 +562,20 @@ package laya.d3.shader {
 				'u_lightShadowVP': Shader3D.PERIOD_SCENE, 
 				'u_shadowPCFoffset': Shader3D.PERIOD_SCENE
 			};
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			};
             vs = __INCLUDESTR__("files/extendTerrain.vs");
             ps = __INCLUDESTR__("files/extendTerrain.ps");
 			shader = Shader3D.add("ExtendTerrain");
 			subShader = new SubShader(attributeMap, uniformMap,RenderableSprite3D.shaderDefines,ExtendTerrainMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs,ps);
+			subShader.addShaderPass(vs,ps,stateMap);
 			
 			//Trail
 			attributeMap = {
@@ -577,13 +599,20 @@ package laya.d3.shader {
 				'u_GradientColorkey' : Shader3D.PERIOD_SPRITE,
 				'u_GradientAlphakey' : Shader3D.PERIOD_SPRITE
 			};
-			
+			stateMap = {
+				's_Cull':Shader3D.RENDER_STATE_CULL, 
+				's_Blend':Shader3D.RENDER_STATE_BLEND,
+				's_BlendSrc':Shader3D.RENDER_STATE_BLEND_SRC,
+				's_BlendDst':Shader3D.RENDER_STATE_BLEND_DST,
+				's_DepthTest':Shader3D.RENDER_STATE_DEPTH_TEST,
+				's_DepthWrite':Shader3D.RENDER_STATE_DEPTH_WRITE
+			};
             vs = __INCLUDESTR__("files/Trail.vs");
             ps = __INCLUDESTR__("files/Trail.ps");
             shader = Shader3D.add("Trail");
 			subShader = new SubShader(attributeMap, uniformMap, TrailSprite3D.shaderDefines, TrailMaterial.shaderDefines);
 			shader.addSubShader(subShader);
-			subShader.addShaderPass(vs,ps);
+			subShader.addShaderPass(vs,ps,stateMap);
 			
 			//WaterPrimary
 			attributeMap = {
@@ -602,6 +631,7 @@ package laya.d3.shader {
 				'u_WaveScale' : Shader3D.PERIOD_MATERIAL,
 				'u_WaveSpeed' : Shader3D.PERIOD_MATERIAL
 			};
+				
 			vs = __INCLUDESTR__("files/WaterPrimary.vs");
 			ps = __INCLUDESTR__("files/WaterPrimary.ps");
 			shader = Shader3D.add("WaterPrimary");

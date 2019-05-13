@@ -1,6 +1,5 @@
 package laya.d3.math {
 	import laya.d3.core.IClone;
-	import laya.d3.math.Native.ConchVector3;
 	import laya.renders.Render;
 	/**
 	 * <code>Vector3</code> 类用于创建三维向量。
@@ -9,26 +8,24 @@ package laya.d3.math {
 		/**@private	*/
 		public static const _tempVector4:Vector4 = new Vector4();
 		
-		/**零向量，禁止修改*/
-		public static const ZERO:Vector3 =/*[STATIC SAFE]*/ new Vector3(0.0, 0.0, 0.0);
-		/**一向量，禁止修改*/
-		public static const ONE:Vector3 =/*[STATIC SAFE]*/ new Vector3(1.0, 1.0, 1.0);
-		/**X轴单位向量，禁止修改*/
-		public static const NegativeUnitX:Vector3 =/*[STATIC SAFE]*/ new Vector3(-1, 0, 0);
-		/**X轴单位向量，禁止修改*/
-		public static const UnitX:Vector3 =/*[STATIC SAFE]*/ new Vector3(1, 0, 0);
-		/**Y轴单位向量，禁止修改*/
-		public static const UnitY:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 1, 0);
-		/**Z轴单位向量，禁止修改*/
-		public static const UnitZ:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, 1);
-		/**右手坐标系统前向量，禁止修改*/
-		public static const ForwardRH:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, -1);
-		/**左手坐标系统前向量,禁止修改*/
-		public static const ForwardLH:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, 1);
-		/**上向量,禁止修改*/
-		public static const Up:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 1, 0);
-		/**无效矩阵,禁止修改*/
-		public static const NAN:Vector3 =/*[STATIC SAFE]*/ new Vector3(NaN, NaN, NaN);
+		/**@private	*/
+		public static const _ZERO:Vector3 =/*[STATIC SAFE]*/ new Vector3(0.0, 0.0, 0.0);
+		/**@private	*/
+		public static const _ONE:Vector3 =/*[STATIC SAFE]*/ new Vector3(1.0, 1.0, 1.0);
+		/**@private	*/
+		public static const _NegativeUnitX:Vector3 =/*[STATIC SAFE]*/ new Vector3(-1, 0, 0);
+		/**@private	*/
+		public static const _UnitX:Vector3 =/*[STATIC SAFE]*/ new Vector3(1, 0, 0);
+		/**@private	*/
+		public static const _UnitY:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 1, 0);
+		/**@private	*/
+		public static const _UnitZ:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, 1);
+		/**@private	*/
+		public static const _ForwardRH:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, -1);
+		/**@private	*/
+		public static const _ForwardLH:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 0, 1);
+		/**@private	*/
+		public static const _Up:Vector3 =/*[STATIC SAFE]*/ new Vector3(0, 1, 0);
 		
 		/**
 		 * 两个三维向量距离的平方。
@@ -342,10 +339,6 @@ package laya.d3.math {
 		 * @param	z  Z轴坐标。
 		 */
 		public function Vector3(x:Number = 0, y:Number = 0, z:Number = 0, nativeElements:Float32Array = null/*[NATIVE]*/) {
-			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
-			if (__JS__("(window.conch != null)")) {
-				__JS__("return new ConchVector3(x, y, z, nativeElements)");
-			}
 			this.x = x;
 			this.y = y;
 			this.z = z;
@@ -401,5 +394,22 @@ package laya.d3.math {
 			z = 0;
 		}
 	
+		public function forNativeElement(nativeElements:Float32Array = null):void
+		{			
+			if (nativeElements)
+			{
+				__JS__("this.elements = nativeElements");
+				__JS__("this.elements[0] = this.x");
+				__JS__("this.elements[1] = this.y");
+				__JS__("this.elements[2] = this.z");
+			}
+			else
+			{
+				__JS__("this.elements = new Float32Array([this.x,this.y,this.z])");
+			}
+			Vector2.rewriteNumProperty(this, "x", 0);
+			Vector2.rewriteNumProperty(this, "y", 1);
+			Vector2.rewriteNumProperty(this, "z", 2);
+		}
 	}
 }

@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec4 a_Position;
 #ifdef BONE
 	attribute vec4 a_BoneIndices;
@@ -21,4 +23,5 @@ void main() {
 	#else
 		gl_Position = u_MvpMatrix * a_Position;
 	#endif
+	gl_Position=remapGLPositionZ(gl_Position);
 }

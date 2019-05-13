@@ -10,7 +10,7 @@ uniform vec4 clipMatDir;
 uniform vec2 clipMatPos;		// 这个是全局的，不用再应用矩阵了。
 varying vec2 cliped;
 uniform vec2 size;
-
+uniform vec2 clipOff;			// 使用要把clip偏移。cacheas normal用. 只用了[0]
 #ifdef WORLDMAT
 	uniform mat4 mmat;
 #endif
@@ -41,7 +41,16 @@ void main() {
 	v_useTex = attribFlags.r/255.0;
 	float clipw = length(clipMatDir.xy);
 	float cliph = length(clipMatDir.zw);
-	vec2 clippos = pos.xy - clipMatPos.xy;	//pos已经应用矩阵了，为了减的有意义，clip的位置也要缩放
+	
+	vec2 clpos = clipMatPos.xy;
+	#ifdef WORLDMAT
+		// 如果有mmat，需要修改clipMatPos,因为 这是cacheas normal （如果不是就错了）， clipMatPos被去掉了偏移
+		if(clipOff[0]>0.0){
+			clpos.x+=mmat[3].x;	//tx	最简单处理
+			clpos.y+=mmat[3].y;	//ty
+		}
+	#endif
+	vec2 clippos = pos.xy - clpos;	//pos已经应用矩阵了，为了减的有意义，clip的位置也要缩放
 	if(clipw>20000. && cliph>20000.)
 		cliped = vec2(0.5,0.5);
 	else {

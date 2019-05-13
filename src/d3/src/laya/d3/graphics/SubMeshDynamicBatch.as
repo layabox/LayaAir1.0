@@ -195,8 +195,6 @@ package laya.d3.graphics {
 			_vertexBuffer.setData(_vertices, 0, 0, vertexCount * (_vertexBuffer.vertexDeclaration.vertexStride / 4));
 			_indexBuffer.setData(_indices, 0, 0, indexCount);
 			LayaGL.instance.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
-			Stat.renderBatch++;
-			Stat.trianglesFaces += indexCount / 3;
 		}
 		
 		/**
@@ -204,7 +202,7 @@ package laya.d3.graphics {
 		 */
 		override public function _prepareRender(state:RenderContext3D):Boolean {
 			var element:SubMeshRenderElement = state.renderElement as SubMeshRenderElement;
-			var vertexDeclaration:VertexDeclaration = element.dynamicVertexDeclaration;
+			var vertexDeclaration:VertexDeclaration = element.vertexBatchVertexDeclaration;
 			_bufferState=MeshRenderDynamicBatchManager.instance._getBufferState(vertexDeclaration);
 			
 			_positionOffset = vertexDeclaration.getVertexElementByUsage(VertexMesh.MESH_POSITION0).offset / 4;
@@ -227,18 +225,22 @@ package laya.d3.graphics {
 		override public function _render(context:RenderContext3D):void {
 			_bufferState.bind();
 			var element:SubMeshRenderElement = context.renderElement as SubMeshRenderElement;
-			var vertexDeclaration:VertexDeclaration = element.dynamicVertexDeclaration;
-			var batchElements:Vector.<SubMeshRenderElement> = element.dynamicBatchElementList;
+			var vertexDeclaration:VertexDeclaration = element.vertexBatchVertexDeclaration;
+			var batchElements:Vector.<SubMeshRenderElement> = element.vertexBatchElementList;
 			
 			var batchVertexCount:int = 0;
 			var batchIndexCount:int = 0;
 			var floatStride:int = vertexDeclaration.vertexStride / 4;
-			for (var i:int = 0, n:int = batchElements.length; i < n; i++) {
+			var renderBatchCount:int = 0;
+			var elementCount:int = batchElements.length;
+			for (var i:int = 0; i < elementCount; i++) {
 				var subElement:SubMeshRenderElement = batchElements[i] as SubMeshRenderElement;
 				var subMesh:SubMesh = subElement._geometry as SubMesh;
 				var indexCount:int = subMesh._indexCount;
 				if (batchIndexCount + indexCount > SubMeshDynamicBatch.maxIndicesCount) {
 					_flush(batchVertexCount, batchIndexCount);
+					renderBatchCount++;
+					Stat.trianglesFaces += batchIndexCount / 3;
 					batchVertexCount = batchIndexCount = 0;
 				}
 				var transform:Transform3D = subElement._transform;
@@ -248,6 +250,10 @@ package laya.d3.graphics {
 				batchIndexCount += indexCount;
 			}
 			_flush(batchVertexCount, batchIndexCount);
+			renderBatchCount++;
+			Stat.renderBatches += renderBatchCount;
+			Stat.savedRenderBatches += elementCount - renderBatchCount;
+			Stat.trianglesFaces += batchIndexCount / 3;
 		}
 	
 	}

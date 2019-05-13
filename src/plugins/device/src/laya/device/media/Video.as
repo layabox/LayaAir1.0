@@ -130,7 +130,7 @@ package laya.device.media
 		private function onPlayComplete(e:*):void
 		{
 			this.event("ended");
-			if(!Render.isConchApp || !videoElement.loop)
+			if(!Render.isConchApp || !videoElement || !videoElement.loop)
 				Laya.timer.clear(this, renderCanvas);
 	
 		}

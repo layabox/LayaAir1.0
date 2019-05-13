@@ -70,7 +70,8 @@ package laya.bd.mini {
 			window.focus = function():void {
 			};
 			//清空路径设定
-			Laya['_getUrlPath'] = function():void {
+			Laya['_getUrlPath'] = function():String {
+				return "";
 			};
 			//add---xiaosong--snowgame
 			window.logtime = function(str:String):void {

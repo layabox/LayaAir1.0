@@ -36,8 +36,6 @@ package laya.d3.core.scene {
 	import laya.d3.shadowMap.ParallelSplitShadowMap;
 	import laya.d3.utils.Utils3D;
 	import laya.display.Sprite;
-	import laya.display.SpriteConst;
-	import laya.layagl.CommandEncoder;
 	import laya.layagl.LayaGL;
 	import laya.net.Loader;
 	import laya.net.URL;
@@ -56,7 +54,6 @@ package laya.d3.core.scene {
 	import laya.webgl.submit.ISubmit;
 	import laya.webgl.submit.Submit;
 	import laya.webgl.submit.SubmitKey;
-	import laya.webgl.utils.Buffer;
 	
 	/**
 	 * <code>Scene3D</code> 类用于实现场景。
@@ -480,13 +477,12 @@ package laya.d3.core.scene {
 				var lineMaterial:PixelLineMaterial = new PixelLineMaterial();
 				lineMaterial.renderQueue = BaseMaterial.RENDERQUEUE_TRANSPARENT;
 				lineMaterial.alphaTest = false;
-				var renderState:RenderState = lineMaterial.getRenderState();
-				renderState.depthWrite = false;
-				renderState.cull = RenderState.CULL_BACK;
-				renderState.blend = RenderState.BLEND_ENABLE_ALL;
-				renderState.srcBlend = RenderState.BLENDPARAM_SRC_ALPHA;
-				renderState.dstBlend = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
-				renderState.depthTest = RenderState.DEPTHTEST_LESS;
+				lineMaterial.depthWrite = false;
+				lineMaterial.cull = RenderState.CULL_BACK;
+				lineMaterial.blend = RenderState.BLEND_ENABLE_ALL;
+				lineMaterial.blendSrc = RenderState.BLENDPARAM_SRC_ALPHA;
+				lineMaterial.blendDst = RenderState.BLENDPARAM_ONE_MINUS_SRC_ALPHA;
+				lineMaterial.depthTest = RenderState.DEPTHTEST_LESS;
 				_debugTool.pixelLineRenderer.sharedMaterial = lineMaterial;
 			}
 		}
@@ -664,10 +660,7 @@ package laya.d3.core.scene {
 		 * @private
 		 */
 		public function _preCulling(context:RenderContext3D, camera:Camera):void {
-			if (camera.useOcclusionCulling)
-				FrustumCulling.renderObjectCulling(camera, this, context, _renders);
-			else
-				FrustumCulling.renderObjectCulling(null, this, context, _renders);
+			FrustumCulling.renderObjectCulling(camera, this, context, _renders);
 		}
 		
 		/**
@@ -682,8 +675,7 @@ package laya.d3.core.scene {
 			var vpX:Number = viewport.x;
 			var vpY:Number = camera._getCanvasHeight() - viewport.y - vpH;
 			gl.viewport(vpX, vpY, vpW, vpH);
-			var flag:int = WebGLContext.DEPTH_BUFFER_BIT;
-			
+			var flag:int;
 			var clearFlag:int = camera.clearFlag;
 			if (clearFlag === BaseCamera.CLEARFLAG_SKY && !(camera.skyRenderer._isAvailable() || _skyRenderer._isAvailable()))
 				clearFlag = BaseCamera.CLEARFLAG_SOLIDCOLOR;
@@ -691,35 +683,12 @@ package laya.d3.core.scene {
 			switch (clearFlag) {
 			case BaseCamera.CLEARFLAG_SOLIDCOLOR: 
 				var clearColor:Vector4 = camera.clearColor;
-				if (clearColor) {
-					gl.enable(WebGLContext.SCISSOR_TEST);
-					gl.scissor(vpX, vpY, vpW, vpH);
-					gl.clearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
-					flag |= WebGLContext.COLOR_BUFFER_BIT;
-				}
-				
-				if (renderTarget) {
-					(clearColor) || (flag = WebGLContext.COLOR_BUFFER_BIT);
-					switch (renderTarget.depthStencilFormat) {
-					case BaseTexture.FORMAT_DEPTH_16: 
-						flag |= WebGLContext.DEPTH_BUFFER_BIT;
-						break;
-					case BaseTexture.FORMAT_STENCIL_8: 
-						flag |= WebGLContext.STENCIL_BUFFER_BIT;
-						break;
-					case BaseTexture.FORMAT_DEPTHSTENCIL_16_8: 
-						flag |= WebGLContext.DEPTH_BUFFER_BIT;
-						flag |= WebGLContext.STENCIL_BUFFER_BIT;
-						break;
-					}
-				}
-				gl.clear(flag);
-				
+				gl.enable(WebGLContext.SCISSOR_TEST);
+				gl.scissor(vpX, vpY, vpW, vpH);
 				if (clearColor)
-					gl.disable(WebGLContext.SCISSOR_TEST);
-				break;
-			case BaseCamera.CLEARFLAG_SKY: 
-			case BaseCamera.CLEARFLAG_DEPTHONLY: 
+					gl.clearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+				else
+					gl.clearColor(0, 0, 0, 0);
 				if (renderTarget) {
 					flag = WebGLContext.COLOR_BUFFER_BIT;
 					switch (renderTarget.depthStencilFormat) {
@@ -731,11 +700,38 @@ package laya.d3.core.scene {
 						break;
 					case BaseTexture.FORMAT_DEPTHSTENCIL_16_8: 
 						flag |= WebGLContext.DEPTH_BUFFER_BIT;
-						flag |= WebGLContext.STENCIL_BUFFER_BIT
+						flag |= WebGLContext.STENCIL_BUFFER_BIT;
 						break;
 					}
+				} else {
+					flag = WebGLContext.COLOR_BUFFER_BIT | WebGLContext.DEPTH_BUFFER_BIT;
 				}
+				WebGLContext.setDepthMask(gl, true);
 				gl.clear(flag);
+				gl.disable(WebGLContext.SCISSOR_TEST);
+				break;
+			case BaseCamera.CLEARFLAG_SKY: 
+			case BaseCamera.CLEARFLAG_DEPTHONLY: 
+				gl.enable(WebGLContext.SCISSOR_TEST);
+				gl.scissor(vpX, vpY, vpW, vpH);
+				if (renderTarget) {
+					switch (renderTarget.depthStencilFormat) {
+					case BaseTexture.FORMAT_DEPTH_16: 
+						flag = WebGLContext.DEPTH_BUFFER_BIT;
+						break;
+					case BaseTexture.FORMAT_STENCIL_8: 
+						flag = WebGLContext.STENCIL_BUFFER_BIT;
+						break;
+					case BaseTexture.FORMAT_DEPTHSTENCIL_16_8: 
+						flag = WebGLContext.DEPTH_BUFFER_BIT | WebGLContext.STENCIL_BUFFER_BIT;
+						break;
+					}
+				} else {
+					flag = WebGLContext.DEPTH_BUFFER_BIT;
+				}
+				WebGLContext.setDepthMask(gl, true);
+				gl.clear(flag);
+				gl.disable(WebGLContext.SCISSOR_TEST);
 				break;
 			case BaseCamera.CLEARFLAG_NONE: 
 				break;

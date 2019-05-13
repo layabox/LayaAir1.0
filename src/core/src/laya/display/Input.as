@@ -130,7 +130,7 @@ package laya.display {
 			if (Browser.onMobile)
 			{
 				var isTrue:Boolean = false;
-				if(Browser.onMiniGame || Browser.onBDMiniGame)
+				if(Browser.onMiniGame || Browser.onBDMiniGame || Browser.onQGMiniGame || Browser.onKGMiniGame)
 				{
 					isTrue = true;
 				}
@@ -357,7 +357,7 @@ package laya.display {
 			if (Browser.onPC) input.focus();
 			
 			// PC浏览器隐藏文字
-			if(!Browser.onMiniGame && !Browser.onBDMiniGame)
+			if(!Browser.onMiniGame && !Browser.onBDMiniGame && !Browser.onQGMiniGame && !Browser.onKGMiniGame)
 			{
 				var temp:String = _text;
 				this._text = null;

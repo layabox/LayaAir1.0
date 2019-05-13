@@ -26,7 +26,7 @@ package laya.webgl.submit {
 			return o;
 		}
 		
-		public var _matrix:Matrix = new Matrix();
+		public var _matrix:Matrix = new Matrix();		// 用来计算当前的世界矩阵
 		public var canv:WebGLContext2D;
 		public var _matrix4:Array = CONST3D2D.defaultMatrix4.concat();
 		

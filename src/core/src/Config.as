@@ -43,5 +43,6 @@ package {
 		 * 是否使用webgl2
 		 */
 		public static var useWebGL2:Boolean = false;
+		public static var useRetinalCanvas:Boolean = false;
 	}
 }

@@ -88,23 +88,23 @@ package laya.resource {
 		}
 		
 		/**@private */
-		protected var _id:int;
+		protected var _id:int=0;
 		/**@private */
-		private var _url:String;
+		private var _url:String=null;
 		/**@private */
 		private var _cpuMemory:int = 0;
 		/**@private */
 		private var _gpuMemory:int = 0;
 		/**@private */
-		private var _destroyed:Boolean;
+		private var _destroyed:Boolean=false;
 		
 		/**@private */
-		protected var _referenceCount:int;
+		protected var _referenceCount:int=0;
 		
 		/**是否加锁，如果true为不能使用自动释放机制。*/
-		public var lock:Boolean;
+		public var lock:Boolean=false;
 		/**名称。 */
-		public var name:String;
+		public var name:String=null;
 		
 		/**
 		 * 获取唯一标识ID,通常用于识别。

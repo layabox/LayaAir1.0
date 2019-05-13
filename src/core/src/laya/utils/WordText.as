@@ -15,6 +15,7 @@ package laya.utils {
 		public var startID:int = 0;	//上面的是个数组，但是可能前面都是空的，加个起始位置
 		public var startIDStroke:int = 0;
 		public var lastGCCnt:int = 0;	//如果文字gc了，需要检查缓存是否有效，这里记录上次检查对应的gc值。
+		public var splitRender:Boolean = false;	// 强制拆分渲染
 		
 		public function setText(txt:String):void {
 			changed = true;

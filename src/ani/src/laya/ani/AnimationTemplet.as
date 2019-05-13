@@ -118,6 +118,11 @@ package laya.ani {
 		/**@private */
 		public var _animationDatasCache:*;
 		
+		public var _fullFrames:Array=null;
+		
+		/**@private */
+		private var _boneCurKeyFrm:Array = [];	// 记录每个骨骼当前在动画的第几帧。这个是为了去掉缓存的帧索引数据。TODO 其实这个应该放到skeleton中
+		
 		public function AnimationTemplet() {
 		}
 		
@@ -217,18 +222,86 @@ package laya.ani {
 			aniDatasCache[frameIndex] = data;
 		}
 		
-		//TODO:coverage
+		/**
+		 * 计算当前时间应该对应关键帧的哪一帧
+		 * @param	nodeframes	当前骨骼的关键帧数据
+		 * @param	nodeid		骨骼id，因为要使用和更新 _boneCurKeyFrm
+		 * @param	tm
+		 * @return
+		 * 问题
+		 * 	最后一帧有问题，例如倒数第二帧时间是0.033ms,则后两帧非常靠近，当实际给最后一帧的时候，根据帧数计算出的时间实际上落在倒数第二帧
+		 *  	使用与AnimationPlayer一致的累积时间就行
+		 */
+		public function getNodeKeyFrame(nodeframes:Vector.<KeyFramesContent>, nodeid:int, tm:Number):int {
+			var cid:int = _boneCurKeyFrm[nodeid];
+			var frmNum:int = nodeframes.length;
+			
+			if (cid==void 0 || cid>=frmNum) {
+				cid = _boneCurKeyFrm[nodeid] = 0;
+			}
+			
+			var kinfo:KeyFramesContent = nodeframes[cid];
+			
+			var curFrmTm:int = kinfo.startTime;
+			var dt:int = tm - curFrmTm;
+			// 缓存命中的情况
+			if (dt == 0 || (dt > 0 && kinfo.duration > dt)) { 
+				return cid;
+			}
+			// 否则就要前后判断在第几帧
+			var i:int = 0;
+			if (dt > 0) {
+				// 在后面
+				tm = tm + 0.01;// 有个问题，由于浮点精度的问题可能导致 前后 st+duration  st+duration 接不上。导致cid+1的起始时间>tm，所以时间加上一点
+				for (i = cid+1; i < frmNum; i++) {
+					kinfo = nodeframes[i];
+					if (kinfo.startTime <= tm && kinfo.startTime+kinfo.duration > tm) {
+						_boneCurKeyFrm[nodeid] = i;
+						return i;
+					}
+				}
+				return frmNum - 1;
+			}else {
+				// 在前面
+				for (i = 0; i < cid; i++) {
+					kinfo = nodeframes[i];
+					if (kinfo.startTime <= tm && kinfo.startTime+kinfo.duration > tm) {
+						_boneCurKeyFrm[nodeid] = i;
+						return i;
+					}
+				}
+				return cid;	// 可能误差导致，返回最后一个
+			}
+			return 0;	// 这个怎么做
+		}
+		
+		/**
+		 * 
+		 * @param	aniIndex
+		 * @param	originalData
+		 * @param	nodesFrameIndices
+		 * @param	frameIndex
+		 * @param	playCurTime
+		 */
 		public function getOriginalData(aniIndex:int, originalData:Float32Array, nodesFrameIndices:Array, frameIndex:int, playCurTime:Number):void {
 			var oneAni:AnimationContent = _anis[aniIndex];
 			
 			var nodes:Vector.<AnimationNodeContent> = oneAni.nodes;
+			
+			// 当前帧缓存数组可能大小需要调整
+			var curKFrm:Array = _boneCurKeyFrm;
+			if ( curKFrm.length < nodes.length) {
+				curKFrm.length = nodes.length;
+			}
 			
 			var j:int = 0;
 			for (var i:int = 0, n:int = nodes.length, outOfs:int = 0; i < n; i++) {
 				var node:AnimationNodeContent = nodes[i];
 				
 				var key:KeyFramesContent;
-				key = node.keyFrame[nodesFrameIndices[i][frameIndex]];
+				//key = node.keyFrame[nodesFrameIndices[i][frameIndex]];
+				var  kfrm:Vector.<KeyFramesContent> = node.keyFrame;
+				key = kfrm[ getNodeKeyFrame(kfrm,i,playCurTime) ];
 				
 				node.dataOffset = outOfs;
 				

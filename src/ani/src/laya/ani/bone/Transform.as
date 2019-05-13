@@ -6,13 +6,13 @@ package laya.ani.bone {
 	 */
 	public class Transform {
 		
-		public var skX:Number = 0;
-		public var skY:Number = 0;
-		public var scX:Number = 1;
+		public var skX:Number = 0;		// 旋转？
+		public var skY:Number = 0;		// 不知道干什么的
+		public var scX:Number = 1;		// 缩放
 		public var scY:Number = 1;
-		public var x:Number = 0;
+		public var x:Number = 0;		// 偏移
 		public var y:Number = 0;
-		public var skewX:Number = 0;
+		public var skewX:Number = 0;	// skew
 		public var skewY:Number = 0;
 		private var mMatrix:Matrix;
 		

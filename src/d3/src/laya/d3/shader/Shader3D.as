@@ -6,6 +6,35 @@ package laya.d3.shader {
 	 * <code>Shader3D</code> 类用于创建Shader3D。
 	 */
 	public class Shader3D {
+		/**渲染状态_剔除。*/
+		public static const RENDER_STATE_CULL:int = 0;
+		/**渲染状态_混合。*/
+		public static const RENDER_STATE_BLEND:int = 1;
+		/**渲染状态_混合源。*/
+		public static const RENDER_STATE_BLEND_SRC:int = 2;
+		/**渲染状态_混合目标。*/
+		public static const RENDER_STATE_BLEND_DST:int = 3;
+		/**渲染状态_混合源RGB。*/
+		public static const RENDER_STATE_BLEND_SRC_RGB:int = 4;
+		/**渲染状态_混合目标RGB。*/
+		public static const RENDER_STATE_BLEND_DST_RGB:int = 5;
+		/**渲染状态_混合源ALPHA。*/
+		public static const RENDER_STATE_BLEND_SRC_ALPHA:int = 6;
+		/**渲染状态_混合目标ALPHA。*/
+		public static const RENDER_STATE_BLEND_DST_ALPHA:int = 7;
+		/**渲染状态_混合常量颜色。*/
+		public static const RENDER_STATE_BLEND_CONST_COLOR:int = 8;
+		/**渲染状态_混合方程。*/
+		public static const RENDER_STATE_BLEND_EQUATION:int = 9;
+		/**渲染状态_RGB混合方程。*/
+		public static const RENDER_STATE_BLEND_EQUATION_RGB:int = 10;
+		/**渲染状态_ALPHA混合方程。*/
+		public static const RENDER_STATE_BLEND_EQUATION_ALPHA:int = 11;
+		/**渲染状态_深度测试。*/
+		public static const RENDER_STATE_DEPTH_TEST:int = 12;
+		/**渲染状态_深度写入。*/
+		public static const RENDER_STATE_DEPTH_WRITE:int = 13;
+		
 		/**shader变量提交周期，自定义。*/
 		public static const PERIOD_CUSTOM:int = 0;
 		/**shader变量提交周期，逐材质。*/
@@ -41,7 +70,7 @@ package laya.d3.shader {
 		 * @return 唯一ID。
 		 */
 		public static function propertyNameToID(name:String):int {
-			if (_propertyNameMap[name]!=null) {
+			if (_propertyNameMap[name] != null) {
 				return _propertyNameMap[name];
 			} else {
 				var id:int = _propertyNameCounter++;
@@ -101,8 +130,8 @@ package laya.d3.shader {
 		 * @private
 		 * 添加预编译shader文件，主要是处理宏定义
 		 */
-		public static function add(name:String):Shader3D {
-			return Shader3D._preCompileShader[name] = new Shader3D(name);
+		public static function add(name:String, enableInstancing:Boolean = false):Shader3D {
+			return Shader3D._preCompileShader[name] = new Shader3D(name, enableInstancing);
 		}
 		
 		/**
@@ -116,6 +145,8 @@ package laya.d3.shader {
 		
 		/**@private */
 		public var _name:String;
+		/**@private */
+		public var _enableInstancing:Boolean = false;
 		
 		/**@private */
 		public var _subShaders:Vector.<SubShader> = new Vector.<SubShader>();
@@ -123,9 +154,10 @@ package laya.d3.shader {
 		/**
 		 * 创建一个 <code>Shader3D</code> 实例。
 		 */
-		public function Shader3D(name:String) {
+		public function Shader3D(name:String, enableInstancing:Boolean) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_name = name;
+			_enableInstancing = enableInstancing;
 		}
 		
 		/**

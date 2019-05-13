@@ -66,14 +66,14 @@ package laya.d3.graphics {
 		public var _batchID:int;
 		
 		/** @private [只读]*/
-		public var batchOwner:MeshRenderStaticBatchOwner;
+		public var batchOwner:Sprite3D;
 		/** @private [只读]*/
 		public var number:int;
 		
 		/**
 		 * 创建一个 <code>SubMeshStaticBatch</code> 实例。
 		 */
-		public function SubMeshStaticBatch(batchOwner:MeshRenderStaticBatchOwner, number:int, vertexDeclaration:VertexDeclaration) {
+		public function SubMeshStaticBatch(batchOwner:Sprite3D, number:int, vertexDeclaration:VertexDeclaration) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_batchID = _batchIDCounter++;
 			_batchElements = new Vector.<RenderableSprite3D>();
@@ -230,7 +230,7 @@ package laya.d3.graphics {
 			var batchVertexCount:int = 0;
 			var batchIndexCount:int = 0;
 			
-			var rootOwner:Sprite3D = batchOwner._owner;
+			var rootOwner:Sprite3D = batchOwner;
 			var floatStride:int = _vertexDeclaration.vertexStride / 4;
 			var vertexDatas:Float32Array = new Float32Array(floatStride * _currentBatchVertexCount);
 			var indexDatas:Uint16Array = new Uint16Array(_currentBatchIndexCount);
@@ -296,7 +296,8 @@ package laya.d3.graphics {
 			/*合并drawcall版本:合并几率不大*/
 			var from:int = 0;
 			var end:int = 0;
-			for (var i:int = 1, n:int = batchElementList.length; i < n; i++) {
+			var count:int = batchElementList.length;
+			for (var i:int = 1; i < count; i++) {
 				var lastElement:SubMeshRenderElement = batchElementList[i - 1];
 				if (lastElement.staticBatchIndexEnd === batchElementList[i].staticBatchIndexStart) {
 					end++;
@@ -312,7 +313,8 @@ package laya.d3.graphics {
 			start = batchElementList[from].staticBatchIndexStart;
 			indexCount = batchElementList[end].staticBatchIndexEnd - start;
 			LayaGL.instance.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, start * 2);
-			Stat.renderBatch++;
+			Stat.renderBatches++;
+			Stat.savedRenderBatches += count - 1;
 			Stat.trianglesFaces += indexCount / 3;
 		/*暴力循环版本:drawcall调用次数有浪费
 		   //for (var i:int = 0, n:int = batchElementList.length; i < n; i++) {

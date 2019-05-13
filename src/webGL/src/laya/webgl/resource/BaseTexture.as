@@ -263,21 +263,21 @@ package laya.webgl.resource {
 			WebGLContext.bindTexture(gl, _glTextureType, _glTexture);
 			switch (value) {
 			case FILTERMODE_POINT: 
-				if (_mipmap && _isPot(_width) && _isPot(_height))
+				if (_mipmap)
 					gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.NEAREST_MIPMAP_NEAREST);
 				else
 					gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.NEAREST);
 				gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MAG_FILTER, WebGLContext.NEAREST);
 				break;
 			case FILTERMODE_BILINEAR: 
-				if (_mipmap && _isPot(_width) && _isPot(_height))
+				if (_mipmap)
 					gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR_MIPMAP_NEAREST);
 				else
 					gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR);
 				gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MAG_FILTER, WebGLContext.LINEAR);
 				break;
 			case FILTERMODE_TRILINEAR: 
-				if (_mipmap && _isPot(_width) && _isPot(_height))
+				if (_mipmap)
 					gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR_MIPMAP_LINEAR);
 				else
 					gl.texParameteri(_glTextureType, WebGLContext.TEXTURE_MIN_FILTER, WebGLContext.LINEAR);
@@ -341,6 +341,14 @@ package laya.webgl.resource {
 				return _glTexture;
 			else
 				return null;
+		}
+		
+		/**
+		 * 通过基础数据生成mipMap。
+		 */
+		public function generateMipmap():void {
+			if (_isPot(width) && _isPot(height))
+				LayaGL.instance.generateMipmap(_glTextureType);
 		}
 	}
 }

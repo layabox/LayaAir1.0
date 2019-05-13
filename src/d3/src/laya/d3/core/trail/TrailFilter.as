@@ -4,16 +4,14 @@ package laya.d3.core.trail {
 	import laya.d3.core.FloatKeyframe;
 	import laya.d3.core.GeometryElement;
 	import laya.d3.core.Gradient;
+	import laya.d3.core.GradientMode;
+	import laya.d3.core.TextureMode;
 	import laya.d3.core.render.BaseRender;
 	import laya.d3.core.render.RenderContext3D;
 	import laya.d3.core.render.RenderElement;
 	import laya.d3.core.scene.Scene3D;
-	import laya.d3.core.GradientMode;
-	import laya.d3.core.TextureMode;
-	import laya.d3.core.FloatKeyframe;
 	import laya.d3.math.Color;
 	import laya.d3.math.Vector3;
-	import laya.events.EventDispatcher;
 	
 	/**
 	 * <code>TrailFilter</code> 类用于创建拖尾过滤器。

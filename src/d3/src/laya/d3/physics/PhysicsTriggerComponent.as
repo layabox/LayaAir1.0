@@ -24,10 +24,13 @@ package laya.d3.physics {
 		public function set isTrigger(value:Boolean):void {
 			_isTrigger = value;
 			if (_nativeColliderObject) {
-				if (_enabled && value) {
-					var flags:int = _nativeColliderObject.getCollisionFlags();
+				var flags:int = _nativeColliderObject.getCollisionFlags();
+				if (value) {
 					if ((flags & COLLISIONFLAGS_NO_CONTACT_RESPONSE) === 0)
 						_nativeColliderObject.setCollisionFlags(flags | COLLISIONFLAGS_NO_CONTACT_RESPONSE);
+				} else {
+					if ((flags & COLLISIONFLAGS_NO_CONTACT_RESPONSE) !== 0)
+						_nativeColliderObject.setCollisionFlags(flags ^ COLLISIONFLAGS_NO_CONTACT_RESPONSE);
 				}
 			}
 		}

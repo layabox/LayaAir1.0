@@ -1,6 +1,7 @@
 package laya.d3.core {
 	import laya.d3.core.scene.Scene3D;
 	import laya.d3.math.Matrix4x4;
+	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
 	import laya.d3.resource.RenderTexture;
 	import laya.d3.resource.models.SkyRenderer;
@@ -63,6 +64,10 @@ package laya.d3.core {
 		private var _orthographicVerticalSize:Number;
 		/**@private */
 		private var _skyRenderer:SkyRenderer = new SkyRenderer();
+		/**@private */
+		private var _forward:Vector3 = new Vector3();
+		/**@private */
+		private var _up:Vector3 = new Vector3();
 		
 		/**@private */
 		protected var _orthographic:Boolean;
@@ -76,8 +81,8 @@ package laya.d3.core {
 		
 		/**清楚标记。*/
 		public var clearFlag:int;
-		/**摄像机的清除颜色。*/
-		public var clearColor:Vector4;
+		/**摄像机的清除颜色,默认颜色为CornflowerBlue。*/
+		public var clearColor:Vector4 = new Vector4(100 / 255, 149 / 255, 237 / 255, 255 / 255);
 		/** 可视层位标记遮罩值,支持混合 例:cullingMask=Math.pow(2,0)|Math.pow(2,1)为第0层和第1层可见。*/
 		public var cullingMask:int;
 		/** 渲染时是否用遮挡剔除。 */
@@ -288,10 +293,12 @@ package laya.d3.core {
 		 * @private
 		 */
 		public function _prepareCameraToRender():void {
+			transform.getForward(_forward);
+			transform.getUp(_up);
 			var cameraSV:ShaderData = _shaderValues;
 			cameraSV.setVector3(BaseCamera.CAMERAPOS, transform.position);
-			cameraSV.setVector3(BaseCamera.CAMERADIRECTION, transform.forward);
-			cameraSV.setVector3(BaseCamera.CAMERAUP, transform.up);
+			cameraSV.setVector3(BaseCamera.CAMERADIRECTION, _forward);
+			cameraSV.setVector3(BaseCamera.CAMERAUP, _up);
 		}
 		
 		/**

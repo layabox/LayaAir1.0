@@ -30,8 +30,6 @@ package laya.d3.core.render {
 		
 		/**@private */
 		private static var _uniqueIDCounter:int = 0;
-		/**@private */
-		private static var _greenColor:Vector4 = new Vector4(0.0, 1.0, 0.0, 1.0);
 		
 		/**@private */
 		private var _id:int;
@@ -71,7 +69,7 @@ package laya.d3.core.render {
 		public var _defineDatas:DefineDatas;
 		
 		/** @private */
-		public var _materials:Vector.<BaseMaterial>;
+		public var _sharedMaterials:Vector.<BaseMaterial>;
 		/** @private */
 		public var _scene:Scene3D;
 		/** @private */
@@ -88,9 +86,9 @@ package laya.d3.core.render {
 		public var _indexInOctreeMotionList:int = -1;
 		
 		/** @private */
-		public var _updateLoopCount:int;
+		public var _updateMark:int=-1;
 		/** @private */
-		public var _updateCamera:BaseCamera;
+		public var _updateRenderType:int=-1;
 		/** @private */
 		public var _isPartOfStaticBatch:Boolean = false;
 		/** @private */
@@ -167,13 +165,13 @@ package laya.d3.core.render {
 		 * @return 第一个实例材质。
 		 */
 		public function get material():BaseMaterial {
-			var material:BaseMaterial = _materials[0];
+			var material:BaseMaterial = _sharedMaterials[0];
 			if (material && !_materialsInstance[0]) {
 				var insMat:BaseMaterial = _getInstanceMaterial(material, 0);
 				var renderElement:RenderElement = _renderElements[0];
 				(renderElement) && (renderElement.material = insMat);
 			}
-			return _materials[0];
+			return _sharedMaterials[0];
 		}
 		
 		/**
@@ -189,14 +187,14 @@ package laya.d3.core.render {
 		 * @return 浅拷贝实例材质列表。
 		 */
 		public function get materials():Vector.<BaseMaterial> {
-			for (var i:int = 0, n:int = _materials.length; i < n; i++) {
+			for (var i:int = 0, n:int = _sharedMaterials.length; i < n; i++) {
 				if (!_materialsInstance[i]) {
-					var insMat:BaseMaterial = _getInstanceMaterial(_materials[i], i);
+					var insMat:BaseMaterial = _getInstanceMaterial(_sharedMaterials[i], i);
 					var renderElement:RenderElement = _renderElements[i];
 					(renderElement) && (renderElement.material = insMat);
 				}
 			}
-			return _materials.slice();
+			return _sharedMaterials.slice();
 		}
 		
 		/**
@@ -212,7 +210,7 @@ package laya.d3.core.render {
 		 * @return 第一个材质。
 		 */
 		public function get sharedMaterial():BaseMaterial {
-			return _materials[0];
+			return _sharedMaterials[0];
 		}
 		
 		/**
@@ -220,9 +218,9 @@ package laya.d3.core.render {
 		 * @param value 第一个材质。
 		 */
 		public function set sharedMaterial(value:BaseMaterial):void {
-			var lastValue:BaseMaterial = _materials[0];
+			var lastValue:BaseMaterial = _sharedMaterials[0];
 			if (lastValue !== value) {
-				_materials[0] = value;
+				_sharedMaterials[0] = value;
 				_materialsInstance[0] = false;
 				_changeMaterialReference(lastValue, value);
 				var renderElement:RenderElement = _renderElements[0];
@@ -235,7 +233,7 @@ package laya.d3.core.render {
 		 * @return 浅拷贝材质列表。
 		 */
 		public function get sharedMaterials():Vector.<BaseMaterial> {
-			var materials:Vector.<BaseMaterial> = _materials.slice();
+			var materials:Vector.<BaseMaterial> = _sharedMaterials.slice();
 			return materials;
 		}
 		
@@ -249,7 +247,7 @@ package laya.d3.core.render {
 			var len:int = value.length;
 			_materialsInstance.length = len;
 			for (var i:int = 0; i < len; i++) {
-				var lastValue:BaseMaterial = _materials[i];
+				var lastValue:BaseMaterial = _sharedMaterials[i];
 				if (lastValue !== value[i]) {
 					_materialsInstance[i] = false;
 					_changeMaterialReference(lastValue, value[i]);
@@ -257,7 +255,7 @@ package laya.d3.core.render {
 					(renderElement) && (renderElement.material = value[i]);
 				}
 			}
-			_materials = value;
+			_sharedMaterials = value;
 		}
 		
 		/**
@@ -377,7 +375,7 @@ package laya.d3.core.render {
 			_boundingSphereNeedChange = true;
 			_boundingBoxNeedChange = true;
 			_boundingBoxCenterNeedChange = true;
-			_materials = new Vector.<BaseMaterial>();
+			_sharedMaterials = new Vector.<BaseMaterial>();
 			_renderElements = new Vector.<RenderElement>();
 			_owner = owner;
 			_enable = true;
@@ -435,8 +433,8 @@ package laya.d3.core.render {
 			material.cloneTo(insMat);//深拷贝
 			insMat.name = insMat.name + "(Instance)";
 			_materialsInstance[index] = true;
-			_changeMaterialReference(_materials[index], insMat);
-			_materials[index] = insMat;
+			_changeMaterialReference(_sharedMaterials[index], insMat);
+			_sharedMaterials[index] = insMat;
 			return insMat;
 		}
 		
@@ -472,12 +470,6 @@ package laya.d3.core.render {
 						_octreeNode._octree.addMotionObject(this);
 				}
 			}
-		}
-		
-		/**
-		 * @private
-		 */
-		protected function _renderRenderableBoundBox():void {
 		}
 		
 		/**
@@ -528,16 +520,20 @@ package laya.d3.core.render {
 		
 		/**
 		 * @private
-		 * 逐精灵执行。
 		 */
 		public function _renderUpdate(context:RenderContext3D, transform:Transform3D):void {
 		}
 		
 		/**
 		 * @private
-		 * 逐精灵和相机执行。
 		 */
 		public function _renderUpdateWithCamera(context:RenderContext3D, transform:Transform3D):void {
+		}
+		
+		/**
+		 * @private
+		 */
+		public function _revertBatchRenderUpdate(context:RenderContext3D):void {
 		}
 		
 		/**
@@ -549,12 +545,12 @@ package laya.d3.core.render {
 			var i:int = 0, n:int = 0;
 			for (i = 0, n = _renderElements.length; i < n; i++)
 				_renderElements[i].destroy();
-			for (i = 0, n = _materials.length; i < n; i++)
-				(_materials[i].destroyed) || (_materials[i]._removeReference());//TODO:材质可能为空
+			for (i = 0, n = _sharedMaterials.length; i < n; i++)
+				(_sharedMaterials[i].destroyed) || (_sharedMaterials[i]._removeReference());//TODO:材质可能为空
 			
 			_renderElements = null;
 			_owner = null;
-			_materials = null;
+			_sharedMaterials = null;
 			_boundingBox = null;
 			_boundingBoxCenter = null;
 			_boundingSphere = null;

@@ -86,7 +86,7 @@ package laya.d3.resource.models {
 				WebGLContext.setDepthMask(gl, false);
 				var shader:ShaderInstance = state.shader = _material._shader.getSubShaderAt(0)._passes[0].withCompile(0, 0, _material._defineDatas.value);//TODO:调整SubShader代码
 				var switchShader:Boolean = shader.bind();//纹理需要切换shader时重新绑定 其他uniform不需要
-				var switchShaderLoop:Boolean = (Stat.loopCount !== shader._uploadLoopCount);
+				var switchShaderLoop:Boolean = (Stat.loopCount !== shader._uploadMark);
 				
 				var uploadScene:Boolean = (shader._uploadScene !== scene) || switchShaderLoop;
 				if (uploadScene || switchShader) {

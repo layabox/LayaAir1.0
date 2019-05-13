@@ -103,6 +103,7 @@ package laya.net {
 		 */
 		public function _create(url:*, mainResou:Boolean, complete:Handler = null, progress:Handler = null, type:String = null, constructParams:Array = null, propertyParams:Object = null, priority:int = 1, cache:Boolean = true):void {
 			if (url is Array) {
+				var allScuess:Boolean = true;
 				var items:Array = url as Array;
 				var itemCount:int = items.length;
 				var loadedCount:int = 0;
@@ -125,8 +126,9 @@ package laya.net {
 				function onComplete(item:Object, content:* = null):void {
 					loadedCount++;
 					item.progress = 1;
+					content || (allScuess=false);//资源加载失败
 					if (loadedCount === itemCount && complete) {
-						complete.run();
+						complete.runWith(allScuess);
 					}
 				}
 				

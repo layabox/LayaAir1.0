@@ -253,13 +253,14 @@ package laya.d3.terrain {
 		 * @inheritDoc
 		 */
 		override public function _prepareRender(state:RenderContext3D):Boolean {
-			var terrainMaterial:TerrainMaterial = state.renderElement.material as TerrainMaterial;
-			if (terrainMaterial.getRenderState(0).blend == RenderState.BLEND_DISABLE) {
-				var camera:Camera = state.camera as Camera;
-				if (assembleIndex(camera, camera.transform.position)) {
-					_indexBuffer.setData(_indexArrayBuffer);
-				}
-			}
+			//TODO:
+			//var terrainMaterial:TerrainMaterial = state.renderElement.material as TerrainMaterial;
+			//if (terrainMaterial.getRenderState(0).blend == RenderState.BLEND_DISABLE) {
+				//var camera:Camera = state.camera as Camera;
+				//if (assembleIndex(camera, camera.transform.position)) {
+					//_indexBuffer.setData(_indexArrayBuffer);
+				//}
+			//}
 			return true;
 		}
 		
@@ -282,7 +283,7 @@ package laya.d3.terrain {
 			 */
 			LayaGL.instance.drawElements(Terrain.RENDER_LINE_MODEL ? WebGLContext.LINES : WebGLContext.TRIANGLES, _currentNumberIndices, WebGLContext.UNSIGNED_SHORT, 0);
 			Stat.trianglesFaces += _numberTriangle;
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 		}
 		
 		/**

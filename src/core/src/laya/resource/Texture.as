@@ -19,11 +19,11 @@ package laya.resource {
 	public class Texture extends EventDispatcher {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 		/**@private 默认 UV 信息。*/
-		public static var DEF_UV:Array = /*[STATIC SAFE]*/ [0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0];
+		public static var DEF_UV:Array = /*[STATIC SAFE]*/ new Float32Array([0, 0, 1.0, 0, 1.0, 1.0, 0, 1.0]);
 		/**@private */
-		public static var NO_UV:Array = /*[STATIC SAFE]*/ [0, 0, 0, 0, 0, 0, 0, 0];
+		public static var NO_UV:Array = /*[STATIC SAFE]*/ new Float32Array([0, 0, 0, 0, 0, 0, 0, 0]);
 		/**@private 反转 UV 信息。*/
-		public static var INV_UV:Array = /*[STATIC SAFE]*/ [0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0];
+		public static var INV_UV:Array = /*[STATIC SAFE]*/ new Float32Array([0, 1, 1.0, 1, 1.0, 0.0, 0, 0.0]);
 		/**@private uv的范围*/
 		public var uvrect:Array = [0, 0, 1, 1]; //startu,startv, urange,vrange
 		/**@private */
@@ -109,7 +109,7 @@ package laya.resource {
 			var u1:Number = tex.uv[0], v1:Number = tex.uv[1], u2:Number = tex.uv[4], v2:Number = tex.uv[5];
 			var inAltasUVWidth:Number = (u2 - u1), inAltasUVHeight:Number = (v2 - v1);
 			var oriUV:Array = moveUV(uv[0], uv[1], [x, y, x + width, y, x + width, y + height, x, y + height]);
-			tex.uv = [u1 + oriUV[0] * inAltasUVWidth, v1 + oriUV[1] * inAltasUVHeight, u2 - (1 - oriUV[2]) * inAltasUVWidth, v1 + oriUV[3] * inAltasUVHeight, u2 - (1 - oriUV[4]) * inAltasUVWidth, v2 - (1 - oriUV[5]) * inAltasUVHeight, u1 + oriUV[6] * inAltasUVWidth, v2 - (1 - oriUV[7]) * inAltasUVHeight];
+			tex.uv = new Float32Array([u1 + oriUV[0] * inAltasUVWidth, v1 + oriUV[1] * inAltasUVHeight, u2 - (1 - oriUV[2]) * inAltasUVWidth, v1 + oriUV[3] * inAltasUVHeight, u2 - (1 - oriUV[4]) * inAltasUVWidth, v2 - (1 - oriUV[5]) * inAltasUVHeight, u1 + oriUV[6] * inAltasUVWidth, v2 - (1 - oriUV[7]) * inAltasUVHeight]);
 			
 			var bitmapScale:Number = bitmap.scaleRate;
 			if (bitmapScale && bitmapScale != 1) {
@@ -166,7 +166,7 @@ package laya.resource {
 		public var _nativeObj:*;
 		
 		/**@private 唯一ID*/
-		public var $_GID:Number;
+		public var $_GID:Number=0;
 		/**沿 X 轴偏移量。*/
 		public var offsetX:Number = 0;
 		/**沿 Y 轴偏移量。*/
@@ -176,7 +176,7 @@ package laya.resource {
 		/**原始高度（包括被裁剪的透明区域）。*/
 		public var sourceHeight:Number = 0;
 		/**图片地址*/
-		public var url:String;
+		public var url:String=null;
 		/** @private */
 		public var scaleRate:Number = 1;
 		
@@ -369,8 +369,8 @@ package laya.resource {
 		public function recoverBitmap():void {
 			var url:String=_bitmap.url;
 			if (!_destroyed && (!_bitmap || _bitmap.destroyed) && url){
-				Laya.loader.load(url, Handler.create(this, function(bitmap:*):void{
-					_bitmap = bitmap;
+				Laya.loader.load(url, Handler.create(this, function(bit:*):void{
+					bitmap = bit;
 				}), null, "htmlimage", 1, false, null, true);	
 			}
 		}
@@ -390,11 +390,12 @@ package laya.resource {
 		public function destroy(force:Boolean=false):void {
 			if (!_destroyed) {
 				_destroyed = true;
-				if (bitmap) {
-					bitmap._removeReference(_referenceCount);
-					if (bitmap.referenceCount=== 0&&force)
-						bitmap.destroy();
-					bitmap = null;
+				var bit:Bitmap= _bitmap;
+				if (bit) {
+					bit._removeReference(_referenceCount);
+					if (bit.referenceCount=== 0||force)
+						bit.destroy();
+					bit = null;
 				}
 				if (url && this === Laya.loader.getRes(url))
 					Laya.loader.clearRes(url);

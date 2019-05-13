@@ -78,7 +78,7 @@ package laya.ani.bone {
 		/** @private */
 		protected var _boneList:Vector.<Bone>;
 		/** @private */
-		protected var _aniSectionDic:Object;
+		protected var _aniSectionDic:Object;		// section 是每段数据(transform,slot,ik,path)的长度，这个是一个section的数据，表示每个clip的section数据
 		private var _eventIndex:int = 0;
 		private var _drawOrderIndex:int = 0;
 		private var _drawOrder:Vector.<int> = null;
@@ -357,7 +357,7 @@ package laya.ani.bone {
 			}
 			_lastTime = tCurrTime;
 			if (!_player) return;
-			_index = _clipIndex = _player.currentKeyframeIndex;
+			_index = _clipIndex = _player.currentKeyframeIndex;	// 当前所在帧
 			if (_index < 0) return;
 			if (dTime > 0 && _clipIndex == preIndex && _lastUpdateAniClipIndex == _aniClipIndex) {
 				return;
@@ -367,11 +367,11 @@ package laya.ani.bone {
 				_emitMissedEvents(_player.playStart, _player.playEnd, _eventIndex);
 				_eventIndex = 0;
 			}
-			var tEventData:EventData;
-			var tEventAniArr:Array = _templet.eventAniArr;
-			var tEventArr:Vector.<EventData> = tEventAniArr[_aniClipIndex];
+			
+			// 触发事件的检查
+			var tEventArr:Vector.<EventData> = _templet.eventAniArr[_aniClipIndex];
 			if (tEventArr && _eventIndex < tEventArr.length) {
-				tEventData = tEventArr[_eventIndex];
+				var tEventData:EventData = tEventArr[_eventIndex];
 				if (tEventData.time >= _player.playStart && tEventData.time <= _player.playEnd) {
 					if (_player.currentPlayTime >= tEventData.time) {
 						this.event(Event.LABEL, tEventData);
@@ -385,6 +385,7 @@ package laya.ani.bone {
 			var tGraphics:Graphics;
 			
 			if (_aniMode == 0) {
+				// 从templet中找到缓存的这一帧的 graphics
 				tGraphics = _templet.getGrahicsDataWithCache(_aniClipIndex, _clipIndex);
 				if (tGraphics) {
 					if (this.graphics != tGraphics) {
@@ -392,6 +393,8 @@ package laya.ani.bone {
 					}
 					return;
 				} else {
+					// 如果没有缓存
+					_createGraphics();/*
 					var i:int, minIndex:int;
 					minIndex = _clipIndex;
 					while ((!_templet.getGrahicsDataWithCache(_aniClipIndex, minIndex - 1)) && (minIndex > 0)) {
@@ -403,6 +406,7 @@ package laya.ani.bone {
 							_createGraphics(i);
 						}
 					}
+					*/
 					//理论上不会出现，但是实际运行出现了
 					tGraphics = _templet.getGrahicsDataWithCache(_aniClipIndex, _clipIndex);
 					if (tGraphics) {
@@ -421,6 +425,8 @@ package laya.ani.bone {
 					}
 					return;
 				} else {
+					_createGraphics();
+					/*
 					minIndex = _clipIndex;
 					while ((!_getGrahicsDataWithCache(_aniClipIndex, minIndex - 1)) && (minIndex > 0)) {
 						minIndex--;
@@ -431,6 +437,7 @@ package laya.ani.bone {
 							_createGraphics(i);
 						}
 					}
+					*/
 				}
 			}
 			_createGraphics();
@@ -439,6 +446,7 @@ package laya.ani.bone {
 		/**
 		 * @private
 		 * 创建grahics图像
+		 * @param	_clipIndex 第几帧
 		 */
 		protected function _createGraphics(_clipIndex:int = -1):void {
 			if (_clipIndex == -1) _clipIndex = this._clipIndex;
@@ -446,36 +454,38 @@ package laya.ani.bone {
 			//处理绘制顺序
 			var tDrawOrderData:DrawOrderData;
 			var tDrawOrderAniArr:Array = _templet.drawOrderAniArr;
+			// 当前动作的 drawOrderArray 信息
 			var tDrawOrderArr:Vector.<DrawOrderData> = tDrawOrderAniArr[_aniClipIndex];
 			if (tDrawOrderArr && tDrawOrderArr.length > 0) {
-				_drawOrderIndex = 0;
+				// 选出当前所在帧的 drawOrderArray
+				_drawOrderIndex = 0;	// 从0开始
 				tDrawOrderData = tDrawOrderArr[_drawOrderIndex];
 				while (curTime >= tDrawOrderData.time) {
 					_drawOrder = tDrawOrderData.drawOrder;
-					_drawOrderIndex++;
+					_drawOrderIndex++;	// 下一帧
 					if (_drawOrderIndex >= tDrawOrderArr.length) {
 						break;
 					}
 					tDrawOrderData = tDrawOrderArr[_drawOrderIndex];
-					
 				}
 			}
 			
 			//要用的graphics
-			var tGraphics:GraphicsAni;
-			if (_aniMode == 0 || _aniMode == 1) {
+			if (_aniMode == 0 || _aniMode == 1) {	// 有缓存的情况
 				this.graphics = GraphicsAni.create();// new GraphicsAni();
-			} else {
+			} else {			// 实时计算的情况
 				if (this.graphics is GraphicsAni) {
 					this.graphics.clear();
 				} else {
 					this.graphics = GraphicsAni.create(); //new GraphicsAni();
 				}
 			}
-			tGraphics = this.graphics as GraphicsAni;
+			var tGraphics:GraphicsAni = this.graphics as GraphicsAni;
 			//获取骨骼数据
 			var bones:Vector.<*> = _templet.getNodes(_aniClipIndex);
-			_templet.getOriginalData(_aniClipIndex, _curOriginalData, _player._fullFrames[_aniClipIndex], _clipIndex, curTime);
+			// 现在把帧数计算改成实时的，根据时间算，因此时间要求准确，不能再用curTime了。
+			// 用curTime可能会出一个bug就是没有到达最后一帧。
+			_templet.getOriginalData(_aniClipIndex, _curOriginalData, /*_templet._fullFrames[_aniClipIndex]*/null, _clipIndex, _player._elapsedPlaybackTime);
 			var tSectionArr:Array = _aniSectionDic[_aniClipIndex];
 			var tParentMatrix:Matrix;//父骨骼矩阵的引用
 			var tStartIndex:int = 0;
@@ -486,18 +496,20 @@ package laya.ani.bone {
 			var tSrcBone:Bone;
 			//对骨骼数据进行计算
 			var boneCount:int = _templet.srcBoneMatrixArr.length;
+			var origDt:Float32Array = _curOriginalData;
 			for (i = 0, n = tSectionArr[0]; i < boneCount; i++) {
 				tSrcBone = _boneList[i];
+				var resultTrans:Transform = tSrcBone.resultTransform;
 				tParentTransform = _templet.srcBoneMatrixArr[i];
-				tSrcBone.resultTransform.scX = tParentTransform.scX * _curOriginalData[tStartIndex++];
-				tSrcBone.resultTransform.skX = tParentTransform.skX + _curOriginalData[tStartIndex++];
-				tSrcBone.resultTransform.skY = tParentTransform.skY + _curOriginalData[tStartIndex++];
-				tSrcBone.resultTransform.scY = tParentTransform.scY * _curOriginalData[tStartIndex++];
-				tSrcBone.resultTransform.x = tParentTransform.x + _curOriginalData[tStartIndex++];
-				tSrcBone.resultTransform.y = tParentTransform.y + _curOriginalData[tStartIndex++];
+				resultTrans.scX = tParentTransform.scX * origDt[tStartIndex++];
+				resultTrans.skX = tParentTransform.skX + origDt[tStartIndex++];
+				resultTrans.skY = tParentTransform.skY + origDt[tStartIndex++];
+				resultTrans.scY = tParentTransform.scY * origDt[tStartIndex++];
+				resultTrans.x = tParentTransform.x + origDt[tStartIndex++];
+				resultTrans.y = tParentTransform.y + origDt[tStartIndex++];
 				if (_templet.tMatrixDataLen === 8) {
-					tSrcBone.resultTransform.skewX = tParentTransform.skewX + _curOriginalData[tStartIndex++];
-					tSrcBone.resultTransform.skewY = tParentTransform.skewY + _curOriginalData[tStartIndex++];
+					resultTrans.skewX = tParentTransform.skewX + origDt[tStartIndex++];
+					resultTrans.skewY = tParentTransform.skewY + origDt[tStartIndex++];
 				}
 				
 			}
@@ -507,26 +519,32 @@ package laya.ani.bone {
 			var tBoneData:*;
 			for (n += tSectionArr[1]; i < n; i++) {
 				tBoneData = bones[i];
-				tSlotDic[tBoneData.name] = _curOriginalData[tStartIndex++];
-				tSlotAlphaDic[tBoneData.name] = _curOriginalData[tStartIndex++];
+				tSlotDic[tBoneData.name] = origDt[tStartIndex++];
+				tSlotAlphaDic[tBoneData.name] = origDt[tStartIndex++];	// 每一个slot的alpha?
 				//预留
-				_curOriginalData[tStartIndex++];
-				_curOriginalData[tStartIndex++];
-				_curOriginalData[tStartIndex++];
-				_curOriginalData[tStartIndex++];
+				tStartIndex += 4;
+				/*
+				origDt[tStartIndex++];
+				origDt[tStartIndex++];
+				origDt[tStartIndex++];
+				origDt[tStartIndex++];
+				*/
 			}
 			//ik
 			var tBendDirectionDic:Object = {};
 			var tMixDic:Object = {};
 			for (n += tSectionArr[2]; i < n; i++) {
 				tBoneData = bones[i];
-				tBendDirectionDic[tBoneData.name] = _curOriginalData[tStartIndex++];
-				tMixDic[tBoneData.name] = _curOriginalData[tStartIndex++];
+				tBendDirectionDic[tBoneData.name] = origDt[tStartIndex++];
+				tMixDic[tBoneData.name] = origDt[tStartIndex++];
 				//预留
-				_curOriginalData[tStartIndex++];
-				_curOriginalData[tStartIndex++];
-				_curOriginalData[tStartIndex++];
-				_curOriginalData[tStartIndex++];
+				tStartIndex += 4;
+				/*
+				origDt[tStartIndex++];
+				origDt[tStartIndex++];
+				origDt[tStartIndex++];
+				origDt[tStartIndex++];
+				*/
 			}
 			//path
 			if (_pathDic) {
@@ -538,24 +556,23 @@ package laya.ani.bone {
 						var tByte:Byte = new Byte(tBoneData.extenData);
 						switch (tByte.getByte()) {
 						case 1://position
-							tPathConstraint.position = _curOriginalData[tStartIndex++];
+							tPathConstraint.position = origDt[tStartIndex++];
 							break;
 						case 2://spacing
-							tPathConstraint.spacing = _curOriginalData[tStartIndex++];
+							tPathConstraint.spacing = origDt[tStartIndex++];
 							break;
 						case 3://mix
-							tPathConstraint.rotateMix = _curOriginalData[tStartIndex++];
-							tPathConstraint.translateMix = _curOriginalData[tStartIndex++];
+							tPathConstraint.rotateMix = origDt[tStartIndex++];
+							tPathConstraint.translateMix = origDt[tStartIndex++];
 							break;
 						}
 					}
 				}
 			}
-			if (_yReverseMatrix) {
-				_rootBone.update(_yReverseMatrix);
-			} else {
-				_rootBone.update(Matrix.TEMP.identity());
-			}
+			
+			// 从root开始级联矩阵
+			_rootBone.update(_yReverseMatrix || Matrix.TEMP.identity());
+			
 			//刷新IK作用器
 			if (_ikArr) {
 				var tIkConstraint:IkConstraint;
@@ -643,9 +660,9 @@ package laya.ani.bone {
 					tDBBoneSlot = _boneSlotArray[_drawOrder[i]];
 					tSlotData2 = tSlotDic[tDBBoneSlot.name];
 					tSlotData3 = tSlotAlphaDic[tDBBoneSlot.name];
-					if (!isNaN(tSlotData3)) {
-						tGraphics.save();
-						tGraphics.alpha(tSlotData3);
+					if (!isNaN(tSlotData3)) {	// 如果alpha有值的话
+						//tGraphics.save();
+						//tGraphics.alpha(tSlotData3);
 					}
 					if (!isNaN(tSlotData2) && tSlotData2 != -2) {
 						
@@ -671,7 +688,7 @@ package laya.ani.bone {
 						tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2);
 					}
 					if (!isNaN(tSlotData3)) {
-						tGraphics.restore();
+						//tGraphics.restore();
 					}
 				}
 			} else {
@@ -680,8 +697,8 @@ package laya.ani.bone {
 					tSlotData2 = tSlotDic[tDBBoneSlot.name];
 					tSlotData3 = tSlotAlphaDic[tDBBoneSlot.name];
 					if (!isNaN(tSlotData3)) {
-						tGraphics.save();
-						tGraphics.alpha(tSlotData3);
+						//tGraphics.save();
+						//tGraphics.alpha(tSlotData3);
 					}
 					if (!isNaN(tSlotData2) && tSlotData2 != -2) {
 						if (_templet.attachmentNames) {
@@ -706,7 +723,7 @@ package laya.ani.bone {
 						tDBBoneSlot.draw(tGraphics, _boneMatrixArray, _aniMode == 2);
 					}
 					if (!isNaN(tSlotData3)) {
-						tGraphics.restore();
+						//tGraphics.restore();
 					}
 				}
 			}
@@ -896,7 +913,7 @@ package laya.ani.bone {
 					for (var j:int = 0, len:int = _graphicsCache[i].length; j < len; j++)
 					{
 						var gp:GraphicsAni = _graphicsCache[i][j];
-						if (gp != graphics)
+						if (gp && gp != graphics)
 						{
 							GraphicsAni.recycle(gp);
 						}

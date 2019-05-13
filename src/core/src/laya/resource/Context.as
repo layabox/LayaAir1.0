@@ -27,7 +27,7 @@ package laya.resource {
 			//to.fillText = to.fillText;
 			//to.fillRect = to.fillRect;
 			//to.strokeText = to.strokeText;
-			var funs:Array = ["saveTransform","restoreTransform", "transformByMatrix","drawTriangles", "drawTriangle", 'drawTextures', 'fillWords', 'fillBorderWords', 'drawRect', 'strokeWord', 'drawText', 'fillTexture', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform', 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText', 'drawCurves', "_drawRect", "alpha", "_transform", "_rotate", "_scale", "_drawLine", "_drawLines", "_drawCircle", "_fillAndStroke", "_drawPie", "_drawPoly", "_drawPath","drawTextureWithTransform"];
+			var funs:Array = ["saveTransform","restoreTransform", "transformByMatrix","drawTriangles", "drawTriangle", 'drawTextures', 'fillWords', 'fillBorderWords', 'drawRect', 'strokeWord', 'drawText', 'fillTexture', 'setTransformByMatrix', 'clipRect', 'drawTexture', 'drawTexture2', 'drawTextureWithTransform',"drawTextureWithSizeGrid", 'flush', 'clear', 'destroy', 'drawCanvas', 'fillBorderText', 'drawCurves', "_drawRect", "alpha", "_transform", "_rotate", "_scale", "_drawLine", "_drawLines", "_drawCircle", "_fillAndStroke", "_drawPie", "_drawPoly", "_drawPath","drawTextureWithTransform"];
 			funs.forEach(function(i:String):void {
 				to[i] = from[i];
 			});
@@ -180,14 +180,14 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function drawCanvas(canvas:HTMLCanvas, x:Number, y:Number, width:Number, height:Number):void {
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			this.drawImage(canvas._source, x, y, width, height);
 		}
 		
 		/**@private */
 		//TODO:coverage
 		public function _drawRect(x:Number, y:Number, width:Number, height:Number, style:*):void {
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			style && (this.fillStyle = style);
 			__JS__("this.fillRect(x, y,width,height)");
 		}
@@ -195,7 +195,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function drawText(text:*, x:Number, y:Number, font:String, color:String, textAlign:String):void {
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			if (arguments.length > 3 && font != null) {
 				this.font = font;
 				this.fillStyle = color;
@@ -208,7 +208,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function fillBorderText(text:*, x:Number, y:Number, font:String, fillColor:String, borderColor:String, lineWidth:int, textAlign:String):void {
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			
 			this.font = font;
 			this.fillStyle = fillColor;
@@ -255,7 +255,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function strokeWord(text:*, x:Number, y:Number, font:String, color:String, lineWidth:Number, textAlign:String):void {
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			if (arguments.length > 3 && font != null) {
 				this.font = font;
 				__JS__("this.strokeStyle = color");
@@ -280,7 +280,7 @@ package laya.resource {
 		/**@private */
 		//TODO:coverage
 		public function clipRect(x:Number, y:Number, width:Number, height:Number):void {
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			this.beginPath();
 			//this.strokeStyle = "red";
 			this.rect(x, y, width, height);
@@ -295,7 +295,7 @@ package laya.resource {
 			//TODO:优化
 			if (!tex._getSource())
 				return;
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			
 			var alphaChanged:Boolean = alpha !== 1;
 			if (alphaChanged) {
@@ -322,12 +322,94 @@ package laya.resource {
 		
 		/**@private */
 		//TODO:coverage
+		public function drawTextureWithSizeGrid(tex:Texture, tx:Number, ty:Number, width:Number, height:Number, sizeGrid:Array, gx:Number, gy:Number):void {
+
+			//TODO:优化
+			if (!tex._getSource())
+				return;
+			Stat.renderBatches++;
+			
+			tx += gx;
+			ty += gy;
+			
+			var uv:Array = tex.uv, w:Number = tex.bitmap._width, h:Number = tex.bitmap._height;
+			
+			var top:Number = sizeGrid[0];
+			var right:Number = sizeGrid[1];
+			var bottom:Number = sizeGrid[2];
+			var left:Number = sizeGrid[3];
+			var repeat:Boolean = sizeGrid[4];
+			var needClip:Boolean = false;
+			
+			
+			if (width == w) {
+				left = right = 0;
+			}
+			if (height == h) {
+				top = bottom = 0;
+			}
+			
+			//处理进度条不好看的问题
+			if (left + right > width) {
+				var clipWidth:Number = width;
+				needClip = true;
+				width = left + right;
+				this.save();
+				clipRect(0+tx, 0+ty, clipWidth, height);
+			}
+			
+			//参考AutoBitmap line:184
+			
+			//绘制四个角
+			
+			//left && top && drawImage(getTexture(source, 0, 0, left, top), 0, 0, left, top);
+			//right && top && drawImage(getTexture(source, sw - right, 0, right, top), width - right, 0, right, top);
+			//left && bottom && drawImage(getTexture(source, 0, sh - bottom, left, bottom), 0, height - bottom, left, bottom);
+			//right && bottom && drawImage(getTexture(source, sw - right, sh - bottom, right, bottom), width - right, height - bottom, right, bottom);
+			
+			//绘制上下两个边
+			
+			//top && drawBitmap(repeat, getTexture(source, left, 0, sw - left - right, top), left, 0, width - left - right, top);
+			//bottom && drawBitmap(repeat, getTexture(source, left, sh - bottom, sw - left - right, bottom), left, height - bottom, width - left - right, bottom);
+			
+			
+			//绘制左右两边
+			
+			//left && drawBitmap(repeat, getTexture(source, 0, top, left, sh - top - bottom), 0, top, left, height - top - bottom);
+			//right && drawBitmap(repeat, getTexture(source, sw - right, top, right, sh - top - bottom), width - right, top, right, height - top - bottom);
+			
+			//绘制中间
+			//drawBitmap(repeat, getTexture(source, left, top, sw - left - right, sh - top - bottom), left, top, width - left - right, height - top - bottom);
+			
+			//绘制四个角
+			left && top && drawRect(0+tx,0+ty,left,top,"#ff0000",null,0);
+			right && top && drawRect(width - right+tx, 0+ty, right, top,"#ff0000",null,0);
+			left && bottom && drawRect( 0+tx, height - bottom+ty, left, bottom,"#ff0000",null,0);
+			right && bottom && drawRect(width - right+tx, height - bottom+ty, right, bottom,"#ff0000",null,0);
+			//绘制上下两个边
+			top && drawRect(left+tx, 0+ty, width - left - right, top,"#ffff00",null,0);
+			bottom && drawRect(left+tx, height - bottom+ty, width - left - right, bottom,"#ffff00",null,0);
+			//绘制左右两边
+			left && drawRect(0+tx, top+ty, left, height - top - bottom,"#ffff00",null,0);
+			right && drawRect(width - right+tx, top+ty, right, height - top - bottom,"#ffff00",null,0);
+			//绘制中间
+			drawRect(left+tx, top+ty, width - left - right, height - top - bottom,"#ff00ff",null,0);
+			
+			if (needClip) this.restore();
+
+			
+			
+			
+		}
+		
+		/**@private */
+		//TODO:coverage
 		public function drawTexture2(x:Number, y:Number, pivotX:Number, pivotY:Number, m:Matrix, args2:Array):void {
 			//drawTextureWithTransform(args2[0], x + args2[1] - pivotX, y + args2[2] - pivotY, args2[3], args2[4], args2[5], args2[6], args2[7]);
 
 			var tex:Texture = args2[0];
 			//TODO:优化
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			
 			var uv:Array = tex.uv, w:Number = tex.bitmap._width, h:Number = tex.bitmap._height;
 			if (m) {
@@ -496,13 +578,13 @@ package laya.resource {
 		public function drawTexture(tex:Texture, x:Number, y:Number, width:Number, height:Number):void {
 			var source:*= tex._getSource();
 			if (!source) return;
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			var uv:Array = tex.uv, w:Number = tex.bitmap.width, h:Number = tex.bitmap.height;
 			this.drawImage(source, uv[0] * w, uv[1] * h, (uv[2] - uv[0]) * w, (uv[5] - uv[3]) * h, x, y, width, height);
 		}
 		
 		public function drawTextures(tex:Texture, pos:Array, tx:Number, ty:Number):void {
-			Stat.renderBatch += pos.length / 2;
+			Stat.renderBatches += pos.length / 2;
 			var w:Number = tex.width;
 			var h:Number = tex.height;
 			for (var i:int = 0, sz:int = pos.length; i < sz; i += 2) {
@@ -615,7 +697,7 @@ package laya.resource {
 		public static var PI2:Number =/*[STATIC SAFE]*/ 2 * Math.PI;
 		public function _drawCircle(x:Number, y:Number, radius:Number, fillColor:*, lineColor:*, lineWidth:Number, vid:int):void {
 			//Render.isWebGL && this.setPathId(vid);
-			Stat.renderBatch++;
+			Stat.renderBatches++;
 			Render.isWebGL? __JS__('this.beginPath(true)'): this.beginPath();
 			this.arc(x, y, radius, 0, PI2);
 			this.closePath();

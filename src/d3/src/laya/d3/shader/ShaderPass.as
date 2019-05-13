@@ -12,6 +12,8 @@ package laya.d3.shader {
 		/**@private */
 		private var _owner:SubShader;
 		/**@private */
+		public var _stateMap:Object;
+		/**@private */
 		private var _cacheSharders:Array;
 		/**@private */
 		private var _publicValidDefine:int;
@@ -32,7 +34,7 @@ package laya.d3.shader {
 			return _renderState;
 		}
 		
-		public function ShaderPass(owner:SubShader, vs:String, ps:String) {
+		public function ShaderPass(owner:SubShader, vs:String, ps:String,stateMap:Object) {
 			/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
 			_owner = owner;
 			_cacheSharders = [];
@@ -52,6 +54,7 @@ package laya.d3.shader {
 				else if (materialDefineMap[k] != null)
 					_materialValidDefine |= materialDefineMap[k];
 			}
+			_stateMap = stateMap;
 		}
 		
 		/**
@@ -254,7 +257,7 @@ package laya.d3.shader {
 				psVersion = ps[0] + '\n';
 				ps.shift();
 			}
-			shader = new ShaderInstance(vsVersion + defineStr + vs.join('\n'), psVersion + defineStr + ps.join('\n'), _owner._attributeMap, _owner._uniformMap);
+			shader = new ShaderInstance(vsVersion + defineStr + vs.join('\n'), psVersion + defineStr + ps.join('\n'), _owner._attributeMap, _owner._uniformMap,this);
 			
 			materialDefShaders[materialDefine] = shader;
 			return shader;

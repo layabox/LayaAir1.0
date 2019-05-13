@@ -44,7 +44,7 @@ package laya.ani {
 		/** 是否在一帧结束时停止*/
 		private var _stopWhenCircleFinish:Boolean;
 		/** 已播放时间，包括重播时间*/
-		private var _elapsedPlaybackTime:Number;
+		public var _elapsedPlaybackTime:Number;
 		/** 播放时帧数*/
 		private var _startUpdateLoopCount:Number;
 		/** 当前动画索引*/
@@ -59,8 +59,6 @@ package laya.ani {
 		private var _cacheFrameRateInterval:Number;
 		/** 缓存播放速率*/
 		private var _cachePlayRate:Number;
-		
-		public var _fullFrames:Array;
 		
 		/**是否缓存*/
 		public var isCache:Boolean = true;
@@ -297,44 +295,48 @@ package laya.ani {
 		 * @private
 		 */
 		private function _computeFullKeyframeIndices():void {
-			var anifullFrames:Array = _fullFrames = [];
+			return;// 先改成实时计算了。否则占用内存太多
 			var templet:AnimationTemplet = _templet;
+			if (templet._fullFrames)
+				return;
+			var anifullFrames:Array = _templet._fullFrames = [];
 			
 			var cacheFrameInterval:Number = _cacheFrameRateInterval * _cachePlayRate;
 			
 			for (var i:int = 0, iNum:int = templet.getAnimationCount(); i < iNum; i++) {
 				var aniFullFrame:Array = [];
-				if (!templet.getAnimation(i).nodes)
-				{
+				if (!templet.getAnimation(i).nodes){
 					anifullFrames.push(aniFullFrame);
 					continue;
 				} 
 				for (var j:int = 0, jNum:int = templet.getAnimation(i).nodes.length; j < jNum; j++) {
 					var node:* = templet.getAnimation(i).nodes[j];
-					var frameCount:int = Math.floor(node.playTime / cacheFrameInterval + 0.01);
+					var frameCount:int = Math.round(node.playTime / cacheFrameInterval);
 					var nodeFullFrames:Uint16Array = new Uint16Array(frameCount + 1);//本骨骼对应的全帧关键帧编号
-					
-					var lastFrameIndex:int = -1;
-					
-					for (var n:int = 0, nNum:int = node.keyFrame.length; n < nNum; n++) {
-						var keyFrame:* = node.keyFrame[n];//原始帧率
-						var tm:Number = keyFrame.startTime;
-						var endTm:Number = tm + keyFrame.duration + cacheFrameInterval;
-						do {
-							var frameIndex:int = Math.floor(tm / cacheFrameInterval + 0.5);
-							for (var k:int = lastFrameIndex + 1; k < frameIndex; k++)
-								nodeFullFrames[k] = n;
-							
-							lastFrameIndex = frameIndex;
-							
-							nodeFullFrames[frameIndex] = n;
-							tm += cacheFrameInterval;
-						} while (tm <= endTm);
+					// 先把关键帧所在的位置填上
+					var stidx:int = -1;// 第一帧的位置，应该是0
+					var nodeframes:Array = node.keyFrame;
+					for (var n:int = 0, nNum:int = nodeframes.length; n < nNum; n++) {
+						var keyFrame:* = nodeframes[n];
+						var pos:int = Math.round(keyFrame.startTime / cacheFrameInterval);
+						if (stidx < 0 && pos>0) {
+							stidx = pos;
+						}
+						if (pos <= frameCount) {// 实际大小是frameCount+1
+							nodeFullFrames[pos] = n;
+						}
 					}
-					
+					// 再把空隙填满
+					var cf:int = 0;
+					for (n = stidx ; n < frameCount; n++) {	// 实际大小是frameCount+1 
+						if ( nodeFullFrames[n] == 0) {
+							nodeFullFrames[n] = cf;
+						}else {
+							cf = nodeFullFrames[n]; 	// 新的开始
+						}
+					}
 					aniFullFrame.push(nodeFullFrames);
 				}
-				
 				anifullFrames.push(aniFullFrame);
 			}
 		}
@@ -436,7 +438,7 @@ package laya.ani {
 		public function _destroy():void {
 			offAll();
 			_templet = null;
-			_fullFrames = null;
+			//_fullFrames = null;
 			_destroyed = true;
 		}
 		

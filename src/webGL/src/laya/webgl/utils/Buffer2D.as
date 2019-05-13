@@ -149,21 +149,24 @@ package laya.webgl.utils {
 		 */
 		public function _resizeBuffer(nsz:int, copy:Boolean):Buffer2D //是否修改了长度
 		{
-			if (nsz < _buffer.byteLength)
+			var buff:* = _buffer;
+			if (nsz <= buff.byteLength)
 				return this;
+			var u8buf:Uint8Array = _u8Array;
 			//_setGPUMemory(nsz);
-			if (copy && _buffer && _buffer.byteLength > 0) {
+			if (copy && buff && buff.byteLength > 0) {
 				var newbuffer:ArrayBuffer = new ArrayBuffer(nsz);
-				var oldU8Arr:Uint8Array = (_u8Array && _u8Array.buffer == _buffer)?_u8Array : new Uint8Array(_buffer);
-				_u8Array = new Uint8Array(newbuffer);
-				_u8Array.set(oldU8Arr, 0);
-				_buffer = newbuffer;
+				var oldU8Arr:Uint8Array = (u8buf && u8buf.buffer == buff)?u8buf : new Uint8Array(buff);
+				u8buf = _u8Array = new Uint8Array(newbuffer);
+				u8buf.set(oldU8Arr, 0);
+				buff = _buffer = newbuffer;
 			} else{
-				_buffer = new ArrayBuffer(nsz);
+				buff = _buffer = new ArrayBuffer(nsz);
+				_u8Array = null;
 			}
 			_checkArrayUse();
 			_upload = true;
-			_bufferSize = _buffer.byteLength;
+			_bufferSize = buff.byteLength;
 			return this;
 		}
 		
@@ -191,14 +194,20 @@ package laya.webgl.utils {
 		 * @param	data
 		 * @param	len
 		 */
-		//TODO:coverage
 		public function appendU16Array(data:Uint16Array, len:int):void {
 			_resizeBuffer(_byteLength + len*2, true);
 			//(new Uint16Array(_buffer, _byteLength, len)).set(data.slice(0, len));
 			//下面这种写法比上面的快多了
 			var u:Uint16Array = new Uint16Array(_buffer, _byteLength, len);	//TODO 怎么能不用new
-			for (var i:int = 0; i < len; i++) {
-				u[i] = data[i];
+			if ( len == 6) {
+				u[0] = data[0]; u[1] = data[1]; u[2] = data[2];
+				u[3] = data[3]; u[4] = data[4]; u[5] = data[5];
+			}else if(len>=100){
+				__JS__('u.set(new Uint16Array(data.buffer, 0, len));')
+			}else{
+				for (var i:int = 0; i < len; i++) {
+					u[i] = data[i];
+				}
 			}
 			_byteLength += len * 2;
 			_checkArrayUse();

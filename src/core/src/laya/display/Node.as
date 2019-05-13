@@ -757,7 +757,7 @@ package laya.display {
 				for (var i:int = 0, n:int = _components.length; i < n; i++) {
 					var comp:Component = _components[i];
 					comp._setActive(true);
-					(comp._isScript()) && (activeChangeScripts.push(comp));
+					(comp._isScript() && comp._enabled) && (activeChangeScripts.push(comp));
 				}
 			}
 			
@@ -800,7 +800,7 @@ package laya.display {
 				for (var i:int = 0, n:int = _components.length; i < n; i++) {
 					var comp:Component = _components[i];
 					comp._setActive(false);
-					(comp._isScript()) && (activeChangeScripts.push(comp));
+					(comp._isScript() && comp._enabled) && (activeChangeScripts.push(comp));
 				}
 			}
 			_setBit(Const.ACTIVE_INHIERARCHY, false);
@@ -839,9 +839,7 @@ package laya.display {
 				var parentScene:Node = _parent.scene;
 				parentScene && _setBelongScene(parentScene);
 				(_parent.activeInHierarchy && active) && _processActive();
-				
 			}
-		
 		}
 		
 		/**
@@ -853,7 +851,6 @@ package laya.display {
 			} else {
 				(_parent.activeInHierarchy && active) && _processInActive();
 				_parent.scene && _setUnBelongScene();
-				
 			}
 		}
 		
@@ -866,10 +863,10 @@ package laya.display {
 			
 			comp.owner = this;
 			comp._onAdded();
-			if (activeInHierarchy){
+			if (activeInHierarchy) {
 				comp._setActive(true);
-				(comp._isScript()) && ((comp as Object).onEnable());
-			} 
+				(comp._isScript() && comp._enabled) && ((comp as Object).onEnable());
+			}
 			_scene && comp._setActiveInScene(true);
 		}
 		

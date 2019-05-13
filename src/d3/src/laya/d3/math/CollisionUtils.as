@@ -299,7 +299,7 @@ package laya.d3.math {
 			var distance:Number;
 			if (!intersectsRayAndTriangleRD(ray, vertex1, vertex2, vertex3, distance)){
 				
-				out = Vector3.ZERO;
+				out = Vector3._ZERO;
 				return false;
 			}
 			
@@ -363,7 +363,7 @@ package laya.d3.math {
 			if (MathUtils3D.isZero(denominator)) {
 				
 				if (MathUtils3D.nearEqual(ray2oeX, ray1oeX) && MathUtils3D.nearEqual(ray2oeY, ray1oeY) && MathUtils3D.nearEqual(ray2oeZ, ray1oeZ)) {
-					out = Vector3.ZERO;
+					out = Vector3._ZERO;
 					return true;
 				}
 			}
@@ -401,7 +401,7 @@ package laya.d3.math {
 			var point2e:Vector3 = _tempV33;
 			
 			if (!MathUtils3D.nearEqual(point2e.x, point1e.x) || !MathUtils3D.nearEqual(point2e.y, point1e.y) || !MathUtils3D.nearEqual(point2e.z, point1e.z)) {
-				out = Vector3.ZERO;
+				out = Vector3._ZERO;
 				return false;
 			}
 			
@@ -470,7 +470,7 @@ package laya.d3.math {
 			var distance:Number;
 			if (!intersectsRayAndPlaneRD(ray, plane, distance)) {
 				
-				out = Vector3.ZERO;
+				out = Vector3._ZERO;
 				return false;
 			}
 			
@@ -616,7 +616,7 @@ package laya.d3.math {
 			var distance:Number = intersectsRayAndBoxRD(ray, box);
 			if (distance === -1) {
 				
-				Vector3.ZERO.cloneTo(out);
+				Vector3._ZERO.cloneTo(out);
 				return distance;
 			}
 			Vector3.scale(ray.direction, distance, _tempV30);
@@ -670,7 +670,7 @@ package laya.d3.math {
 		public static function intersectsRayAndSphereRP(ray:Ray, sphere:BoundSphere, out:Vector3):Number {
 			var distance:Number = intersectsRayAndSphereRD(ray, sphere);
 			if (distance===-1) {
-				Vector3.ZERO.cloneTo(out);
+				Vector3._ZERO.cloneTo(out);
 				return distance;
 			}
 			

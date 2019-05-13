@@ -71,6 +71,15 @@ package laya.device.media
 			return _source;
 		}
 		
-		
+		public override function destroy():void {
+			super.destroy();
+
+			var isConchApp:Boolean = __JS__("Render.isConchApp");
+			if (isConchApp)
+			{
+				video._destroy();
+			}			
+		}
+
 	}
 }

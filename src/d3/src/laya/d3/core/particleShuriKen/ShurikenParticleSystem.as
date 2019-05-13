@@ -1104,9 +1104,9 @@ package laya.d3.core.particleShuriKen {
 			if (_shape && _shape.enable) {
 				//TODO:
 			} else {
-				minPosition = maxPosition = Vector3.ZERO;
-				minDirection = Vector3.ZERO;
-				maxDirection = Vector3.UnitZ;
+				minPosition = maxPosition = Vector3._ZERO;
+				minDirection = Vector3._ZERO;
+				maxDirection = Vector3._UnitZ;
 			}
 			
 			var startMinVelocity:Vector3 = new Vector3(minDirection.x * minStartSpeed, minDirection.y * minStartSpeed, minDirection.z * minStartSpeed);
@@ -1160,7 +1160,7 @@ package laya.d3.core.particleShuriKen {
 			case 2: 
 				positionScale = transform.scale;
 				sizeScale.x = sizeScale.y = sizeScale.z = 1;
-				(renderMode === 1) && (velocityScale = Vector3.ONE);
+				(renderMode === 1) && (velocityScale = Vector3._ONE);
 				break;
 			}
 			
@@ -1973,17 +1973,17 @@ package laya.d3.core.particleShuriKen {
 				indexCount = (_firstFreeElement - _firstActiveElement) * _indexStride;
 				gl.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 2 * _firstActiveElement * _indexStride);
 				Stat.trianglesFaces += indexCount / 3;
-				Stat.renderBatch++;
+				Stat.renderBatches++;
 			} else {
 				indexCount = (_bufferMaxParticles - _firstActiveElement) * _indexStride;
 				gl.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 2 * _firstActiveElement * _indexStride);
 				Stat.trianglesFaces += indexCount / 3;
-				Stat.renderBatch++;
+				Stat.renderBatches++;
 				if (_firstFreeElement > 0) {
 					indexCount = _firstFreeElement * _indexStride;
 					gl.drawElements(WebGLContext.TRIANGLES, indexCount, WebGLContext.UNSIGNED_SHORT, 0);
 					Stat.trianglesFaces += indexCount / 3;
-					Stat.renderBatch++;
+					Stat.renderBatches++;
 				}
 			}
 		}

@@ -10,7 +10,7 @@ package laya.ani.bone {
 		
 		public var name:String;
 		public var attachmentName:String;
-		public var type:int;
+		public var type:int;				//0 硬  1 skin 2 另一种skin? 3 不支持
 		public var transform:Transform;
 		public var width:Number;
 		public var height:Number;

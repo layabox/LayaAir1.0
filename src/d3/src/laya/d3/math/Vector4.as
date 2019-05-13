@@ -1,7 +1,6 @@
 package laya.d3.math {
 	
 	import laya.d3.core.IClone;
-	import laya.d3.math.Native.ConchVector4;
 	import laya.renders.Render;
 
 	/**
@@ -44,10 +43,20 @@ package laya.d3.math {
 		 * @param	w  W轴坐标。
 		 */
 		public function Vector4(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 0) {
-			//if (Render.supportWebGLPlusAnimation || Render.supportWebGLPlusRendering) {
-			if (__JS__("(window.conch != null)")) {
-				__JS__("return new ConchVector4(x, y, z, w)");
-			}
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.w = w;
+		}
+		
+		/**
+		 * 设置xyzw值。
+		 * @param	x X值。
+		 * @param	y Y值。
+		 * @param	z Z值。
+		 * @param	w W值。
+		 */
+		public function setValue(x:Number, y:Number, z:Number, w:Number):void {
 			this.x = x;
 			this.y = y;
 			this.z = z;
@@ -322,6 +331,26 @@ package laya.d3.math {
 			out.y = Math.max(a.y, b.y);
 			out.z = Math.max(a.z, b.z);
 			out.w = Math.max(a.w, b.w);
+		}
+		
+		public function forNativeElement(nativeElements:Float32Array = null):void
+		{		
+			if (nativeElements)
+			{
+				__JS__("this.elements = nativeElements");
+				__JS__("this.elements[0] = this.x");
+				__JS__("this.elements[1] = this.y");
+				__JS__("this.elements[2] = this.z");
+				__JS__("this.elements[3] = this.w");
+			}
+			else
+			{
+				__JS__("this.elements = new Float32Array([this.x,this.y,this.z,this.w])");
+			}
+			Vector2.rewriteNumProperty(this, "x", 0);
+			Vector2.rewriteNumProperty(this, "y", 1);
+			Vector2.rewriteNumProperty(this, "z", 2);
+			Vector2.rewriteNumProperty(this, "w", 3);
 		}
 	
 	}

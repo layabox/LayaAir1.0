@@ -336,7 +336,7 @@ package laya.d3.shadowMap {
 			_shaderValueDistance.x = _spiltDistance[1];
 			_shaderValueDistance.y = _spiltDistance[2];
 			_shaderValueDistance.z = _spiltDistance[3];
-			_shaderValueDistance.w = _spiltDistance[4];
+			_shaderValueDistance.w = 0.0; //_spiltDistance[4]为undefine 微信小游戏
 		}
 		
 		/**

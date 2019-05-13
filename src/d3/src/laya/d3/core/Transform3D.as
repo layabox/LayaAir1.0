@@ -69,12 +69,6 @@ package laya.d3.core {
 		private var _worldMatrix:Matrix4x4 = new Matrix4x4();
 		
 		/** @private */
-		private var _forward:Vector3 = new Vector3();
-		/** @private */
-		private var _up:Vector3 = new Vector3();
-		/** @private */
-		private var _right:Vector3 = new Vector3();
-		/** @private */
 		private var _children:Vector.<Transform3D>;
 		
 		/** @private */
@@ -83,9 +77,6 @@ package laya.d3.core {
 		public var _dummy:AnimationTransform3D;
 		/**@private */
 		public var _transformFlag:int = 0;
-		
-		/** 变换中心点,注意:该中心点不受变换的影响。*/
-		public var pivot:Vector3;
 		
 		/**
 		 * @private
@@ -275,10 +266,7 @@ package laya.d3.core {
 			_localRotation.normalize(_localRotation);
 			_setTransformFlag(TRANSFORM_LOCALEULER | TRANSFORM_LOCALMATRIX, true);
 			_setTransformFlag(TRANSFORM_LOCALQUATERNION, false);
-			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
-				_onWorldPositionRotationTransform();
-			else
-				_onWorldRotationTransform();
+			_onWorldRotationTransform();
 		}
 		
 		/**
@@ -348,10 +336,7 @@ package laya.d3.core {
 			if (_localScale !== value)
 				value.cloneTo(_localScale);
 			_setTransformFlag(TRANSFORM_LOCALMATRIX, true);
-			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
-				_onWorldPositionScaleTransform();
-			else
-				_onWorldScaleTransform();
+			_onWorldScaleTransform();
 		}
 		
 		/**
@@ -431,10 +416,7 @@ package laya.d3.core {
 				value.cloneTo(_localRotationEuler);
 			_setTransformFlag(TRANSFORM_LOCALEULER, false);
 			_setTransformFlag(TRANSFORM_LOCALQUATERNION | TRANSFORM_LOCALMATRIX, true);
-			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0))
-				_onWorldPositionRotationTransform();
-			else
-				_onWorldRotationTransform();
+			_onWorldRotationTransform();
 		}
 		
 		/**
@@ -564,11 +546,11 @@ package laya.d3.core {
 		 */
 		public function set scale(value:Vector3):void {
 			if (_parent !== null) {
-				var pScaleE:Vector3 = _parent.scale;
-				var invPScaleE:Vector3 = _tempVector30;
-				invPScaleE.x = 1.0 / pScaleE.x;
-				invPScaleE.y = 1.0 / pScaleE.y;
-				invPScaleE.z = 1.0 / pScaleE.z;
+				var parScale:Vector3 = _parent.scale;
+				var invParScale:Vector3 = _tempVector30;
+				invParScale.x = 1.0 / parScale.x;
+				invParScale.y = 1.0 / parScale.y;
+				invParScale.z = 1.0 / parScale.z;
 				Vector3.multiply(value, _tempVector30, _localScale);
 			} else {
 				value.cloneTo(_localScale);
@@ -644,42 +626,6 @@ package laya.d3.core {
 		}
 		
 		/**
-		 * 获取向前方向。
-		 * @return	向前方向。
-		 */
-		public function get forward():Vector3 {
-			var worldMatElem:Float32Array = worldMatrix.elements;
-			_forward.x = -worldMatElem[8];
-			_forward.y = -worldMatElem[9];
-			_forward.z = -worldMatElem[10];
-			return _forward;
-		}
-		
-		/**
-		 * 获取向上方向。
-		 * @return	向上方向。
-		 */
-		public function get up():Vector3 {
-			var worldMatElem:Float32Array = worldMatrix.elements;
-			_up.x = worldMatElem[4];
-			_up.y = worldMatElem[5];
-			_up.z = worldMatElem[6];
-			return _up;
-		}
-		
-		/**
-		 * 获取向右方向。
-		 * @return	向右方向。
-		 */
-		public function get right():Vector3 {
-			var worldMatElem:Float32Array = worldMatrix.elements;
-			_right.x = worldMatElem[0];
-			_right.y = worldMatElem[1];
-			_right.z = worldMatElem[2];
-			return _right;
-		}
-		
-		/**
 		 * 创建一个 <code>Transform3D</code> 实例。
 		 * @param owner 所属精灵。
 		 */
@@ -729,23 +675,7 @@ package laya.d3.core {
 		 * @private
 		 */
 		private function _updateLocalMatrix():void {
-			if (pivot && (pivot.x !== 0 || pivot.y !== 0 || pivot.z !== 0)) {
-				var scalePivot:Vector3 = _tempVector30;
-				Vector3.multiply(pivot, _localScale, scalePivot);
-				var scaleOffsetPosition:Vector3 = _tempVector31;
-				Vector3.subtract(scalePivot, pivot, scaleOffsetPosition);
-				var rotationOffsetPosition:Vector3 = _tempVector32;
-				var localRot:Quaternion = localRotation;
-				Vector3.transformQuat(scalePivot, localRot, rotationOffsetPosition);
-				Vector3.subtract(rotationOffsetPosition, scalePivot, rotationOffsetPosition);
-				
-				var resultLocalPosition:Vector3 = _tempVector33;
-				Vector3.subtract(_localPosition, scaleOffsetPosition, resultLocalPosition);
-				Vector3.subtract(resultLocalPosition, rotationOffsetPosition, resultLocalPosition);
-				Matrix4x4.createAffineTransformation(resultLocalPosition, localRot, _localScale, _localMatrix);
-			} else {
-				Matrix4x4.createAffineTransformation(_localPosition, localRotation, _localScale, _localMatrix);
-			}
+			Matrix4x4.createAffineTransformation(_localPosition, localRotation, _localScale, _localMatrix);
 		}
 		
 		/**
@@ -860,6 +790,39 @@ package laya.d3.core {
 				Quaternion.multiply(_tempQuaternion0, this.rotation, _rotation);
 				this.rotation = _rotation;
 			}
+		}
+		
+		/**
+		 * 获取向前方向。
+		 * @param 前方向。
+		 */
+		public function getForward(forward:Vector3):void {
+			var worldMatElem:Float32Array = worldMatrix.elements;
+			forward.x = -worldMatElem[8];
+			forward.y = -worldMatElem[9];
+			forward.z = -worldMatElem[10];
+		}
+		
+		/**
+		 * 获取向上方向。
+		 * @param 上方向。
+		 */
+		public function getUp(up:Vector3):void {
+			var worldMatElem:Float32Array = worldMatrix.elements;
+			up.x = worldMatElem[4];
+			up.y = worldMatElem[5];
+			up.z = worldMatElem[6];
+		}
+		
+		/**
+		 * 获取向右方向。
+		 * @param 右方向。
+		 */
+		public function getRight(right:Vector3):void {
+			var worldMatElem:Float32Array = worldMatrix.elements;
+			right.x = worldMatElem[0];
+			right.y = worldMatElem[1];
+			right.z = worldMatElem[2];
 		}
 		
 		/**

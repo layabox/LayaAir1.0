@@ -63,6 +63,7 @@ package laya.webgl.shader.d2.value {
 		private var _cacheID:int = 0;
 		public var clipMatDir:Array = [WebGLContext2D._MAXSIZE, 0, 0, WebGLContext2D._MAXSIZE];
 		public var clipMatPos:Array = [0, 0];
+		public var clipOff:Array = [0,0];			// 裁剪是否需要加上偏移，cacheas normal用
 		//public var clipDir:Array = [WebGLContext2D._MAXSIZE, 0, 0, WebGLContext2D._MAXSIZE];		//裁剪信息
 		//public var clipRect:Array = [0, 0];						//裁剪位置
 		
@@ -151,6 +152,7 @@ package laya.webgl.shader.d2.value {
 		public function clear():void
 		{
 			defines._value=subID + (WebGL.shaderHighPrecision?ShaderDefines2D.SHADERDEFINE_FSHIGHPRECISION:0);
+			clipOff[0] = 0;
 		}
 		
 		public function release():void
@@ -163,6 +165,7 @@ package laya.webgl.shader.d2.value {
 				this.clear();
 				this.filters = null;
 				this.ref = 1;
+				this.clipOff[0] = 0;
 			}
 		}
 		

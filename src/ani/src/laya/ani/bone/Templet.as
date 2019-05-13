@@ -79,6 +79,7 @@ package laya.ani.bone {
 		private var _textureDic:Object = {};
 		private var _loadList:Array;
 		private var _path:String;
+		private var _relativeUrl:String;
 		/**@private */
 		public var tMatrixDataLen:int;
 		
@@ -114,6 +115,7 @@ package laya.ani.bone {
 		 * @param	playbackRate	缓冲的帧率数据（会根据帧率去分帧）
 		 */
 		public function parseData(texture:Texture, skeletonData:ArrayBuffer, playbackRate:int = 30):void {
+			if(!_path&&_relativeUrl)_path = _relativeUrl.slice(0, _relativeUrl.lastIndexOf("/")) + "/";
 			if(!_path&&url)_path = url.slice(0, url.lastIndexOf("/")) + "/";
 			_mainTexture = texture;
 			if (_mainTexture) {
@@ -712,6 +714,13 @@ package laya.ani.bone {
 			}
 			//trace("getGrahicsDataWithCache fail:",aniIndex,frameIndex,this._path);
 			return null;
+		}
+		
+
+		override public function _setCreateURL(url:String):void 
+		{
+			_relativeUrl = url;
+			super._setCreateURL(url);
 		}
 		
 		/**

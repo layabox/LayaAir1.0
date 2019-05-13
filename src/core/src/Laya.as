@@ -41,7 +41,7 @@
 		/** 加载管理器的引用。*/
 		public static var loader:LoaderManager = null;
 		/** 当前引擎版本。*/
-		public static var version:String = "2.0.1";
+		public static var version:String = "2.0.2";
 		/**@private Render 类的引用。*/
 		public static var render:Render;
 		/**@private */
@@ -98,7 +98,7 @@
 			}
 			CacheManger.beginCheck();
 			_currentStage = stage = new Stage();
-			_getUrlPath();
+			URL.rootPath = URL._basePath = _getUrlPath();
 			render = new Render(0, 0);
 			stage.size(width, height);
 			window.stage = stage;
@@ -111,12 +111,12 @@
 		}
 		
 		/**@private */
-		private static function _getUrlPath():void {
+		public static function _getUrlPath():String {
 			var location:* = Browser.window.location;
 			var pathName:String = location.pathname;
 			// 索引为2的字符如果是':'就是windows file协议
 			pathName = pathName.charAt(2) == ':' ? pathName.substring(1) : pathName;
-			URL.rootPath = URL.basePath = URL.getPath(location.protocol == "file:" ? pathName : location.protocol + "//" + location.host + location.pathname);
+			return URL.getPath(location.protocol == "file:" ? pathName : location.protocol + "//" + location.host + location.pathname);
 		}
 		
 		/**@private */

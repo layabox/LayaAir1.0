@@ -3,16 +3,15 @@ package laya.d3Editor {
 	import laya.d3.core.MeshSprite3D;
 	import laya.d3.core.Sprite3D;
 	import laya.d3.core.Transform3D;
+	import laya.d3.core.material.RenderState;
 	import laya.d3.core.pixelLine.PixelLineMaterial;
 	import laya.d3.core.pixelLine.PixelLineSprite3D;
-	import laya.d3.core.material.RenderState;
 	import laya.d3.math.Color;
 	import laya.d3.math.Matrix4x4;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
-	import laya.d3.resource.models.BoxMesh;
-	import laya.d3.resource.models.ConeMesh;
+	import laya.d3.resource.models.PrimitiveMesh;
 	import laya.d3Editor.material.DepthCullLineMaterial;
 	import laya.d3Editor.material.GizmoMaterial;
 	
@@ -40,9 +39,9 @@ package laya.d3Editor {
 		public var scalingZ:Sprite3D;
 		
 		public var color:* = new Color(1, 1, 1, 1);
-		public var colorX:* = new Color(1, 0, 0, 0);
-		public var colorY:* = new Color(0, 1, 0, 0);
-		public var colorZ:* = new Color(0, 0, 1, 0);
+		public var colorX:Vector4 = new Vector4(1, 0, 0, 0);
+		public var colorY:Vector4 = new Vector4(0, 1, 0, 0);
+		public var colorZ:Vector4 = new Vector4(0, 0, 1, 0);
 		public var selectColor:Vector4 = new Vector4(1, 0.92, 0.016, 0);
 		public var selectSprite3D:Sprite3D;
 		
@@ -51,6 +50,9 @@ package laya.d3Editor {
 		private var _position:Vector3 = new Vector3();
 		private var _rotation:Quaternion = new Quaternion();
 		private var _scale:Vector3 = new Vector3();
+		private var _right:Vector3 = new Vector3();
+		private var _up:Vector3 = new Vector3();
+		private var _forward:Vector3 = new Vector3();
 		
 		public function TransformSprite3D() {
 			
@@ -69,9 +71,9 @@ package laya.d3Editor {
 				
 				if (curCamera && active && rotationSprite3D.active) {
 					var cameraTransform:Transform3D = curCamera.transform;
-					var cameraRight:Vector3 = cameraTransform.right;
-					var cameraUp:Vector3 = cameraTransform.up;
-					var cameraForward:Vector3 = cameraTransform.forward;
+					var cameraRight:Vector3 = cameraTransform.getRight(_right);
+					var cameraUp:Vector3 = cameraTransform.getUp(_up);
+					var cameraForward:Vector3 = cameraTransform.getForward(_forward);
 					var mate:Float32Array = _mat.elements;
 					mate[0] = cameraRight.x;
 					mate[1] = cameraRight.y;
@@ -115,7 +117,6 @@ package laya.d3Editor {
 		}
 		
 		public function initPositionXSprite3D():void {
-			
 			positionX = positionSprite3D.addChild(new Sprite3D()) as Sprite3D;
 			
 			var line:PixelLineSprite3D = positionX.addChild(new PixelLineSprite3D(2)) as PixelLineSprite3D;
@@ -128,7 +129,7 @@ package laya.d3Editor {
 			line.name = 'PositionX';
 			//line.transformType = 1;
 			
-			var cone:MeshSprite3D = positionX.addChild(new MeshSprite3D(new ConeMesh(0.04, 0.125))) as MeshSprite3D;
+			var cone:MeshSprite3D = positionX.addChild(new MeshSprite3D(PrimitiveMesh.createCone(0.04, 0.125))) as MeshSprite3D;
 			cone.transform.localPosition = new Vector3(0, 0.5, 0);
 			var mat:GizmoMaterial = new GizmoMaterial();
 			mat.color = colorX;
@@ -155,7 +156,7 @@ package laya.d3Editor {
 			line.name = 'PositionY';
 			//line.transformType = 2;
 			
-			var cone:MeshSprite3D = positionY.addChild(new MeshSprite3D(new ConeMesh(0.04, 0.125))) as MeshSprite3D;
+			var cone:MeshSprite3D = positionY.addChild(new MeshSprite3D(PrimitiveMesh.createCone(0.04, 0.125))) as MeshSprite3D;
 			cone.transform.localPosition = new Vector3(0, 0.5, 0);
 			var mat:GizmoMaterial = new GizmoMaterial();
 			mat.color = colorY;
@@ -180,7 +181,7 @@ package laya.d3Editor {
 			line.name = 'PositionZ';
 			//line.transformType = 3;
 			
-			var cone:MeshSprite3D = positionZ.addChild(new MeshSprite3D(new ConeMesh(0.04, 0.125))) as MeshSprite3D;
+			var cone:MeshSprite3D = positionZ.addChild(new MeshSprite3D(PrimitiveMesh.createCone(0.04, 0.125))) as MeshSprite3D;
 			cone.transform.localPosition = new Vector3(0, 0.5, 0);
 			var mat:GizmoMaterial = new GizmoMaterial();
 			mat.color = colorZ;
@@ -265,7 +266,7 @@ package laya.d3Editor {
 			line.name = 'ScaleX';
 			//line.transformType = 7;
 			
-			var cone:MeshSprite3D = scalingX.addChild(new MeshSprite3D(new BoxMesh(0.05, 0.05, 0.05))) as MeshSprite3D;
+			var cone:MeshSprite3D = scalingX.addChild(new MeshSprite3D(PrimitiveMesh.createBox(0.05, 0.05, 0.05))) as MeshSprite3D;
 			cone.transform.localPosition = new Vector3(0, 0.5, 0);
 			var mat:GizmoMaterial = new GizmoMaterial();
 			mat.color = color;
@@ -291,7 +292,7 @@ package laya.d3Editor {
 			line.name = 'ScaleY';
 			//line.transformType = 8;
 			
-			var cone:MeshSprite3D = scalingY.addChild(new MeshSprite3D(new BoxMesh(0.05, 0.05, 0.05))) as MeshSprite3D;
+			var cone:MeshSprite3D = scalingY.addChild(new MeshSprite3D(PrimitiveMesh.createBox(0.05, 0.05, 0.05))) as MeshSprite3D;
 			cone.transform.localPosition = new Vector3(0, 0.5, 0);
 			var mat:GizmoMaterial = new GizmoMaterial();
 			mat.color = color;
@@ -315,7 +316,7 @@ package laya.d3Editor {
 			line.name = 'ScaleZ';
 			//line.transformType = 9;
 			
-			var cone:MeshSprite3D = scalingZ.addChild(new MeshSprite3D(new BoxMesh(0.05, 0.05, 0.05))) as MeshSprite3D;
+			var cone:MeshSprite3D = scalingZ.addChild(new MeshSprite3D(PrimitiveMesh.createBox(0.05, 0.05, 0.05))) as MeshSprite3D;
 			cone.transform.localPosition = new Vector3(0, 0.5, 0);
 			var mat:GizmoMaterial = new GizmoMaterial();
 			mat.color = color;

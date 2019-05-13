@@ -15,6 +15,7 @@ package laya.webgl.canvas {
 	import laya.utils.ColorUtils;
 	import laya.utils.FontInfo;
 	import laya.utils.HTMLChar;
+	import laya.utils.Stat;
 	import laya.utils.StringKey;
 	import laya.utils.VectorGraphManager;
 	import laya.utils.WordText;
@@ -59,7 +60,6 @@ package laya.webgl.canvas {
 	
 	public class WebGLContext2D extends Context {
 		/*[DISABLE-ADD-VARIABLE-DEFAULT-VALUE]*/
-		public static const _tempPoint:Point = /*[STATIC SAFE]*/ new Point();
 		public static const _SUBMITVBSIZE:int = 32000;
 		
 		public static const _MAXSIZE:int = 99999999;
@@ -69,16 +69,15 @@ package laya.webgl.canvas {
 		
 		public static var _COUNT:int = 0;
 			
-		public static var _tmpMatrix:Matrix = /*[STATIC SAFE]*/ new Matrix();
+		public var _tmpMatrix:Matrix = new Matrix();		// chrome下静态的访问比从this访问要慢
 		
 		private static var SEGNUM:int = 32;
 			 
-		private static var _drawStyleTemp:DrawStyle = new DrawStyle(null);
 		private static var _contextcount:int = 0;
-		private static var _keyMap:StringKey = new StringKey();
 		
-		private static var _drawTexToDrawTri_Vert:Float32Array = new Float32Array(8);
-		private static var _drawTexToDrawTri_Index:Uint16Array = new Uint16Array([0, 1, 2, 0, 2, 3]);
+		private var _drawTexToDrawTri_Vert:Float32Array = new Float32Array(8);		// 从速度考虑，不做成static了
+		private var _drawTexToDrawTri_Index:Uint16Array = new Uint16Array([0, 1, 2, 0, 2, 3]);
+		private var _tempUV:Float32Array = new Float32Array(8);
 		private var _drawTriUseAbsMatrix:Boolean = false;	//drawTriange函数的矩阵是全局的，不用再乘以当前矩阵了。这是一个补丁。
 		
 		public static function __init__():void {
@@ -94,18 +93,20 @@ package laya.webgl.canvas {
 			WebGLContext.setCullFace(gl, false);
 			WebGLContext.setDepthMask(gl, true);
 			WebGLContext.setFrontFace(gl, WebGLContext.CCW);
-			gl.viewport(0, 0, RenderState2D.width, RenderState2D.height);//还原2D视口
+			if (!Render.isConchApp)
+			{
+				gl.viewport(0, 0, RenderState2D.width, RenderState2D.height);//还原2D视口
+			}
 		}
 		
 		public var _id:int = ++_COUNT;
 		
-		private var _other:ContextParams;
-		private var _renderNextSubmitIndex:int;
+		private var _other:ContextParams=null;
+		private var _renderNextSubmitIndex:int=0;
 		
 		private var _path:Path = null;
 		private var _primitiveValue2D:Value2D;
 		public  var _drawCount:int = 1;
-		private var _maxNumEle:int = 0;			//所有submit中的最多的element个数
 		private var _width:Number = _MAXSIZE;
 		private var _height:Number = _MAXSIZE;
 		private var _renderCount:int = 0;
@@ -114,9 +115,9 @@ package laya.webgl.canvas {
 		public var _curSubmit:* = null;
 		public var _submitKey:SubmitKey = new SubmitKey();	//当前将要使用的设置。用来跟上一次的_curSubmit比较
 		
-		public var _mesh:MeshQuadTexture;			//用Mesh2D代替_vb,_ib. 当前使用的mesh
-		public var _pathMesh:MeshVG;			//矢量专用mesh。
-		public var _triangleMesh:MeshTexture;	//drawTriangles专用mesh。由于ib不固定，所以不能与_mesh通用
+		public var _mesh:MeshQuadTexture=null;			//用Mesh2D代替_vb,_ib. 当前使用的mesh
+		public var _pathMesh:MeshVG=null;			//矢量专用mesh。
+		public var _triangleMesh:MeshTexture=null;	//drawTriangles专用mesh。由于ib不固定，所以不能与_mesh通用
 		
 		public var meshlist:Array = [];	//本context用到的mesh
 		
@@ -127,9 +128,10 @@ package laya.webgl.canvas {
 		public var _clipRect:Rectangle = MAXCLIPRECT;
 		//public var _transedClipInfo:Array = [0, 0, WebGLContext2D._MAXSIZE, 0, 0, WebGLContext2D._MAXSIZE];	//应用矩阵后的clip。ox,oy, xx,xy,yx,yy 	xx,xy等是缩放*宽高
 		public var _globalClipMatrix:Matrix = new Matrix(WebGLContext2D._MAXSIZE, 0, 0, WebGLContext2D._MAXSIZE, 0, 0);	//用矩阵描述的clip信息。最终的点投影到这个矩阵上，在0~1之间就可见。
+		public var _clipInCache:Boolean = false; 	// 当前记录的clipinfo是在cacheas normal后赋值的，因为cacheas normal会去掉当前矩阵的tx，ty，所以需要记录一下，以便在是shader中恢复
 		public var _clipInfoID:uint = 0;					//用来区分是不是clipinfo已经改变了
 		private static var _clipID_Gen:uint = 0;			//生成clipid的，原来是  _clipInfoID=++_clipInfoID 这样会有问题，导致兄弟clip的id都相同
-		public var _curMat:Matrix;
+		public var _curMat:Matrix=null;
 		
 		//计算矩阵缩放的缓存
 		public var _lastMatScaleX:Number = 1.0;
@@ -140,9 +142,9 @@ package laya.webgl.canvas {
 		private var _lastMat_d:Number = 1.0;
 		
 		public var _nBlendType:int = 0;
-		public var _save:*;
-		public var _targets:RenderTexture2D;
-		public var _charSubmitCache:CharSubmitCache;
+		public var _save:*=null;
+		public var _targets:RenderTexture2D=null;
+		public var _charSubmitCache:CharSubmitCache=null;
 		
 		public var _saveMark:SaveMark = null;
 		
@@ -153,7 +155,7 @@ package laya.webgl.canvas {
 		 * 对于cacheas bitmap的情况，如果图片还没准备好，需要有机会重画，所以要保存sprite。例如在图片
 		 * 加载完成后，调用repaint
 		 */
-		public var sprite:Sprite;	
+		public var sprite:Sprite=null;	
 		
 		//文字颜色。使用顶点色
 		public var _drawTextureUseColor:Boolean = false;
@@ -166,11 +168,13 @@ package laya.webgl.canvas {
 		private var _fillColor:uint = 0;
 		private var _flushCnt:int = 0;
 		
-		private static var defTexture:Texture;	//给fillrect用
+		private static var defTexture:Texture=null;	//给fillrect用
 		
-		public var _colorFiler:ColorFilter;
+		public var _colorFiler:ColorFilter=null;
 		
 		public var drawTexAlign:Boolean = false;		// 按照像素对齐
+			
+		public var _incache:Boolean = false;			// 正处在cacheas normal过程中
 		
 		public function WebGLContext2D(){
 			_contextcount++;
@@ -179,6 +183,7 @@ package laya.webgl.canvas {
 			if (!defTexture) {
 				var defTex2d:Texture2D = new Texture2D(2,2);
 				defTex2d.setPixels(new Uint8Array(16));
+				defTex2d.lock = true;
 				defTexture = new Texture(defTex2d);
 			}
 			_lastTex = defTexture;
@@ -649,7 +654,10 @@ package laya.webgl.canvas {
 				sprite && Laya.systemTimer.callLater(this, _repaintSprite);
 				return;
 			}
-			
+			_fillTexture(texture,texture.width,texture.height, texture.uvrect,x,y,width,height,type,offset.x,offset.y);
+		}
+        
+		public function _fillTexture(texture:Texture, texw:Number, texh:Number, texuvRect:Array, x:Number, y:Number, width:Number, height:Number, type:String, offsetx:Number, offsety:Number):void {
 			var submit:Submit = _curSubmit;
 			var sameKey:Boolean = false;
 			if ( _mesh.vertNum + 4 > _MAXVERTNUM) {
@@ -658,7 +666,6 @@ package laya.webgl.canvas {
 				sameKey = false;
 			}
 			
-			var tex2d:Texture2D = texture.bitmap as Texture2D;
 			//filltexture相关逻辑。计算rect大小以及对应的uv
 			var repeatx:Boolean = true;
 			var repeaty:Boolean = true;
@@ -674,31 +681,31 @@ package laya.webgl.canvas {
 			var stu:Number = 0; //uv起点
 			var stv:Number = 0;
 			var stx:Number = 0, sty:Number = 0, edx:Number = 0, edy:Number = 0;
-			if (offset.x < 0) {
+			if (offsetx < 0) {
 				stx = x; 
-				stu = (-offset.x %texture.width) / texture.width ;//有偏移的情况下的u不是从头开始
+				stu = (-offsetx %texw) / texw ;//有偏移的情况下的u不是从头开始
 			}else { 
-				stx = x + offset.x;
+				stx = x + offsetx;
 			}
-			if (offset.y < 0) { 
+			if (offsety < 0) { 
 				sty = y; 
-				stv = (-offset.y %texture.height) / texture.height;//有偏移的情况下的v不是从头开始
+				stv = (-offsety %texh) / texh;//有偏移的情况下的v不是从头开始
 			}else { 
-				sty = y + offset.y; 
+				sty = y + offsety; 
 			}
 			
 			edx = x + width;
 			edy = y + height;
-			(!repeatx) && (edx = Math.min(edx, x + offset.x + texture.width));//x不重复的话，最多只画一个
-			(!repeaty) && (edy = Math.min(edy, y + offset.y + texture.height));//y不重复的话，最多只画一个
+			(!repeatx) && (edx = Math.min(edx, x + offsetx + texw));//x不重复的话，最多只画一个
+			(!repeaty) && (edy = Math.min(edy, y + offsety + texh));//y不重复的话，最多只画一个
 			if (edx < x || edy < y)
 				return;
 			if (stx > edx || sty > edy)
 				return;
 				
 			//计算最大uv
-			var edu:Number = (edx-x-offset.x)/texture.width;
-			var edv:Number = (edy - y - offset.y) / texture.height;
+			var edu:Number = (edx-x-offsetx)/texw;
+			var edv:Number = (edy - y - offsety) / texh;
 			
 			transformQuad(stx, sty, edx-stx, edy-sty, 0, _curMat, _transedPoints);
 			//四个点对应的uv。必须在transformQuad后面，因为共用了_temp4Points
@@ -717,7 +724,7 @@ package laya.webgl.canvas {
 				//这个优化先不要了，因为没太弄明白wrapmode的设置，总是不起作用。
 				//if(texture.uvrect[2]<1.0||texture.uvrect[3]<1.0)//这表示是大图集中的一部分，只有这时候才用特殊shader
 					sv.defines.add(ShaderDefines2D.FILLTEXTURE);
-				(sv as Object).u_TexRange = texture.uvrect;
+				(sv as Object).u_TexRange = texuvRect;
 				submit = _curSubmit =  SubmitTexture.create(this, _mesh, sv );
 				_submits[_submits._length++] = submit;
 				_copyClipInfo(submit, _globalClipMatrix);
@@ -729,6 +736,7 @@ package laya.webgl.canvas {
 			}
 			breakNextMerge();	//暂不合并
 		}
+        
 		
 		/**
 		 * 反正只支持一种filter，就不要叫setFilter了，直接叫setColorFilter
@@ -756,8 +764,9 @@ package laya.webgl.canvas {
 			//TODO 还没实现
 			var n:int = pos.length / 2;
 			var ipos:int = 0;
+			var bmpid:int = tex.bitmap.id;
 			for (var i:int = 0; i < n; i++) {
-				_inner_drawTexture(tex, tex.bitmap.id, pos[ipos++]+tx, pos[ipos++]+ty,0,0,null,null, 1.0,false);
+				_inner_drawTexture(tex, bmpid, pos[ipos++]+tx, pos[ipos++]+ty,0,0,null,null, 1.0,false);
 			}
 			
 			/*
@@ -784,7 +793,6 @@ package laya.webgl.canvas {
 				_curSubmit._numEle += 6;
 				vpos += WebGLContext2D._RECTVBSIZE;
 			}
-			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);
 			*/
 		}
 		
@@ -848,6 +856,10 @@ package laya.webgl.canvas {
 			var cmp:Array = submit.shaderValue.clipMatPos;
 			cmp[0] = clipInfo.tx; cmp[1] = clipInfo.ty;
 			submit.clipInfoID = this._clipInfoID;
+			
+			if (_clipInCache) {
+				submit.shaderValue.clipOff[0] = 1;
+			}
 		}
 				
 		
@@ -926,7 +938,7 @@ package laya.webgl.canvas {
 		 * @param	uv
 		 * @return
 		 */
-		public function _inner_drawTexture(tex:Texture, imgid:int, x:Number, y:Number, width:Number, height:Number, m:Matrix, uv:Array, alpha:Number,lastRender:Boolean):Boolean {
+		public function _inner_drawTexture(tex:Texture, imgid:int, x:Number, y:Number, width:Number, height:Number, m:Matrix, uv:Array, alpha:Number, lastRender:Boolean):Boolean {
 			var preKey:SubmitKey = _curSubmit._key;
 			uv = uv || __JS__("tex._uv")
 			//为了优化，如果上次是画三角形，并且贴图相同，会认为他们是一组的，把这个也转成三角形，以便合并。
@@ -935,25 +947,30 @@ package laya.webgl.canvas {
 				var tv:Float32Array = _drawTexToDrawTri_Vert;
 				tv[0] = x; tv[1] = y; tv[2] = x + width, tv[3] = y, tv[4] = x + width, tv[5] = y + height, tv[6] = x, tv[7] = y + height;
 				_drawTriUseAbsMatrix = true;
-				drawTriangles(tex, 0, 0, tv, (uv as Object as Float32Array), _drawTexToDrawTri_Index, m, alpha,null,'normal');//uv是通过[]访问的，所以arraylike即可
+				var tuv:Float32Array = _tempUV;
+				tuv[0] = uv[0];tuv[1] = uv[1];tuv[2] = uv[2];tuv[3] = uv[3];tuv[4] = uv[4];tuv[5] = uv[5];tuv[6] = uv[6];tuv[7] = uv[7];
+				drawTriangles(tex, 0, 0, tv, tuv, _drawTexToDrawTri_Index, m, alpha,null,null);//用tuv而不是uv会提高效率
 				_drawTriUseAbsMatrix = false;
 				return true;
 			}
 
+			var mesh:MeshQuadTexture = this._mesh;
+			var submit:SubmitTexture = _curSubmit;
 			var ops:Array = lastRender?_charSubmitCache.getPos():_transedPoints;
 			
 			//凡是这个都是在_mesh上操作，不用考虑samekey
 			transformQuad(x, y, width || tex.width, height || tex.height, _italicDeg, m || _curMat, ops);
 			
 			if (drawTexAlign) {
-				ops[0] = Math.round(ops[0]);//  (ops[0] + 0.5) | 0;	// 这么计算负的时候会有问题
-				ops[1] = Math.round(ops[1]);//(ops[1] + 0.5) | 0;
-				ops[2] = Math.round(ops[2]);//(ops[2] + 0.5) | 0;
-				ops[3] = Math.round(ops[3]);//(ops[3] + 0.5) | 0;
-				ops[4] = Math.round(ops[4]);//(ops[4] + 0.5) | 0;
-				ops[5] = Math.round(ops[5]);//(ops[5] + 0.5) | 0;
-				ops[6] = Math.round(ops[6]);//(ops[6] + 0.5) | 0;
-				ops[7] = Math.round(ops[7]);//(ops[7] + 0.5) | 0;
+				var round:Function = Math.round;
+				ops[0] = round(ops[0]);//  (ops[0] + 0.5) | 0;	// 这么计算负的时候会有问题
+				ops[1] = round(ops[1]);
+				ops[2] = round(ops[2]);
+				ops[3] = round(ops[3]);
+				ops[4] = round(ops[4]);
+				ops[5] = round(ops[5]);
+				ops[6] = round(ops[6]);
+				ops[7] = round(ops[7]);
 				drawTexAlign = false;	//一次性的
 			}
 
@@ -971,28 +988,27 @@ package laya.webgl.canvas {
 			var sameKey:Boolean = imgid >= 0 && preKey.submitType === Submit.KEY_DRAWTEXTURE && preKey.other === imgid ;
 			
 			//clipinfo
-			sameKey && (sameKey &&= isSameClipInfo(_curSubmit));
+			sameKey && (sameKey &&= isSameClipInfo(submit));
 			
 			_lastTex = tex;
 			
-			if (_mesh.vertNum + 4 > _MAXVERTNUM) {
-				_mesh = MeshQuadTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
-				meshlist.push(_mesh);
+			if (mesh.vertNum + 4 > _MAXVERTNUM) {
+				mesh = _mesh = MeshQuadTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(mesh);
 				sameKey = false;	//新的mesh不能算samekey了
 			}
 			
-			if (!clipedOff(_transedPoints)) {
-				_mesh.addQuad(ops, uv , rgba, true);
+			{
+				mesh.addQuad(ops, uv , rgba, true);
 				if (!sameKey) {
-					var submit:SubmitTexture  = SubmitTexture.create(this, _mesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
-					_submits[_submits._length++] = _curSubmit = submit;
+					_submits[_submits._length++] = _curSubmit = submit = SubmitTexture.create(this, mesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
 					submit.shaderValue.textureHost = tex;
 					submit._key.other = imgid;
 					_copyClipInfo(submit, _globalClipMatrix);
 				}
-				_curSubmit._numEle += 6;
-				_mesh.indexNum += 6;
-				_mesh.vertNum += 4;
+				submit._numEle += 6;
+				mesh.indexNum += 6;
+				mesh.vertNum += 4;
 				return true;
 			}
 			return false;
@@ -1004,19 +1020,42 @@ package laya.webgl.canvas {
 		 * @param	out		输出
 		 */
 		public function transform4Points(a:Array, m:Matrix, out:Array):void {
+		/*
+			out[0] = 846;
+			out[1] = 656;
+			out[2] = 881;
+			out[3] = 657;
+			out[4] = 880;
+			out[5] = 732;
+			out[6] = 844;
+			out[7] = 731;
+			return ;
+		*/
 			//var m:Matrix = _curMat;
 			var tx:Number = m.tx;
 			var ty:Number = m.ty;
+			var ma:Number = m.a;
+			var mb:Number = m.b;
+			var mc:Number = m.c;
+			var md:Number = m.d;
+			var a0:Number = a[0];
+			var a1:Number = a[1];
+			var a2:Number = a[2];
+			var a3:Number = a[3];
+			var a4:Number = a[4];
+			var a5:Number = a[5];
+			var a6:Number = a[6];
+			var a7:Number = a[7];
 			if (m._bTransform) {
-				out[0] = a[0] * m.a + a[1] * m.c + tx; out[1] = a[0] * m.b + a[1] * m.d + ty;
-				out[2] = a[2] * m.a + a[3] * m.c + tx; out[3] = a[2] * m.b + a[3] * m.d + ty;
-				out[4] = a[4] * m.a + a[5] * m.c + tx; out[5] = a[4] * m.b + a[5] * m.d + ty;
-				out[6] = a[6] * m.a + a[7] * m.c + tx; out[7] = a[6] * m.b + a[7] * m.d + ty;
+				out[0] = a0 * ma + a1 * mc + tx; out[1] = a0 * mb + a1 * md + ty;
+				out[2] = a2 * ma + a3 * mc + tx; out[3] = a2 * mb + a3 * md + ty;
+				out[4] = a4 * ma + a5 * mc + tx; out[5] = a4 * mb + a5 * md + ty;
+				out[6] = a6 * ma + a7 * mc + tx; out[7] = a6 * mb + a7 * md + ty;
 			}else {
-				out[0] = a[0] + tx; out[1] = a[1] + ty;
-				out[2] = a[2] + tx; out[3] = a[3] + ty;
-				out[4] = a[4] + tx; out[5] = a[5] + ty;
-				out[6] = a[6] + tx; out[7] = a[7] + ty;
+				out[0] = a0 + tx; out[1] = a1 + ty;
+				out[2] = a2 + tx; out[3] = a3 + ty;
+				out[4] = a4 + tx; out[5] = a5 + ty;
+				out[6] = a6 + tx; out[7] = a7 + ty;
 			}
 		}
 		
@@ -1041,16 +1080,44 @@ package laya.webgl.canvas {
 		 * @param   italicDeg 倾斜角度，单位是度。0度无，目前是下面不动。以后要做成可调的
 		 */
 		public function transformQuad(x:Number, y:Number, w:Number, h:Number, italicDeg:Number, m:Matrix, out:Array):void {
+			/*
+			out[0] = 100.1; out[1] = 100.1;
+			out[2] = 101.1; out[3] = 100.1;
+			out[4] = 101.1; out[5] = 101.1;
+			out[6] = 100.1; out[7] = 101.1;
+			return;
+			*/
 			var xoff:Number = 0;
 			if (italicDeg != 0) {
 				xoff = Math.tan(italicDeg * Math.PI / 180) * h;
 			}
 			var maxx:Number = x + w; var maxy:Number = y + h;
-			_temp4Points[0] = x+xoff; _temp4Points[1] = y;
-			_temp4Points[2] = maxx+xoff; _temp4Points[3] = y;
-			_temp4Points[4] = maxx; _temp4Points[5] = maxy;
-			_temp4Points[6] = x; _temp4Points[7] = maxy;
-			transform4Points(_temp4Points,m, out);
+			
+			var tx:Number = m.tx;
+			var ty:Number = m.ty;
+			var ma:Number = m.a;
+			var mb:Number = m.b;
+			var mc:Number = m.c;
+			var md:Number = m.d;
+			var a0:Number = x+xoff;
+			var a1:Number = y;
+			var a2:Number = maxx+xoff;
+			var a3:Number = y;
+			var a4:Number = maxx;
+			var a5:Number = maxy;
+			var a6:Number = x;
+			var a7:Number = maxy;
+			if (m._bTransform) {
+				out[0] = a0 * ma + a1 * mc + tx; out[1] = a0 * mb + a1 * md + ty;
+				out[2] = a2 * ma + a3 * mc + tx; out[3] = a2 * mb + a3 * md + ty;
+				out[4] = a4 * ma + a5 * mc + tx; out[5] = a4 * mb + a5 * md + ty;
+				out[6] = a6 * ma + a7 * mc + tx; out[7] = a6 * mb + a7 * md + ty;
+			}else {
+				out[0] = a0 + tx; out[1] = a1 + ty;
+				out[2] = a2 + tx; out[3] = a3 + ty;
+				out[4] = a4 + tx; out[5] = a5 + ty;
+				out[6] = a6 + tx; out[7] = a7 + ty;
+			}			
 		}
 		
 		public function pushRT():void {
@@ -1117,6 +1184,7 @@ package laya.webgl.canvas {
 		 */
 		override public function drawTextureWithTransform(tex:Texture, x:Number, y:Number, width:Number, height:Number, transform:Matrix, tx:Number, ty:Number, alpha:Number, blendMode:String, colorfilter:ColorFilter = null):void {
 			var oldcomp:String = null;
+			var curMat:Matrix = _curMat;
 			if (blendMode) {
 				oldcomp = globalCompositeOperation;
 				globalCompositeOperation = blendMode;
@@ -1127,7 +1195,7 @@ package laya.webgl.canvas {
 			}
 			
 			if (!transform) {
-				_drawTextureM(tex, x + tx, y + ty, width, height, null, alpha, null);
+				_drawTextureM(tex, x + tx, y + ty, width, height, curMat, alpha, null);
 				if (blendMode) {
 					globalCompositeOperation = oldcomp;
 				}
@@ -1136,17 +1204,17 @@ package laya.webgl.canvas {
 				}
 				return;
 			}
-			var curMat:Matrix = _curMat;
+			var tmpMat:Matrix = _tmpMatrix;
 			//克隆transform,因为要应用tx，ty，这里不能修改原始的transform
-			_tmpMatrix.a = transform.a; _tmpMatrix.b = transform.b; _tmpMatrix.c = transform.c; _tmpMatrix.d = transform.d; _tmpMatrix.tx = transform.tx + tx; _tmpMatrix.ty = transform.ty + ty;
-			_tmpMatrix._bTransform = transform._bTransform;
+			tmpMat.a = transform.a; tmpMat.b = transform.b; tmpMat.c = transform.c; tmpMat.d = transform.d; tmpMat.tx = transform.tx + tx; tmpMat.ty = transform.ty + ty;
+			tmpMat._bTransform = transform._bTransform;
 			if (transform && curMat._bTransform) {
-				Matrix.mul(_tmpMatrix, curMat, _tmpMatrix);
-				transform = _tmpMatrix;
+				Matrix.mul(tmpMat, curMat, tmpMat);
+				transform = tmpMat;
 				transform._bTransform = true;
 			}else {
 				//如果curmat没有旋转。
-				transform = _tmpMatrix;
+				transform = tmpMat;
 			}
 			_drawTextureM(tex, x, y, width, height, transform, alpha, null);
 			if (blendMode) {
@@ -1250,8 +1318,8 @@ package laya.webgl.canvas {
 				// 先加上位置，最后再乘逆
 				var tx:Number = mat.tx, ty:Number = mat.ty;
 				mat.tx = mat.ty = 0;
-				mat.transformPoint(Point.TEMP.setTo(x, y));
-				mat.translate(Point.TEMP.x + tx, Point.TEMP.y + ty);
+				mat.transformPoint(Point.TEMP.setTo(x, y));	// 用当前矩阵变换 (x,y)
+				mat.translate(Point.TEMP.x + tx, Point.TEMP.y + ty);	// 加上原来的 (tx,ty)
 				
 				Matrix.mul(canv.invMat, mat,  mat);
 
@@ -1278,7 +1346,6 @@ package laya.webgl.canvas {
 				submit._numEle = 6;
 				_mesh.indexNum += 6;
 				_mesh.vertNum += 4;
-				_maxNumEle = Math.max(_maxNumEle, submit._numEle);				
 				_submits[_submits._length++] = submit;
 				//暂时drawTarget不合并
 				_curSubmit = Submit.RENDERBASE
@@ -1298,6 +1365,10 @@ package laya.webgl.canvas {
 			}
 			_drawCount++;
 			
+            // 为了提高效率，把一些变量放到这里
+            var tmpMat:Matrix = _tmpMatrix;
+			var triMesh:MeshTexture = _triangleMesh;
+			
 			var oldColorFilter:ColorFilter=null;
 			var needRestorFilter:Boolean = false;
 			if (color) {
@@ -1313,17 +1384,14 @@ package laya.webgl.canvas {
 			
 			//var rgba:int = mixRGBandAlpha(0xffffffff);
 			//rgba = _mixRGBandAlpha(rgba, alpha);	这个函数有问题，不能连续调用，输出作为输入
-			var rgba:int = _mixRGBandAlpha( 0xffffffff, _shader2D.ALPHA * alpha);			
-			var vertNum:int = vertices.length / 2;
-			var eleNum:int = indices.length;
-			if (_triangleMesh.vertNum + vertNum > _MAXVERTNUM) {
-				_triangleMesh = MeshTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
-				meshlist.push(_triangleMesh);
+			if (triMesh.vertNum + vertices.length / 2 > _MAXVERTNUM) {
+				triMesh = _triangleMesh = MeshTexture.getAMesh();//创建新的mesh  TODO 如果_mesh不是常见格式，这里就不能这么做了。以后把_mesh单独表示成常用模式 
+				meshlist.push(triMesh);
 				sameKey = false;	//新的mesh不能算samekey了
 			}
 			if (!sameKey) {
 				//添加一个新的submit
-				var submit:SubmitTexture = _curSubmit = SubmitTexture.create(this, _triangleMesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
+				var submit:SubmitTexture = _curSubmit = SubmitTexture.create(this, triMesh, Value2D.create(ShaderDefines2D.TEXTURE2D, 0));
 				submit.shaderValue.textureHost = tex;
 				submit._renderType = Submit.TYPE_TEXTURE;
 				submit._key.submitType = Submit.KEY_TRIANGLES;
@@ -1331,17 +1399,21 @@ package laya.webgl.canvas {
 				_copyClipInfo(submit, _globalClipMatrix);				
 				_submits[_submits._length++] = submit;
 			}
-			if (!matrix) {
-				_tmpMatrix.a = 1; _tmpMatrix.b = 0; _tmpMatrix.c = 0; _tmpMatrix.d = 1; _tmpMatrix.tx = x; _tmpMatrix.ty = y;
-			} else {
-				_tmpMatrix.a = matrix.a; _tmpMatrix.b = matrix.b; _tmpMatrix.c = matrix.c; _tmpMatrix.d = matrix.d; _tmpMatrix.tx = matrix.tx + x; _tmpMatrix.ty = matrix.ty + y;
-			}
+			
+			var rgba:int = _mixRGBandAlpha( 0xffffffff, _shader2D.ALPHA * alpha);
 			if(!_drawTriUseAbsMatrix){
-				Matrix.mul(_tmpMatrix, _curMat, _tmpMatrix);
+				if (!matrix) {
+					tmpMat.a = 1; tmpMat.b = 0; tmpMat.c = 0; tmpMat.d = 1; tmpMat.tx = x; tmpMat.ty = y;
+				} else {
+					tmpMat.a = matrix.a; tmpMat.b = matrix.b; tmpMat.c = matrix.c; tmpMat.d = matrix.d; tmpMat.tx = matrix.tx + x; tmpMat.ty = matrix.ty + y;
+				}
+				Matrix.mul(tmpMat, _curMat, tmpMat);
+				triMesh.addData(vertices, uvs, indices, tmpMat, rgba);
+			}else {
+				// 这种情况是drawtexture转成的drawTriangle，直接使用matrix就行，传入的xy都是0
+				triMesh.addData(vertices, uvs, indices, matrix, rgba);
 			}
-			_triangleMesh.addData(vertices, uvs, indices, _tmpMatrix, rgba,this);
-			_curSubmit._numEle += eleNum;
-			_maxNumEle = Math.max(_maxNumEle, _curSubmit._numEle);				
+			_curSubmit._numEle += indices.length;
 			
 			if (needRestorFilter) {
 				_colorFiler = oldColorFilter;
@@ -1420,6 +1492,9 @@ package laya.webgl.canvas {
 					cm.a = _clipRect.width ;
 					cm.b = cm.c  = 0;
 					cm.d = _clipRect.height;
+				}
+				if (_incache) {
+					_clipInCache = true;
 				}
 			}
 			
@@ -2004,6 +2079,9 @@ package laya.webgl.canvas {
 			return _mixRGBandAlpha(color, _shader2D.ALPHA);
 		}
 		public function _mixRGBandAlpha(color:uint, alpha:Number):uint {
+			if (alpha >= 1) {
+				return color;
+			}
 			var a:int = ((color & 0xff000000) >>> 24);
 			//TODO 这里容易出问题，例如颜色的alpha部分虽然为0，但是他的意义就是0，不能假设是没有设置alpha。例如级联多个alpha就会生成这种结果
 			if (a != 0) {
@@ -2081,6 +2159,232 @@ package laya.webgl.canvas {
 			mat._bTransform = true;
 		}
 		*/
+		
+		/* 下面的是错误的。位置没有被缩放
+		override public function transformByMatrix(matrix:Matrix, tx:Number, ty:Number):void {
+			SaveTransform.save(this);			
+			Matrix.mul(matrix, _curMat, _curMat);	
+			_curMat.tx += tx;
+			_curMat.ty += ty;
+			_curMat._checkTransform();
+		}
+				
+		public function transformByMatrixNoSave(matrix:Matrix, tx:Number, ty:Number):void {
+			Matrix.mul(matrix, _curMat, _curMat);	
+			_curMat.tx += tx;
+			_curMat.ty += ty;
+			_curMat._checkTransform();
+		}
+		*/
+		
+		private static var tmpuv1:Array = [0, 0, 0, 0, 0, 0, 0, 0];
+		/**
+		 * 专用函数。通过循环创建来水平填充
+		 * @param	tex
+		 * @param	bmpid
+		 * @param	uv		希望循环的部分的uv
+		 * @param	oriw
+		 * @param	orih
+		 * @param	x
+		 * @param	y
+		 * @param	w
+		 */
+		private function _fillTexture_h(tex:Texture, imgid:int, uv:Array,oriw:Number, orih:Number, x:Number, y:Number, w:Number):void {
+			var stx:Number = x;
+			var num:int = Math.floor( w / oriw);
+			var left:Number = w % oriw;
+			for (var i:int = 0; i < num; i++) {
+				_inner_drawTexture(tex, imgid, stx, y, oriw, orih, _curMat, uv, 1, false);
+				stx += oriw;
+			}
+			// 最后剩下的
+			if (left > 0) {
+				var du:Number = uv[2] - uv[0];
+				var uvr:Number = uv[0] + du * (left / oriw);
+				var tuv:Array = tmpuv1;
+				tuv[0] = uv[0]; tuv[1] = uv[1]; tuv[2] = uvr; tuv[3] = uv[3];
+				tuv[4] = uvr; tuv[5] = uv[5]; tuv[6] = uv[6]; tuv[7] = uv[7];
+				_inner_drawTexture(tex, imgid, stx, y, left, orih, _curMat, tuv, 1, false);
+			}
+		}
+		
+		/**
+		 * 专用函数。通过循环创建来垂直填充
+		 * @param	tex
+		 * @param	imgid
+		 * @param	uv
+		 * @param	oriw
+		 * @param	orih
+		 * @param	x
+		 * @param	y
+		 * @param	h
+		 */
+		private function _fillTexture_v(tex:Texture, imgid:int, uv:Array,oriw:Number, orih:Number, x:Number, y:Number, h:Number):void {
+			var sty:Number = y;
+			var num:int = Math.floor( h / orih);
+			var left:Number = h % orih;
+			for (var i:int = 0; i < num; i++) {
+				_inner_drawTexture(tex, imgid, x, sty, oriw, orih, _curMat, uv, 1, false);
+				sty += orih;
+			}
+			// 最后剩下的
+			if (left > 0) {
+				var dv:Number = uv[7] - uv[1];
+				var uvb:Number = uv[1] + dv * (left / orih);
+				var tuv:Array = tmpuv1;
+				tuv[0] = uv[0]; tuv[1] = uv[1]; tuv[2] = uv[2]; tuv[3] = uv[3];
+				tuv[4] = uv[4]; tuv[5] = uvb; tuv[6] = uv[6]; tuv[7] = uvb;
+				_inner_drawTexture(tex, imgid, x, sty, oriw, left, _curMat, tuv, 1, false);
+			}
+		}		
+		
+		private static var tmpUV:Array = [0, 0, 0, 0, 0, 0, 0, 0];
+		private static var tmpUVRect:Array = [0, 0, 0, 0];
+		override public function drawTextureWithSizeGrid(tex:Texture, tx:Number, ty:Number, width:Number, height:Number, sizeGrid:Array, gx:Number, gy:Number):void {
+			if (!tex._getSource())
+				return;
+			tx += gx;
+			ty += gy;
+			
+			var uv:Array = tex.uv, w:Number = tex.bitmap._width, h:Number = tex.bitmap._height;
+			
+			var top:Number = sizeGrid[0];
+			var left:Number = sizeGrid[3];
+			var d_top:Number = top / h;
+			var d_left:Number = left / w;
+			var right:Number = sizeGrid[1];
+			var bottom:Number = sizeGrid[2];
+			var d_right:Number = right / w;
+			var d_bottom:Number = bottom / h;
+			var repeat:Boolean = sizeGrid[4];
+			var needClip:Boolean = false;
+			
+			if (width == w) {
+				left = right = 0;
+			}
+			if (height == h) {
+				top = bottom = 0;
+			}
+			
+			//处理进度条不好看的问题
+			if (left + right > width) {
+				var clipWidth:Number = width;
+				needClip = true;
+				width = left + right;
+				save();
+				clipRect(0+tx, 0+ty, clipWidth, height);
+			}
+			
+			var imgid:int = tex.bitmap.id;
+			var mat:Matrix = _curMat;
+			var tuv:Array = _tempUV;
+			// 整图的uv
+			// 一定是方的，所以uv只要左上右下就行
+			var uvl:Number = uv[0];
+			var uvt:Number = uv[1];
+			var uvr:Number = uv[4];
+			var uvb:Number = uv[5];
+			
+			// 小图的uv
+			var uvl_:Number = uvl;
+			var uvt_:Number = uvt;
+			var uvr_:Number = uvr;
+			var uvb_:Number = uvb;
+			
+			//绘制四个角
+			// 构造uv
+			if(left && top){
+				uvr_ = uvl + d_left;
+				uvb_ = uvt + d_top;
+				tuv[0] = uvl, tuv[1] = uvt, 	tuv[2] = uvr_, tuv[3] = uvt, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 		tuv[6] = uvl, tuv[7] = uvb_;
+				_inner_drawTexture(tex, imgid, tx, ty, left, top, mat, tuv, 1, false);
+			}
+			if ( right && top) {
+				uvl_ = uvr - d_right; uvt_ = uvt;
+				uvr_ = uvr; uvb_ = uvt + d_top;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				_inner_drawTexture(tex, imgid, width - right + tx, 0 + ty, right, top, mat, tuv, 1, false);
+			}
+			if (left && bottom) {
+				uvl_ = uvl; uvt_ = uvb-d_bottom;
+				uvr_ = uvl+d_left; uvb_ = uvb;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				_inner_drawTexture(tex, imgid, 0+tx, height - bottom+ty, left, bottom, mat, tuv, 1, false);
+			}
+			if (right && bottom) {
+				uvl_ = uvr-d_right; uvt_ = uvb-d_bottom;
+				uvr_ = uvr; uvb_ = uvb;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				_inner_drawTexture(tex, imgid,width - right+tx, height - bottom+ty, right, bottom, mat, tuv, 1, false);
+			}
+			//绘制上下两个边
+			if (top) {
+				uvl_ = uvl+d_left; uvt_ = uvt;
+				uvr_ = uvr-d_right; uvb_ = uvt+d_top;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				if (repeat) {
+					_fillTexture_h(tex, imgid, tuv, tex.width - left - right, top, left + tx, ty, width - left - right);
+				}else {
+					_inner_drawTexture(tex, imgid,left + tx, ty, width - left - right, top, mat, tuv, 1, false);	
+				}
+				
+			}
+			if (bottom ) {
+				uvl_ = uvl+d_left; uvt_ = uvb-d_bottom;
+				uvr_ = uvr - d_right; uvb_ = uvb;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				if (repeat) {
+					_fillTexture_h(tex, imgid, tuv, tex.width - left - right, bottom, left + tx, height - bottom + ty, width - left - right);
+				}else{
+					_inner_drawTexture(tex, imgid, left + tx, height - bottom + ty, width - left - right, bottom, mat, tuv, 1, false);
+				}
+			}
+			//绘制左右两边
+			if (left) {
+				uvl_ = uvl; uvt_ = uvt+d_top;
+				uvr_ = uvl+d_left; uvb_ = uvb-d_bottom;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				if (repeat) {
+					_fillTexture_v(tex, imgid, tuv, left, tex.height - top - bottom, tx, top + ty, height - top - bottom);
+				}else{	
+					_inner_drawTexture(tex, imgid, tx, top + ty, left, height - top - bottom, mat, tuv, 1, false);
+				}
+			}
+			if (right) {
+				uvl_ = uvr-d_right; uvt_ = uvt+d_top;
+				uvr_ = uvr; uvb_ = uvb-d_bottom;
+				tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+				tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+				if (repeat) {
+					_fillTexture_v(tex, imgid, tuv, right, tex.height - top - bottom, width - right + tx, top + ty, height - top - bottom);
+				}else{
+					_inner_drawTexture(tex, imgid, width - right + tx, top + ty, right, height - top - bottom, mat, tuv, 1, false);
+				}
+			}
+			//绘制中间
+			uvl_ = uvl+d_left; uvt_ = uvt+d_top;
+			uvr_ = uvr-d_right; uvb_ = uvb-d_bottom;
+			tuv[0] = uvl_, tuv[1] = uvt_, 	tuv[2] = uvr_, tuv[3] = uvt_, 
+			tuv[4] = uvr_, tuv[5] = uvb_, 	tuv[6] = uvl_, tuv[7] = uvb_;
+			if (repeat) {
+				var tuvr:Array = tmpUVRect;
+				tuvr[0] = uvl_; tuvr[1] = uvt_;
+				tuvr[2] = uvr_ -uvl_; tuvr[3] = uvb_ -uvt_;
+				// 这个如果用重复的可能比较多，所以采用filltexture的方法，注意这样会打断合并
+				_fillTexture(tex, tex.width - left - right, tex.height - top - bottom, tuvr, left + tx, top + ty, width - left - right, height - top - bottom, 'repeat', 0, 0);
+			}else{
+				_inner_drawTexture(tex, imgid, left + tx, top + ty, width - left - right, height - top - bottom, mat, tuv, 1, false);
+			}
+			
+			if (needClip) restore();			
+		}
 	}
 }
 

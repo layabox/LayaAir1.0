@@ -1,3 +1,5 @@
+#include "Lighting.glsl";
+
 attribute vec4 a_Position;
 attribute vec4 a_Color;
 
@@ -16,4 +18,5 @@ void main()
 	depthValue = (position.z / position.w) / 2.0 + 0.5;
 	
 	v_Color = a_Color;
+	gl_Position=remapGLPositionZ(gl_Position);
 }

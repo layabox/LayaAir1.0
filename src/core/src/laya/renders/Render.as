@@ -48,7 +48,10 @@ package laya.renders {
 			}
 			else
 			{
-				Browser.container.appendChild(_mainCanvas.source);
+				if(!Browser.onKGMiniGame)
+				{
+					Browser.container.appendChild(_mainCanvas.source);//xiaosong add
+				}
 			}
 			RunDriver.initRender(_mainCanvas, width, height);
 			Browser.window.requestAnimationFrame(loop);

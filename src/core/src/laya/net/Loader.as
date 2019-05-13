@@ -9,6 +9,7 @@ package laya.net {
 	import laya.resource.HTMLImage;
 	import laya.resource.Texture;
 	import laya.utils.Browser;
+	import laya.utils.Byte;
 	import laya.utils.Handler;
 	import laya.utils.Utils;
 	
@@ -54,6 +55,8 @@ package laya.net {
 		public static const TTF:String = "ttf";
 		/** 预加载文件类型，加载完成后自动解析到preLoadedMap。*/
 		public static const PLF:String = "plf";
+		/** 二进制预加载文件类型，加载完成后自动解析到preLoadedMap。*/
+		public static const PLFB:String = "plfb";
 		/**Hierarchy资源。*/
 		public static const HIERARCHY:String = "HIERARCHY";
 		/**Mesh资源。*/
@@ -74,7 +77,7 @@ package laya.net {
 		public static const TERRAINRES:String = "TERRAIN";
 		
 		/**文件后缀和类型对应表。*/
-		public static var typeMap:Object = /*[STATIC SAFE]*/ {"ttf": "ttf", "png": "image", "jpg": "image", "jpeg": "image", "ktx": "image", "pvr": "image", "txt": "text", "json": "json", "prefab": "prefab", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "plf": "plf", "scene": "json", "ani": "json", "sk": "arraybuffer"};
+		public static var typeMap:Object = /*[STATIC SAFE]*/ {"ttf": "ttf", "png": "image", "jpg": "image", "jpeg": "image", "ktx": "image", "pvr": "image", "txt": "text", "json": "json", "prefab": "prefab", "xml": "xml", "als": "atlas", "atlas": "atlas", "mp3": "sound", "ogg": "sound", "wav": "sound", "part": "json", "fnt": "font", "plf": "plf","plfb":"plfb", "scene": "json", "ani": "json", "sk": "arraybuffer"};
 		/**资源解析函数对应表，用来扩展更多类型的资源加载解析。*/
 		public static var parserMap:Object = /*[STATIC SAFE]*/ {};
 		/**每帧加载完成回调使用的最大超时时间，如果超时，则下帧再处理，防止帧卡顿。*/
@@ -170,6 +173,9 @@ package laya.net {
 				break;
 			case FONT: 
 				contentType = XML;
+				break;
+			case PLFB:
+				contentType = BUFFER;
 				break;
 			default: 
 				contentType = type;
@@ -335,6 +341,11 @@ package laya.net {
 		 */
 		protected function onLoaded(data:* = null):void {
 			var type:String = this._type;
+			if (type == PLFB)
+			{
+				parsePLFBData(data);
+				complete(data);
+			}else
 			if (type == PLF) {
 				parsePLFData(data);
 				complete(data);
@@ -478,6 +489,30 @@ package laya.net {
 				}
 				
 			}
+		}
+		
+		private function parsePLFBData(plfData:ArrayBuffer):void
+		{
+			 var byte:Byte;
+			 byte = new Byte(plfData);
+			 var i:int, len:int;
+			 len = byte.getInt32();
+			 for (i = 0; i < len; i++)
+			 {
+				 parseOnePLFBFile(byte);
+			 }
+		}
+		
+		private function parseOnePLFBFile(byte:Byte):void
+		{
+			var fileLen:int;
+			var fileName:String;
+			var fileData:ArrayBuffer;
+			fileName = byte.getUTFString();
+			fileLen = byte.getInt32();
+			fileData = byte.readArrayBuffer(fileLen);
+			preLoadedMap[URL.formatURL(fileName)] = fileData;
+			
 		}
 		
 		/**

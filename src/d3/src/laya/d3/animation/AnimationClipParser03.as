@@ -2,6 +2,8 @@ package laya.d3.animation {
 	import laya.d3.core.FloatKeyframe;
 	import laya.d3.core.QuaternionKeyframe;
 	import laya.d3.core.Vector3Keyframe;
+	import laya.d3.math.Native.ConchQuaternion;
+	import laya.d3.math.Native.ConchVector3;
 	import laya.d3.math.Quaternion;
 	import laya.d3.math.Vector3;
 	import laya.d3.math.Vector4;
@@ -142,10 +144,10 @@ package laya.d3.animation {
 				case 1: 
 				case 3: 
 				case 4: 
-					node.data = new Vector3();
+					node.data = Render.supportWebGLPlusAnimation ? new ConchVector3 : new Vector3();
 					break;
 				case 2: 
-					node.data = new Quaternion();
+					node.data = Render.supportWebGLPlusAnimation ? new ConchQuaternion : new Quaternion();
 					break;
 				default: 
 					throw "AnimationClipParser03:unknown type.";
@@ -232,7 +234,7 @@ package laya.d3.animation {
 			var eventCount:int = reader.getUint16();
 			for (i = 0; i < eventCount; i++) {
 				var event:AnimationEvent = new AnimationEvent();
-				event.time = reader.getFloat32();
+				event.time =Math.min(clipDur,reader.getFloat32());//TODO:事件时间可能大于动画总时长
 				event.eventName = _strings[reader.getUint16()];
 				var params:Array;
 				var paramCount:int = reader.getUint16();

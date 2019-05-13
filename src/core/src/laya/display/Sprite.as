@@ -606,7 +606,7 @@ package laya.display {
 				if (this._texture)
 				{
 					rec = Rectangle.TEMP;
-					rec.setTo(0, 0, this._texture.width, this._texture.height);
+					rec.setTo(0, 0, this.width||this._texture.width, this.height||this._texture.height);
 					Utils.concatArray(pList, rec._getBoundPoints());
 				}		
 			}
@@ -757,11 +757,14 @@ package laya.display {
 			_tfChanged = false;
 			var style:SpriteStyle = this._style;
 			var sx:Number = style.scaleX, sy:Number = style.scaleY;
+			var sskx:Number = style.skewX;
+			var ssky:Number = style.skewY;
+			var rot:Number = style.rotation;
 			var m:Matrix = this._transform || (this._transform=_createTransform());
-			if (style.rotation || sx !== 1 || sy !== 1 || style.skewX!==0 || style.skewY!==0) {
+			if (rot || sx !== 1 || sy !== 1 || sskx!==0 || ssky!==0) {
 				m._bTransform = true;				
-				var skx:Number = (style.rotation - style.skewX) * 0.0174532922222222;//laya.CONST.PI180;
-				var sky:Number = (style.rotation + style.skewY) * 0.0174532922222222;
+				var skx:Number = (rot - sskx) * 0.0174532922222222;//laya.CONST.PI180;
+				var sky:Number = (rot+ ssky) * 0.0174532922222222;
 				var cx:Number = Math.cos(sky);
 				var ssx:Number = Math.sin(sky);
 				var cy:Number = Math.sin(skx);
@@ -1134,7 +1137,7 @@ package laya.display {
 		 * <p>也可以获取原始图片数据，分享到网上，从而实现截图效果，示例：</p>
 		 *
 		 * var htmlCanvas:HTMLCanvas = sprite.drawToCanvas(100, 100, 0, 0);//把精灵绘制到canvas上面
-		 * htmlCanvas.toBase64("image/png",0.9,callBack);//打印图片base64信息，可以发给服务器或者保存为图片
+		 * htmlCanvas.toBase64("image/png",0.9);//打印图片base64信息，可以发给服务器或者保存为图片
 		 *
 		 * @param	canvasWidth 画布宽度。
 		 * @param	canvasHeight 画布高度。

@@ -64,7 +64,8 @@ package laya.media {
 		 * 停止播放。
 		 */
 		public function stop():void {
-		
+			if (completeHandler) completeHandler.run();
+			completeHandler = null;
 		}
 		
 		/**

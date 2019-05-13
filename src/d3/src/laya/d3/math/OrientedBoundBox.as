@@ -343,7 +343,7 @@ package laya.d3.math {
 				locRadius = sphereR;
 			} else {
 				
-				Vector3.scale(Vector3.UnitX, sphereR, _tempV31);
+				Vector3.scale(Vector3._UnitX, sphereR, _tempV31);
 				Vector3.TransformNormal(_tempV31, _tempM0, _tempV31);
 				locRadius = Vector3.scalarLength(_tempV31);
 			}
